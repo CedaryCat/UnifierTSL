@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="PluginService\RuntimeIdentifierGraph.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="PluginService\Dependencies\RuntimeIdentifierGraph.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\UnifierTSL.ConsoleClient\UnifierTSL.ConsoleClient.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="MonoMod.RuntimeDetour" Version="25.2.3" />
+		<PackageReference Include="MonoMod.RuntimeDetour.HookGen" Version="22.7.31.1" />
+		<PackageReference Include="ModFramework" Version="1.1.15" />
+		<PackageReference Include="OTAPI.USP" Version="1.0.1" />
+	</ItemGroup>
+
+</Project>

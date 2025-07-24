@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "UnifierTSL": {
+      "commandName": "Project",
+      "commandLineArgs": "-server name:S1 worldname:S1 gamemode:3 size:1 evil:0 seed:for the worthy\r\n-server name:S2 worldname:S2 gamemode:3 size:1 evil:0 seed:for the worthy"
+    }
+  }
+}
