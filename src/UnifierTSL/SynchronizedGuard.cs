@@ -53,13 +53,17 @@ namespace UnifierTSL
                 += (orig, self, root, culture)
                 => { lock (cultureFileLock) { orig(self, root, culture); } };
             On.Terraria.GameContent.Creative.CreativeItemSacrificesCatalog.Initialize
-                += (orig, self) => { lock (creativeSacrificesLock) { orig(self); } };
+                += (orig, self) 
+                => { lock (creativeSacrificesLock) { orig(self); } };
             On.Terraria.IO.FavoritesFile.Save 
-                += (orig, file, root) => { lock (favoritesFileLock) { orig(file, root); } };
+                += (orig, file, root)
+                => { lock (favoritesFileLock) { orig(file, root); } };
             On.Terraria.IO.FavoritesFile.Load
-                += (orig, file, root) => { lock (favoritesFileLock) { orig(file, root); } };
+                += (orig, file, root)
+                => { lock (favoritesFileLock) { orig(file, root); } };
             On.Terraria.IO.WorldFileSystemContext.mfwh_SaveWorld_bool_bool
-                += (orig, self, _, resetTime) => {
+                += (orig, self, _, resetTime) 
+                => {
                     var s = self.root;
                     if (s.Main.worldName == "") {
                         s.Main.worldName = "World";

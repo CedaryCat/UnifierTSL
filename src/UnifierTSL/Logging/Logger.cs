@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using UnifierTSL.Logging.LogFilters;
+using UnifierTSL.Logging.LogWriters;
 
 namespace UnifierTSL.Logging
 {
@@ -15,6 +16,18 @@ namespace UnifierTSL.Logging
                     return;
                 }
                 filter = value;
+            }
+        }
+        private ILogWriter writer;
+        public ILogWriter? Writer {
+            [return: NotNull]
+            get => writer;
+            set {
+                if (value is null) {
+                    writer = new ConsoleLogWriter();
+                    return;
+                }
+                writer = value;
             }
         }
     }

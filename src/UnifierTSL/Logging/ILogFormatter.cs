@@ -14,7 +14,7 @@ namespace UnifierTSL.Logging
     }
     public interface ILogFormatter<TOutPut> : IInspectableFormatter where TOutPut : notnull
     {
-        public TOutPut Format(in LogEntry entry);
+        TOutPut Format(in LogEntry entry);
         dynamic IInspectableFormatter.Sample(in LogEntry entry) => Format(entry);
     }
 }
