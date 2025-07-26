@@ -1,4 +1,5 @@
 ﻿using UnifierTSL.Logging.Formatters;
+using UnifierTSL.Logging.LogWriters;
 
 namespace UnifierTSL.Logging
 {
@@ -17,6 +18,26 @@ namespace UnifierTSL.Logging
         /// Writes the specified log entry using the current formatter.
         /// </summary>
         /// <param name="log">The log entry to be written.</param>
-        void Write(LogEntry log);
+        void Write(scoped in LogEntry log);
+
+        public static CompositeLogWriter operator +(ILogWriter left, ILogWriter right) {
+            if (left is CompositeLogWriter leftComp) {
+                return leftComp + right;
+            }
+            else if (right is CompositeLogWriter rightComp) {
+                return left + rightComp;
+            }
+            return new CompositeLogWriter(left, right);
+        }
+
+        public static ILogWriter? operator -(ILogWriter left, ILogWriter right) {
+            if (left is CompositeLogWriter leftComp) {
+                return leftComp - right;
+            }
+            if (right is CompositeLogWriter rightComp) {
+                return left - rightComp;
+            }
+            return left;
+        }
     }
 }

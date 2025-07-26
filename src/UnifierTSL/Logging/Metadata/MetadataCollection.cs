@@ -9,7 +9,7 @@ namespace UnifierTSL.Logging.Metadata
         private Span<KeyValueMetadata> _entries;
         private int _count;
 
-        public MetadataCollection(ref MetadataAllocHandle handle) {
+        internal MetadataCollection(ref MetadataAllocHandle handle) {
             _metadataAllocHandle = ref handle;
             _entries = _metadataAllocHandle.Allocate(4);
             _count = 0;

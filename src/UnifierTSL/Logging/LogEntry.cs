@@ -12,11 +12,12 @@ namespace UnifierTSL.Logging
         Trace = 0,
         Debug = 1,
         Info = 2,
-        Warning = 3,
-        Error = 4,
-        Critical = 5
+        Success = 3,
+        Warning = 4,
+        Error = 5,
+        Critical = 6
     }
-    public readonly ref struct LogEntry
+    public readonly ref partial struct LogEntry
     {
         public DateTimeOffset TimestampUtc { get; init; }
         public LogLevel Level { get; init; }
@@ -26,7 +27,7 @@ namespace UnifierTSL.Logging
         public string Category { get; init; }
         public Exception? Exception { get; init; }
 
-        
+
         public string? SourceFilePath { get; init; }
         public string? MemberName { get; init; }
         public int? SourceLineNumber { get; init; }
@@ -36,6 +37,9 @@ namespace UnifierTSL.Logging
         public string? CorrelationId { get; init; }
 
         private readonly MetadataCollection metadata;
+    }
+    public readonly ref partial struct LogEntry
+    {
         public readonly ReadOnlySpan<KeyValueMetadata> Metadata => metadata.Metadata;
         public readonly void SetMetadata(string key, string value) {
             metadata.Set(key, value);

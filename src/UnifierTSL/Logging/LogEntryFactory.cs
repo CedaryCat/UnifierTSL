@@ -41,7 +41,7 @@ namespace UnifierTSL.Logging
                 correlationId: correlationId
             );
         }
-        public static void CreateLog(
+        internal static void CreateLog(
             LogLevel level,
             string role,
             string category,
@@ -104,7 +104,7 @@ namespace UnifierTSL.Logging
                 correlationId: correlationId
             );
         }
-        public static void CreateException(
+        internal static void CreateException(
             string role,
             string category,
             string message,

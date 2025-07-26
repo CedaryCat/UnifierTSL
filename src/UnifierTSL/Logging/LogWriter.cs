@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UnifierTSL.Commons;
@@ -33,7 +34,7 @@ namespace UnifierTSL.Logging
         /// Writes the specified log entry using the concrete implementation.
         /// </summary>
         /// <param name="log">The log entry to write.</param>
-        public abstract void Write(LogEntry log);
+        public abstract void Write(scoped in LogEntry log);
     }
 
     /// <summary>
@@ -118,18 +119,26 @@ namespace UnifierTSL.Logging
         /// Writes the specified input using the concrete implementation.
         /// </summary>
         /// <param name="input">The input data to write.</param>
-        public abstract void Write(TInput input);
+        public abstract void Write(Span<TInput> input);
 
         /// <summary>
         /// Formats a <see cref="LogEntry"/> using the current formatter and writes the formatted output.
         /// </summary>
         /// <param name="log">The log entry to write.</param>
-        public void Write(LogEntry log) {
-            TInput formatted;
+        public void Write(scoped in LogEntry log) {
+            int bufferSize;
+            Span<TInput> formatted;
+            TInput[]? buffer = null;
             try {
-                formatted = curFormatter.Format(log);
+                bufferSize = curFormatter.GetEstimatedSize(log);
+                buffer = ArrayPool<TInput>.Shared.Rent(bufferSize);
+                curFormatter.Format(in log, ref buffer[0], out var written);
+                formatted = buffer.AsSpan(0, written);
             }
             catch (Exception ex) {
+                if (buffer is not null) {
+                    ArrayPool<TInput>.Shared.Return(buffer);
+                }
                 LogFactory.CreateException(
                     role: "Logger",
                     category: "FormatterFailure",
@@ -137,12 +146,22 @@ namespace UnifierTSL.Logging
                              $"Original log entry has been re-formatted using the default formatter.",
                     exception: ex,
                     out var errorLog);
-                var formattedEx = defFormatter.Format(errorLog);
-                Write(formattedEx);
 
-                formatted = defFormatter.Format(log);
+                bufferSize = defFormatter.GetEstimatedSize(errorLog);
+                buffer = ArrayPool<TInput>.Shared.Rent(bufferSize);
+                defFormatter.Format(in errorLog, ref buffer[0], out var written);
+                formatted = buffer.AsSpan(0, written);
+                Write(formatted);
+                ArrayPool<TInput>.Shared.Return(buffer);
+
+                bufferSize = defFormatter.GetEstimatedSize(log);
+                buffer = ArrayPool<TInput>.Shared.Rent(bufferSize);
+                defFormatter.Format(in log, ref buffer[0], out written);
+                formatted = buffer.AsSpan(0, written);
             }
             Write(formatted);
+            ArrayPool<TInput>.Shared.Return(buffer);
+            return;
         }
     }
 }
