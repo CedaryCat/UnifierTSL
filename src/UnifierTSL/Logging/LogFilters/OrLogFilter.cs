@@ -16,6 +16,7 @@ namespace UnifierTSL.Logging.LogFilters
         public bool ShouldLog(in LogEntry entry) {
             var handlers = Filters.AsSpan();
             var len = handlers.Length;
+            if (len == 0) return true;
             ref var r0 = ref MemoryMarshal.GetReference(handlers);
             for (int i = 0; i < len; i++) {
                 if (Unsafe.Add(ref r0, i).ShouldLog(entry)) {

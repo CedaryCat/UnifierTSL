@@ -27,9 +27,11 @@ namespace UnifierTSL.Logging.LogWriters
         public void Write(scoped in LogEntry log) {
             var writers = Writers.AsSpan();
             var len = writers.Length;
-            ref var w0 = ref MemoryMarshal.GetReference(writers);
-            for (int i = 0; i < len; i++) {
-                Unsafe.Add(ref w0, i).Write(in log);
+            if (len > 0) {
+                ref var w0 = ref MemoryMarshal.GetReference(writers);
+                for (int i = 0; i < len; i++) {
+                    Unsafe.Add(ref w0, i).Write(in log);
+                }
             }
         }
 

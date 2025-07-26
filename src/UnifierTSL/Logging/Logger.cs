@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -8,7 +9,7 @@ using UnifierTSL.Logging.Metadata;
 
 namespace UnifierTSL.Logging
 {
-    public class Logger
+    public class Logger : IMetadataInjectionHost
     {
         private ILogFilter filter = EmptyLogFilter.Instance;
         public ILogFilter? Filter {
@@ -35,13 +36,35 @@ namespace UnifierTSL.Logging
             }
         }
 
+        private ImmutableArray<ILogMetadataInjector> _injectors = ImmutableArray<ILogMetadataInjector>.Empty;
+        public IReadOnlyList<ILogMetadataInjector> MetadataInjectors => _injectors;
+
+        public void AddMetadataInjector(ILogMetadataInjector injector) {
+            ArgumentNullException.ThrowIfNull(injector, nameof(injector));
+            ImmutableInterlocked.Update(ref _injectors, arr => arr.Add(injector));
+        }
+
+        public void RemoveMetadataInjector(ILogMetadataInjector injector) {
+            ArgumentNullException.ThrowIfNull(injector, nameof(injector));
+            ImmutableInterlocked.Update(ref _injectors, arr => arr.Remove(injector));
+        }
+
         public void Log(in LogEntry entry) {
-            if (filter.ShouldLog(entry)) {
-                writer.Write(entry);
+            var injectors = _injectors.AsSpan();
+            var injectorCount = injectors.Length;
+            if (injectorCount > 0) {
+                ref var element0 = ref MemoryMarshal.GetReference(injectors);
+                for (int i = 0; i < injectorCount; i++) {
+                    Unsafe.Add(ref element0, i).InjectMetadata(in entry);
+                }
+            }
+
+            if (filter.ShouldLog(in entry)) {
+                writer.Write(in entry);
             }
         }
 
-        internal MetadataAllocHandle CreateMetadataAllocHandle() {
+        internal static MetadataAllocHandle CreateMetadataAllocHandle() {
             var handle = new InnerMetadataAllocHandle();
             return Unsafe.As<InnerMetadataAllocHandle, MetadataAllocHandle>(ref handle);
         }

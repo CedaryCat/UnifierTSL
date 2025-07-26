@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using UnifierTSL.Logging.LogTrace;
 using UnifierTSL.Logging.Metadata;
 
 namespace UnifierTSL.Logging
@@ -32,15 +34,13 @@ namespace UnifierTSL.Logging
         public string? MemberName { get; init; }
         public int? SourceLineNumber { get; init; }
 
-        public string? TraceId { get; init; }
-        public string? SpanId { get; init; }
-        public string? CorrelationId { get; init; }
+        public readonly ref readonly TraceContext TraceContext;
 
         private readonly MetadataCollection metadata;
     }
     public readonly ref partial struct LogEntry
     {
-        public readonly ReadOnlySpan<KeyValueMetadata> Metadata => metadata.Metadata;
+        public bool HasTraceContext => !Unsafe.IsNullRef(in TraceContext);
         public readonly void SetMetadata(string key, string value) {
             metadata.Set(key, value);
         }
@@ -50,6 +50,7 @@ namespace UnifierTSL.Logging
             }
             return null;
         }
+
         public readonly override string ToString() {
             return $"[{Level}][{Role}]{Message}";
         }
@@ -59,32 +60,55 @@ namespace UnifierTSL.Logging
             LogLevel level,
             int eventId,
             string role,
-            string message,
             string category,
+            string message,
+            in TraceContext traceContext,
             Exception? exception,
             string? sourceFilePath,
             string? memberName,
             int? sourceLineNumber,
-            string? traceId,
-            string? spanId,
-            string? correlationId,
             ref MetadataAllocHandle metadataAllocHandle) {
 
             TimestampUtc = timestampUtc;
             Level = level;
             EventId = eventId;
             Role = role;
-            Message = message;
             Category = category;
+            Message = message;
             Exception = exception;
+
+            TraceContext = ref traceContext;
 
             SourceFilePath = sourceFilePath;
             MemberName = memberName;
             SourceLineNumber = sourceLineNumber;
 
-            TraceId = traceId;
-            SpanId = spanId;
-            CorrelationId = correlationId;
+            metadata = new(ref metadataAllocHandle);
+        }
+        internal LogEntry(
+            DateTimeOffset timestampUtc,
+            LogLevel level,
+            int eventId,
+            string role,
+            string category,
+            string message,
+            Exception? exception,
+            string? sourceFilePath,
+            string? memberName,
+            int? sourceLineNumber,
+            ref MetadataAllocHandle metadataAllocHandle) {
+
+            TimestampUtc = timestampUtc;
+            Level = level;
+            EventId = eventId;
+            Role = role;
+            Category = category;
+            Message = message;
+            Exception = exception;
+
+            SourceFilePath = sourceFilePath;
+            MemberName = memberName;
+            SourceLineNumber = sourceLineNumber;
 
             metadata = new(ref metadataAllocHandle);
         }
@@ -92,51 +116,60 @@ namespace UnifierTSL.Logging
         /// <summary>
         /// Do not support metadata
         /// </summary>
-        /// <param name="timestampUtc"></param>
-        /// <param name="level"></param>
-        /// <param name="eventId"></param>
-        /// <param name="role"></param>
-        /// <param name="message"></param>
-        /// <param name="category"></param>
-        /// <param name="exception"></param>
-        /// <param name="sourceFilePath"></param>
-        /// <param name="memberName"></param>
-        /// <param name="sourceLineNumber"></param>
-        /// <param name="traceId"></param>
-        /// <param name="spanId"></param>
-        /// <param name="correlationId"></param>
         public LogEntry(
             DateTimeOffset timestampUtc,
             LogLevel level,
             int eventId,
             string role,
-            string message,
             string category,
-            Exception? exception = null,
-            string? sourceFilePath = null,
-            string? memberName = null,
-            int? sourceLineNumber = null,
-            string? traceId = null,
-            string? spanId = null,
-            string? correlationId = null) {
+            string message,
+            Exception? exception,
+            string? sourceFilePath,
+            string? memberName,
+            int? sourceLineNumber) {
 
             TimestampUtc = timestampUtc;
             Level = level;
             EventId = eventId;
             Role = role;
-            Message = message;
             Category = category;
+            Message = message;
             Exception = exception;
 
             SourceFilePath = sourceFilePath;
             MemberName = memberName;
             SourceLineNumber = sourceLineNumber;
+        }
 
-            TraceId = traceId;
-            SpanId = spanId;
-            CorrelationId = correlationId;
+        /// <summary>
+        /// Do not support metadata
+        /// </summary>
+        public LogEntry(
+            DateTimeOffset timestampUtc,
+            LogLevel level,
+            int eventId,
+            string role,
+            string category,
+            string message,
+            in TraceContext traceContext,
+            Exception? exception,
+            string? sourceFilePath,
+            string? memberName,
+            int? sourceLineNumber) {
 
-            metadata = default;
+            TimestampUtc = timestampUtc;
+            Level = level;
+            EventId = eventId;
+            Role = role;
+            Category = category;
+            Message = message;
+            Exception = exception;
+
+            TraceContext = ref traceContext;
+
+            SourceFilePath = sourceFilePath;
+            MemberName = memberName;
+            SourceLineNumber = sourceLineNumber;
         }
     }
 }

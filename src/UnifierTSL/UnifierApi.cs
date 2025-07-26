@@ -12,18 +12,18 @@ namespace UnifierTSL
         public static int ListenPort { get; internal set; } = -1;
         private static string? serverPassword;
         public static string ServerPassword => serverPassword ?? "";
-        internal static void Initialize(string[] parms) {
+        internal static void Initialize(string[] launcherArgs) {
 
             PluginsContext = new PluginLoader(new DirectoryInfo(Directory.GetCurrentDirectory()))
                 .LoadPluginInfo(out var vaildPluginInfos, out var nameConflicts)
                 .HandleDependencies(out var validPlugins, out var failedPlugins)
                 .Initialize();
 
-            HandleCommandLine(parms);
+            HandleCommandLine(launcherArgs);
             ReadLauncherArgs();
         }
-        static void HandleCommandLine(string[] parms) {
-            Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(parms);
+        static void HandleCommandLine(string[] launcherArgs) {
+            Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);
             foreach (var arg in args) {
                 var firstValue = arg.Value[0];
                 switch (arg.Key) { 
