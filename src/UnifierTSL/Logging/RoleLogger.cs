@@ -11,7 +11,7 @@ using UnifierTSL.Logging.Metadata;
 
 namespace UnifierTSL.Logging
 {
-    public class RoleLogger(ILoggerHost host, Logger logger) : IMetadataInjectionHost, IStandardLogger
+    public class RoleLogger : IMetadataInjectionHost, IStandardLogger
     {
         private ImmutableArray<ILogMetadataInjector> _injectors = ImmutableArray<ILogMetadataInjector>.Empty;
         public IReadOnlyList<ILogMetadataInjector> MetadataInjectors => _injectors;
@@ -26,8 +26,24 @@ namespace UnifierTSL.Logging
             ImmutableInterlocked.Update(ref _injectors, arr => arr.Remove(injector));
         }
 
-        readonly Logger logger = logger;
-        readonly ILoggerHost role = host;
+        readonly Logger logger;
+        readonly ILoggerHost role;
+
+        internal RoleLogger(ILoggerHost host, Logger logger) {
+            this.logger = logger;
+            role = host;
+        }
+
+        public RoleLogger CloneForHost(ILoggerHost host, bool inheritInjectors = false) {
+            var roleLogger = new RoleLogger(host, logger);
+            if (inheritInjectors) {
+                foreach (var injector in _injectors) {
+                    roleLogger.AddMetadataInjector(injector);
+                }
+            }
+            return roleLogger;
+        }
+        public RoleLogger Clone(bool inheritInjectors = false) => CloneForHost(role, inheritInjectors);
         
         public void Log(
             LogLevel level,

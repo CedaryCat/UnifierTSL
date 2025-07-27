@@ -7,7 +7,7 @@ namespace UnifierTSL.PluginService
     public abstract class BasePlugin : IPlugin
     {
         public virtual int InitializationOrder => 1;
-        public abstract Task InitializeAsync(ReadOnlySpan<PluginInitInfo> priorInitializations, CancellationToken cancellationToken = default);
+        public abstract Task InitializeAsync(ReadOnlyMemory<PluginInitInfo> priorInitializations, CancellationToken cancellationToken = default);
         public virtual Task ShutdownAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public ValueTask DisposeAsync() {
             GC.SuppressFinalize(this);

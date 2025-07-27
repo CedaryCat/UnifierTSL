@@ -1,11 +1,21 @@
-﻿using System.Collections.Immutable;
+﻿using NuGet.Common;
+using System.Collections.Immutable;
+using UnifierTSL.Logging;
 
 namespace UnifierTSL.PluginService.Loading
 {
-    public class PluginsLoadContext
+    public class PluginsLoadContext : ILoggerHost
     {
+        private readonly Logger logCore;
+        private readonly RoleLogger Logger;
         private readonly ImmutableArray<PluginContainer> Plugins;
-        internal PluginsLoadContext(IReadOnlyList<PluginContainer> plugins) {
+
+        public string Name => "PluginInitializer";
+        public string? CurrentLogCategory => null;
+
+        internal PluginsLoadContext(Logger logger, IReadOnlyList<PluginContainer> plugins) {
+            logCore = logger;
+            Logger = UnifierApi.CreateLogger(this, logger);
             // Sort plugins by InitializationOrder, if same, sort by type name
             Plugins = [.. plugins
                 .OrderBy(p => p.Plugin.InitializationOrder)
@@ -26,7 +36,7 @@ namespace UnifierTSL.PluginService.Loading
             return this;
         }
 
-        static async Task InitializeAllAsync(ImmutableArray<PluginContainer> sortedPlugins) {
+        async Task InitializeAllAsync(ImmutableArray<PluginContainer> sortedPlugins) {
             var initTasks = new Dictionary<PluginContainer, Task>();
             var initInfos = new PluginInitInfo[sortedPlugins.Length];
 
@@ -34,14 +44,13 @@ namespace UnifierTSL.PluginService.Loading
                 var current = sortedPlugins[i];
 
                 // Extract the initialization information of the preceding plugins (in order)
-                var prior = initInfos.AsSpan()[..i]; // Snapshot for ReadOnlySpan
-                var plugin = current.Plugin;
+                var prior = initInfos.AsMemory()[..i]; // Snapshot for ReadOnlyMemory
 
                 // Create CancellationToken
                 var token = CancellationToken.None;
 
                 // Call InitializeAsync
-                var task = plugin.InitializeAsync(prior, token);
+                var task = InitializePlugin(Logger, current, prior, token);
 
                 // Save Task and Plugin information
                 initTasks[current] = task;
@@ -50,7 +59,19 @@ namespace UnifierTSL.PluginService.Loading
 
             // Wait for all initialization tasks to complete
             await Task.WhenAll(initTasks.Values);
+
+            if (initTasks.Count > 0) {
+                Logger.Info(
+                    message: $"All plugins ({initTasks.Count}) have been initialized.");
+            }
+            else {
+                Logger.Info(
+                    message: "No plugins have been initialized.");
+            }
+        }
+        static async Task InitializePlugin(RoleLogger logger, PluginContainer container, ReadOnlyMemory<PluginInitInfo> prior, CancellationToken token) {
+            await container.Plugin.InitializeAsync(prior, token);
+            logger.Success($"Plugin {container.Name} v{container.Version} (by {container.Author}) initiated.");
         }
     }
-
 }

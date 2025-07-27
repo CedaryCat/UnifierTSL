@@ -9,6 +9,8 @@ namespace UnifierTSL
     {
 
         // Just trigger the static constructor
+
+        public readonly static Lock ConsoleLock = new();
         public static void Load() { }
 
         static readonly Lock cultureFileLock = new();

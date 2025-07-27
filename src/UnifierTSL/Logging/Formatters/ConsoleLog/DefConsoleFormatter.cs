@@ -18,7 +18,9 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
             written = 0;
 
             string levelText = $"[{entry.Level}]";
-            string roleCatText = $"[{entry.Role}|{entry.Category}]";
+            string roleCatText = string.IsNullOrEmpty(entry.Category) 
+                ? $"[{entry.Role}]" 
+                : $"[{entry.Role}|{entry.Category}]";
 
             ConsoleColor fgLevel = GetLevelColor(entry.Level);
             ConsoleColor bg = ConsoleColor.Black;
@@ -37,6 +39,10 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
                 ? $" {lines[0]}"
                 : $" {lines[0]}\n{FormatMultiline(lines.Skip(1))}";
 
+            if (entry.Exception is null) {
+                messageText = $"{messageText}\n";
+            }
+
             Unsafe.Add(ref buffer, written) = new(messageText.AsMemory(), fgLevel, bg);
             written++;
 
@@ -50,10 +56,10 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
                 sb.AppendLine($" │ {label}");
 
                 for (int i = 0; i < exceptionLines.Length; i++) {
-                    if (i == 0)
-                        sb.AppendLine($" ├── {exceptionLines[i]}");
-                    else if (i == exceptionLines.Length - 1)
+                    if (i == exceptionLines.Length - 1)
                         sb.AppendLine($" └── {exceptionLines[i]}");
+                    else if (i == 0)
+                        sb.AppendLine($" ├── {exceptionLines[i]}");
                     else
                         sb.AppendLine($" │   {exceptionLines[i]}");
                 }
@@ -80,10 +86,10 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
             var sb = new StringBuilder();
             var arr = lines.ToArray();
             for (int i = 0; i < arr.Length; i++) {
-                if (i == 0)
-                    sb.AppendLine($" ├── {arr[i]}");
-                else if (i == arr.Length - 1)
+                if (i == arr.Length - 1)
                     sb.AppendLine($" └── {arr[i]}");
+                else if (i == 0)
+                    sb.AppendLine($" ├── {arr[i]}");
                 else
                     sb.AppendLine($" │   {arr[i]}");
             }

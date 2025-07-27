@@ -1,4 +1,5 @@
-﻿using UnifierTSL.Events.Handlers;
+﻿using Terraria.Localization;
+using UnifierTSL.Events.Handlers;
 
 namespace UnifierTSL
 {
@@ -17,12 +18,26 @@ namespace UnifierTSL
             Console.WriteLine(@"                       Demonstration For Terraria v{0} & OTAPI v{1}                         ", version.TerrariaVersion, version.OTAPIVersion);
             Console.WriteLine(@"---------------------------------------------------------------------------------------------------");
 
-            WorkRunner.RunTimedWork("Global initialization started...", () => {
+            WorkRunner.RunTimedWork("Init", "Global initialization started...", () => {
                 Initializer.Initialize();
                 UnifierApi.Initialize(args);
             });
 
             UnifiedServerCoordinator.Launch(UnifierApi.ListenPort, UnifierApi.ServerPassword);
+
+            Console.Title = $"UnifierTSL " +
+                            $"- {UnifiedServerCoordinator.GetActiveClientCount()}/{byte.MaxValue} " +
+                            $"@ {UnifiedServerCoordinator.ListeningEndpoint} " +
+                            $"USP for Terraria v{version.TerrariaVersion}";
+
+            UnifiedServerCoordinator.Logger.Info(
+                category: "Startup",
+                message: "UnifierTSLauncher started successfully! \r\n" +
+                         Language.GetTextValue("CLI.ListeningOnPort", UnifiedServerCoordinator.ListenPort));
+
+            while (true) {
+                Console.ReadLine();
+            }
         }
     }
 }

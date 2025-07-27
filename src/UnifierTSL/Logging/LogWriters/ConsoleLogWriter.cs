@@ -19,10 +19,12 @@ namespace UnifierTSL.Logging.LogWriters
             ref var element0 = ref MemoryMarshal.GetReference(input);
             for (int i = 0; i < count; i++) {
                 var element = Unsafe.Add(ref element0, i);
-                Console.BackgroundColor = element.BackgroundColor;
-                Console.ForegroundColor = element.ForegroundColor;
-                Console.Write(element.Text);
-                Console.ResetColor();
+                lock (SynchronizedGuard.ConsoleLock) {
+                    Console.BackgroundColor = element.BackgroundColor;
+                    Console.ForegroundColor = element.ForegroundColor;
+                    Console.Write(element.Text);
+                    Console.ResetColor();
+                }
             }
         }
     }

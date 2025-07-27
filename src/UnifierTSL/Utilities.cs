@@ -116,12 +116,15 @@ namespace UnifierTSL
                 return File.Create(path);
             }
 
-            public static int RemoveEmptyDirectories(string path) {
+            public static int RemoveEmptyDirectories(string path, bool includeRoot = true) {
+                if (!Directory.Exists(path)) {
+                    return 0;
+                }
                 int removedCount = 0;
                 foreach (var dir in Directory.GetDirectories(path)) {
                     removedCount += RemoveEmptyDirectories(dir);
                 }
-                if (Directory.GetFiles(path).Length == 0 && Directory.GetDirectories(path).Length == 0) {
+                if (includeRoot && Directory.GetFiles(path).Length == 0 && Directory.GetDirectories(path).Length == 0) {
                     try {
                         Directory.Delete(path);
                         removedCount++;

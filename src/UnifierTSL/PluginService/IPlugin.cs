@@ -45,12 +45,12 @@ namespace UnifierTSL.PluginService
         /// of plugins initialized earlier (lower InitializationOrder).
         /// </param>
         /// <param name="cancellationToken">Token for cooperative cancellation.</param>
-        Task InitializeAsync(ReadOnlySpan<PluginInitInfo> priorInitializations, CancellationToken cancellationToken = default);
+        Task InitializeAsync(ReadOnlyMemory<PluginInitInfo> priorInitializations, CancellationToken cancellationToken);
 
         /// <summary>
         /// Called when the plugin is being shut down, typically during application shutdown or plugin reload.
         /// </summary>
         /// <param name="cancellationToken">Token for cooperative cancellation.</param>
-        Task ShutdownAsync(CancellationToken cancellationToken = default);
+        Task ShutdownAsync(CancellationToken cancellationToken);
     }
 }

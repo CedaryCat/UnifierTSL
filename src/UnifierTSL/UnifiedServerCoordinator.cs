@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using NuGet.Common;
+using System.Collections.Immutable;
 using System.Net;
 using System.Net.Sockets;
 using Terraria;
@@ -8,6 +9,7 @@ using TrProtocol;
 using TrProtocol.NetPackets;
 using UnifierTSL.Events.Handlers;
 using UnifierTSL.Extensions;
+using UnifierTSL.Logging;
 using UnifierTSL.Network;
 using UnifierTSL.Servers;
 
@@ -127,7 +129,11 @@ namespace UnifierTSL
                     }
                     unreadLength = 0;
                     readPosition = 0;
-                    Console.WriteLine(exception);
+
+                    Logger.LogHandledException(
+                        category: "PendingConnection",
+                        message: Language.GetTextValue("Error.NetMessageError", readBuffer[readPosition + 2]),
+                        ex: exception);
                 }
                 if (unreadLength != totalData) {
                     for (int i = 0; i < unreadLength; i++) {
@@ -182,21 +188,41 @@ namespace UnifierTSL
                                 var joinServer = SwitchJoinServer?.Invoke(player, client);
                                 if (joinServer is null) {
                                     sender.Kick(NetworkText.FromLiteral("Could not find a server to join."));
+
+                                    Logger.Warning(
+                                        category: "PendingConnection",
+                                        message: $"Could not find a server to join for '{player.name}' ({client.ClientUUID})");
                                 }
                                 else {
                                     SetClientCurrentlyServer(Index, joinServer);
+
+                                    Logger.Info(
+                                        category: "PendingConnection",
+                                        message: $"Joined server '{joinServer.Name}' for '{player.name}' ({client.ClientUUID})");
                                 }
 
                                 break;
                             }
                         default: {
                                 sender.Kick(Lang.mp[2].ToNetworkText());
+
+                                Logger.Warning(
+                                    category: "PendingConnection",
+                                    message: $"'{client.Name}' ({client.Socket.GetRemoteAddress()}) sent invalid packet {type} before name-uuid anthentication. Kicked.");
                                 break;
                             }
                     }
                 }
             }
         }
+        class LoggerHost : ILoggerHost
+        {
+            public string Name => "UnifierTSL";
+            public string? CurrentLogCategory { get; set; }
+        }
+        static readonly ILoggerHost LogHost = new LoggerHost();
+        static readonly RoleLogger logger;
+        public static RoleLogger Logger => logger;
         public static int ListenPort { get; private set; }
         public static string ServerPassword { get; private set; } = "";
         public static readonly RemoteClient[] globalClients = new RemoteClient[Netplay.MaxConnections];
@@ -207,26 +233,11 @@ namespace UnifierTSL
 
         private static ImmutableArray<ServerContext> servers = [];
         public static ImmutableArray<ServerContext> Servers => servers;
-        readonly static ReaderWriterLockSlim serversLock = new();
         public static void AddServer(ServerContext server) {
-            serversLock.EnterWriteLock();
-            try {
-                if (servers.Contains(server))
-                    return;
-                servers = servers.Add(server);
-            }
-            finally {
-                serversLock.ExitWriteLock();
-            }
+            ImmutableInterlocked.Update(ref servers, arr => arr.Add(server));
         }
         public static void RemoveServer(ServerContext server) {
-            serversLock.EnterWriteLock();
-            try {
-                servers = servers.Remove(server);
-            }
-            finally {
-                serversLock.ExitWriteLock();
-            }
+            ImmutableInterlocked.Update(ref servers, arr => arr.Remove(server));
         }
         public static ServerContext? GetClientCurrentlyServer(int clientIndex) => Volatile.Read(ref clientCurrentlyServers[clientIndex]);
         static void SetClientCurrentlyServer(int clientIndex, ServerContext? server) => Volatile.Write(ref clientCurrentlyServers[clientIndex], server);
@@ -241,7 +252,11 @@ namespace UnifierTSL
         public static event Func<Player, RemoteClient, ServerContext?>? SwitchJoinServer;
         public static event Action? Started;
 
+        public static IPEndPoint ListeningEndpoint { get; private set; }
+
         static UnifiedServerCoordinator() {
+            logger = UnifierApi.CreateLogger(LogHost);
+
             On.Terraria.NetMessageSystemContext.mfwh_CheckBytes += ProcessBytes;
             On.Terraria.NetplaySystemContext.mfwh_UpdateServerInMainThread += UpdateServerInMainThread;
             On.Terraria.NetMessageSystemContext.CheckCanSend += NetMessageSystemContext_CheckCanSend;
@@ -258,7 +273,7 @@ namespace UnifierTSL
                     whoAmI = i
                 };
             }
-            listener = new TcpListener(IPAddress.Any, 7777);
+            listener = new TcpListener(ListeningEndpoint = new IPEndPoint(IPAddress.Any, 7777));
             broadcastClient = new UdpClient();
         }
         static Thread? ServerLoopThread;
@@ -266,7 +281,7 @@ namespace UnifierTSL
             ListenPort = listenPort;
             ServerPassword = password;
             listener.Dispose();
-            listener = new TcpListener(IPAddress.Any, listenPort);
+            listener = new TcpListener(ListeningEndpoint = new IPEndPoint(IPAddress.Any, listenPort));
             
             broadcastClient.EnableBroadcast = true;
 
@@ -422,7 +437,7 @@ namespace UnifierTSL
             }
         }
 
-        static int GetClientSpace() {
+        public static int GetClientSpace() {
             int space = Main.maxPlayers;
             for (int i = 0; i < Main.maxPlayers; i++) {
                 if (globalClients[i].IsActive) {
@@ -431,7 +446,7 @@ namespace UnifierTSL
             }
             return space;
         }
-        static int GetActiveClientCount() {
+        public static int GetActiveClientCount() {
             int count = 0;
             for (int i = 0; i < Main.maxPlayers; i++) {
                 if (globalClients[i].IsActive) {
@@ -524,14 +539,26 @@ namespace UnifierTSL
             if (id != -1) {
                 SetClientCurrentlyServer(id, null);
                 pendingConnects[id].Reset(client);
+
+                Logger.Info(
+                    category: "ConnectionAccept",
+                    message: $"Accepted connection: {client.GetRemoteAddress()}");
             }
             else {
                 var sender = new TmpSocketSender(client);
                 sender.Kick(NetworkText.FromKey("CLI.ServerIsFull"), true);
+
+                Logger.Info(
+                    category: "ConnectionAccept",
+                    message: "Server is full");
             }
             if (FindNextEmptyClientSlot() == -1) {
                 listener.Stop();
                 isListening = false;
+
+                Logger.Info(
+                    category: "ConnectionAccept",
+                    message: "No more slots available, stopping listener");
             }
         }
         static int FindNextEmptyClientSlot() {
@@ -543,7 +570,7 @@ namespace UnifierTSL
             return -1;
         }
 
-        public static void ServerWarp(byte plr, ServerContext to) {
+        public static void TransferPlayerToServer(byte plr, ServerContext to) {
             var from = GetClientCurrentlyServer(plr);
 
             if (from is null) {
@@ -558,25 +585,33 @@ namespace UnifierTSL
 
             var client = globalClients[plr];
             lock (client) {
+
+                // Leave data sync
                 from.SyncPlayerLeaveToOthers(plr);
                 from.SyncServerOfflineToPlayer(plr);
-                from.Console.WriteLine($"[USP] Player '{from.Main.player[plr].name}' warped to {to.Name}, curFormatter players: {to.NPC.GetActivePlayerCount()}");
+                from.Console.WriteLine($"[USP] Player '{from.Main.player[plr].name}' transferred to {to.Name}, current players: {to.NPC.GetActivePlayerCount()}");
 
+                // Player state swap
                 var inactivePlayer = to.Main.player[plr];
                 var activePlayer = from.Main.player[plr];
-
                 from.Main.player[plr] = inactivePlayer;
                 to.Main.player[plr] = activePlayer;
-
                 inactivePlayer.active = false;
                 activePlayer.active = true;
 
+                // Update current server
                 SetClientCurrentlyServer(plr, to);
                 client.ResetSections(to);
 
+                // Join data sync
                 to.SyncServerOnlineToPlayer(plr);
                 to.SyncPlayerJoinToOthers(plr);
-                to.Console.WriteLine($"[USP] Player '{to.Main.player[plr].name}' joined from {from.Name}, curFormatter players: {to.NPC.GetActivePlayerCount()}");
+                to.Console.WriteLine($"[USP] Player '{to.Main.player[plr].name}' joined from {from.Name}, current players: {to.NPC.GetActivePlayerCount()}");
+
+                // Log
+                Logger.Info(
+                    category: "TransferPlayerToServer",
+                    message: $"Player '{to.Main.player[plr].name}' {from.Name} → {to.Name} transferred.");
             }
         }
     }

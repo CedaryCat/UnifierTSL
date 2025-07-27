@@ -5,8 +5,11 @@ namespace UnifierTSL
 {
     internal static class WorkRunner
     {
-        public static void RunTimedWork(string message, Action work) {
-            Console.Write($"[USP|Info] {message}");
+        public static void RunTimedWork(string category, string message, Action work) {
+            UnifierApi.Logger.Info(
+                category: $"TimedWork:{category}",
+                message: message);
+
             var spinner = new ConsoleSpinner(100);
             spinner.Start();
             Stopwatch stopwatch = new();
@@ -14,10 +17,17 @@ namespace UnifierTSL
             work();
             stopwatch.Stop();
             spinner.Stop();
-            Console.WriteLine($" - done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
+            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
+
+            UnifierApi.Logger.Info(
+                category: $"TimedWork:{category}",
+                message: $"- Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
         }
-        public static TOut RunTimedWork<TOut>(string message, WorkDelegate<TOut> work) {
-            Console.Write($"[USP|Info] {message}");
+        public static TOut RunTimedWork<TOut>(string category, string message, WorkDelegate<TOut> work) {
+            UnifierApi.Logger.Info(
+                category: $"TimedWork:{category}",
+                message: message);
+
             var spinner = new ConsoleSpinner(100);
             spinner.Start();
             Stopwatch stopwatch = new();
@@ -25,11 +35,19 @@ namespace UnifierTSL
             var output = work();
             stopwatch.Stop();
             spinner.Stop();
-            Console.WriteLine($" - done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
+            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
+
+            UnifierApi.Logger.Info(
+                category: $"TimedWork:{category}",
+                message: $"- Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
+
             return output;
         }
-        public static void RunTimedWorkAsync(string message, Func<TaskCompletionSource> work, Action? endAction = null) {
-            Console.Write($"[USP|Info] {message}");
+        public static void RunTimedWorkAsync(string category, string message, Func<TaskCompletionSource> work, Action? endAction = null) {
+            UnifierApi.Logger.Info(
+                category: $"TimedWork:{category}",
+                message: message);
+
             var spinner = new ConsoleSpinner(100);
             spinner.Start();
             Stopwatch stopwatch = new();
@@ -37,7 +55,12 @@ namespace UnifierTSL
             work().Task.Wait();
             stopwatch.Stop();
             spinner.Stop();
-            Console.WriteLine($" - done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
+            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
+
+            UnifierApi.Logger.Info(
+                category: $"TimedWork:{category}",
+                message: $"- Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
+
             endAction?.Invoke();
         }
 

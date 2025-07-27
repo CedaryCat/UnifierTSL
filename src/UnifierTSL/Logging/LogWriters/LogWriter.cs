@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using UnifierTSL.Commons;
 using UnifierTSL.Logging.Formatters;
 
-namespace UnifierTSL.Logging
+namespace UnifierTSL.Logging.LogWriters
 {
     /// <summary>
     /// Provides a simplified base class for log writers that store raw or structured log entries
@@ -140,7 +140,7 @@ namespace UnifierTSL.Logging
                     ArrayPool<TInput>.Shared.Return(buffer);
                 }
                 LogFactory.CreateException(
-                    role: "Logger",
+                    role: "logCore",
                     category: "FormatterFailure",
                     message: $"Failed to format log entry [TimestampUtc:{log.TimestampUtc:u}] using formatter '{curFormatter.FormatName}'. " +
                              $"Original log entry has been re-formatted using the default formatter.",
