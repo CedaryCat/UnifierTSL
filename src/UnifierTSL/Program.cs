@@ -6,6 +6,11 @@ namespace UnifierTSL
     internal class Program
     {
         static void Main(string[] args) {
+            Initializer.InitializeResolver();
+            Run(args);
+        }
+
+        static void Run(string[] args) {
             var version = new VersionHelper();
 
             Console.Title = "UnifierTSLauncher";

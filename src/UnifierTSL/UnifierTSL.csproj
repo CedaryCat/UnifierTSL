@@ -23,7 +23,7 @@
 		<PackageReference Include="MonoMod.RuntimeDetour" Version="25.2.3" />
 		<PackageReference Include="MonoMod.RuntimeDetour.HookGen" Version="22.7.31.1" />
 		<PackageReference Include="ModFramework" Version="1.1.15" />
-		<PackageReference Include="OTAPI.USP" Version="1.0.1" />
+		<PackageReference Include="OTAPI.USP" Version="1.0.2" />
 	</ItemGroup>
 
 </Project>

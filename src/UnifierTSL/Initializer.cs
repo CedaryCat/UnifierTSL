@@ -7,8 +7,21 @@ namespace UnifierTSL
 {
     public static class Initializer
     {
+        static Initializer() {
+            AssemblyResolverInit();
+        }
+
+        private static void AssemblyResolverInit() {
+            AppDomain.CurrentDomain.AssemblyResolve += ResolveHelpers.GlobalResolveAssembly;
+            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += ResolveHelpers.ResolveAssembly;
+        }
+
+        /// <summary>
+        /// Just triggers the static constructor
+        /// </summary>
+        public static void InitializeResolver() { }
+
         public static void Initialize() {
-            AppDomain.CurrentDomain.AssemblyResolve += ResolveHelpers.ResolveAssembly;
             Terraria.Program.SavePath = Platform.Get<IPathService>().GetStoragePath("Terraria");
             Terraria.Main.SkipAssemblyLoad = true;
             GlobalInitializer.Initialize();
@@ -17,9 +30,9 @@ namespace UnifierTSL
             InitSets();
         }
 
+
         private static void InitSets() {
-            ItemID.Sets.Explosives = ItemID.Sets.Factory.CreateBoolSet(new int[]
-                        {
+            ItemID.Sets.Explosives = ItemID.Sets.Factory.CreateBoolSet([
 				// Bombs
 				ItemID.Bomb,
                 ItemID.StickyBomb,
@@ -47,7 +60,7 @@ namespace UnifierTSL
 				ItemID.Dynamite,
                 ItemID.Explosives,
                 ItemID.StickyDynamite
-                        });
+            ]);
 
             //Set corrupt tiles to true, as they aren't in vanilla
             TileID.Sets.Corrupt[TileID.CorruptGrass] = true;

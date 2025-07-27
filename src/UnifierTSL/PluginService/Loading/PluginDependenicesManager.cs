@@ -1,4 +1,7 @@
-﻿using System.Text.Json;
+﻿using System.Reflection;
+using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using UnifierTSL.Logging;
 using UnifierTSL.PluginService.Dependencies;
 using UnifierTSL.Reflection.Metadata;
@@ -52,12 +55,12 @@ namespace UnifierTSL.PluginService.Loading
                     var dependencyName = kv.Key;
                     var dependency = kv.Value;
 
-                    // If the dependency file does not exist in the bin directory, remove it from the configuration.
+                    // If the dependencies file does not exist in the bin directory, remove it from the configuration.
                     if (!File.Exists(Path.Combine(binDirectory.FullName, dependency.FilePathRelativeToBinDir))) {
                         configuration.Dependencies.Remove(dependencyName);
                         logger.Debug(
-                            category: "Normalize", 
-                            message: "The dependency file does not exist in the bin directory, removing from the configuration.");
+                            category: "ManagedConfNormalize", 
+                            message: "The dependencies file does not exist in the bin directory, removing from the configuration.");
                     }
 
                     string? name;
@@ -69,14 +72,14 @@ namespace UnifierTSL.PluginService.Loading
                         }
                     }
 
-                    // If the assembly name in the file does not match the expected dependency name,
+                    // If the assembly name in the file does not match the expected dependencies name,
                     // it likely means the file has been modified in a breaking way,
                     // and any original dependent plugins can no longer reliably depend on it.
                     if (dependencyName != name) {
                         dependency.DependentPlugins = [];
                         logger.Warning(
-                            category: "Normalize",
-                            message: $"The assembly name ({name}) in the file does not match the expected dependency name ({dependencyName}).");
+                            category: "ManagedConfNormalize",
+                            message: $"The assembly name ({name}) in the file does not match the expected dependencies name ({dependencyName}).");
                     }
                 }
             }
@@ -91,18 +94,18 @@ namespace UnifierTSL.PluginService.Loading
                 var prevConfig = LoadDependenicesConfig(binDirectory);
                 NormalizeDependenicesConfig(logger, prevConfig, binDirectory);
 
-                // Mapping from the target file path to all plugin-provided native dependencies for that path
-                var pathToDependencyMap = new Dictionary<string, List<(PluginTypeInfo Provider, NativeEmbeddedDependency Dependency)>>();
+                // Mapping from the target file path to all plugin-provided managed dependencies for that path
+                var pathToDependencyMap = new Dictionary<string, List<(PluginTypeInfo Provider, PluginDependency Dependency)>>();
 
                 foreach (var (pluginInfo, dependencies) in pluginInfos) {
-                    var nativeDependencies = dependencies
-                        .OfType<NativeEmbeddedDependency>()
+                    var managedDependencies = dependencies
+                        .Where(dep => dep is not NativeEmbeddedDependency)
                         .ToArray();
 
-                    if (nativeDependencies.Length == 0)
+                    if (managedDependencies.Length == 0)
                         continue;
 
-                    foreach (var dependency in nativeDependencies) {
+                    foreach (var dependency in managedDependencies) {
                         var fullPath = Path.Combine(binDirectory.FullName, dependency.ExpectedPath);
 
                         if (!pathToDependencyMap.TryGetValue(fullPath, out var list)) {
@@ -134,15 +137,15 @@ namespace UnifierTSL.PluginService.Loading
                                 source.CopyTo(destination);
 
                                 logger.Debug(
-                                    category: "UpdateDependencies",
-                                    message: $"Updated native dependency '{extractor.LibraryName}' to version '{extractor.Version}'.");
+                                    category: "UpdateManagedDeps",
+                                    message: $"Updated managed dependencies '{extractor.LibraryName}' to version '{extractor.Version}'.");
                             }
                         }
                         catch (Exception ex) {
                             failed.Add(provider);
                             logger.LogHandledExceptionWithMetadata(
-                                category: "LoadDependencies",
-                                message: $"Failed to load native dependencies of plugin {provider.Name}.",
+                                category: "LoadManagedDeps",
+                                message: $"Failed to load managed dependencies of plugin {provider.Name}.",
                                 ex: ex,
                                 metadata: [
                                     new("PluginFile", provider.PluginType.Assembly.Location)
@@ -150,7 +153,7 @@ namespace UnifierTSL.PluginService.Loading
                             continue;
                         }
 
-                        // Set or update dependency info
+                        // Set or update dependencies info
                         currentConfig.Dependencies[path] = new DependenicyEntry {
                             FilePathRelativeToBinDir = dependency.ExpectedPath,
                             Version = dependency.Version,
@@ -181,13 +184,13 @@ namespace UnifierTSL.PluginService.Loading
                         try {
                             File.Delete(Path.Combine(binDirectory.FullName, oldDependenicyPair.Value.FilePathRelativeToBinDir));
                             logger.Debug(
-                                category: "DependenciesCleanUp",
-                                message: $"Deleted unused dependency file '{Path.Combine("bin", oldDependenicyPair.Value.FilePathRelativeToBinDir)}'");
+                                category: "ManagedDepsCleanUp",
+                                message: $"Deleted unused dependencies file '{Path.Combine("bin", oldDependenicyPair.Value.FilePathRelativeToBinDir)}'");
                         }
                         catch (IOException ex) when (IgnoreThisIOError(ex)) {
                             logger.Warning(
-                                category: "DependenciesCleanUp",
-                                message: $"Failed to delete unused dependency file '{Path.Combine("runtimes", oldDependenicyPair.Value.FilePathRelativeToBinDir)}'.\r\n" +
+                                category: "ManagedDepsCleanUp",
+                                message: $"Failed to delete unused dependencies file '{Path.Combine("runtimes", oldDependenicyPair.Value.FilePathRelativeToBinDir)}'.\r\n" +
                                 $"It is likely that the file is in use by another process. you can try to delete it manually.");
                         }
                         catch {
@@ -209,9 +212,9 @@ namespace UnifierTSL.PluginService.Loading
             class DependenciesConfiguration
             {
                 /// <summary>
-                /// Indicates whether to enable aggressive dependency cleanup.
-                /// When set to <c>true</c>, any file not listed in the curFormatter dependency map will be deleted 
-                /// from the dependency directory, which results in a cleaner state but may unintentionally 
+                /// Indicates whether to enable aggressive dependencies cleanup.
+                /// When set to <c>true</c>, any file not listed in the curFormatter dependencies map will be deleted 
+                /// from the dependencies directory, which results in a cleaner state but may unintentionally 
                 /// remove manually added files.
                 /// When set to <c>false</c>, the cleanup process will only remove files associated with 
                 /// previously known dependencies that have been explicitly removed, preserving any 
@@ -235,7 +238,7 @@ namespace UnifierTSL.PluginService.Loading
                 foreach (var kv in configuration.Dependencies.ToArray()) {
                     var dependency = kv.Value;
 
-                    // If the dependency file does not exist in the runtimes directory, remove it from the configuration.
+                    // If the dependencies file does not exist in the runtimes directory, remove it from the configuration.
                     if (!File.Exists(Path.Combine(runtimesFolder.FullName, dependency.FilePathRelativeToRuntimesDir))) {
                         configuration.Dependencies.Remove(kv.Key);
                     }
@@ -300,7 +303,7 @@ namespace UnifierTSL.PluginService.Loading
                             continue;
                         }
 
-                        // Set or update dependency info
+                        // Set or update dependencies info
                         currentConfig.Dependencies[path] = new DependenicyEntry {
                             LibraryNameWithouExtension = dependency.Name,
                             FilePathRelativeToRuntimesDir = dependency.ExpectedPath,
@@ -349,13 +352,13 @@ namespace UnifierTSL.PluginService.Loading
                     try {
                         File.Delete(file.FullName);
                         logger.Debug(
-                            category: "DependenciesCleanUp",
-                            message: $"Deleted unused dependency file '{deletePath}'");
+                            category: "NativeDepsCleanUp",
+                            message: $"Deleted unused dependencies file '{deletePath}'");
                     } 
                     catch (IOException ex) when (IgnoreThisIOError(ex)) {
                         logger.Warning(
-                            category: "DependenciesCleanUp",
-                            message: $"Failed to delete unused dependency file '{deletePath}'.\r\n" +
+                            category: "NativeDepsCleanUp",
+                            message: $"Failed to delete unused dependencies file '{deletePath}'.\r\n" +
                             $"It is likely that the file is in use by another process. you can try to delete it manually.");
                     }
                     catch {
@@ -370,13 +373,13 @@ namespace UnifierTSL.PluginService.Loading
                         try {
                             File.Delete(Path.Combine(runtimesFolder.FullName, oldDependenicyPair.Value.FilePathRelativeToRuntimesDir));
                             logger.Debug(
-                                category: "DependenciesCleanUp",
-                                message: $"Deleted unused dependency file '{Path.Combine("bin", oldDependenicyPair.Value.FilePathRelativeToRuntimesDir)}'");
+                                category: "NativeDepsCleanUp",
+                                message: $"Deleted unused dependencies file '{Path.Combine("bin", oldDependenicyPair.Value.FilePathRelativeToRuntimesDir)}'");
                         }
                         catch (IOException ex) when (IgnoreThisIOError(ex)) {
                             logger.Warning(
-                                category: "DependenciesCleanUp",
-                                message: $"Failed to delete unused dependency file '{Path.Combine("runtimes", oldDependenicyPair.Value.FilePathRelativeToRuntimesDir)}'.\r\n" +
+                                category: "NativeDepsCleanUp",
+                                message: $"Failed to delete unused dependencies file '{Path.Combine("runtimes", oldDependenicyPair.Value.FilePathRelativeToRuntimesDir)}'.\r\n" +
                                 $"It is likely that the file is in use by another process. you can try to delete it manually.");
                         }
                         catch {
@@ -413,11 +416,18 @@ namespace UnifierTSL.PluginService.Loading
                 }
             }
 
-            NativeDependenicy.UpdateDependencies(Logger, new DirectoryInfo(Path.Combine(directory.FullName, "runtimes")), inputWithDependencies, out var nativeFailedPlugins);
+            var runtimesDirectory = new DirectoryInfo(Path.Combine(directory.FullName, "runtimes"));
+            var binDirectory = new DirectoryInfo(Path.Combine(directory.FullName, "bin"));
+
+            NativeDependenicy.UpdateDependencies(Logger, runtimesDirectory, inputWithDependencies, out var nativeFailedPlugins);
             failed.AddRange(nativeFailedPlugins);
 
-            ManagedDependenicy.UpdateDependencies(Logger, new DirectoryInfo(Path.Combine(directory.FullName, "bin")), inputWithDependencies, out var managedFailedPlugins);
+            ManagedDependenicy.UpdateDependencies(Logger, binDirectory, inputWithDependencies, out var managedFailedPlugins);
             failed.AddRange(managedFailedPlugins);
+
+            // SetManangedLibraryResolver(binDirectory);
+            
+            SetNativeLibraryResolver(failed, inputWithDependencies, runtimesDirectory);
 
             List<PluginContainer> valids = [];
             foreach (var (pluginInfo, dependencies) in inputWithDependencies) {
@@ -441,6 +451,49 @@ namespace UnifierTSL.PluginService.Loading
             validPlugins = valids;
             failedPlugins = failed;
             return new PluginsLoadContext(logCore, valids);
+        }
+
+        private static void SetNativeLibraryResolver(List<PluginTypeInfo> failed, List<(PluginTypeInfo info, IReadOnlyList<PluginDependency>)> inputWithDependencies, DirectoryInfo runtimesDirectory) {
+            Dictionary<Assembly, Dictionary<string, List<NativeEmbeddedDependency>>> assemblyToNativeDeps = [];
+            foreach (var (pluginInfo, dependencies) in inputWithDependencies) {
+                if (failed.Contains(pluginInfo)) {
+                    continue;
+                }
+
+                var assembly = pluginInfo.PluginType.Assembly;
+                if (!assemblyToNativeDeps.TryGetValue(assembly, out var dict)) {
+                    assemblyToNativeDeps[assembly] = dict = [];
+                }
+
+                foreach (var dependency in dependencies.OfType<NativeEmbeddedDependency>()) {
+                    if (!dict.TryGetValue(dependency.Name, out var list)) {
+                        dict[dependency.Name] = list = [];
+                    }
+                    list.Add(dependency);
+                }
+            }
+
+            foreach (var (assembly, dict) in assemblyToNativeDeps) {
+                NativeLibrary.SetDllImportResolver(assembly, (libraryName, assembly, searchPath) => {
+                    if (!assemblyToNativeDeps.TryGetValue(assembly, out var dict)) {
+                        return nint.Zero;
+                    }
+
+                    if (!dict.TryGetValue(libraryName, out var dependencies)) {
+                        return nint.Zero;
+                    }
+
+                    foreach (var dependency in dependencies) {
+                        if (!NativeLibrary.TryLoad(Path.Combine(runtimesDirectory.FullName, dependency.ExpectedPath), out var handle)) {
+                            continue;
+                        }
+
+                        return handle;
+                    }
+
+                    return nint.Zero;
+                });
+            }
         }
     }
 }
