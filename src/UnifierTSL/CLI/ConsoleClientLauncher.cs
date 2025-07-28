@@ -123,7 +123,7 @@ namespace UnifierTSL.CLI
                 catch { }
 
                 // start new process
-                var clientExePath = $"{nameof(UnifierTSL)}.{nameof(ConsoleClient)}.exe";
+                var clientExePath = Path.Combine("app", $"{nameof(UnifierTSL)}.{nameof(ConsoleClient)}.exe");
                 var startInfo = new ProcessStartInfo {
                     FileName = clientExePath,
                     Arguments = _pipeName,

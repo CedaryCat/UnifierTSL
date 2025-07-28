@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnifierTSL", "UnifierTSL\Un
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnifierTSL.ConsoleClient", "UnifierTSL.ConsoleClient\UnifierTSL.ConsoleClient.csproj", "{07A1A27A-DFD8-4FA2-95EB-68AD69291718}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnifierTSL.Publisher", "UnifierTSL.Publisher\UnifierTSL.Publisher.csproj", "{AE0334F2-D284-4189-A998-EE1423F07DD3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{07A1A27A-DFD8-4FA2-95EB-68AD69291718}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07A1A27A-DFD8-4FA2-95EB-68AD69291718}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07A1A27A-DFD8-4FA2-95EB-68AD69291718}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE0334F2-D284-4189-A998-EE1423F07DD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE0334F2-D284-4189-A998-EE1423F07DD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE0334F2-D284-4189-A998-EE1423F07DD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE0334F2-D284-4189-A998-EE1423F07DD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
