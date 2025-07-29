@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using UnifierTSL.Module;
 using UnifierTSL.PluginService.Dependencies;
 using UnifierTSL.PluginService.Loading;
 
@@ -7,7 +8,7 @@ namespace UnifierTSL.PluginService
     /// <summary>
     /// Represents a plugin that can be initialized asynchronously with dependency awareness.
     /// </summary>
-    public interface IPlugin : IAsyncDisposable
+    public interface IPlugin : IAsyncDisposable, IModule
     {
         /// <summary>
         /// Gets the initialization order of the plugin. 

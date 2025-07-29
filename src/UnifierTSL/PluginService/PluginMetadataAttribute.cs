@@ -15,7 +15,7 @@ namespace UnifierTSL.PluginService.Metadata
         public Version Version { get; } = new Version(version);
         public string Author { get; } = author;
         public string Description { get; } = description;
-        public PluginMetadata ToPluginMetadata(PluginDependenciesAttribute? dependenciesMetadata = null) {
+        public PluginMetadata ToPluginMetadata(ModuleDependenciesAttribute? dependenciesMetadata = null) {
             return new PluginMetadata(Name, Version, Author, Description, dependenciesMetadata?.DependenciesProvider);
         }
     }

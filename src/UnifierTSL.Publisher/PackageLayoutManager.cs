@@ -21,7 +21,7 @@ namespace UnifierTSL.Publisher
             RuntimesPath = Path.Combine(PublishPath, "runtimes");
             AppPath = Path.Combine(PublishPath, "app");
             PluginsPath = Path.Combine(PublishPath, "plugins");
-
+            
             if (Directory.Exists(PublishPath)) {
                 Directory.Delete(PublishPath, recursive: true);
             }

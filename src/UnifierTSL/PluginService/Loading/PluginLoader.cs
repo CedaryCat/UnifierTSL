@@ -44,7 +44,7 @@ namespace UnifierTSL.PluginService.Loading
                     var metadataAttr = type.GetCustomAttribute<PluginMetadataAttribute>();
                     if (metadataAttr is null) continue;
 
-                    var dependencyAttr = type.GetCustomAttribute<PluginDependenciesAttribute>();
+                    var dependencyAttr = type.GetCustomAttribute<ModuleDependenciesAttribute>();
                     var info = new PluginTypeInfo(type, metadataAttr.ToPluginMetadata(dependencyAttr));
 
                     if (!loadedPlugins.TryAdd(info.Name, info)) {

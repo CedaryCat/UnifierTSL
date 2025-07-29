@@ -9,6 +9,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="PluginService\NewFile1.txt" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<EmbeddedResource Include="PluginService\Dependencies\RuntimeIdentifierGraph.json" />
 	</ItemGroup>
 
