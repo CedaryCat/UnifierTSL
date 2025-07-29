@@ -3,19 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnifierTSL.Logging;
 
 namespace UnifierTSL.Module
 {
-    // 欸我去，泛型约束不可以是interface，byd微软 
-    // class 欸我去
-    // 爆！哈基软
-    // 顺便帮我创个cs文件吧（我这边创建没有模板，还得调属性
-    // OK力
-    // IPluginManager.cs
-    // 好好好 看看聊天框（
-    // 思考，插件目录下的结构怎么安排呢
-    public class AssemblyModuleLoader<TModule> where TModule : IModule
+    public abstract class AssemblyModuleLoader<TModule>(string loadDirectory) : ILoggerHost where TModule : IModule
     {
+        public abstract string Name { get; }
+        public abstract string CurrentLogCategory { get; set; }
 
+        public void PreloadModules()
+        {
+            var searchDir = new DirectoryInfo(loadDirectory);
+            foreach (var file in searchDir.GetFiles("*.dll"))
+            {
+
+            }
+        }
     }
 }

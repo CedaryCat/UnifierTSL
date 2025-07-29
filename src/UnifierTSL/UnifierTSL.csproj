@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Module\NewFile1.txt" />
 	  <None Remove="PluginService\NewFile1.txt" />
 	</ItemGroup>
 
