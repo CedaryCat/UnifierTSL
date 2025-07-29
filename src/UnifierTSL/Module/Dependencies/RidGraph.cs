@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace UnifierTSL.PluginService.Dependencies
+namespace UnifierTSL.Module.Dependencies
 {
     public class RidGraph
     {
@@ -13,7 +13,8 @@ namespace UnifierTSL.PluginService.Dependencies
         public Dictionary<string, string[]> RIDParents { get; } = [];
 
         public RidGraph() {
-            using var stream = typeof(RidGraph).Assembly.GetManifestResourceStream("UnifierTSL.PluginService.Dependencies.RuntimeIdentifierGraph.json")!;
+            using var stream = typeof(RidGraph).Assembly.GetManifestResourceStream(
+                $"{typeof(RidGraph).Namespace}.RuntimeIdentifierGraph.json")!;
             using var reader = new StreamReader(stream);
             var json = reader.ReadToEnd();
             LoadRidGraph(json);

@@ -1,4 +1,5 @@
-﻿using Terraria.Localization;
+﻿using System.Reflection;
+using Terraria.Localization;
 using UnifierTSL.Events.Handlers;
 
 namespace UnifierTSL

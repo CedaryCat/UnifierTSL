@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using UnifierTSL.Logging;
+using UnifierTSL.Module;
 using UnifierTSL.PluginService.Metadata;
 
 namespace UnifierTSL.PluginService.Loading

@@ -14,7 +14,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace UnifierTSL.PluginService.Dependencies
+namespace UnifierTSL.Module.Dependencies
 {
     public static class NugetPackageCache
     {

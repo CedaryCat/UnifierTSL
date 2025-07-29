@@ -1,6 +1,6 @@
-﻿namespace UnifierTSL.PluginService.Dependencies
+﻿namespace UnifierTSL.Module.Dependencies
 {
-    public abstract class PluginDependency
+    public abstract class ModuleDependency
     {
         public abstract string Name { get; }
         public abstract Version Version { get; }

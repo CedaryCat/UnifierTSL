@@ -7,9 +7,9 @@ using NuGet.Versioning;
 using System.Reflection;
 using System.Runtime.Versioning;
 
-namespace UnifierTSL.PluginService.Dependencies
+namespace UnifierTSL.Module.Dependencies
 {
-    public class NugetManagedDependency : PluginDependency
+    public class NugetManagedDependency : ModuleDependency
     {
         private readonly string packageId;
         private readonly Version version;

@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.PluginService.Dependencies
+﻿namespace UnifierTSL.Module.Dependencies
 {
     public interface IDependencyLibraryExtractor
     {

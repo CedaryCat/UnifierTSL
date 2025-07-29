@@ -2,9 +2,9 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace UnifierTSL.PluginService.Dependencies
+namespace UnifierTSL.Module.Dependencies
 {
-    public class NativeEmbeddedDependency : PluginDependency
+    public class NativeEmbeddedDependency : ModuleDependency
     {
         private readonly Assembly plugin;
         private readonly Version version;
@@ -15,12 +15,12 @@ namespace UnifierTSL.PluginService.Dependencies
         public override string Name => libraryName;
         public override Version Version => version;
         public override DependencyKind Kind => DependencyKind.NativeLibrary;
-        public override string ExpectedPath => Path.Combine(rid, "native", $"{fileNameWithExt}");
+        public override string ExpectedPath => Path.Combine("runtimes", rid, "native", $"{fileNameWithExt}");
         public override IDependencyLibraryExtractor LibraryExtractor { get; }
         public NativeEmbeddedDependency(Assembly plugin, string libraryName, Version libraryVersion) {
             this.libraryName = libraryName;
             this.plugin = plugin;
-            this.version = libraryVersion;
+            version = libraryVersion;
 
             var currentRid = RuntimeInformation.RuntimeIdentifier;
             var fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);

@@ -25,24 +25,5 @@ namespace UnifierTSL
             }
             return null;
         }
-
-        static readonly Dictionary<string, Assembly> resolvedAssembly = []; // <AssemblyName, Assembly>
-        internal static Assembly? ResolveAssembly(AssemblyLoadContext context, AssemblyName name) {
-            if (name?.Name is null) return null;
-            if (resolvedAssembly.TryGetValue(name.Name, out Assembly? asm) && asm is not null) return asm;
-
-            var location = Path.Combine(AppContext.BaseDirectory, "bin", name.Name + ".dll");
-            if (File.Exists(location))
-                asm = context.LoadFromAssemblyPath(location);
-
-            location = Path.ChangeExtension(location, ".exe");
-            if (File.Exists(location))
-                asm = context.LoadFromAssemblyPath(location);
-
-            if (asm is not null)
-                resolvedAssembly[name.Name] = asm;
-
-            return asm;
-        }
     }
 }

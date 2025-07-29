@@ -3,9 +3,9 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using UnifierTSL.Reflection.Metadata;
 
-namespace UnifierTSL.PluginService.Dependencies
+namespace UnifierTSL.Module.Dependencies
 {
-    public class ManagedEmbeddedDependency(Assembly plugin, string embeddedPath) : PluginDependency
+    public class ManagedEmbeddedDependency(Assembly plugin, string embeddedPath) : ModuleDependency
     {
         public class EmbeddedLibraryExtractor : IDependencyLibraryExtractor
         {

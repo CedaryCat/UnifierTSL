@@ -58,11 +58,9 @@ namespace UnifierTSL.Publisher
 
             // Step 3: Copy dependencies
             var dependencies = Directory.GetFiles(buildDir, "*.dll")
-                .Where(f => Path.GetFileName(f) != $"{projectName}.dll")
                 .Select(f => Path.Combine(buildDir, f))
                 .ToArray();
             var dependenciesPdb = Directory.GetFiles(buildDir, "*.pdb")
-                .Where(f => Path.GetFileName(f) != $"{projectName}.pdb")
                 .Select(f => Path.Combine(buildDir, f))
                 .ToArray();
 
@@ -74,13 +72,13 @@ namespace UnifierTSL.Publisher
             HostWriter.CreateAppHost(
                 appHostSourceFilePath: appHostTemplate,
                 appHostDestinationFilePath: outputExe,
-                appBinaryFilePath: dllPath,
+                appBinaryFilePath: Path.Combine("libs", $"{projectName}.dll"),
                 windowsGraphicalUserInterface: false);
 
             return new CoreAppBuilderResult(
                 OutputExecutable: outputExe,
                 PdbFile: pdbPath,
-                OtherDependencyDlls: [..dependencies, ..dependenciesPdb]
+                OtherDependencyDlls: [..dependencies, ..dependenciesPdb, runtimeConfigPath, depsJsonPath]
             );
         }
     }

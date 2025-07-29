@@ -8,11 +8,56 @@ namespace UnifierTSL.Reflection.Metadata
 {
     public static class MetadataBlobHelpers
     {
+        public static bool IsManagedAssembly(string filePath) {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var reader = new PEReader(stream);
+            return reader.HasMetadata;
+        }
+        public static bool HasCustomAttribute(Stream assemblyStream, string attributeFullName) {
+            try {
+                using var peReader = new PEReader(assemblyStream);
+
+                if (!peReader.HasMetadata) {
+                    return false;
+                }
+
+                var metadataReader = peReader.GetMetadataReader();
+
+                foreach (var handle in metadataReader.CustomAttributes) {
+                    var attribute = metadataReader.GetCustomAttribute(handle);
+                    var ctorHandle = attribute.Constructor;
+
+                    if (ctorHandle.Kind == HandleKind.MemberReference) {
+                        var memberRef = metadataReader.GetMemberReference((MemberReferenceHandle)ctorHandle);
+                        var container = memberRef.Parent;
+
+                        if (container.Kind == HandleKind.TypeReference) {
+                            var typeRef = metadataReader.GetTypeReference((TypeReferenceHandle)container);
+                            var fullName = metadataReader.GetString(typeRef.Namespace) + "." + metadataReader.GetString(typeRef.Name);
+
+                            if (fullName == attributeFullName) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            }
+            catch {
+                return false;
+            }
+        }
+
         public static bool TryReadAssemblyIdentity(Stream stream, [NotNullWhen(true)] out string? name, [NotNullWhen(true)] out Version? version) {
             name = null;
             version = null;
             try {
                 using var peReader = new PEReader(stream, PEStreamOptions.LeaveOpen);
+
+                if (!peReader.HasMetadata) {
+                    return false;
+                }
                 var metadataReader = peReader.GetMetadataReader();
 
                 var assemblyDef = metadataReader.GetAssemblyDefinition();

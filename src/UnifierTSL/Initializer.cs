@@ -13,7 +13,7 @@ namespace UnifierTSL
 
         private static void AssemblyResolverInit() {
             AppDomain.CurrentDomain.AssemblyResolve += ResolveHelpers.GlobalResolveAssembly;
-            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += ResolveHelpers.ResolveAssembly;
+            // System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += ResolveHelpers.ResolveAssembly;
         }
 
         /// <summary>
