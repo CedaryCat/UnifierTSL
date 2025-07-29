@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnifierTSL.Module;
-using UnifierTSL.PluginService.Dependencies;
+using UnifierTSL.PluginServices;
 
-namespace UnifierTSL.PluginService.Metadata
+namespace UnifierTSL.Plugins.Hosts.Dotnet
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class PluginMetadataAttribute(string name, string version = "1.0.0.0", string author = "Unknown", string description = "") : Attribute
@@ -16,9 +16,8 @@ namespace UnifierTSL.PluginService.Metadata
         public Version Version { get; } = new Version(version);
         public string Author { get; } = author;
         public string Description { get; } = description;
-        public PluginMetadata ToPluginMetadata(ModuleDependenciesAttribute? dependenciesMetadata = null) {
-            return new PluginMetadata(Name, Version, Author, Description, dependenciesMetadata?.DependenciesProvider);
+        public PluginMetadata ToPluginMetadata() {
+            return new PluginMetadata(Name, Version, Author, Description);
         }
     }
-    public record PluginMetadata(string Name, Version Version, string Author, string Description, IDependencyProvider? DependenciesProvider);
 }

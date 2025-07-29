@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;
-using UnifierTSL.PluginService.Metadata;
+using UnifierTSL.Plugins.Hosts.Dotnet;
 
 namespace UnifierTSL.PluginService.Loading
 {

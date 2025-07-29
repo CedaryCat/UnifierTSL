@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using UnifierTSL.Module;
-using UnifierTSL.PluginService.Metadata;
+using UnifierTSL.PluginServices;
 
 namespace UnifierTSL.PluginService;
 

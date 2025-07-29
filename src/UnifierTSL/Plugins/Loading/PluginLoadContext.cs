@@ -1,6 +1,7 @@
 ﻿using NuGet.Common;
 using System.Collections.Immutable;
 using UnifierTSL.Logging;
+using UnifierTSL.Plugins.Hosts.Dotnet;
 
 namespace UnifierTSL.PluginService.Loading
 {

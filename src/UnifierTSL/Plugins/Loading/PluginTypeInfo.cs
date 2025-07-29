@@ -1,4 +1,4 @@
-﻿using UnifierTSL.PluginService.Metadata;
+﻿using UnifierTSL.PluginServices;
 
 namespace UnifierTSL.PluginService.Loading
 {

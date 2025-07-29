@@ -1,5 +1,5 @@
 ﻿using System.Collections.Immutable;
-using UnifierTSL.PluginService.Dependencies;
+using UnifierTSL.Plugins.Hosts.Dotnet;
 using UnifierTSL.PluginService.Loading;
 
 namespace UnifierTSL.PluginService

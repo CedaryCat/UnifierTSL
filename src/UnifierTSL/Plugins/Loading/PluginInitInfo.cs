@@ -1,4 +1,6 @@
-﻿namespace UnifierTSL.PluginService.Loading
+﻿using UnifierTSL.Plugins.Hosts.Dotnet;
+
+namespace UnifierTSL.PluginService.Loading
 {
     /// <summary>
     /// Represents the context of a previously initialized plugin, including the plugin reference and its initialization task.

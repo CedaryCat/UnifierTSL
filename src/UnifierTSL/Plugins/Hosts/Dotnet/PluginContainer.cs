@@ -6,14 +6,16 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnifierTSL.Module.Dependencies;
-using UnifierTSL.PluginService.Metadata;
+using UnifierTSL.PluginService;
+using UnifierTSL.PluginServices;
 
-namespace UnifierTSL.PluginService
+namespace UnifierTSL.Plugins.Hosts.Dotnet
 {
-    public class PluginContainer(PluginMetadata metadata, IReadOnlyList<ModuleDependency> dependencies, IPlugin plugin)
+    public class PluginContainer(PluginMetadata metadata, ImmutableArray<ModuleDependency> dependencies, IPlugin plugin) : IPluginContainer
     {
         private readonly ImmutableArray<ModuleDependency> dependencies = [.. dependencies];
         private readonly Assembly pluginAssembly = plugin.GetType().Assembly;
+        public PluginMetadata Metadata => metadata;
 
         public string Name => metadata.Name;
         public string Author => metadata.Author;

@@ -10,7 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="PluginService\NewFile1.txt" />
+	  <None Remove="Plugins\NewFile1.txt" />
 	</ItemGroup>
 
 	<ItemGroup>
