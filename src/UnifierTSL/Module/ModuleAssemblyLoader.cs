@@ -8,7 +8,7 @@ using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.Module
 {
-    public abstract class AssemblyModuleLoader : ILoggerHost
+    public abstract class ModuleAssemblyLoader : ILoggerHost
     {
         private readonly string loadDirectory;
         protected RoleLogger Logger { get; init; }
@@ -16,7 +16,7 @@ namespace UnifierTSL.Module
         public abstract string Name { get; }
         public abstract string CurrentLogCategory { get; set; }
 
-        public AssemblyModuleLoader(string modulesDirectory) {
+        public ModuleAssemblyLoader(string modulesDirectory) {
             this.loadDirectory = modulesDirectory;
             Logger = UnifierApi.CreateLogger(this);
         }
