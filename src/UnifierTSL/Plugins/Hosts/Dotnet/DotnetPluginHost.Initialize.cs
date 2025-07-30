@@ -15,6 +15,7 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
 
 		public async Task InitializePluginsAsync(CancellationToken cancellationToken = default) {
 
+#warning TODO Unload old plugins?
 			var infos = PluginDiscoverer.DiscoverPlugins("plugins", PluginDiscoveryMode.UpdatedOnly);
 
             foreach (var info in infos) {
