@@ -1,7 +1,6 @@
 ﻿using System.Collections.Immutable;
 using UnifierTSL.Module;
 using UnifierTSL.Plugins.Hosts.Dotnet;
-using UnifierTSL.PluginService.Loading;
 
 namespace UnifierTSL.PluginService
 {

@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
@@ -8,40 +10,59 @@ using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.Module
 {
-    public abstract class ModuleAssemblyLoader : ILoggerHost
+    public class ModuleAssemblyLoader : ILoggerHost
     {
         private readonly string loadDirectory;
         protected RoleLogger Logger { get; init; }
 
-        public abstract string Name { get; }
-        public abstract string CurrentLogCategory { get; set; }
+        public string Name { get; init; } = "ModuleLoader";
+        public string? CurrentLogCategory => null;
 
         public ModuleAssemblyLoader(string modulesDirectory) {
             this.loadDirectory = modulesDirectory;
             Logger = UnifierApi.CreateLogger(this);
         }
 
-        public abstract ModuleLoadContext CreateLoadContext();
-
         private void PreloadModules() {
             var modulesDir = new DirectoryInfo(loadDirectory);
             modulesDir.Create();
 
-            foreach (var dll in Directory.GetFiles(loadDirectory, "*.dll")) {
-                using (var stream = File.OpenRead(dll)) {
-                    if (!MetadataBlobHelpers.HasCustomAttribute(stream, nameof(ModuleDependenciesAttribute<>))) {
-                        continue;
-                    }
-
-                    var name = Path.GetFileNameWithoutExtension(dll);
-                    var moduleDir = Path.Combine(loadDirectory, name);
-                    Directory.CreateDirectory(moduleDir);
-
-                    using var moved = File.Create(Path.Combine(moduleDir, name + ".dll"));
-                    stream.CopyTo(moved);
-                }
-                File.Delete(dll);
+            foreach (var dll in modulesDir.GetFiles("*.dll")) {
+                PreloadModule(dll.Name, out _, checkDirectory: false, checkFile: false);
             }
+        }
+        private void PreloadModule(string filename, out string newLocation, bool checkDirectory = true, bool checkFile = true) {
+            if (checkDirectory) {
+                var modulesDir = new DirectoryInfo(loadDirectory);
+                modulesDir.Create();
+            }
+
+            newLocation = Path.Combine(loadDirectory, filename);
+
+            var dll = Path.Combine(loadDirectory, filename);
+
+            if (checkFile && !File.Exists(dll)) {
+                return;
+            }
+
+            using (var stream = File.OpenRead(dll)) {
+                if (!MetadataBlobHelpers.HasCustomAttribute(stream, nameof(ModuleDependenciesAttribute<>))) {
+                    return;
+                }
+
+                var name = Path.GetFileNameWithoutExtension(dll);
+                var moduleDir = Path.Combine(loadDirectory, name);
+                Directory.CreateDirectory(moduleDir);
+
+                using var moved = File.Create(newLocation = Path.Combine(moduleDir, name + ".dll"));
+                stream.CopyTo(moved);
+            }
+
+            File.SetCreationTime(newLocation, File.GetCreationTime(dll));
+            File.SetLastWriteTime(newLocation, File.GetLastWriteTime(dll));
+            File.SetLastAccessTime(newLocation, File.GetLastAccessTime(dll));
+
+            File.Delete(dll);
         }
         private ImmutableArray<string> GetModulesPaths() {
             List<string> modules = [];
@@ -67,28 +88,110 @@ namespace UnifierTSL.Module
             return [.. modules];
         }
         record ModuleInfo(AssemblyLoadContext Context, Assembly Assembly, IDependencyProvider? Dependencies);
-        public ImmutableArray<ModuleAssemblyInfo> Load() {
+        public static void ClearCache() => moduleCache.Clear();
+        public static void ClearCache(IReadOnlyList<Assembly> assemblies) {
+            var rm = assemblies.ToHashSet();
+            List<string> keysToRemove = [];
+            foreach (var kv in moduleCache.ToArray()) {
+                if (rm.Contains(kv.Value.Assembly)) {
+                    keysToRemove.Add(kv.Key);
+                }
+            }
+
+            foreach (var key in keysToRemove) {
+                moduleCache.TryRemove(key, out _);
+            }
+        }
+        public ImmutableArray<ModuleAssemblyInfo> Load(out ImmutableArray<ModuleAssemblyInfo> outdated) {
             List<ModuleAssemblyInfo> modules = [];
+            List<ModuleAssemblyInfo> outdatedModules = [];
 
             PreloadModules();
 
             foreach (var dll in GetModulesPaths()) {
-                var context = CreateLoadContext();
+
+                var cacheKey = new FileInfo(dll).FullName;
+
+                if (moduleCache.TryGetValue(cacheKey, out var cached) && cached.Signature.QuickEquals(dll)) {
+                    modules.Add(cached);
+                    continue;
+                }
+
+                var context = CreateLoadContext(dll);
                 var asm = context.LoadFromAssemblyPath(dll);
                 var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
                 var dependenciesProvider = dependencyAttr?.DependenciesProvider;
 
-                var info = new ModuleInfo(context, asm, dependenciesProvider);
+                var tmp = new ModuleInfo(context, asm, dependenciesProvider);
 
-                if (!UpdateDependencies(dll, info, out var dependencies)) { 
+                if (!UpdateDependencies(dll, tmp, out var dependencies)) { 
                     continue;
                 }
 
-                modules.Add(new ModuleAssemblyInfo(context, asm, dependencies));
+                var signature = FileSignature.Generate(dll);
+                var info = new ModuleAssemblyInfo(context, asm, dependencies, signature);
+                modules.Add(info);
+
+                moduleCache.AddOrUpdate(cacheKey, info, (_, existing) => {
+                    outdatedModules.Add(existing);
+                    return info;
+                });
             }
 
+            outdated = [.. outdatedModules];
             return [.. modules];
         }
+
+        private AssemblyLoadContext CreateLoadContext(string filePath) {
+            return new ModuleLoadContext(new FileInfo(filePath));
+        }
+
+        static readonly ConcurrentDictionary<string, ModuleAssemblyInfo> moduleCache = new(); 
+
+        public bool TryLoadSpecific(string filename, [NotNullWhen(true)] out ModuleAssemblyInfo? info, out ModuleAssemblyInfo? outdated) {
+            outdated = null;
+
+            PreloadModule(filename, out var newLocation);
+
+            var cacheKey = new FileInfo(newLocation).FullName;
+
+            if (moduleCache.TryGetValue(cacheKey, out var cached) && cached.Signature.QuickEquals(newLocation)) {
+                info = cached;
+                return true;
+            }
+
+            if (!MetadataBlobHelpers.IsManagedAssembly(newLocation)) { 
+                info = null;
+                return false;
+            }
+
+            var context = CreateLoadContext(newLocation);
+            var asm = context.LoadFromAssemblyPath(newLocation);
+            var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
+            var dependenciesProvider = dependencyAttr?.DependenciesProvider;
+
+            var tmp = new ModuleInfo(context, asm, dependenciesProvider);
+
+            if (!UpdateDependencies(newLocation, tmp, out var dependencies)) {
+                info = null;
+                return false;
+            }
+
+            var signature = FileSignature.Generate(newLocation);
+
+            ModuleAssemblyInfo capturedInfo = new(context, asm, dependencies, signature);
+            ModuleAssemblyInfo? capturedOutdated = null;
+
+            moduleCache.AddOrUpdate(cacheKey, capturedInfo, (_, existing) => {
+                capturedOutdated = existing;
+                return capturedInfo;
+            });
+
+            info = capturedInfo;
+            outdated = capturedOutdated;
+            return true;
+        }
+
         static DependenciesConfiguration LoadDependenicesConfig(string pluginDirectory) {
             var configPath = Path.Combine(pluginDirectory, "dependencies.json");
             if (!File.Exists(configPath)) {
@@ -229,7 +332,7 @@ namespace UnifierTSL.Module
             catch (Exception ex) {
                 Logger.LogHandledExceptionWithMetadata(
                     category: "ExtractDeps",
-                    message: $"Failed to extract dependencies info of module '{dll}'.",
+                    message: $"Failed to extract dependencies tmp of module '{dll}'.",
                     ex: ex,
                     metadata: [new("ModuleFile", dll)]);
 
