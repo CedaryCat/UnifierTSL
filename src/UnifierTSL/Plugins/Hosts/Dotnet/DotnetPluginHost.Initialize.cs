@@ -15,6 +15,12 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
 
 		public async Task InitializePluginsAsync(CancellationToken cancellationToken = default) {
 
+			var infos = PluginDiscoverer.DiscoverPlugins("plugins", PluginDiscoveryMode.UpdatedOnly);
+
+            foreach (var info in infos) {
+                PluginLoader.LoadPlugin(info);
+            }
+
 			var plugins = SortPlugins();
 			
 			// Call BeforeGlobalInitialize method of all plugins
