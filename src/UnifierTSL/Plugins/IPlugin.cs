@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 using UnifierTSL.Module;
-using UnifierTSL.Plugins.Hosts.Dotnet;
+using UnifierTSL.Plugins;
 
 namespace UnifierTSL.PluginService
 {
@@ -24,10 +24,10 @@ namespace UnifierTSL.PluginService
         /// must be in place before any plugin begins its asynchronous initialization.
         /// </summary>
         /// <param name="plugins">
-        /// An immutable array of all <see cref="PluginContainer"/> instances loaded into the system.
+        /// An immutable array of all <see cref="IPluginContainer"/> instances loaded into the system.
         /// This enables a plugin to coordinate or hook into other plugins prior to any initialization logic.
         /// </param>
-        void BeforeGlobalInitialize(ImmutableArray<PluginContainer> plugins);
+        void BeforeGlobalInitialize(ImmutableArray<IPluginContainer> plugins);
 
         /// <summary>
         /// Asynchronously initializes the plugin.

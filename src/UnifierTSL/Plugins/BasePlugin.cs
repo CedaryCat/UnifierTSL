@@ -1,5 +1,5 @@
 ﻿using System.Collections.Immutable;
-using UnifierTSL.Plugins.Hosts.Dotnet;
+using UnifierTSL.Plugins;
 
 namespace UnifierTSL.PluginService
 {
@@ -15,6 +15,6 @@ namespace UnifierTSL.PluginService
         public virtual ValueTask DisposeAsync(bool isDisposing) {
             return ValueTask.CompletedTask;
         }
-        public virtual void BeforeGlobalInitialize(ImmutableArray<PluginContainer> plugins) { }
+        public virtual void BeforeGlobalInitialize(ImmutableArray<IPluginContainer> plugins) { }
     }
 }

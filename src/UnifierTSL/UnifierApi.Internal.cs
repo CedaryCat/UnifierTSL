@@ -1,5 +1,4 @@
 ﻿using UnifierTSL.Logging;
-using UnifierTSL.PluginService.Loading;
 using UnifierTSL.Servers;
 using static Terraria.GameContent.UI.States.UIWorldCreation;
 
@@ -14,7 +13,6 @@ namespace UnifierTSL
         #endregion
 
         #region Plugins
-        public static PluginsLoadContext PluginsContext { get; internal set; } = null!;
         #endregion
 
         #region Parameters
@@ -46,10 +44,7 @@ namespace UnifierTSL
 
         internal static void Initialize(string[] launcherArgs) {
 
-            PluginsContext = new PluginLoader(LogCore, new DirectoryInfo(Directory.GetCurrentDirectory()))
-                .LoadPluginInfo(out _, out _)
-                .HandleDependencies(out _, out _)
-                .Initialize();
+#warning Plugin Service implementation
 
             HandleCommandLine(launcherArgs);
             ReadLauncherArgs();

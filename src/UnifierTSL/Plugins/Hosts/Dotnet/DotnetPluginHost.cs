@@ -24,13 +24,17 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
         public DotnetPluginHost() {
             Logger = UnifierApi.CreateLogger(this);
             PluginDiscoverer = new PluginDiscoverer(this);
-            PluginLoader = new DotnetPluginLoader(this);
+            PluginLoader = new PluginLoader(this);
         }
 
         public Task ShutdownAsync(CancellationToken cancellationToken = default) {
+#warning TODO
+            return Task.CompletedTask;
         }
 
         public Task UnloadPluginsAsync(CancellationToken cancellationToken = default) {
+#warning TODO
+            return Task.CompletedTask;
         }
     }
 }

@@ -1,14 +1,16 @@
-﻿namespace UnifierTSL.Plugins.Hosts.Dotnet
+﻿using UnifierTSL.PluginService;
+
+namespace UnifierTSL.Plugins
 {
     /// <summary>
     /// Represents the context of a previously initialized plugin, including the plugin reference and its initialization task.
     /// </summary>
-    public readonly struct PluginInitInfo(PluginContainer plugin, Task initializationTask, CancellationToken cancellationToken)
+    public readonly struct PluginInitInfo(IPluginContainer plugin, Task initializationTask, CancellationToken cancellationToken)
     {
         /// <summary>
         /// The plugin container instance for a previously initialized plugin.
         /// </summary>
-        public readonly PluginContainer Plugin = plugin;
+        public readonly IPluginContainer Plugin = plugin;
 
         /// <summary>
         /// The task representing the initialization of the plugin.

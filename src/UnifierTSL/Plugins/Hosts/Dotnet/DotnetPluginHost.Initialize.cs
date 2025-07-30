@@ -6,7 +6,7 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
 {
     partial class DotnetPluginHost
     {
-        ImmutableArray<PluginContainer> SortPlugins() {
+        ImmutableArray<IPluginContainer> SortPlugins() {
 			return [.. Plugins
 				.OrderBy(p => p.Plugin.InitializationOrder)
 				.ThenBy(p => p.Plugin.GetType().Name, StringComparer.Ordinal)
@@ -25,12 +25,12 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
 			// Perform asynchronous initialization and wait for all initialization to complete
 			await InitializeAllAsync(Logger, plugins);
 		}
-		static async Task InitializeAllAsync(RoleLogger logger, ImmutableArray<PluginContainer> sortedPlugins) {
+		static async Task InitializeAllAsync(RoleLogger logger, ImmutableArray<IPluginContainer> sortedPlugins) {
 			var initTasks = new Dictionary<PluginContainer, Task>();
 			var initInfos = new PluginInitInfo[sortedPlugins.Length];
 
 			for (int i = 0; i < sortedPlugins.Length; i++) {
-				var current = sortedPlugins[i];
+				var current = (PluginContainer)sortedPlugins[i];
 
 				// Extract the initialization information of the preceding plugins (in order)
 				var prior = initInfos.AsMemory()[..i]; // Snapshot for ReadOnlyMemory

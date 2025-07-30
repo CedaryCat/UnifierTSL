@@ -1,6 +1,4 @@
 ﻿using UnifierTSL.Module;
-using UnifierTSL.Plugins;
-using UnifierTSL.PluginService.Loading;
 using UnifierTSL.PluginServices;
 
 namespace UnifierTSL.Plugins.Hosts.Dotnet

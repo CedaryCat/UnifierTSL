@@ -9,11 +9,11 @@ using UnifierTSL.PluginService;
 
 namespace UnifierTSL.Plugins.Hosts.Dotnet
 {
-    public class DotnetPluginLoader : IPluginLoader, ILoggerHost
+    public class PluginLoader : IPluginLoader, ILoggerHost
     {
         private readonly DotnetPluginHost host;
         private readonly RoleLogger Logger;
-        public DotnetPluginLoader(DotnetPluginHost host) {
+        public PluginLoader(DotnetPluginHost host) {
             this.host = host;
             this.Logger = host.Logger;
         }

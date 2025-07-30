@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;
 using UnifierTSL.PluginService;
-using UnifierTSL.PluginService.Loading;
 
 namespace UnifierTSL.Plugins.Hosts.Dotnet
 {
