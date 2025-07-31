@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnifierTSL.Module;
-using UnifierTSL.PluginServices;
+using UnifierTSL.Plugins;
 
-namespace UnifierTSL.Plugins.Hosts.Dotnet
+namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class PluginMetadataAttribute(string name, string version = "1.0.0.0", string author = "Unknown", string description = "") : Attribute
     {
         public string Name { get; } = name;

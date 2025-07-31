@@ -40,12 +40,12 @@ namespace UnifierTSL.Logging
         public IReadOnlyList<ILogMetadataInjector> MetadataInjectors => _injectors;
 
         public void AddMetadataInjector(ILogMetadataInjector injector) {
-            ArgumentNullException.ThrowIfNull(injector, nameof(injector));
+            ArgumentNullException.ThrowIfNull(injector);
             ImmutableInterlocked.Update(ref _injectors, arr => arr.Add(injector));
         }
 
         public void RemoveMetadataInjector(ILogMetadataInjector injector) {
-            ArgumentNullException.ThrowIfNull(injector, nameof(injector));
+            ArgumentNullException.ThrowIfNull(injector);
             ImmutableInterlocked.Update(ref _injectors, arr => arr.Remove(injector));
         }
 

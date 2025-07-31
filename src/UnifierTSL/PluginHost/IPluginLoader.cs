@@ -1,6 +1,6 @@
 ﻿using UnifierTSL.PluginService;
 
-namespace UnifierTSL.Plugins
+namespace UnifierTSL.PluginHost
 {
     public interface IPluginLoader
     {

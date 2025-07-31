@@ -1,7 +1,7 @@
 ﻿using UnifierTSL.Module;
-using UnifierTSL.PluginServices;
+using UnifierTSL.Plugins;
 
-namespace UnifierTSL.Plugins.Hosts.Dotnet
+namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
     public record DotnetPluginInfo(Type PluginType, ModuleAssemblyInfo Module, PluginMetadata Metadata) : IPluginInfo
     {

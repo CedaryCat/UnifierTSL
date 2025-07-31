@@ -1,8 +1,8 @@
 ﻿using System.Collections.Immutable;
 using UnifierTSL.Module;
-using UnifierTSL.Plugins;
+using UnifierTSL.PluginService;
 
-namespace UnifierTSL.PluginService
+namespace UnifierTSL.Plugins
 {
     /// <summary>
     /// Represents a plugin that can be initialized asynchronously with dependency awareness.
@@ -32,20 +32,30 @@ namespace UnifierTSL.PluginService
         /// <summary>
         /// Asynchronously initializes the plugin.
         /// 
-        /// This method is called after the plugin is constructed. It receives a span of 
+        /// This method is called after the plugin is constructed. It receives a memory of 
         /// previously scheduled plugin initializations that occurred before this plugin 
         /// (ordered by <see cref="InitializationOrder"/>). 
         /// 
-        /// The plugin may selectively await specific tasks from the span if it depends on 
+        /// The plugin may selectively await specific tasks from the memory if it depends on 
         /// certain plugins being initialized before continuing. If no such dependencies 
         /// exist, the plugin may proceed in parallel.
         /// </summary>
+        /// <param name="configRegistrar">
+        /// The registrar for plugin configuration files. 
+        /// <para>
+        /// Note: It is **not required** to register all configuration instances immediately 
+        /// within <see cref="InitializeAsync"/>. A plugin may store this reference and 
+        /// register configurations at any point during its lifetime. 
+        /// Each registration returns an <see cref="IPluginConfigHandle{TConfig}"/> that
+        /// provides host-defined access to the configuration file.
+        /// </para>
+        /// </param>
         /// <param name="priorInitializations">
-        /// A read-only span containing context information and initialization tasks 
+        /// A read-only memory containing context information and initialization tasks 
         /// of plugins initialized earlier (lower InitializationOrder).
         /// </param>
         /// <param name="cancellationToken">Token for cooperative cancellation.</param>
-        Task InitializeAsync(ReadOnlyMemory<PluginInitInfo> priorInitializations, CancellationToken cancellationToken);
+        Task InitializeAsync(IPluginConfigRegistrar configRegistrar, ReadOnlyMemory<PluginInitInfo> priorInitializations, CancellationToken cancellationToken);
 
         /// <summary>
         /// Called when the plugin is being shut down, typically during application shutdown or plugin reload.

@@ -10,7 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="Plugins\NewFile1.txt" />
+	  <None Remove="PluginHost\NewFile1.txt" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -22,6 +22,7 @@
 		<PackageReference Include="MonoMod.RuntimeDetour.HookGen" Version="22.7.31.1" GeneratePathProperty="true" />
 		<PackageReference Include="ModFramework" Version="1.1.15" GeneratePathProperty="true" />
 		<PackageReference Include="OTAPI.USP" Version="1.0.2" GeneratePathProperty="true" />
+		<PackageReference Include="Tomlyn" Version="0.19.0" />
 	</ItemGroup>
 
 	<ItemGroup>

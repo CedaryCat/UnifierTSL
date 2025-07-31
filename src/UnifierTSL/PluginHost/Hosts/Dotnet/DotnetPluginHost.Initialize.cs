@@ -1,8 +1,10 @@
 ﻿using System.Collections.Immutable;
 using UnifierTSL.Logging;
+using UnifierTSL.PluginHost.Configs;
+using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;
 
-namespace UnifierTSL.Plugins.Hosts.Dotnet
+namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
     partial class DotnetPluginHost
     {
@@ -30,9 +32,9 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
 			}
 
 			// Perform asynchronous initialization and wait for all initialization to complete
-			await InitializeAllAsync(Logger, plugins);
+			await InitializeAllAsync(Logger, plugins, cancellationToken);
 		}
-		static async Task InitializeAllAsync(RoleLogger logger, ImmutableArray<IPluginContainer> sortedPlugins) {
+		static async Task InitializeAllAsync(RoleLogger logger, ImmutableArray<IPluginContainer> sortedPlugins, CancellationToken token) {
 			var initTasks = new Dictionary<PluginContainer, Task>();
 			var initInfos = new PluginInitInfo[sortedPlugins.Length];
 
@@ -42,13 +44,10 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
 				// Extract the initialization information of the preceding plugins (in order)
 				var prior = initInfos.AsMemory()[..i]; // Snapshot for ReadOnlyMemory
 
-				// Create CancellationToken
-				var token = CancellationToken.None;
-
 				// Call InitializeAsync
 				var task = InitializePlugin(logger, current, prior, token);
 
-				// Save Task and Plugin information
+				// Save Task and Plugins information
 				initTasks[current] = task;
 				initInfos[i] = new PluginInitInfo(current, task, token);
 			}
@@ -70,25 +69,24 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
 			if (container.Status is PluginStatus.Disabled) {
 				logger.InfoWithMetadata(
 					category: "Init",
-					message: $"Plugin {container.Name} is disabled, Skipped.",
+					message: $"Plugins {container.Name} is disabled, Skipped.",
 					metadata: [new("PluginFile", container.Module.Signature.FilePath)]);
-				await Task.CompletedTask;
 				return;
 			}
 
 			if (container.LoadStatus is not PluginLoadStatus.NotLoaded) {
 				logger.InfoWithMetadata(
 					category: "Init",
-					message: $"Plugin {container.Name} in Status {container.LoadStatus}, Skipped.",
+					message: $"Plugins {container.Name} in Status {container.LoadStatus}, Skipped.",
 					metadata: [new("PluginFile", container.Module.Signature.FilePath)]);
-				await Task.CompletedTask;
 				return;
 			}
 
 			try {
-				await container.Plugin.InitializeAsync(prior, token);
+				var config = new PluginConfigRegistrar(container, Path.Combine("config", Path.GetFileNameWithoutExtension(container.Location.FilePath)));
+				await container.Plugin.InitializeAsync(config, prior, token);
 				container.LoadStatus = PluginLoadStatus.Loaded;
-				logger.Success($"Plugin {container.Name} v{container.Version} (by {container.Author}) initiated.");
+				logger.Success($"Plugins {container.Name} v{container.Version} (by {container.Author}) initiated.");
 			}
 			catch (Exception ex) {
 				container.LoadStatus = PluginLoadStatus.Failed;
@@ -96,7 +94,7 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
 
 				logger.LogHandledExceptionWithMetadata(
 					category: "Init",
-					message: $"Plugin {container.Name} failed to initialize: {ex.Message}",
+					message: $"Plugins {container.Name} failed to initialize: {ex.Message}",
 					metadata: [new("PluginFile", container.Module.Signature.FilePath)],
 					ex: ex);
 			}

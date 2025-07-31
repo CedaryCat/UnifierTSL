@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UnifierTSL.PluginServices;
+using UnifierTSL.Plugins;
 
-namespace UnifierTSL.Plugins
+namespace UnifierTSL.PluginHost
 {
     public interface IPluginInfo : IPluginMetadata
     {

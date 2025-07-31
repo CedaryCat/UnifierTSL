@@ -7,10 +7,10 @@ using System.Text;
 using System.Threading.Tasks;
 using UnifierTSL.Module;
 using UnifierTSL.Module.Dependencies;
+using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;
-using UnifierTSL.PluginServices;
 
-namespace UnifierTSL.Plugins.Hosts.Dotnet
+namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
     public class PluginContainer(PluginMetadata metadata, ModuleAssemblyInfo module, IPlugin plugin) : IPluginContainer
     {
@@ -21,6 +21,7 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
         public string Description => metadata.Description;
         public Version Version => metadata.Version;
         public IPlugin Plugin => plugin;
+        public FileSignature Location => module.Signature;
         public ModuleAssemblyInfo Module => module;
         public Assembly PluginAssembly => module.Assembly;
 

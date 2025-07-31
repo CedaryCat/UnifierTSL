@@ -1,5 +1,4 @@
 ﻿using UnifierTSL.Plugins;
-using UnifierTSL.PluginServices;
 
 namespace UnifierTSL.PluginService
 {
@@ -11,6 +10,7 @@ namespace UnifierTSL.PluginService
         string IPluginMetadata.Description => Metadata.Description;
         Version IPluginMetadata.Version => Metadata.Version;
         IPlugin Plugin { get; }
+        FileSignature Location { get; }
         PluginLoadStatus LoadStatus { get; }
         public Exception? LoadError { get; }
         PluginStatus Status { get; set; }

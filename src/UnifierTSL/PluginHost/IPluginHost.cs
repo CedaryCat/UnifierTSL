@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnifierTSL.Logging;
 using UnifierTSL.PluginService;
 
-namespace UnifierTSL.Plugins
+namespace UnifierTSL.PluginHost
 {
     public interface IPluginHost : ILoggerHost { 
         public string Key { get; }

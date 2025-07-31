@@ -2,7 +2,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using UnifierTSL.Commons;
 using UnifierTSL.Logging.Formatters;
 
 namespace UnifierTSL.Logging.LogWriters
@@ -53,7 +52,7 @@ namespace UnifierTSL.Logging.LogWriters
         /// <param name="defaultFormatter">The default formatter to use when no other formatter is specified.</param>
         /// <exception cref="ArgumentNullException">Thrown if the <paramref name="defaultFormatter"/> is null.</exception>
         public LogWriter(ILogFormatter<TInput> defaultFormatter) {
-            TSLThrowHelper.ThrowIfNull(defaultFormatter);
+            ArgumentNullException.ThrowIfNull(defaultFormatter);
             curFormatter = defFormatter = defaultFormatter;
             availableFormatters.Add(defaultFormatter);
         }

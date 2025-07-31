@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using UnifierTSL.Logging;
 using UnifierTSL.PluginService;
 
-namespace UnifierTSL.Plugins.Hosts.Dotnet
+namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
     public partial class DotnetPluginHost : IPluginHost
     {

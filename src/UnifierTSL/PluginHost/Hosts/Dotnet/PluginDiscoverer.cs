@@ -1,9 +1,9 @@
 ﻿using System.Reflection;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;
-using UnifierTSL.PluginService;
+using UnifierTSL.Plugins;
 
-namespace UnifierTSL.Plugins.Hosts.Dotnet
+namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
     public class PluginDiscoverer : IPluginDiscoverer, ILoggerHost
     {

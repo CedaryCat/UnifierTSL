@@ -5,9 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnifierTSL.Logging;
+using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;
 
-namespace UnifierTSL.Plugins.Hosts.Dotnet
+namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
     public class PluginLoader : IPluginLoader, ILoggerHost
     {
@@ -25,7 +26,7 @@ namespace UnifierTSL.Plugins.Hosts.Dotnet
             if (pluginInfo is not DotnetPluginInfo info) {
                 Logger.Warning(
                     category: "Loading",
-                    message: $"Plugin {pluginInfo.Name} is not a DotnetPluginInfo, skipping.");
+                    message: $"Plugins {pluginInfo.Name} is not a DotnetPluginInfo, skipping.");
                 return null;
             }
 
