@@ -8,7 +8,6 @@ namespace UnifierTSL.PluginHost.Configs
     internal class ConfigHandle<TConfig> : IPluginConfigHandle<TConfig>
         where TConfig : class, new()
     {
-
         public record ConfigOption(
             string RelativePath,
             bool AutoReloadOnExternalChange,
@@ -313,7 +312,7 @@ namespace UnifierTSL.PluginHost.Configs
             }
         }
 
-        public TConfig? Request(bool reloadFromIO = false) {
+        public TConfig Request(bool reloadFromIO = false) {
             if (CachedConfig is not null && !reloadFromIO) {
                 return CachedConfig;
             }
@@ -341,10 +340,10 @@ namespace UnifierTSL.PluginHost.Configs
                 Overwrite(CachedConfig);
             }
 
-            return CachedConfig;
+            return CachedConfig!;
         }
 
-        public async Task<TConfig?> RequestAsync(bool reloadFromIO = false, CancellationToken cancellationToken = default) {
+        public async Task<TConfig> RequestAsync(bool reloadFromIO = false, CancellationToken cancellationToken = default) {
             if (CachedConfig is not null && !reloadFromIO) {
                 return CachedConfig;
             }
@@ -372,7 +371,7 @@ namespace UnifierTSL.PluginHost.Configs
                 await OverwriteAsync(CachedConfig, cancellationToken);
             }
 
-            return CachedConfig;
+            return CachedConfig!;
         }
 
         public TConfig? TryGetCurrent() => CachedConfig;

@@ -5,9 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnifierTSL.Module;
-using UnifierTSL.Plugins;
 
-namespace UnifierTSL.PluginHost.Hosts.Dotnet
+namespace UnifierTSL.Plugins
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class PluginMetadataAttribute(string name, string version = "1.0.0.0", string author = "Unknown", string description = "") : Attribute

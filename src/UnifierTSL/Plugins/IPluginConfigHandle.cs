@@ -15,7 +15,7 @@
         /// </param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The current configuration instance.</returns>
-        Task<TConfig?> RequestAsync(bool reloadFromIO = false, CancellationToken cancellationToken = default);
+        Task<TConfig> RequestAsync(bool reloadFromIO = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Synchronously requests the current configuration.
@@ -25,7 +25,7 @@
         /// If false, may return a cached copy if available.
         /// </param>
         /// <returns>The current configuration instance.</returns>
-        TConfig? Request(bool reloadFromIO = false);
+        TConfig Request(bool reloadFromIO = false);
 
         /// <summary>
         /// Synchronously attempts to get the current configuration if it exists without creating/loading a fresh one.

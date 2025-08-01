@@ -1,27 +1,24 @@
-﻿using UnifierTSL.PluginHost.ConfigFormats;
+﻿using System;
+using UnifierTSL.PluginHost.ConfigFormats;
 using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;
 namespace UnifierTSL.PluginHost.Configs
 {
     internal class ConfigRegistrar(IPluginContainer plugin, string configsPath) : IPluginConfigRegistrar
     {
-        public IPluginConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TConfig>(string relativePath, ConfigFormat format) where TConfig : class, new() {
-            return format switch {
-                ConfigFormat.NewtonsoftJson => CreateConfigRegistration<NewtonsoftJsonFormater, TConfig>(relativePath),
-
-                ConfigFormat.Toml => CreateConfigRegistration<TomlFormater, TConfig>(relativePath),
-
-                ConfigFormat.Json or
-                ConfigFormat.SystemTextJson or 
-                _ => CreateConfigRegistration<SystemTextJsonFormater, TConfig>(relativePath),
-                // _ => throw new NotSupportedException($"Unsupported config format: {format}"),
-            };
+        private readonly ConfigOption option = new();
+        public IConfigOption DefaultOption => option;
+        public IConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TConfig>(string relativePath) where TConfig : class, new() {
+            return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, option);
+        }
+        public IConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TConfig>(string relativePath, ConfigFormat format) where TConfig : class, new() {
+            return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, option, ConfigOption.GetFormater(format));
         }
 
-        public IPluginConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TFormatProvider, TConfig>(string relativePath)
+        public IConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TFormatProvider, TConfig>(string relativePath)
             where TFormatProvider : IConfigFormatProvider, new()
             where TConfig : class, new() {
-            return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, new TFormatProvider());
+            return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, option, new TFormatProvider());
         }
     }
 }
