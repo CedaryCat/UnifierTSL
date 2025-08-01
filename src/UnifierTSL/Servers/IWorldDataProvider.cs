@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Terraria.IO;
-using static Terraria.GameContent.UI.States.UIWorldCreation;
+﻿using Terraria.IO;
 
 namespace UnifierTSL.Servers
 {
     public interface IWorldDataProvider
     {
         public string WorldName { get; }
+        public string WorldFileName { get; }
         public WorldFileData ApplyMetadata(ServerContext server); 
 
         public static IWorldDataProvider GenerateOrLoadExisting(string worldName, int worldSize, int difficulty = 2, int worldEvil = 0, string seed = "")
@@ -18,6 +13,7 @@ namespace UnifierTSL.Servers
         private class GenerateOrLoadProvider(string worldName, int worldSize, int difficulty = 2, int worldEvil = 0, string seed = "") : IWorldDataProvider
         {
             public string WorldName => worldName;
+            public string WorldFileName => Path.GetFileName(Utilities.IO.GetWorldPathFromName(worldName, true));
 
             public WorldFileData ApplyMetadata(ServerContext server) {
                 server.Main.worldName = worldName;
@@ -61,6 +57,7 @@ namespace UnifierTSL.Servers
         private class FromBytesProvider(string worldName, byte[] worldFileData) : IWorldDataProvider
         {
             public string WorldName => worldName;
+            public string WorldFileName => Path.GetFileName(Utilities.IO.GetWorldPathFromName(worldName, true));
 
             public WorldFileData ApplyMetadata(ServerContext server) {
                 var worldPath = Utilities.IO.GetWorldPathFromName(worldName, true);

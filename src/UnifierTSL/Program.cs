@@ -1,6 +1,5 @@
-﻿using System.Reflection;
-using Terraria.Localization;
-using UnifierTSL.Events.Handlers;
+﻿using Terraria.Localization;
+using UnifierTSL.PluginHost;
 
 namespace UnifierTSL
 {
@@ -16,13 +15,23 @@ namespace UnifierTSL
 
             Console.Title = "UnifierTSLauncher";
 
-            Console.WriteLine(@"___________________________________________________________________________________________________");
-            Console.WriteLine(@"_  _ _  _ _ ____ _ ____ ___     ____ ____ ____ _  _ ____ ____    ___  ____ ____ ____ ____ ____ ____");
-            Console.WriteLine(@"|  | |\ | | |___ | |___ |  \    [__  |___ |__/ |  | |___ |__/    |__] |__/ |  | |    |___ [__  [__ ");
-            Console.WriteLine(@"|__| | \| | |    | |___ |__/    ___] |___ |  \  \/  |___ |  \    |    |  \ |__| |___ |___ ___] ___]");
-            Console.WriteLine(@"---------------------------------------------------------------------------------------------------");
-            Console.WriteLine(@"                       Demonstration For Terraria v{0} & OTAPI v{1}                         ", version.TerrariaVersion, version.OTAPIVersion);
-            Console.WriteLine(@"---------------------------------------------------------------------------------------------------");
+            Console.WriteLine(@" ╔════════════════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine(@"╔═══════════════════════════════════════════════════════════════════════════════════╗╗║");
+            Console.WriteLine(@"║   ██╗   ██╗███╗   ██╗██╗███████╗██╗███████╗██████╗     ████████╗███████╗██╗       ║║║");
+            Console.WriteLine(@"║   ██║   ██║████╗  ██║██║██╔════╝██║██╔════╝██╔══██╗    ╚══██╔══╝██╔════╝██║       ║║║");
+            Console.WriteLine(@"║   ██║   ██║██╔██╗ ██║██║█████╗  ██║█████╗  ██████╔╝       ██║   ███████╗██║       ║ ║");
+            Console.WriteLine(@"║   ██║   ██║██║╚██╗██║██║██╔══╝  ██║██╔══╝  ██╔══██╗       ██║   ╚════██║██║       ║ ║");
+            Console.WriteLine(@"║   ╚██████╔╝██║ ╚████║██║██║     ██║███████╗██║  ██║       ██║   ███████║███████╗  ║║║");
+            Console.WriteLine(@"║    ╚═════╝ ╚═╝  ╚═══╝╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝       ╚═╝   ╚══════╝╚══════╝  ║║╝");
+            Console.WriteLine(@"╚═══════════════════════════════════════════════════════════════════════════════════╝");
+
+            Console.WriteLine();
+
+            UnifierApi.Logger.Info($"Unifier Terraria-Server-Launcher Running\r\n" +
+                $"Version Info: \r\n" +
+                $"  Terraria v{version.TerrariaVersion} & OTAPI v{version.OTAPIVersion}\r\n" +
+                $"  UnifierApi v{version.UnifierApiVersion} & PluginApi v{PluginOrchestrator.ApiVersion}\r\n" +
+                $"Current Process ID: {Environment.ProcessId}");
 
             WorkRunner.RunTimedWork("Init", "Global initialization started...", () => {
                 Initializer.Initialize();
@@ -36,10 +45,22 @@ namespace UnifierTSL
                             $"@ {UnifiedServerCoordinator.ListeningEndpoint} " +
                             $"USP for Terraria v{version.TerrariaVersion}";
 
+            string currentServers = "";
+            if (UnifiedServerCoordinator.Servers.Length > 0) {
+                currentServers = "Current Servers: \r\n";
+                foreach (var server in UnifiedServerCoordinator.Servers) {
+                    currentServers += $"  {server.Name} Running on world: {server.worldDataProvider.WorldFileName}\r\n";
+                }
+            }
+
             UnifiedServerCoordinator.Logger.Info(
                 category: "Startup",
-                message: "UnifierTSLauncher started successfully! \r\n" +
-                         Language.GetTextValue("CLI.ListeningOnPort", UnifiedServerCoordinator.ListenPort));
+                message: "UnifierTSL started successfully! \r\n" +
+                         currentServers +
+                         Language.GetTextValue("CLI.ListeningOnPort", UnifiedServerCoordinator.ListenPort) + "\r\n" + 
+                         (string.IsNullOrEmpty(UnifiedServerCoordinator.ServerPassword) 
+                         ? "Server is running without a password. -anyone can join."
+                         : $"Server is running with password: '{UnifiedServerCoordinator.ServerPassword}'"));
 
             while (true) {
                 Console.ReadLine();

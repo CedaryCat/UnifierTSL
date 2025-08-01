@@ -4,13 +4,17 @@ namespace UnifierTSL
 {
     public class VersionHelper
     {
+        public readonly string UnifierApiVersion;
         public readonly string TerrariaVersion;
         public readonly string OTAPIVersion;
 
         public VersionHelper() {
+            var utsl = typeof(UnifierApi).Assembly;
             var otapi = typeof(Terraria.Main).Assembly;
-            var fileVersionAttr = otapi.GetCustomAttribute<AssemblyFileVersionAttribute>();
-            TerrariaVersion = fileVersionAttr!.Version;
+
+
+            UnifierApiVersion = utsl.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version;
+            TerrariaVersion = otapi.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version;
 
             var informationalVersionAttr = otapi.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             OTAPIVersion = informationalVersionAttr!.InformationalVersion.Split('+').First();
