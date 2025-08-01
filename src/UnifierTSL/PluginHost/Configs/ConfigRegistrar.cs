@@ -3,7 +3,7 @@ using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;
 namespace UnifierTSL.PluginHost.Configs
 {
-    internal class PluginConfigRegistrar(IPluginContainer plugin, string configsPath) : IPluginConfigRegistrar
+    internal class ConfigRegistrar(IPluginContainer plugin, string configsPath) : IPluginConfigRegistrar
     {
         public IPluginConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TConfig>(string relativePath, ConfigFormat format) where TConfig : class, new() {
             return format switch {
@@ -21,7 +21,7 @@ namespace UnifierTSL.PluginHost.Configs
         public IPluginConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TFormatProvider, TConfig>(string relativePath)
             where TFormatProvider : IConfigFormatProvider, new()
             where TConfig : class, new() {
-            return new PluginConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, new TFormatProvider());
+            return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, new TFormatProvider());
         }
     }
 }

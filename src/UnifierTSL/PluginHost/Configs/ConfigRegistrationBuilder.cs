@@ -2,13 +2,13 @@
 using UnifierTSL.PluginService;
 namespace UnifierTSL.PluginHost.Configs
 {
-    internal class PluginConfigRegistrationBuilder<TConfig>(
+    internal class ConfigRegistrationBuilder<TConfig>(
         IPluginContainer plugin, 
         string configsPath, 
         string relativePath, 
         IConfigFormatProvider formatProvider) : IPluginConfigRegistrationBuilder<TConfig> where TConfig : class, new()
     {
-        bool AutoReloadOnExternalChange = true;
+        bool AutoReloadOnExternalChange;
         DeserializationFailureHandling DeseriFailureHandling = DeserializationFailureHandling.ThrowException;
         bool DeseriAutoPersistFallback;
         SerializationFailureHandling SeriFailureHandling = SerializationFailureHandling.ThrowException;

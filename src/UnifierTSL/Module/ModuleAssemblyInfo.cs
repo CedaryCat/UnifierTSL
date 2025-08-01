@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.Loader;
+using UnifierTSL.FileSystem;
 using UnifierTSL.Module.Dependencies;
 
 namespace UnifierTSL.Module

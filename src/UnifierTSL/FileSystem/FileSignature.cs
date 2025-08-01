@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace UnifierTSL
+namespace UnifierTSL.FileSystem
 {
     public record FileSignature(string FilePath, string Hash, DateTime LastWriteTimeUtc) {
         public static FileSignature Generate(string filePath) {

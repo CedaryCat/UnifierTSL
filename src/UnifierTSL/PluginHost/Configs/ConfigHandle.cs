@@ -1,15 +1,11 @@
 ﻿using System.Threading;
+using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
 using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;
 namespace UnifierTSL.PluginHost.Configs
 {
-    internal class ConfigHandle<TConfig>(
-        string configsPath,
-        IPluginContainer plugin,
-        IConfigFormatProvider formatProvider, 
-        ConfigHandle<TConfig>.ConfigOption option) : IPluginConfigHandle<TConfig>
-
+    internal class ConfigHandle<TConfig> : IPluginConfigHandle<TConfig>
         where TConfig : class, new() {
 
         public record ConfigOption(
@@ -23,13 +19,71 @@ namespace UnifierTSL.PluginHost.Configs
         );
 
         record LoggerHost(string Name, string? CurrentLogCategory) : ILoggerHost;
-        readonly RoleLogger Logger = UnifierApi.CreateLogger(new LoggerHost("PluginConfig", $"P:{plugin.Name}"));
-        readonly IPluginContainer Owner = plugin;
-        readonly IConfigFormatProvider FormatProvider = formatProvider;
-        readonly ConfigOption Option = option;
-        readonly string filePath = Path.Combine(configsPath, option.RelativePath);
+        readonly RoleLogger Logger;
+        readonly IPluginContainer Owner;
+        readonly IConfigFormatProvider FormatProvider;
+        readonly ConfigOption Option;
+        readonly string filePath;
+
+        readonly ContentAwareFileWatcher watcher;
 
         TConfig? CachedConfig = null;
+
+        public ConfigHandle(
+            string configsPath,
+            IPluginContainer plugin,
+            IConfigFormatProvider formatProvider, 
+            ConfigOption option) {
+
+            Logger = UnifierApi.CreateLogger(new LoggerHost("PluginConfig", $"P:{plugin.Name}"));
+            Owner = plugin;
+            FormatProvider = formatProvider;
+            Option = option;
+            filePath = Path.Combine(configsPath, option.RelativePath);
+
+            watcher = new ContentAwareFileWatcher(filePath);
+            watcher.Modified += OnFileChanged;
+            watcher.Error += (s, e) => {
+                Logger.LogHandledExceptionWithMetadata(
+                    message: $"FileWatcher error for config: {Option.RelativePath}",
+                    ex: e.GetException(),
+                    [new("PluginFile", Owner.Location.FilePath)]);
+            };
+        }
+
+        private async void OnFileChanged(object sender, FileSystemEventArgs e) {
+            string text;
+            try {
+                text = File.ReadAllText(e.FullPath);
+            }
+            catch (Exception ex) {
+                Logger.LogHandledExceptionWithMetadata(
+                    message: $"Failed to read config when external change detected: {Option.RelativePath}, skipping reload.",
+                    ex: ex,
+                    [new("PluginFile", Owner.Location.FilePath)]);
+                return;
+            }
+            var newConfig = ReturnDeserializedOrCache(text, null);
+
+            if (OnChangedAsync is not null) {
+                foreach (var executor in OnChangedAsync.GetInvocationList().Cast<AsyncConfigChangedHandler<TConfig?>>()) {
+                    if (await executor.Invoke(newConfig)) {
+                        return;
+                    }
+                }
+            }
+
+            if (Option.AutoReloadOnExternalChange) {
+                CachedConfig = newConfig;
+            }
+        }
+
+        /// <summary>
+        /// Never call in user code
+        /// </summary>
+        public void Dispose() {
+            watcher.Dispose();
+        }
 
         #region Helper Methods
         void EnsureDirectoryExists() {
@@ -41,7 +95,6 @@ namespace UnifierTSL.PluginHost.Configs
         string SerializeToText(TConfig? newConfig) {
             string result;
             try {
-                CachedConfig = newConfig;
                 result = FormatProvider.Serialize(newConfig);
             }
             catch (Exception ex) {
@@ -65,12 +118,14 @@ namespace UnifierTSL.PluginHost.Configs
                 Logger.LogHandledExceptionWithMetadata(
                     message: $"Failed to serialize config: {Option.RelativePath}",
                     ex: ex,
-                    [new("PluginFile", Owner.Location.FilePath)]);
+                    metadata: [new("PluginFile", Owner.Location.FilePath)]);
             }
 
             return result;
         }
-        TConfig? DeserializeToCache(string text, Exception? readException) {
+        TConfig? ReturnDeserializedOrCache(string text, Exception? readException) {
+            TConfig? result;
+
             if (readException is not null) {
                 switch (Option.DeseriFailureHandling) {
                     default:
@@ -90,7 +145,7 @@ namespace UnifierTSL.PluginHost.Configs
                 Logger.LogHandledExceptionWithMetadata(
                     message: $"Failed to read config: {Option.RelativePath} when requesting, return by mode: {Option.DeseriFailureHandling}",
                     ex: readException,
-                    [new("PluginFile", Owner.Location.FilePath)]);
+                    metadata: [new("PluginFile", Owner.Location.FilePath)]);
 
                 if (text is null) {
                     return CachedConfig;
@@ -98,7 +153,7 @@ namespace UnifierTSL.PluginHost.Configs
             }
 
             try {
-                CachedConfig = FormatProvider.Deserialize<TConfig>(text);
+                result = FormatProvider.Deserialize<TConfig>(text);
             }
             catch (Exception ex) {
                 // If readException is not null, the text must be given by FormatProvider and occurred a unexpected exception. so throw.
@@ -122,21 +177,20 @@ namespace UnifierTSL.PluginHost.Configs
                 Logger.LogHandledExceptionWithMetadata(
                     message: $"Failed to deserialize config: {Option.RelativePath} when reloading, skipping reload.",
                     ex: ex,
-                    [new("PluginFile", Owner.Location.FilePath)]);
+                    metadata: [new("PluginFile", Owner.Location.FilePath)]);
                 return CachedConfig;
             }
 
-            return CachedConfig;
+            return result;
         }
         #endregion
 
         #region Implementation
         public string FilePath => filePath;
-
-#warning TODO: Implement a file watcher to monitor changes in the config file and trigger reloads if AutoReloadOnExternalChange is true.
         public event AsyncConfigChangedHandler<TConfig?>? OnChangedAsync;
         public TConfig? ModifyInMemory(Func<TConfig?, TConfig?> updater) => CachedConfig = updater(CachedConfig);
         public void Overwrite(TConfig? newConfig) {
+            CachedConfig = newConfig;
             string text = SerializeToText(newConfig);
 
             EnsureDirectoryExists();
@@ -152,12 +206,13 @@ namespace UnifierTSL.PluginHost.Configs
                     Logger.LogHandledExceptionWithMetadata(
                         message: $"Failed to write config: {Option.RelativePath}",
                         ex: ex,
-                        [new("PluginFile", Owner.Location.FilePath)]);
+                        metadata: [new("PluginFile", Owner.Location.FilePath)]);
                 }
             }
         }
 
         public async Task OverwriteAsync(TConfig? newConfig, CancellationToken cancellationToken = default) {
+            CachedConfig = newConfig;
             string text = SerializeToText(newConfig);
 
             EnsureDirectoryExists();
@@ -173,7 +228,7 @@ namespace UnifierTSL.PluginHost.Configs
                     Logger.LogHandledExceptionWithMetadata(
                         message: $"Failed to write config: {Option.RelativePath}",
                         ex: ex,
-                        [new("PluginFile", Owner.Location.FilePath)]);
+                        metadata: [new("PluginFile", Owner.Location.FilePath)]);
                 }
             }
         }
@@ -198,7 +253,7 @@ namespace UnifierTSL.PluginHost.Configs
                     Logger.LogHandledExceptionWithMetadata(
                         message: $"Failed to read config: {Option.RelativePath} when reloading, skipping reload.",
                         ex: ex,
-                        [new("PluginFile", Owner.Location.FilePath)]);
+                        metadata: [new("PluginFile", Owner.Location.FilePath)]);
                     return;
                 }
             }
@@ -213,7 +268,7 @@ namespace UnifierTSL.PluginHost.Configs
                 Logger.LogHandledExceptionWithMetadata(
                     message: $"Failed to deserialize config: {Option.RelativePath} when reloading, skipping reload.",
                     ex: ex,
-                    [new("PluginFile", Owner.Location.FilePath)]);
+                    metadata: [new("PluginFile", Owner.Location.FilePath)]);
             }
         }
 
@@ -236,7 +291,7 @@ namespace UnifierTSL.PluginHost.Configs
                     Logger.LogHandledExceptionWithMetadata(
                         message: $"Failed to read config: {Option.RelativePath} when reloading, skipping reload.",
                         ex: ex,
-                        [new("PluginFile", Owner.Location.FilePath)]);
+                        metadata: [new("PluginFile", Owner.Location.FilePath)]);
                     return;
                 }
             }
@@ -251,7 +306,7 @@ namespace UnifierTSL.PluginHost.Configs
                 Logger.LogHandledExceptionWithMetadata(
                     message: $"Failed to deserialize config: {Option.RelativePath} when reloading, skipping reload.",
                     ex: ex,
-                    [new("PluginFile", Owner.Location.FilePath)]);
+                    metadata: [new("PluginFile", Owner.Location.FilePath)]);
             }
         }
 
@@ -278,13 +333,12 @@ namespace UnifierTSL.PluginHost.Configs
                 }
             }
 
-            var config = DeserializeToCache(text, readException);
-
+            CachedConfig = ReturnDeserializedOrCache(text, readException);
             if (readException is not null && Option.DeseriAutoPersistFallback) {
-                Overwrite(config);
+                Overwrite(CachedConfig);
             }
 
-            return config;
+            return CachedConfig;
         }
 
         public async Task<TConfig?> RequestAsync(bool reloadFromIO = false, CancellationToken cancellationToken = default) {
@@ -310,13 +364,12 @@ namespace UnifierTSL.PluginHost.Configs
                 }
             }
 
-            var config = DeserializeToCache(text, readException);
-
+            CachedConfig = ReturnDeserializedOrCache(text, readException);
             if (readException is not null && Option.DeseriAutoPersistFallback) {
-                await OverwriteAsync(config);
+                await OverwriteAsync(CachedConfig, cancellationToken);
             }
 
-            return config;
+            return CachedConfig;
         }
 
         public TConfig? TryGetCurrent() => CachedConfig;

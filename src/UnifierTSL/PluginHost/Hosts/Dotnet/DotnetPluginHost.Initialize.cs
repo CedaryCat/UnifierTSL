@@ -83,7 +83,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 			}
 
 			try {
-				var config = new PluginConfigRegistrar(container, Path.Combine("config", Path.GetFileNameWithoutExtension(container.Location.FilePath)));
+				var config = new ConfigRegistrar(container, Path.Combine("config", Path.GetFileNameWithoutExtension(container.Location.FilePath)));
 				await container.Plugin.InitializeAsync(config, prior, token);
 				container.LoadStatus = PluginLoadStatus.Loaded;
 				logger.Success($"Plugins {container.Name} v{container.Version} (by {container.Author}) initiated.");

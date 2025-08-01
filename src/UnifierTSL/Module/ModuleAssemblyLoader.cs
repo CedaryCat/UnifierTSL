@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
+using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
 using UnifierTSL.Module.Dependencies;
 using UnifierTSL.Reflection.Metadata;

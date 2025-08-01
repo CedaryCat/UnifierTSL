@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace UnifierTSL
+namespace UnifierTSL.FileSystem
 {
     public sealed class FileLockManager
     {
@@ -12,7 +12,7 @@ namespace UnifierTSL
             public void IncrementRef() => Interlocked.Increment(ref refCount);
             public int DecrementRef() => Interlocked.Decrement(ref refCount);
         }
-        sealed class Releaser(string filePath, FileLockManager.FileLock fileLock) : IDisposable
+        sealed class Releaser(string filePath, FileLock fileLock) : IDisposable
         {
             private readonly string filePath = filePath;
             private readonly FileLock fileLock = fileLock;

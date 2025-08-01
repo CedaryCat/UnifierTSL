@@ -4,7 +4,7 @@
     /// Handle through which clients can read, write, reload, and observe changes to a plugin configuration.
     /// </summary>
     /// <typeparam name="TConfig">The configuration type.</typeparam>
-    public interface IPluginConfigHandle<TConfig> where TConfig : class
+    public interface IPluginConfigHandle<TConfig> : IDisposable where TConfig : class
     {
         /// <summary>
         /// Asynchronously requests the current configuration.
