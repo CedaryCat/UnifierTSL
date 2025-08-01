@@ -44,7 +44,7 @@ namespace UnifierTSL.Publisher
 
                 var startInfo = new ProcessStartInfo {
                     FileName = "dotnet",
-                    Arguments = $"publish {projectPath} -c Release -p:PublishSingleFile=true -p:SelfContained=false -o {outputDir}",
+                    Arguments = $"publish \"{projectPath}\" -c Release -p:PublishSingleFile=true -p:SelfContained=false -o {outputDir}",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -53,10 +53,16 @@ namespace UnifierTSL.Publisher
 
                 using var process = new Process { StartInfo = startInfo };
                 process.Start();
+
+                Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
                 await process.WaitForExitAsync();
 
+                string output = await outputTask;
+                string error = await errorTask;
+
                 if (process.ExitCode != 0) {
-                    string error = await process.StandardError.ReadToEndAsync();
                     throw new InvalidOperationException($"Failed to publish {relativePath}: {error}");
                 }
 

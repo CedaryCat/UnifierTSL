@@ -74,6 +74,27 @@ public static class LoggerExt
         [CallerLineNumber] int line = 0)
         where TLogger : IStandardLogger =>
         logger.Log(LogLevel.Critical, message, category, ex, eventId, file, member, line);
+    public static void TraceWithMetadata<TLogger>(this TLogger logger, string message,
+        ReadOnlySpan<KeyValueMetadata> metadata,
+        string? category = null,
+        Exception? ex = null,
+        int eventId = 0,
+        [CallerFilePath] string? file = null,
+        [CallerMemberName] string? member = null,
+        [CallerLineNumber] int line = 0)
+        where TLogger : IStandardLogger =>
+        logger.Log(LogLevel.Trace, message, metadata, category, ex, eventId, file, member, line);
+
+    public static void DebugWithMetadata<TLogger>(this TLogger logger, string message,
+        ReadOnlySpan<KeyValueMetadata> metadata,
+        string? category = null,
+        Exception? ex = null,
+        int eventId = 0,
+        [CallerFilePath] string? file = null,
+        [CallerMemberName] string? member = null,
+        [CallerLineNumber] int line = 0)
+        where TLogger : IStandardLogger =>
+        logger.Log(LogLevel.Debug, message, metadata, category, ex, eventId, file, member, line);
 
     public static void InfoWithMetadata<TLogger>(this TLogger logger, string message,
         ReadOnlySpan<KeyValueMetadata> metadata,
@@ -85,6 +106,50 @@ public static class LoggerExt
         [CallerLineNumber] int line = 0)
         where TLogger : IStandardLogger =>
         logger.Log(LogLevel.Info, message, metadata, category, ex, eventId, file, member, line);
+
+    public static void SuccessWithMetadata<TLogger>(this TLogger logger, string message,
+        ReadOnlySpan<KeyValueMetadata> metadata,
+        string? category = null,
+        Exception? ex = null,
+        int eventId = 0,
+        [CallerFilePath] string? file = null,
+        [CallerMemberName] string? member = null,
+        [CallerLineNumber] int line = 0)
+        where TLogger : IStandardLogger =>
+        logger.Log(LogLevel.Success, message, metadata, category, ex, eventId, file, member, line);
+
+    public static void WarningWithMetadata<TLogger>(this TLogger logger, string message,
+        ReadOnlySpan<KeyValueMetadata> metadata,
+        string? category = null,
+        Exception? ex = null,
+        int eventId = 0,
+        [CallerFilePath] string? file = null,
+        [CallerMemberName] string? member = null,
+        [CallerLineNumber] int line = 0)
+        where TLogger : IStandardLogger =>
+        logger.Log(LogLevel.Warning, message, metadata, category, ex, eventId, file, member, line);
+
+    public static void ErrorWithMetadata<TLogger>(this TLogger logger, string message,
+        ReadOnlySpan<KeyValueMetadata> metadata,
+        Exception? ex = null,
+        string? category = null,
+        int eventId = 0,
+        [CallerFilePath] string? file = null,
+        [CallerMemberName] string? member = null,
+        [CallerLineNumber] int line = 0)
+        where TLogger : IStandardLogger =>
+        logger.Log(LogLevel.Error, message, metadata, category, ex, eventId, file, member, line);
+
+    public static void CriticalWithMetadata<TLogger>(this TLogger logger, string message,
+        ReadOnlySpan<KeyValueMetadata> metadata,
+        Exception? ex = null,
+        string? category = null,
+        int eventId = 0,
+        [CallerFilePath] string? file = null,
+        [CallerMemberName] string? member = null,
+        [CallerLineNumber] int line = 0)
+        where TLogger : IStandardLogger =>
+        logger.Log(LogLevel.Critical, message, metadata, category, ex, eventId, file, member, line);
 
     public static void LogWithMetadata<TLogger>(this TLogger logger, LogLevel level,
         string message,

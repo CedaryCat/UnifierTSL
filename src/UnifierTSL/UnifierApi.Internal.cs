@@ -1,4 +1,6 @@
-﻿using UnifierTSL.Logging;
+﻿using UnifierTSL.FileSystem;
+using UnifierTSL.Logging;
+using UnifierTSL.PluginHost;
 using UnifierTSL.Servers;
 using static Terraria.GameContent.UI.States.UIWorldCreation;
 
@@ -13,12 +15,17 @@ namespace UnifierTSL
         #endregion
 
         #region Plugins
+        public static readonly PluginOrchestrator PluginHosts;
         #endregion
 
         #region Parameters
         public static int ListenPort { get; internal set; } = -1;
         private static string? serverPassword;
         public static string ServerPassword => serverPassword ?? "";
+        #endregion
+
+        #region IO
+        internal static readonly DirectoryWatchManager FileMonitor = new(Directory.GetCurrentDirectory());
         #endregion
 
         #region Logging
@@ -40,11 +47,13 @@ namespace UnifierTSL
         static UnifierApi() {
             logCore = new();
             logger = CreateLogger(LogHost);
+            PluginHosts = new();
         }
 
         internal static void Initialize(string[] launcherArgs) {
-
-#warning Plugin Service implementation
+            PluginHosts.InitializeAllAsync()
+                .GetAwaiter()
+                .GetResult();
 
             HandleCommandLine(launcherArgs);
             ReadLauncherArgs();

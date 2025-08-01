@@ -111,15 +111,15 @@ namespace UnifierTSL.Module
 
             foreach (var dll in GetModulesPaths()) {
 
-                var cacheKey = new FileInfo(dll).FullName;
+                var fullPath = new FileInfo(dll).FullName;
 
-                if (moduleCache.TryGetValue(cacheKey, out var cached) && cached.Signature.QuickEquals(dll)) {
+                if (moduleCache.TryGetValue(fullPath, out var cached) && cached.Signature.QuickEquals(dll)) {
                     modules.Add(cached);
                     continue;
                 }
 
                 var context = CreateLoadContext(dll);
-                var asm = context.LoadFromAssemblyPath(dll);
+                var asm = context.LoadFromAssemblyPath(fullPath);
                 var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
                 var dependenciesProvider = dependencyAttr?.DependenciesProvider;
 
@@ -133,7 +133,7 @@ namespace UnifierTSL.Module
                 var info = new ModuleAssemblyInfo(context, asm, dependencies, signature);
                 modules.Add(info);
 
-                moduleCache.AddOrUpdate(cacheKey, info, (_, existing) => {
+                moduleCache.AddOrUpdate(fullPath, info, (_, existing) => {
                     outdatedModules.Add(existing);
                     return info;
                 });
@@ -154,9 +154,9 @@ namespace UnifierTSL.Module
 
             PreloadModule(filename, out var newLocation);
 
-            var cacheKey = new FileInfo(newLocation).FullName;
+            var fullPath = new FileInfo(newLocation).FullName;
 
-            if (moduleCache.TryGetValue(cacheKey, out var cached) && cached.Signature.QuickEquals(newLocation)) {
+            if (moduleCache.TryGetValue(fullPath, out var cached) && cached.Signature.QuickEquals(newLocation)) {
                 info = cached;
                 return true;
             }
@@ -167,7 +167,7 @@ namespace UnifierTSL.Module
             }
 
             var context = CreateLoadContext(newLocation);
-            var asm = context.LoadFromAssemblyPath(newLocation);
+            var asm = context.LoadFromAssemblyPath(fullPath);
             var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
             var dependenciesProvider = dependencyAttr?.DependenciesProvider;
 
@@ -183,7 +183,7 @@ namespace UnifierTSL.Module
             ModuleAssemblyInfo capturedInfo = new(context, asm, dependencies, signature);
             ModuleAssemblyInfo? capturedOutdated = null;
 
-            moduleCache.AddOrUpdate(cacheKey, capturedInfo, (_, existing) => {
+            moduleCache.AddOrUpdate(fullPath, capturedInfo, (_, existing) => {
                 capturedOutdated = existing;
                 return capturedInfo;
             });

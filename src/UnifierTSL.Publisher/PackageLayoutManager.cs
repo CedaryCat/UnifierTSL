@@ -23,7 +23,12 @@ namespace UnifierTSL.Publisher
             PluginsPath = Path.Combine(PublishPath, "plugins");
             
             if (Directory.Exists(PublishPath)) {
-                Directory.Delete(PublishPath, recursive: true);
+                foreach (var file in Directory.GetFiles(PublishPath)) { 
+                    File.Delete(file);
+                }
+                foreach (var dir in Directory.GetDirectories(PublishPath)) { 
+                    Directory.Delete(dir, recursive: true);
+                }
             }
             Directory.CreateDirectory(PublishPath);
 
@@ -40,6 +45,17 @@ namespace UnifierTSL.Publisher
                 var fileName = Path.GetFileName(app);
                 var destPath = Path.Combine(AppPath, fileName);
                 await FileHelpers.SafeCopy(app, destPath);
+            });
+
+            await Task.WhenAll(copyTasks);
+        }
+
+        public async Task InputPlugins(ImmutableArray<string> pluginFiles) {
+
+            var copyTasks = pluginFiles.Select(async file => {
+                var fileName = Path.GetFileName(file);
+                var destPath = Path.Combine(PluginsPath, fileName);
+                await FileHelpers.SafeCopy(file, destPath);
             });
 
             await Task.WhenAll(copyTasks);

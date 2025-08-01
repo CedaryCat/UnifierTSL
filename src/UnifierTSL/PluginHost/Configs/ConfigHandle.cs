@@ -6,7 +6,8 @@ using UnifierTSL.PluginService;
 namespace UnifierTSL.PluginHost.Configs
 {
     internal class ConfigHandle<TConfig> : IPluginConfigHandle<TConfig>
-        where TConfig : class, new() {
+        where TConfig : class, new()
+    {
 
         public record ConfigOption(
             string RelativePath,
@@ -25,7 +26,7 @@ namespace UnifierTSL.PluginHost.Configs
         readonly ConfigOption Option;
         readonly string filePath;
 
-        readonly ContentAwareFileWatcher watcher;
+        readonly IFileMonitorHandle monitor;
 
         TConfig? CachedConfig = null;
 
@@ -41,14 +42,14 @@ namespace UnifierTSL.PluginHost.Configs
             Option = option;
             filePath = Path.Combine(configsPath, option.RelativePath);
 
-            watcher = new ContentAwareFileWatcher(filePath);
-            watcher.Modified += OnFileChanged;
-            watcher.Error += (s, e) => {
-                Logger.LogHandledExceptionWithMetadata(
-                    message: $"FileWatcher error for config: {Option.RelativePath}",
-                    ex: e.GetException(),
-                    [new("PluginFile", Owner.Location.FilePath)]);
-            };
+            monitor = UnifierApi.FileMonitor.Register(filePath, OnFileChanged, OnError);
+        }
+
+        private void OnError(object sender, ErrorEventArgs e) {
+            Logger.LogHandledExceptionWithMetadata(
+                message: $"FileWatcher error for config: {Option.RelativePath}",
+                ex: e.GetException(),
+                [new("PluginFile", Owner.Location.FilePath)]);
         }
 
         private async void OnFileChanged(object sender, FileSystemEventArgs e) {
@@ -82,7 +83,7 @@ namespace UnifierTSL.PluginHost.Configs
         /// Never call in user code
         /// </summary>
         public void Dispose() {
-            watcher.Dispose();
+            monitor.Dispose();
         }
 
         #region Helper Methods
@@ -197,7 +198,7 @@ namespace UnifierTSL.PluginHost.Configs
 
             using (FileLockManager.Enter(filePath)) {
                 try {
-                    File.WriteAllText(filePath, text);
+                    monitor.InternalModify(() => File.WriteAllText(filePath, text));
                 }
                 catch (Exception ex) {
                     if (Option.SeriFailureHandling is SerializationFailureHandling.ThrowException) {
@@ -219,7 +220,9 @@ namespace UnifierTSL.PluginHost.Configs
 
             using (FileLockManager.Enter(filePath)) {
                 try {
-                    await File.WriteAllTextAsync(filePath, text, cancellationToken);
+                    await monitor.InternalModifyAsync(
+                        async () => await File.WriteAllTextAsync(filePath, text, cancellationToken)
+                    );
                 }
                 catch (Exception ex) {
                     if (Option.SeriFailureHandling is SerializationFailureHandling.ThrowException) {

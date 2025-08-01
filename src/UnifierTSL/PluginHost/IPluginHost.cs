@@ -8,8 +8,7 @@ using UnifierTSL.PluginService;
 
 namespace UnifierTSL.PluginHost
 {
-    public interface IPluginHost : ILoggerHost { 
-        public string Key { get; }
+    public interface IPluginHost : IKeySelector<string>, ILoggerHost { 
         IReadOnlyList<IPluginContainer> Plugins { get; }
         IPluginDiscoverer PluginDiscoverer { get; }
         IPluginLoader PluginLoader { get; }

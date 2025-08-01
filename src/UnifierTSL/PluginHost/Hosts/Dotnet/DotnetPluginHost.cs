@@ -15,7 +15,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
         public RoleLogger Logger { get; init; }
 
         public string Name => "UTSL-PluginHost";
-        public string Key => "DotnetPluginHost";
+        public string Key => "dotnet";
         public string? CurrentLogCategory => null;
 
         IReadOnlyList<IPluginContainer> IPluginHost.Plugins => Plugins;

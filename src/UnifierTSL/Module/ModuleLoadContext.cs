@@ -61,7 +61,7 @@ namespace UnifierTSL.Module
             var matchFile = Path.Combine(moduleDir, assemblyName.Name + ".dll");
 
             if (File.Exists(matchFile)) {
-                return LoadFromModuleContext(assemblyName, matchFile);
+                return LoadFromModuleContext(assemblyName, new FileInfo(matchFile).FullName);
             }
 
             if (utslCoreLibPath is not null) {

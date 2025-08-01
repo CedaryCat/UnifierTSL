@@ -27,7 +27,6 @@ namespace UnifierTSL.PluginHost.ConfigFormats
 
                 throw new Exception($"TOML parsing errors: \r\n{string.Join("\r\n\r\n", errors)}");
             }
-
             return doc.ToModel<TConfig>();
         }
     }
