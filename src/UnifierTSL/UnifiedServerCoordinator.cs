@@ -29,6 +29,7 @@ namespace UnifierTSL
                 client.ClientUUID = RecievedUUID = null;
                 client.Name = player.name = string.Empty;
 
+                totalData = 0;
                 client.Data.Clear();
                 client.TimeOutTimer = 0;
                 client.StatusCount = 0;
@@ -156,7 +157,7 @@ namespace UnifierTSL
                                     sender.Kick(Lang.mp[4].ToNetworkText());
                                     break;
                                 }
-                                if (string.IsNullOrEmpty(ServerPassword)) {
+                                if (!string.IsNullOrEmpty(ServerPassword)) {
                                     client.State = -1;
                                     sender.SendFixedPacket(new RequestPassword());
                                     break;
@@ -187,18 +188,23 @@ namespace UnifierTSL
                                 client.ClientUUID = RecievedUUID = msg.UUID;
                                 var joinServer = SwitchJoinServer?.Invoke(player, client);
                                 if (joinServer is null) {
-                                    sender.Kick(NetworkText.FromLiteral("Could not find a server to join."));
+                                    sender.Kick(NetworkText.FromLiteral("Unable to locate an available server to join."));
 
                                     Logger.Warning(
                                         category: "PendingConnection",
-                                        message: $"Could not find a server to join for '{player.name}' ({client.ClientUUID})");
+                                        message: $"No available server found for player '{player.name}' ({client.ClientUUID}); connection aborted.");
                                 }
                                 else {
                                     SetClientCurrentlyServer(Index, joinServer);
+                                    var playerData = player.CreateSyncPacket(Index);
+                                    joinServer.Main.player[Index].ApplySyncPlayerPacket(in playerData, false);
+                                    globalClients[Index].ResetSections(joinServer);
+
+                                    UnifierApi.UpdateTitle();
 
                                     Logger.Info(
                                         category: "PendingConnection",
-                                        message: $"Joined server '{joinServer.Name}' for '{player.name}' ({client.ClientUUID})");
+                                        message: $"Player '{player.name}' ({client.ClientUUID}) routed to server '{joinServer.Name}'.");
                                 }
 
                                 break;
@@ -267,6 +273,7 @@ namespace UnifierTSL
                     ReadBuffer = new byte[1024]
                 };
                 pendingConnects[i] = new(i);
+                clientSenders[i] = new(i);
             }
             for (int i = 0; i < globalMsgBuffers.Length; i++) {
                 globalMsgBuffers[i] = new MessageBuffer() {
@@ -325,7 +332,6 @@ namespace UnifierTSL
                     while (unreadLength >= 2) {
                         int packetLength = BitConverter.ToUInt16(buffer.readBuffer, readPosition);
                         if (unreadLength >= packetLength && packetLength != 0) {
-                            long position = buffer.reader.BaseStream.Position;
 
                             // buffer.GetData(server, readPosition + 2, packetLength - 2, out var _);
                             NetPacketRegister.ProcessBytes(server, buffer, readPosition + 2, packetLength - 2);
@@ -336,7 +342,6 @@ namespace UnifierTSL
                                 break;
                             }
 
-                            buffer.reader.BaseStream.Position = position + packetLength;
                             unreadLength -= packetLength;
                             readPosition += packetLength;
 

@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 using Microsoft.NET.HostModel.AppHost;
 
@@ -40,7 +41,9 @@ namespace UnifierTSL.Publisher
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                StandardErrorEncoding = Encoding.Default,
+                StandardOutputEncoding = Encoding.Default,
             }) ?? 
             throw new Exception("Failed to start dotnet build process.");
 

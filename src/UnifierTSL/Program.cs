@@ -11,7 +11,7 @@ namespace UnifierTSL
         }
 
         static void Run(string[] args) {
-            var version = new VersionHelper();
+            var version = UnifierApi.VersionHelper;
 
             Console.Title = "UnifierTSLauncher";
 
@@ -40,10 +40,7 @@ namespace UnifierTSL
 
             UnifiedServerCoordinator.Launch(UnifierApi.ListenPort, UnifierApi.ServerPassword);
 
-            Console.Title = $"UnifierTSL " +
-                            $"- {UnifiedServerCoordinator.GetActiveClientCount()}/{byte.MaxValue} " +
-                            $"@ {UnifiedServerCoordinator.ListeningEndpoint} " +
-                            $"USP for Terraria v{version.TerrariaVersion}";
+            UnifierApi.UpdateTitle();
 
             string currentServers = "";
             if (UnifiedServerCoordinator.Servers.Length > 0) {

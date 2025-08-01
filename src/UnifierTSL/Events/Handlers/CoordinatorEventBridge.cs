@@ -22,18 +22,18 @@ namespace UnifierTSL.Events.Handlers
     public class CoordinatorEventBridge
     {
         public CoordinatorEventBridge() {
-            UnifiedServerCoordinator.SwitchJoinServer += static (player, client) => {
+            UnifiedServerCoordinator.SwitchJoinServer += (player, client) => {
                 var eventData = new SwitchJoinServerEvent(player, client, UnifiedServerCoordinator.Servers);
                 SwitchJoinServer.Invoke(ref eventData);
                 return eventData.JoinServer;
             };
-            UnifiedServerCoordinator.CreateSocket += static (client) => {
+            UnifiedServerCoordinator.CreateSocket += (client) => {
                 var eventData = new CreateSocketEvent(client);
                 CreateSocket.Invoke(ref eventData);
                 return eventData.Socket ?? new TcpSocket(client);
             };
         }
-        public static readonly ValueEventNoCancelProvider<SwitchJoinServerEvent> SwitchJoinServer = new();
-        public static readonly ValueEventNoCancelProvider<CreateSocketEvent> CreateSocket = new();
+        public readonly ValueEventNoCancelProvider<SwitchJoinServerEvent> SwitchJoinServer = new();
+        public readonly ValueEventNoCancelProvider<CreateSocketEvent> CreateSocket = new();
     }
 }

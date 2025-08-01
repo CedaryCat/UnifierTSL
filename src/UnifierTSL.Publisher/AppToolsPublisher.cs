@@ -48,7 +48,9 @@ namespace UnifierTSL.Publisher
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    StandardErrorEncoding = Encoding.Default,
+                    StandardOutputEncoding = Encoding.Default,
                 };
 
                 using var process = new Process { StartInfo = startInfo };

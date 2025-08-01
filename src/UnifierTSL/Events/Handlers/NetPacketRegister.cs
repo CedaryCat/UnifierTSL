@@ -93,9 +93,19 @@ namespace UnifierTSL.Events.Handlers
         }
 
         #region PrecessPacket
+        static unsafe void OriginalProcess(ref readonly RecieveBytesInfo info) {
+            var msgBuffer = UnifiedServerCoordinator.globalMsgBuffers[info.RecieveFrom.ID];
+            int begin, length;
+            fixed (byte* ptr = msgBuffer.readBuffer) {
+                begin = (int)((byte*)info.rawDataBegin - ptr);
+                length = (int)((byte*)info.rawDataEnd - (byte*)info.rawDataBegin);
+            }
+            msgBuffer.GetData(info.LocalReciever.Server, begin, length, out _);
+        }
         static unsafe void PrecessPacket_F<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INonLengthAware, INonSideSpecific, INetPacket {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
+                OriginalProcess(in info);
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
@@ -109,6 +119,7 @@ namespace UnifierTSL.Events.Handlers
         static unsafe void PrecessPacket_FL<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INetPacket, ILengthAware, INonSideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
+                OriginalProcess(in info);
                 return;
             }
             var data = new RecievePacketEvent<TPacket>(in info);
@@ -122,6 +133,7 @@ namespace UnifierTSL.Events.Handlers
         static unsafe void PrecessPacket_FS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INetPacket, INonLengthAware, ISideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
+                OriginalProcess(in info);
                 return;
             }
             var data = new RecievePacketEvent<TPacket>(in info);
@@ -136,6 +148,7 @@ namespace UnifierTSL.Events.Handlers
         static unsafe void PrecessPacket_FLS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INetPacket, ILengthAware, ISideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
+                OriginalProcess(in info);
                 return;
             }
             var data = new RecievePacketEvent<TPacket>(in info);
@@ -150,6 +163,7 @@ namespace UnifierTSL.Events.Handlers
         static unsafe void PrecessPacket_D<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INonLengthAware, INonSideSpecific, INetPacket {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
+                OriginalProcess(in info);
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
@@ -163,6 +177,7 @@ namespace UnifierTSL.Events.Handlers
         static unsafe void PrecessPacket_DL<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, INonSideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
+                OriginalProcess(in info);
                 return;
             }
             var data = new RecievePacketEvent<TPacket>(in info);
@@ -176,6 +191,7 @@ namespace UnifierTSL.Events.Handlers
         static unsafe void PrecessPacket_DS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INetPacket, INonLengthAware, ISideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
+                OriginalProcess(in info);
                 return;
             }
             var data = new RecievePacketEvent<TPacket>(in info);
@@ -190,6 +206,7 @@ namespace UnifierTSL.Events.Handlers
         static unsafe void PrecessPacket_DLS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, ISideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
+                OriginalProcess(in info);
                 return;
             }
             var data = new RecievePacketEvent<TPacket>(in info);

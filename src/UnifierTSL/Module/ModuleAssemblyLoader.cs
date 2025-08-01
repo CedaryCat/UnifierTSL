@@ -47,7 +47,7 @@ namespace UnifierTSL.Module
             }
 
             using (var stream = File.OpenRead(dll)) {
-                if (!MetadataBlobHelpers.HasCustomAttribute(stream, nameof(ModuleDependenciesAttribute<>))) {
+                if (!MetadataBlobHelpers.HasCustomAttribute(stream, "UnifierTSL.Module.ModuleDependenciesAttribute`1")) {
                     return;
                 }
 

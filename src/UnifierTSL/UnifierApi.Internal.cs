@@ -1,4 +1,7 @@
-﻿using UnifierTSL.FileSystem;
+﻿using Terraria.Utilities;
+using UnifierTSL.Events.Core;
+using UnifierTSL.Events.Handlers;
+using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
 using UnifierTSL.PluginHost;
 using UnifierTSL.Servers;
@@ -8,7 +11,10 @@ namespace UnifierTSL
 {
     public static partial class UnifierApi
     {
-        public static Version TerrariaVersion { get; } = new(1, 4, 4, 9);
+        private static VersionHelper? version;
+        public static VersionHelper VersionHelper => version ??= new();
+
+        public static readonly UnifiedRandom rand = new();
 
         #region Events
         public static readonly EventHub EventHub = new();
@@ -60,6 +66,7 @@ namespace UnifierTSL
         }
         static void HandleCommandLine(string[] launcherArgs) {
             Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);
+            bool settedJoinServer = false;
             foreach (var arg in args) {
                 var firstValue = arg.Value[0];
                 switch (arg.Key) { 
@@ -79,6 +86,29 @@ namespace UnifierTSL
                     case "-addserver":
                     case "-server":
                         AutoStartServer(arg);
+                        break;
+                    case "-joinserver":
+                        if (settedJoinServer) {
+                            break;
+                        }
+                        static void JoinRandom(ref ValueEventNoCancelArgs<SwitchJoinServerEvent> arg) {
+                            if (arg.Content.Servers.Length > 0) {
+                                arg.Content.JoinServer = arg.Content.Servers[rand.Next(0, arg.Content.Servers.Length)];
+                            }
+                        }
+                        static void JoinFirst(ref ValueEventNoCancelArgs<SwitchJoinServerEvent> arg) {
+                            if (arg.Content.Servers.Length > 0) {
+                                arg.Content.JoinServer = arg.Content.Servers[0];
+                            }
+                        }
+                        if (firstValue is "random" or "rnd" or "r") {
+                            settedJoinServer = true;
+                            EventHub.Coordinator.SwitchJoinServer.Register(JoinRandom, HandlerPriority.Lowest);
+                        }
+                        else if (firstValue is "first" or "f") {
+                            settedJoinServer = true;
+                            EventHub.Coordinator.SwitchJoinServer.Register(JoinFirst, HandlerPriority.Lowest);
+                        }
                         break;
                 }
             }

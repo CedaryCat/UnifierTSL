@@ -9,7 +9,7 @@ namespace UnifierTSL
         public readonly string OTAPIVersion;
 
         public VersionHelper() {
-            var utsl = typeof(UnifierApi).Assembly;
+            var utsl = typeof(Program).Assembly;
             var otapi = typeof(Terraria.Main).Assembly;
 
 

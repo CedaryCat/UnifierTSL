@@ -45,12 +45,8 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
             // Segment 2: Main Message
             string[] lines = entry.Message.Split(separator, StringSplitOptions.RemoveEmptyEntries);
             string messageText = lines.Length == 1
-                ? $" {lines[0]}"
-                : $" {lines[0]}\n{FormatMultiline(lines.Skip(1))}";
-
-            if (entry.Exception is null) {
-                messageText = $"{messageText}\n";
-            }
+                ? $" {lines[0]}\r\n"
+                : $" {lines[0]}\r\n{FormatMultiline(lines.Skip(1))}\r\n";
 
             Unsafe.Add(ref buffer, written) = new(messageText.AsMemory(), fgLevel, bg);
             written++;
