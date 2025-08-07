@@ -7,6 +7,11 @@ namespace UnifierTSL
     public static class Utilities
     {
         public static class CLI {
+            /// <summary>
+            /// --key1 value1 --key2 value2
+            /// </summary>
+            /// <param name="args"></param>
+            /// <returns></returns>
             public static Dictionary<string, List<string>> ParseArguements(string[] args) {
                 string? key = null;
                 string value = "";
@@ -45,6 +50,12 @@ namespace UnifierTSL
 
                 return dictionary;
             }
+            /// <summary>
+            /// --key1 sub1:val1 sub2:val2 --key2 sub3:val3
+            /// </summary>
+            /// <param name="input"></param>
+            /// <param name="result"></param>
+            /// <returns></returns>
             public static bool TryParseSubArguements(string input, [NotNullWhen(true)] out Dictionary<string, string>? result) {
                 result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 var sb = new StringBuilder();

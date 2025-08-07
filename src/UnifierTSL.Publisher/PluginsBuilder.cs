@@ -6,7 +6,7 @@ namespace UnifierTSL.Publisher
 {
     public class PluginsBuilder(string RelativePluginProjectDir)
     {
-        public async Task<ImmutableArray<string>> BuildPlugins() {
+        public ImmutableArray<string> BuildPlugins() {
             var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
                 // target framework folder
                 .Parent! // configuration (Debug or Release) folder
@@ -23,9 +23,9 @@ namespace UnifierTSL.Publisher
                 .SelectMany(d => d.GetFiles("*.csproj"))
                 .ToList();
 
-            return await Build(solutionDir, projects);
+            return Build(solutionDir, projects);
         }
-        public async Task<ImmutableArray<string>> BuildPlugins(params IReadOnlyList<string> specifiedProjectNames) {
+        public ImmutableArray<string> BuildPlugins(params IReadOnlyList<string> excludedProjectNames) {
             var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
                 // target framework folder
                 .Parent! // configuration (Debug or Release) folder
@@ -34,7 +34,7 @@ namespace UnifierTSL.Publisher
                 .Parent! // target framework folder
                 .FullName;
 
-            var specified = specifiedProjectNames.ToHashSet();
+            var excluded = new HashSet<string>(excludedProjectNames, StringComparer.OrdinalIgnoreCase);
             var pluginDir = Path.Combine(solutionDir, RelativePluginProjectDir);
             var pluginDirInfo = new DirectoryInfo(pluginDir);
 
@@ -42,20 +42,20 @@ namespace UnifierTSL.Publisher
 
             foreach (var project in pluginDirInfo.GetDirectories().SelectMany(d => d.GetFiles("*.csproj"))) {
                 var name = Path.GetFileNameWithoutExtension(project.Name);
-                if (!specified.Contains(name)) {
+                if (excluded.Contains(name)) {
                     continue;
                 }
                 projects.Add(project);
             }
 
-            return await Build(solutionDir, projects);
+            return Build(solutionDir, projects);
         }
 
-        static async Task<ImmutableArray<string>> Build(string solutionDir, List<FileInfo> projects) {
+        static ImmutableArray<string> Build(string solutionDir, List<FileInfo> projects) {
             string[] files = new string[projects.Count * 2]; // dll and pdb
 
-            await Task.WhenAll(projects.Select(async (project, i) => {
-
+            for (int i = 0; i < projects.Count; i++) {
+                var project = projects[i];
                 var relativePath = Path.GetRelativePath(solutionDir, project.FullName);
                 var projectName = Path.GetFileNameWithoutExtension(project.Name);
                 var outputDir = Path.Combine("plugins-publish", projectName);
@@ -82,10 +82,10 @@ namespace UnifierTSL.Publisher
                 Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
                 Task<string> errorTask = process.StandardError.ReadToEndAsync();
 
-                await process.WaitForExitAsync();
+                process.WaitForExit();
 
-                string output = await outputTask;
-                string error = await errorTask;
+                string output = outputTask.GetAwaiter().GetResult();
+                string error = errorTask.GetAwaiter().GetResult();
 
                 if (process.ExitCode != 0) {
                     throw new InvalidOperationException(
@@ -94,7 +94,7 @@ namespace UnifierTSL.Publisher
 
                 files[i * 2] = Path.Combine(outputDir, projectName + ".dll");
                 files[i * 2 + 1] = Path.Combine(outputDir, projectName + ".pdb");
-            }));
+            }
 
             return [.. files];
         }

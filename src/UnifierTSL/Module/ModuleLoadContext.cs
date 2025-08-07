@@ -58,7 +58,7 @@ namespace UnifierTSL.Module
             }
 
             var moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
-            var matchFile = Path.Combine(moduleDir, assemblyName.Name + ".dll");
+            var matchFile = Path.Combine(moduleDir, "lib", assemblyName.Name + ".dll");
 
             if (File.Exists(matchFile)) {
                 return LoadFromModuleContext(assemblyName, new FileInfo(matchFile).FullName);

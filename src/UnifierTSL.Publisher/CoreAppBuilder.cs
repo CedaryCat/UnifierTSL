@@ -1,9 +1,10 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.NET.HostModel.AppHost;
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using Microsoft.NET.HostModel.AppHost;
 
 namespace UnifierTSL.Publisher
 {
@@ -15,7 +16,7 @@ namespace UnifierTSL.Publisher
         /// using Microsoft.NET.HostModel.
         /// </summary>
         /// <returns>Result containing paths to the packaged executable and dependencies.</returns>
-        public async Task<CoreAppBuilderResult> Build() {
+        public CoreAppBuilderResult Build() {
             var targetFrameworkDir = new DirectoryInfo(Directory.GetCurrentDirectory());
             var solutionDir = targetFrameworkDir
                 .Parent! // configuration (Debug/Release)
@@ -47,9 +48,12 @@ namespace UnifierTSL.Publisher
             }) ?? 
             throw new Exception("Failed to start dotnet build process.");
 
-            await buildProcess.WaitForExitAsync();
+            Task<string> outputTask = buildProcess.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = buildProcess.StandardError.ReadToEndAsync();
+            buildProcess.WaitForExit();
+            var output = outputTask.GetAwaiter().GetResult();
+            var error = errorTask.GetAwaiter().GetResult();
             if (buildProcess.ExitCode != 0) {
-                var error = await buildProcess.StandardError.ReadToEndAsync();
                 throw new Exception($"Build failed: {error}");
             }
 
@@ -75,12 +79,13 @@ namespace UnifierTSL.Publisher
             HostWriter.CreateAppHost(
                 appHostSourceFilePath: appHostTemplate,
                 appHostDestinationFilePath: outputExe,
-                appBinaryFilePath: Path.Combine("libs", $"{projectName}.dll"),
+                appBinaryFilePath: Path.Combine("lib", $"{projectName}.dll"),
                 windowsGraphicalUserInterface: false);
 
             return new CoreAppBuilderResult(
                 OutputExecutable: outputExe,
                 PdbFile: pdbPath,
+                RuntimesPath: Path.Combine(buildDir, "runtimes"),
                 OtherDependencyDlls: [..dependencies, ..dependenciesPdb, runtimeConfigPath, depsJsonPath]
             );
         }
@@ -89,6 +94,7 @@ namespace UnifierTSL.Publisher
     public record CoreAppBuilderResult(
         string OutputExecutable,
         string PdbFile,
+        string RuntimesPath,
         string[] OtherDependencyDlls
     );
 }

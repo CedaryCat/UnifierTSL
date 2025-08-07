@@ -69,7 +69,7 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
                         sb.AppendLine($" │   {exceptionLines[i]}");
                 }
 
-                Unsafe.Add(ref buffer, written) = new(sb.ToString().AsMemory(), ConsoleColor.Red, ConsoleColor.DarkGray);
+                Unsafe.Add(ref buffer, written) = new(sb.ToString().AsMemory(), ConsoleColor.Red, ConsoleColor.White);
                 written++;
             }
         }

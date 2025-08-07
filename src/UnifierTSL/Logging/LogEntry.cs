@@ -19,7 +19,7 @@ namespace UnifierTSL.Logging
         Error = 5,
         Critical = 6
     }
-    public readonly ref partial struct LogEntry
+    public ref partial struct LogEntry
     {
         public DateTimeOffset TimestampUtc { get; init; }
         public LogLevel Level { get; init; }
@@ -36,12 +36,13 @@ namespace UnifierTSL.Logging
 
         public readonly ref readonly TraceContext TraceContext;
 
-        private readonly MetadataCollection metadata;
+        private MetadataCollection metadata;
     }
-    public readonly ref partial struct LogEntry
+    public ref partial struct LogEntry
     {
-        public bool HasTraceContext => !Unsafe.IsNullRef(in TraceContext);
-        public readonly void SetMetadata(string key, string value) {
+        public readonly bool HasTraceContext => !Unsafe.IsNullRef(in TraceContext);
+        public void SetMetadata(string key, string value) {
+            ref var metadata = ref this.metadata;
             metadata.Set(key, value);
         }
         public readonly string? GetMetadata(string key) {

@@ -1,23 +1,24 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using NuGet.Versioning;
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using UnifierTSL.Logging;
 
 namespace UnifierTSL.Module.Dependencies
 {
     public class NativeEmbeddedDependency : ModuleDependency
     {
         private readonly Assembly plugin;
-        private readonly Version version;
+        private readonly NuGetVersion version;
         private readonly string libraryName;
         private readonly string embeddedPath;
         private readonly string rid;
         private readonly string fileNameWithExt;
         public override string Name => libraryName;
-        public override Version Version => version;
-        public override DependencyKind Kind => DependencyKind.NativeLibrary;
-        public override string ExpectedPath => Path.Combine("runtimes", rid, "native", $"{fileNameWithExt}");
+        public override NuGetVersion Version => version;
         public override IDependencyLibraryExtractor LibraryExtractor { get; }
-        public NativeEmbeddedDependency(Assembly plugin, string libraryName, Version libraryVersion) {
+        public NativeEmbeddedDependency(Assembly plugin, string libraryName, NuGetVersion libraryVersion) {
             this.libraryName = libraryName;
             this.plugin = plugin;
             version = libraryVersion;
@@ -38,7 +39,7 @@ namespace UnifierTSL.Module.Dependencies
                 throw new Exception($"Unable to find native library '{libraryName}' for RID '{currentRid}' in embedded resources.");
             }
 
-            LibraryExtractor = new EmbeddedLibraryResolver(plugin, libraryVersion, libraryName, embeddedPath);
+            LibraryExtractor = new EmbeddedLibraryResolver(plugin, libraryVersion, rid, fileNameWithExt, libraryName, embeddedPath);
         }
         static bool TryExtractNativeLibrary(Assembly plugin, string libraryName, string rid,
             [NotNullWhen(true)] out string? fileNameWithExt,
@@ -57,12 +58,18 @@ namespace UnifierTSL.Module.Dependencies
             return true;
         }
 
-        class EmbeddedLibraryResolver(Assembly plugin, Version version, string libraryName, string embeddedPath) : IDependencyLibraryExtractor
+        class EmbeddedLibraryResolver(Assembly plugin, NuGetVersion version, string rid, string fileNameWithExt, string libraryName, string embeddedPath) : IDependencyLibraryExtractor
         {
-            public string LibraryName => libraryName;
-            public Version Version => version;
-            public Stream Extract() {
-                return plugin.GetManifestResourceStream(embeddedPath)!;
+            public ImmutableArray<LibraryEntry> Extract(RoleLogger logger) {
+                return [
+                    new LibraryEntry(
+                        new(() => plugin.GetManifestResourceStream(embeddedPath)!),
+                        DependencyKind.NativeLibrary,
+                        Path.Combine("runtimes", rid, "native", $"{fileNameWithExt}"),
+                        version,
+                        libraryName
+                    )
+                ];
             }
         }
     }

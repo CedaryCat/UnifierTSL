@@ -1,9 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace UnifierTSL.CLI
+namespace UnifierTSL.Extensions
 {
-
-    public static class ConsoleColorHelper
+    public static class ColorExt
     {
         private static readonly Dictionary<ConsoleColor, Color> _consoleColorMap = new Dictionary<ConsoleColor, Color> {
             [ConsoleColor.Black] = new Color(0, 0, 0),

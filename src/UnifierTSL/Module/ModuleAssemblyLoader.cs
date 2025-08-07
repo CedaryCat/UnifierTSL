@@ -1,6 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using Mono.Cecil;
+using NuGet.Versioning;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
@@ -50,20 +53,33 @@ namespace UnifierTSL.Module
                 if (!MetadataBlobHelpers.HasCustomAttribute(stream, "UnifierTSL.Module.ModuleDependenciesAttribute`1")) {
                     return;
                 }
-
-                var name = Path.GetFileNameWithoutExtension(dll);
-                var moduleDir = Path.Combine(loadDirectory, name);
-                Directory.CreateDirectory(moduleDir);
-
-                using var moved = File.Create(newLocation = Path.Combine(moduleDir, name + ".dll"));
-                stream.CopyTo(moved);
             }
-
+            var name = Path.GetFileNameWithoutExtension(dll);
+            var moduleDir = Path.Combine(loadDirectory, name);
+            Directory.CreateDirectory(moduleDir);
+            using (var stream = File.OpenRead(dll)) {
+                using (var moved = File.OpenWrite(newLocation = Path.Combine(moduleDir, name + ".dll"))) {
+                    stream.CopyTo(moved);
+                }
+            }
             File.SetCreationTime(newLocation, File.GetCreationTime(dll));
             File.SetLastWriteTime(newLocation, File.GetLastWriteTime(dll));
             File.SetLastAccessTime(newLocation, File.GetLastAccessTime(dll));
-
             File.Delete(dll);
+
+            var pdb = Path.ChangeExtension(dll, ".pdb");
+            if (File.Exists(pdb)) {
+                var newPdb = Path.ChangeExtension(newLocation, ".pdb");
+                using (var stream = File.OpenRead(pdb)) {
+                    using (var moved = File.OpenWrite(newPdb)) {
+                        stream.CopyTo(moved);
+                    }
+                }
+                File.SetCreationTime(newPdb, File.GetCreationTime(pdb));
+                File.SetLastWriteTime(newPdb, File.GetLastWriteTime(pdb));
+                File.SetLastAccessTime(newPdb, File.GetLastAccessTime(pdb));
+                File.Delete(pdb);
+            }
         }
         private ImmutableArray<string> GetModulesPaths() {
             List<string> modules = [];
@@ -119,6 +135,7 @@ namespace UnifierTSL.Module
                 }
 
                 var context = CreateLoadContext(dll);
+                context.Resolving += OnResolving;
                 var asm = context.LoadFromAssemblyPath(fullPath);
                 var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
                 var dependenciesProvider = dependencyAttr?.DependenciesProvider;
@@ -141,6 +158,15 @@ namespace UnifierTSL.Module
 
             outdated = [.. outdatedModules];
             return [.. modules];
+        }
+
+        private Assembly? OnResolving(AssemblyLoadContext context, AssemblyName name) {
+            foreach (var module in moduleCache.Values) {
+                if (module.Assembly.GetName().Name == name.Name) {
+                    return module.Assembly;
+                }
+            }
+            return null;
         }
 
         private AssemblyLoadContext CreateLoadContext(string filePath) {
@@ -201,37 +227,38 @@ namespace UnifierTSL.Module
             return JsonSerializer.Deserialize<DependenciesConfiguration>(File.ReadAllText(configPath))!;
         }
         void NormalizeDependenicesConfig(DependenciesConfiguration configuration, string pluginDirectory) {
-            foreach (var pair in configuration.Dependencies.ToArray()) {
-                var relativeFilePath = pair.Key;
-                var dependency = pair.Value;
+            foreach (var depEntry in configuration.Dependencies.Values.ToArray()) {
 
-                if (!File.Exists(Path.Combine(pluginDirectory, relativeFilePath))) {
-                    configuration.Dependencies.Remove(relativeFilePath);
-                    Logger.Debug(
-                        category: "ConfNormalize",
-                        message: "The dependencies file does not exist in the bin pluginDirInfo, removing from the configuration.");
-                }
-
-                if (!dependency.IsNativeLibrary) {
-                    string? name;
-                    Version? version;
-                    using (var stream = File.OpenRead(Path.Combine(pluginDirectory, relativeFilePath))) {
-                        // Try to read the assembly's identity (name and version) from the file.
-                        if (!MetadataBlobHelpers.TryReadAssemblyIdentity(stream, out name, out version)) {
-                            continue;
-                        }
-                    }
-
-                    // If the assembly name in the file does not match the expected dependencies name,
-                    // it likely means the file has been modified in a breaking way,
-                    // and any original dependent plugins can no longer reliably depend on it.
-                    if (dependency.Name != name) {
-                        configuration.Dependencies.Remove(relativeFilePath);
-                        Logger.Warning(
+                foreach (var item in depEntry.Manifests) {
+                    if (!File.Exists(Path.Combine(pluginDirectory, item.FilePath))) {
+                        configuration.Dependencies.Remove(depEntry.Name);
+                        Logger.Debug(
                             category: "ConfNormalize",
-                            message: $"The assembly name ({name}) in the file does not match the expected dependencies name ({dependency.Name}).");
+                            message: "The dependencies file missing, removing from the recorded configuration for update.");
+                        break;
                     }
                 }
+
+                //if (!dependency.IsNativeLibrary) {
+                //    string? name;
+                //    Version? version;
+                //    using (var stream = File.OpenRead(Path.Combine(pluginDirectory, relativeFilePath))) {
+                //        // Try to read the assembly's identity (name and version) from the file.
+                //        if (!MetadataBlobHelpers.TryReadAssemblyIdentity(stream, out name, out version)) {
+                //            continue;
+                //        }
+                //    }
+
+                //    // If the assembly name in the file does not match the expected dependencies name,
+                //    // it likely means the file has been modified in a breaking way,
+                //    // and any original dependent plugins can no longer reliably depend on it.
+                //    if (dependency.Name != name) {
+                //        configuration.Dependencies.Remove(relativeFilePath);
+                //        Logger.Warning(
+                //            category: "ConfNormalize",
+                //            message: $"The assembly name ({name}) in the file does not match the expected dependencies name ({dependency.Name}).");
+                //    }
+                //}
             }
         }
         /// <summary>
@@ -346,11 +373,11 @@ namespace UnifierTSL.Module
             };
 
             try {
+                Dictionary<string, LibraryEntry> highestVersion = new Dictionary<string, LibraryEntry>();
                 foreach (var dependency in dependencies) {
-                    var relativeDepPath = dependency.ExpectedPath;
                     bool update = false;
 
-                    if (!prevConfig.Dependencies.TryGetValue(relativeDepPath, out var existingDependency)) {
+                    if (!prevConfig.Dependencies.TryGetValue(dependency.Name, out var existingDependency)) {
                         update = true;
                     }
                     else if (dependency.Name != existingDependency.Name) {
@@ -361,16 +388,32 @@ namespace UnifierTSL.Module
                     }
 
                     if (update) {
-                        using var source = dependency.LibraryExtractor.Extract();
-                        using var destination = Utilities.IO.SafeFileCreate(Path.Combine(pluginDir, relativeDepPath));
-                        source.CopyTo(destination);
-                    }
+                        var items = dependency.LibraryExtractor.Extract(Logger);
 
-                    currentConfig.Dependencies[relativeDepPath] = new DependencyConfEntry {
-                        Name = dependency.Name,
-                        IsNativeLibrary = dependency.Kind is DependencyKind.NativeLibrary,
-                        Version = dependency.Version,
-                    };
+                        foreach (var item in items) {
+                            if (!highestVersion.TryAdd(item.FilePath, item)) {
+                                if (highestVersion[item.FilePath].Version < item.Version) {
+                                    highestVersion[item.FilePath] = item;
+                                }
+                            }
+                        }
+
+                        currentConfig.Dependencies[dependency.Name] = new DependencyConfEntry {
+                            Name = dependency.Name,
+                            Version = dependency.Version,
+                            Manifests = [.. items.Select(x => new DependencyItem(x.FilePath, x.Version))]
+                        };
+                    }
+                    else {
+                        currentConfig.Dependencies[dependency.Name] = prevConfig.Dependencies[dependency.Name];
+                    }
+                }
+
+                foreach (var pair in highestVersion) {
+                    var relativeDepPath = pair.Key;
+                    using var source = pair.Value.Stream.Value;
+                    using var destination = Utilities.IO.SafeFileCreate(Path.Combine(pluginDir, relativeDepPath));
+                    source.CopyTo(destination);
                 }
             }
             catch (Exception ex) {

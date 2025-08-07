@@ -14,9 +14,9 @@ namespace UnifierTSL
             return new RoleLogger(host, overrideLogger ?? LogCore);
         }
 
-        public static void UpdateTitle() {
+        public static void UpdateTitle(bool empty = false) {
             Console.Title = $"UnifierTSL " +
-                            $"- {UnifiedServerCoordinator.GetActiveClientCount()}/{byte.MaxValue} " +
+                            $"- {(empty ? 0 : UnifiedServerCoordinator.GetActiveClientCount())}/{byte.MaxValue} " +
                             $"@ {UnifiedServerCoordinator.ListeningEndpoint} " +
                             $"USP for Terraria v{VersionHelper.TerrariaVersion}";
         }

@@ -2,13 +2,13 @@
 using System.Runtime.CompilerServices;
 using TrProtocol;
 using TrProtocol.Interfaces;
-using UnifiedServerProcess;
+using UnifierTSL.Servers;
 
 namespace UnifierTSL.Network
 {
-    public class ClientPacketReciever(RootContext server)
+    public class ClientPacketReciever(ServerContext server)
     {
-        public readonly RootContext Server = server;
+        public readonly ServerContext Server = server;
         private unsafe void AsRecieveFromSenderInner<TNetPacket>(LocalClientSender sender, scoped in TNetPacket packet, int bufferSize) where TNetPacket : struct, INetPacket {
             var buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
 

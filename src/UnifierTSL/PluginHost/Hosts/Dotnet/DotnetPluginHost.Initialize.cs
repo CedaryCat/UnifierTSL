@@ -42,10 +42,10 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 				var current = (PluginContainer)sortedPlugins[i];
 
 				// Extract the initialization information of the preceding plugins (in order)
-				var prior = initInfos.AsMemory()[..i]; // Snapshot for ReadOnlyMemory
+				var prior = initInfos[..i]; // Snapshot for ReadOnlyMemory
 
 				// Call InitializeAsync
-				var task = InitializePlugin(logger, current, prior, token);
+				var task = InitializePlugin(logger, current, [.. prior], token);
 
 				// Save Task and Plugins information
 				initTasks[current] = task;
@@ -65,7 +65,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 			}
 		}
 
-		static async Task InitializePlugin(RoleLogger logger, PluginContainer container, ReadOnlyMemory<PluginInitInfo> prior, CancellationToken token) {
+		static async Task InitializePlugin(RoleLogger logger, PluginContainer container, ImmutableArray<PluginInitInfo> prior, CancellationToken token) {
 			if (container.Status is PluginStatus.Disabled) {
 				logger.InfoWithMetadata(
 					category: "Init",

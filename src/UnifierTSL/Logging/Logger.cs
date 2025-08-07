@@ -41,7 +41,7 @@ namespace UnifierTSL.Logging
 
         public void AddMetadataInjector(ILogMetadataInjector injector) {
             ArgumentNullException.ThrowIfNull(injector);
-            ImmutableInterlocked.Update(ref _injectors, arr => arr.Add(injector));
+            ImmutableInterlocked.Update(ref _injectors, arr => arr.Contains(injector) ? arr : arr.Add(injector));
         }
 
         public void RemoveMetadataInjector(ILogMetadataInjector injector) {
@@ -49,13 +49,13 @@ namespace UnifierTSL.Logging
             ImmutableInterlocked.Update(ref _injectors, arr => arr.Remove(injector));
         }
 
-        public void Log(in LogEntry entry) {
+        public void Log(ref LogEntry entry) {
             var injectors = _injectors.AsSpan();
             var injectorCount = injectors.Length;
             if (injectorCount > 0) {
                 ref var element0 = ref MemoryMarshal.GetReference(injectors);
                 for (int i = 0; i < injectorCount; i++) {
-                    Unsafe.Add(ref element0, i).InjectMetadata(in entry);
+                    Unsafe.Add(ref element0, i).InjectMetadata(ref entry);
                 }
             }
 

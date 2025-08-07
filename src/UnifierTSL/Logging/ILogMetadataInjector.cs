@@ -8,6 +8,6 @@ namespace UnifierTSL.Logging
 {
     public interface ILogMetadataInjector
     {
-        void InjectMetadata(scoped in LogEntry entry);
+        void InjectMetadata(scoped ref LogEntry entry);
     }
 }

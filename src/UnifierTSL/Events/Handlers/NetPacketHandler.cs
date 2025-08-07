@@ -7,7 +7,6 @@ using TrProtocol.Models;
 using TrProtocol.NetPackets;
 using TrProtocol.NetPackets.Mobile;
 using TrProtocol.NetPackets.Modules;
-using UnifiedServerProcess;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Network;
 using UnifierTSL.Servers;
@@ -20,14 +19,15 @@ namespace UnifierTSL.Events.Handlers
         Overwrite = 2
     }
     public delegate void PacketProcessedDelegate<TPacket>(in RecievePacketEvent<TPacket> args, PacketHandleMode handleMode) where TPacket : struct, INetPacket;
-    public readonly unsafe struct RecieveBytesInfo(LocalClientSender sender, ClientPacketReciever reciever, void* ptr, void* ptr_end)
+    public readonly unsafe struct RecieveBytesInfo(LocalClientSender sender, ClientPacketReciever reciever, void* ptr, void* ptr_end) : IEventContent
     {
         public readonly LocalClientSender RecieveFrom = sender;
         public readonly ClientPacketReciever LocalReciever = reciever;
         public readonly void* rawDataBegin = ptr;
         public readonly void* rawDataEnd = ptr_end;
+        public readonly ReadOnlySpan<byte> RawData => new(rawDataBegin, (int)((byte*)rawDataEnd - (byte*)rawDataBegin));
     }
-    public unsafe ref struct RecievePacketEvent<TPacket>(ref readonly RecieveBytesInfo info) : IEventContent where TPacket : struct, INetPacket
+    public unsafe ref struct RecievePacketEvent<TPacket>(ref readonly RecieveBytesInfo info) : IPlayerEventContent where TPacket : struct, INetPacket
     {
         public readonly LocalClientSender RecieveFrom = info.RecieveFrom;
         public readonly ClientPacketReciever LocalReciever = info.LocalReciever;
@@ -38,11 +38,13 @@ namespace UnifierTSL.Events.Handlers
         public PacketHandleMode HandleMode;
         public bool StopMovementUp;
         public PacketProcessedDelegate<TPacket>? PacketProcessed;
+        public readonly int Who => RecieveFrom.ID;
     }
 
     public delegate void RecievePacket<TPacket>(ref RecievePacketEvent<TPacket> args) where TPacket : struct, INetPacket;
-    public static class NetPacketRegister
+    public static class NetPacketHandler
     {
+        public static ReadonlyEventProvider<RecieveBytesInfo> RecievePacketEvent = new();
         readonly struct PriorityItem<TPacket>(RecievePacket<TPacket> handler, HandlerPriority priority, FilterEventOption option) : IPriorityHandler where TPacket : struct, INetPacket
         {
             public readonly RecievePacket<TPacket> Handler = handler;
@@ -109,7 +111,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = args.rawDataBegin;
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
             args.Packet.ReadContent(ref ptr);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
                 args.LocalReciever.AsRecieveFromSender_FixedPkt(args.RecieveFrom, args.Packet);
@@ -122,12 +124,12 @@ namespace UnifierTSL.Events.Handlers
                 OriginalProcess(in info);
                 return;
             }
-            var data = new RecievePacketEvent<TPacket>(in info);
-            var ptr = data.rawDataBegin;
-            data.Packet.ReadContent(ref ptr, data.rawDataEnd);
-            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref data) is PacketHandleMode.Overwrite) {
-                data.LocalReciever.AsRecieveFromSender_FixedPkt(data.RecieveFrom, data.Packet);
-                data.PacketProcessed?.Invoke(data, PacketHandleMode.Overwrite);
+            var args = new RecievePacketEvent<TPacket>(in info);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            args.Packet.ReadContent(ref ptr, args.rawDataEnd);
+            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
+                args.LocalReciever.AsRecieveFromSender_FixedPkt(args.RecieveFrom, args.Packet);
+                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
         static unsafe void PrecessPacket_FS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INetPacket, INonLengthAware, ISideSpecific {
@@ -136,13 +138,13 @@ namespace UnifierTSL.Events.Handlers
                 OriginalProcess(in info);
                 return;
             }
-            var data = new RecievePacketEvent<TPacket>(in info);
-            var ptr = data.rawDataBegin;
-            data.Packet.IsServerSide = true;
-            data.Packet.ReadContent(ref ptr);
-            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref data) is PacketHandleMode.Overwrite) {
-                data.LocalReciever.AsRecieveFromSender_FixedPkt_S(data.RecieveFrom, data.Packet);
-                data.PacketProcessed?.Invoke(data, PacketHandleMode.Overwrite);
+            var args = new RecievePacketEvent<TPacket>(in info);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            args.Packet.IsServerSide = true;
+            args.Packet.ReadContent(ref ptr);
+            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
+                args.LocalReciever.AsRecieveFromSender_FixedPkt_S(args.RecieveFrom, args.Packet);
+                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
         static unsafe void PrecessPacket_FLS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INetPacket, ILengthAware, ISideSpecific {
@@ -151,13 +153,13 @@ namespace UnifierTSL.Events.Handlers
                 OriginalProcess(in info);
                 return;
             }
-            var data = new RecievePacketEvent<TPacket>(in info);
-            var ptr = data.rawDataBegin;
-            data.Packet.IsServerSide = true;
-            data.Packet.ReadContent(ref ptr, data.rawDataEnd);
-            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref data) is PacketHandleMode.Overwrite) {
-                data.LocalReciever.AsRecieveFromSender_FixedPkt_S(data.RecieveFrom, data.Packet);
-                data.PacketProcessed?.Invoke(data, PacketHandleMode.Overwrite);
+            var args = new RecievePacketEvent<TPacket>(in info);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            args.Packet.IsServerSide = true;
+            args.Packet.ReadContent(ref ptr, args.rawDataEnd);
+            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
+                args.LocalReciever.AsRecieveFromSender_FixedPkt_S(args.RecieveFrom, args.Packet);
+                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
         static unsafe void PrecessPacket_D<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INonLengthAware, INonSideSpecific, INetPacket {
@@ -167,7 +169,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = args.rawDataBegin;
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
             args.Packet.ReadContent(ref ptr);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
                 args.LocalReciever.AsRecieveFromSender_DynamicPkt(args.RecieveFrom, args.Packet);
@@ -180,12 +182,12 @@ namespace UnifierTSL.Events.Handlers
                 OriginalProcess(in info);
                 return;
             }
-            var data = new RecievePacketEvent<TPacket>(in info);
-            var ptr = data.rawDataBegin;
-            data.Packet.ReadContent(ref ptr, data.rawDataEnd);
-            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref data) is PacketHandleMode.Overwrite) {
-                data.LocalReciever.AsRecieveFromSender_DynamicPkt(data.RecieveFrom, data.Packet);
-                data.PacketProcessed?.Invoke(data, PacketHandleMode.Overwrite);
+            var args = new RecievePacketEvent<TPacket>(in info);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            args.Packet.ReadContent(ref ptr, args.rawDataEnd);
+            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
+                args.LocalReciever.AsRecieveFromSender_DynamicPkt(args.RecieveFrom, args.Packet);
+                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
         static unsafe void PrecessPacket_DS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INetPacket, INonLengthAware, ISideSpecific {
@@ -194,13 +196,13 @@ namespace UnifierTSL.Events.Handlers
                 OriginalProcess(in info);
                 return;
             }
-            var data = new RecievePacketEvent<TPacket>(in info);
-            var ptr = data.rawDataBegin;
-            data.Packet.IsServerSide = true;
-            data.Packet.ReadContent(ref ptr);
-            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref data) is PacketHandleMode.Overwrite) {
-                data.LocalReciever.AsRecieveFromSender_DynamicPkt_S(data.RecieveFrom, data.Packet);
-                data.PacketProcessed?.Invoke(data, PacketHandleMode.Overwrite);
+            var args = new RecievePacketEvent<TPacket>(in info);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            args.Packet.IsServerSide = true;
+            args.Packet.ReadContent(ref ptr);
+            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
+                args.LocalReciever.AsRecieveFromSender_DynamicPkt_S(args.RecieveFrom, args.Packet);
+                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
         static unsafe void PrecessPacket_DLS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, ISideSpecific {
@@ -209,19 +211,19 @@ namespace UnifierTSL.Events.Handlers
                 OriginalProcess(in info);
                 return;
             }
-            var data = new RecievePacketEvent<TPacket>(in info);
-            var ptr = data.rawDataBegin;
-            data.Packet.IsServerSide = true;
-            data.Packet.ReadContent(ref ptr, data.rawDataEnd);
-            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref data) is PacketHandleMode.Overwrite) {
-                data.LocalReciever.AsRecieveFromSender_DynamicPkt_S(data.RecieveFrom, data.Packet);
-                data.PacketProcessed?.Invoke(data, PacketHandleMode.Overwrite);
+            var args = new RecievePacketEvent<TPacket>(in info);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            args.Packet.IsServerSide = true;
+            args.Packet.ReadContent(ref ptr, args.rawDataEnd);
+            if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
+                args.LocalReciever.AsRecieveFromSender_DynamicPkt_S(args.RecieveFrom, args.Packet);
+                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
         #endregion
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static void ProcessBytes(RootContext root, MessageBuffer buffer, int contentStart, int contentLength) {
+        public unsafe static void ProcessBytes(ServerContext root, MessageBuffer buffer, int contentStart, int contentLength) {
             fixed (void* ptr = buffer.readBuffer) {
                 PrecessBytes(
                     UnifiedServerCoordinator.clientSenders[buffer.whoAmI],
@@ -233,6 +235,10 @@ namespace UnifierTSL.Events.Handlers
         static unsafe void PrecessBytes(LocalClientSender sender, ClientPacketReciever reciever, void* ptr, void* ptr_end) {
             var id = (MessageID)Unsafe.Read<byte>(ptr);
             var info = new RecieveBytesInfo(sender, reciever, ptr, ptr_end);
+            RecievePacketEvent.Invoke(in info, out var handled);
+            if (handled) {
+                return;
+            }
             // D - F
             // D is Dynamic, means the packet has no max length
             // F is Fixed, means the packet has a max length

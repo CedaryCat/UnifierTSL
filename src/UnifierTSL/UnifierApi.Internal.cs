@@ -21,13 +21,14 @@ namespace UnifierTSL
         #endregion
 
         #region Plugins
-        public static readonly PluginOrchestrator PluginHosts;
+        public static PluginOrchestrator? pluginHosts;
+        public static PluginOrchestrator PluginHosts => pluginHosts ??= new();
         #endregion
 
         #region Parameters
-        public static int ListenPort { get; internal set; } = -1;
+        internal static int ListenPort { get; set; } = -1;
         private static string? serverPassword;
-        public static string ServerPassword => serverPassword ?? "";
+        internal static string ServerPassword => serverPassword ?? "";
         #endregion
 
         #region IO
@@ -53,10 +54,10 @@ namespace UnifierTSL
         static UnifierApi() {
             logCore = new();
             logger = CreateLogger(LogHost);
-            PluginHosts = new();
         }
 
         internal static void Initialize(string[] launcherArgs) {
+            pluginHosts = new();
             PluginHosts.InitializeAllAsync()
                 .GetAwaiter()
                 .GetResult();

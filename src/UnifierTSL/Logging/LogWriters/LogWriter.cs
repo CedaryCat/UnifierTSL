@@ -118,7 +118,7 @@ namespace UnifierTSL.Logging.LogWriters
         /// Writes the specified input using the concrete implementation.
         /// </summary>
         /// <param name="input">The input data to write.</param>
-        public abstract void Write(Span<TInput> input);
+        public abstract void Write(scoped in LogEntry raw, Span<TInput> input);
 
         /// <summary>
         /// Formats a <see cref="LogEntry"/> using the current formatter and writes the formatted output.
@@ -150,7 +150,7 @@ namespace UnifierTSL.Logging.LogWriters
                 buffer = ArrayPool<TInput>.Shared.Rent(bufferSize);
                 defFormatter.Format(in errorLog, ref buffer[0], out var written);
                 formatted = buffer.AsSpan(0, written);
-                Write(formatted);
+                Write(in errorLog, formatted);
                 ArrayPool<TInput>.Shared.Return(buffer);
 
                 bufferSize = defFormatter.GetEstimatedSize(log);
@@ -158,7 +158,7 @@ namespace UnifierTSL.Logging.LogWriters
                 defFormatter.Format(in log, ref buffer[0], out written);
                 formatted = buffer.AsSpan(0, written);
             }
-            Write(formatted);
+            Write(in log, formatted);
             ArrayPool<TInput>.Shared.Return(buffer);
             return;
         }

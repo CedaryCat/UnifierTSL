@@ -1,4 +1,5 @@
-﻿using UnifierTSL;
+﻿using System.Collections.Immutable;
+using UnifierTSL;
 using UnifierTSL.Logging;
 using UnifierTSL.Plugins;
 
@@ -17,7 +18,7 @@ namespace ExamplePlugin
 
         public override async Task InitializeAsync(
             IPluginConfigRegistrar configRegistrar,
-            ReadOnlyMemory<PluginInitInfo> priorInitializations,
+            ImmutableArray<PluginInitInfo> priorInitializations,
             CancellationToken cancellationToken = default) {
 
             configRegistrar.DefaultOption
@@ -26,7 +27,7 @@ namespace ExamplePlugin
                 .TriggerReloadOnExternalChange(true);
 
             var configHandle = configRegistrar
-                .CreateConfigRegistration<ExampleConfig>("configHandle.json", ConfigFormat.SystemTextJson)
+                .CreateConfigRegistration<ExampleConfig>("config.json", ConfigFormat.SystemTextJson)
                 .WithDefault(() => new ExampleConfig { Name = "Example", Message = "Hello World!" })
                 .Complete();
 

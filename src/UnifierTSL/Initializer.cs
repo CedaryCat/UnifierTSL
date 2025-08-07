@@ -1,6 +1,8 @@
 ﻿using ReLogic.OS;
+using System.Runtime.Loader;
 using Terraria.ID;
 using UnifiedServerProcess;
+using UnifierTSL.Localization.Terraria;
 using UnifierTSL.Network;
 
 namespace UnifierTSL
@@ -12,8 +14,8 @@ namespace UnifierTSL
         }
 
         private static void AssemblyResolverInit() {
-            AppDomain.CurrentDomain.AssemblyResolve += ResolveHelpers.GlobalResolveAssembly;
-            // System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += ResolveHelpers.ResolveAssembly;
+            AssemblyLoadContext.Default.Resolving += ResolveHelpers.ResolveAssembly;
+            AssemblyLoadContext.Default.ResolvingUnmanagedDll += ResolveHelpers.ResolveNativeDll;
         }
 
         /// <summary>
@@ -24,6 +26,7 @@ namespace UnifierTSL
         public static void Initialize() {
             Terraria.Program.SavePath = Platform.Get<IPathService>().GetStoragePath("Terraria");
             Terraria.Main.SkipAssemblyLoad = true;
+            EnglishLanguage.Load();
             GlobalInitializer.Initialize();
             SynchronizedGuard.Load();
             UnifiedNetworkPatcher.Load();

@@ -7,12 +7,8 @@ using NuGet.Packaging.Signing;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
-using System;
 using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using UnifierTSL.Logging;
 
 namespace UnifierTSL.Module.Dependencies
 {
@@ -23,33 +19,7 @@ namespace UnifierTSL.Module.Dependencies
         private static readonly SourceRepository SourceRepository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 
         private static readonly ConcurrentDictionary<string, Task<string>> extractedPackages = new();
-
-        public static async Task<string> GetDllPathAsync(string packageId, string version, string targetFramework, string dllName) {
-            string packagePath = await EnsurePackageExtractedAsync(packageId, version);
-
-            using var reader = new PackageFolderReader(packagePath);
-            var libItems = await reader.GetLibItemsAsync(CancellationToken.None);
-
-            var allFrameworks = libItems.Select(group => group.TargetFramework).ToList();
-
-            var reducer = new FrameworkReducer();
-            var target = NuGetFramework.ParseFolder(targetFramework);
-            var nearest = reducer.GetNearest(target, allFrameworks) 
-                ?? throw new InvalidOperationException($"No compatible frameworks found in package '{packageId}' for target '{targetFramework}'.");
-            var compatibleLibGroup = libItems.First(g => g.TargetFramework.Equals(nearest));
-
-            var relativeDllPath = compatibleLibGroup.Items
-                .FirstOrDefault(path => Path.GetFileName(path).Equals(dllName, StringComparison.OrdinalIgnoreCase)) 
-                ?? throw new FileNotFoundException($"DLL '{dllName}' not found in NuGet package '{packageId}' for framework '{nearest.GetShortFolderName()}'.");
-            string fullPath = Path.Combine(packagePath, relativeDllPath);
-            if (!File.Exists(fullPath))
-                throw new FileNotFoundException($"Expected DLL at path '{fullPath}' does not exist.");
-
-            return fullPath;
-        }
-
-
-        private static async Task<string> EnsurePackageExtractedAsync(string packageId, string version) {
+        public static async Task<string> EnsurePackageExtractedAsync(RoleLogger logger, string packageId, string version) {
             var key = $"{packageId.ToLowerInvariant()}:{version}";
             return await extractedPackages.GetOrAdd(key, async _ =>
             {
@@ -57,8 +27,12 @@ namespace UnifierTSL.Module.Dependencies
                 var globalPackagesPath = SettingsUtility.GetGlobalPackagesFolder(settings);
                 var versionFolder = Path.Combine(globalPackagesPath, packageId.ToLowerInvariant(), version);
 
-                if (Directory.Exists(versionFolder))
+                if (Directory.Exists(versionFolder)) {
+                    logger.Info($"Package: {packageId} ({version}) found in cache.");
                     return versionFolder;
+                }
+
+                logger.Info($"Downloading package: {packageId} ({version}) from NuGet.");
 
                 var resource = await SourceRepository.GetResourceAsync<FindPackageByIdResource>();
                 using var stream = new MemoryStream();
@@ -71,6 +45,7 @@ namespace UnifierTSL.Module.Dependencies
 
                 stream.Position = 0;
 
+                logger.Info($"Extracting package: {packageId} ({version}) to local nuget cache.");
                 using var reader = new PackageArchiveReader(stream);
 
                 // Use PackageExtractor to extract contents
@@ -92,8 +67,72 @@ namespace UnifierTSL.Module.Dependencies
                     token: CancellationToken.None
                 );
 
+                logger.Info($"Extracted package: {packageId} ({version}) successfully.");
+
                 return versionFolder;
             });
+        }
+        public static async Task<List<PackageIdentity>> ResolveDependenciesAsync(string packageId, string version, string targetFramework) {
+            var rootPackage = new PackageIdentity(packageId, NuGetVersion.Parse(version));
+            var resolved = new Dictionary<string, PackageIdentity>(StringComparer.OrdinalIgnoreCase);
+            var toResolve = new Queue<PackageIdentity>();
+            toResolve.Enqueue(rootPackage);
+
+            var providers = Repository.Provider.GetCoreV3();
+            var settings = Settings.LoadDefaultSettings(root: null);
+            var globalPackagesFolder = SettingsUtility.GetGlobalPackagesFolder(settings);
+            var localRepo = new FindLocalPackagesResourceV3(globalPackagesFolder);
+
+            var metadataResource = await SourceRepository.GetResourceAsync<PackageMetadataResource>();
+
+            var target = NuGetFramework.ParseFolder(targetFramework);
+            var reducer = new FrameworkReducer();
+
+            while (toResolve.Count > 0) {
+                var current = toResolve.Dequeue();
+
+                if (resolved.ContainsKey(current.Id))
+                    continue;
+
+                resolved[current.Id] = current;
+
+                IEnumerable<PackageDependencyGroup>? dependencyGroups = null;
+
+                // try to read nuspec from local cache
+                var localPackage = localRepo.FindPackagesById(current.Id, NullLogger.Instance, CancellationToken.None)
+                    .First(pkg => pkg.Identity.Version == current.Version);
+                if (localPackage != null) {
+                    var nuspecReader = localPackage.Nuspec;
+                    dependencyGroups = nuspecReader.GetDependencyGroups();
+                }
+                else {
+                    // cache miss, request remote source
+                    var metadata = await metadataResource.GetMetadataAsync(current, new SourceCacheContext(), NullLogger.Instance, CancellationToken.None);
+                    if (metadata != null) {
+                        dependencyGroups = metadata.DependencySets;
+                    }
+                }
+
+                if (dependencyGroups == null)
+                    continue;
+
+                var nearest = reducer.GetNearest(target, dependencyGroups.Select(g => g.TargetFramework));
+                if (nearest == null)
+                    continue;
+
+                var dependencies = dependencyGroups
+                    .Where(g => g.TargetFramework.Equals(nearest))
+                    .SelectMany(g => g.Packages)
+                    .Select(d => new PackageIdentity(d.Id, d.VersionRange.MinVersion))
+                    .Where(p => p != null);
+
+                foreach (var dep in dependencies) {
+                    if (!resolved.ContainsKey(dep.Id))
+                        toResolve.Enqueue(dep);
+                }
+            }
+
+            return [.. resolved.Values];
         }
     }
 }

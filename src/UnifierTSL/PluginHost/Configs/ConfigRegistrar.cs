@@ -8,6 +8,8 @@ namespace UnifierTSL.PluginHost.Configs
     {
         private readonly ConfigOption option = new();
         public IConfigOption DefaultOption => option;
+        public string Directory => configsPath;
+
         public IConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TConfig>(string relativePath) where TConfig : class, new() {
             return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, option);
         }

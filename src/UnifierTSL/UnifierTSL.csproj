@@ -17,11 +17,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MonoMod.RuntimeDetour" Version="25.2.3" GeneratePathProperty="true" />
-		<PackageReference Include="MonoMod.RuntimeDetour.HookGen" Version="22.7.31.1" GeneratePathProperty="true" />
-		<PackageReference Include="ModFramework" Version="1.1.15" GeneratePathProperty="true" />
-		<PackageReference Include="OTAPI.USP" Version="1.0.2" GeneratePathProperty="true" />
+		<PackageReference Include="OTAPI.USP" Version="1.0.4" />
+		<PackageReference Include="ModFramework" Version="1.1.15" />
+		<PackageReference Include="MonoMod.RuntimeDetour" Version="25.2.3" />
+		<PackageReference Include="MonoMod.RuntimeDetour.HookGen" Version="22.7.31.1" />
 		<PackageReference Include="Tomlyn" Version="0.19.0" />
+		<PackageReference Include="linq2db" Version="5.4.1" />
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

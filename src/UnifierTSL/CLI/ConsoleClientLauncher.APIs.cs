@@ -2,7 +2,7 @@
 {
     partial class ConsoleClientLauncher
     {
-        #region Other Implementation
+        #region Write overloads
         public override void Write(char value) => Write(value.ToString());
         public override void Write(bool value) => Write(value.ToString());
         public override void Write(float value) => Write(value.ToString());
@@ -36,6 +36,13 @@
         public override void WriteLine(string format, params object?[]? arg) => WriteLine((arg is not null && arg.Length != 0) ? string.Format(format, arg) : format);
         public override void WriteLine(char[] buffer, int index, int count) => WriteLine(new string(buffer, index, count));
         public override void WriteLine(char[]? buffer) => WriteLine(new string(buffer));
+        #endregion
+
+        #region Others
+        public sealed override void ResetColor() {
+            ForegroundColor = ConsoleColor.Gray;
+            BackgroundColor = ConsoleColor.Black;
+        }
         #endregion
     }
 }

@@ -1,9 +1,12 @@
-﻿namespace UnifierTSL.Module.Dependencies
+﻿using NuGet.Versioning;
+using System.Collections.Immutable;
+using UnifierTSL.Logging;
+
+namespace UnifierTSL.Module.Dependencies
 {
     public interface IDependencyLibraryExtractor
     {
-        string LibraryName { get; }
-        Version Version { get; }
-        public Stream Extract();
+        public ImmutableArray<LibraryEntry> Extract(RoleLogger logger);
     }
+    public readonly record struct LibraryEntry(Lazy<Stream> Stream, DependencyKind Kind, string FilePath, NuGetVersion Version, string LibraryName);
 }

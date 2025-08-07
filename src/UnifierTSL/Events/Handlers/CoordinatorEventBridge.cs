@@ -19,6 +19,7 @@ namespace UnifierTSL.Events.Handlers
         public readonly TcpClient Client = client;
         public ISocket? Socket;
     }
+    public struct StartedEvent : IEventContent { }
     public class CoordinatorEventBridge
     {
         public CoordinatorEventBridge() {
@@ -35,5 +36,6 @@ namespace UnifierTSL.Events.Handlers
         }
         public readonly ValueEventNoCancelProvider<SwitchJoinServerEvent> SwitchJoinServer = new();
         public readonly ValueEventNoCancelProvider<CreateSocketEvent> CreateSocket = new();
+        public readonly ReadonlyEventNoCancelProvider<StartedEvent> Started = new();
     }
 }

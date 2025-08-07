@@ -1,15 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NuGet.Versioning;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace UnifierTSL.Module.Dependencies
 {
     public class DependencyConfEntry
     {
-        public required bool IsNativeLibrary { get; set; }
         public required string Name { get; set; }
-        public required Version Version { get; set; }
+        [JsonConverter(typeof(NuGetVersionJsonConverter))]
+        public required NuGetVersion Version { get; set; }
+        public required List<DependencyItem> Manifests { get; set; }
+    }
+    public class DependencyItem
+    {
+        public DependencyItem() {
+            FilePath = null!;
+            Version = null!;
+        }
+        public DependencyItem(string filePath, NuGetVersion version) {
+            FilePath = filePath;
+            Version = version;
+        }
+        public string FilePath { get; set; }
+        [JsonConverter(typeof(NuGetVersionJsonConverter))]
+        public NuGetVersion Version { get; set; }
+    }
+    public class NuGetVersionJsonConverter : JsonConverter<NuGetVersion>
+    {
+        public override NuGetVersion? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+            var versionString = reader.GetString();
+            return versionString != null ? NuGetVersion.Parse(versionString) : null;
+        }
+
+        public override void Write(Utf8JsonWriter writer, NuGetVersion value, JsonSerializerOptions options) {
+            writer.WriteStringValue(value.ToNormalizedString());
+        }
     }
 }

@@ -18,9 +18,6 @@ namespace UnifierTSL.Module.Dependencies
         /// manually added or unknown files.
         /// </summary>
         public bool EnableAggressiveCleanUp { get; set; } = false;
-        /// <summary>
-        /// relative path to specify plugin directory → dependency
-        /// </summary>
         public required Dictionary<string, DependencyConfEntry> Dependencies { get; set; }
     }
 }

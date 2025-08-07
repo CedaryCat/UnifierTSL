@@ -12,6 +12,10 @@ namespace UnifierTSL.Plugins
     public interface IPluginConfigRegistrar
     {
         /// <summary>
+        /// The directory in which to look for configuration files for this plugin.
+        /// </summary>
+        public string Directory { get; }
+        /// <summary>
         /// Default options for each plugin, independent of one another.  
         /// When creating an <see cref="IConfigRegistrationBuilder"/>, these options are used as the initial configuration.  
         /// Afterward, the configuration can be customized further through methods on <see cref="IConfigRegistrationBuilder"/>.  

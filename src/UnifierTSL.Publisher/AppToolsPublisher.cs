@@ -21,7 +21,7 @@ namespace UnifierTSL.Publisher
         /// and returns the results as an ImmutableArray.
         /// </summary>
         /// <returns>An ImmutableArray containing the output files of the published applications.</returns>
-        public async Task<ImmutableArray<string>> PublishApps() {
+        public ImmutableArray<string> PublishApps() {
 
             var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
                          // target framework folder
@@ -32,12 +32,11 @@ namespace UnifierTSL.Publisher
                 .FullName;
 
             var publishPaths = new ConcurrentBag<string>();
-            var publishTasks = appProjectPaths.Select(async relativePath => {
-
+            foreach(var relativePath in appProjectPaths) {
                 var projectPath = Path.Combine(solutionDir, relativePath);
                 var outputDir = Path.Combine("apps-publish", Path.GetFileNameWithoutExtension(relativePath));
 
-                if (Directory.Exists(outputDir)) { 
+                if (Directory.Exists(outputDir)) {
                     Directory.Delete(outputDir, recursive: true);
                 }
                 Directory.CreateDirectory(outputDir);
@@ -59,10 +58,10 @@ namespace UnifierTSL.Publisher
                 Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
                 Task<string> errorTask = process.StandardError.ReadToEndAsync();
 
-                await process.WaitForExitAsync();
+                process.WaitForExit();
 
-                string output = await outputTask;
-                string error = await errorTask;
+                string output = outputTask.GetAwaiter().GetResult();
+                string error = errorTask.GetAwaiter().GetResult();
 
                 if (process.ExitCode != 0) {
                     throw new InvalidOperationException($"Failed to publish {relativePath}: {error}");
@@ -71,9 +70,8 @@ namespace UnifierTSL.Publisher
                 foreach (var file in Directory.GetFiles(outputDir)) {
                     publishPaths.Add(file);
                 }
-            });
+            }
 
-            await Task.WhenAll(publishTasks);
             return [.. publishPaths];
         }
     }

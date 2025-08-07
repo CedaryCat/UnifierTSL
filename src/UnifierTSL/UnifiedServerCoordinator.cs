@@ -153,6 +153,9 @@ namespace UnifierTSL
                     switch (type) {
                         case MessageID.ClientHello: {
                                 var msg = new ClientHello(ref readPtr);
+                                if (HandleConnect is not null && HandleConnect.Invoke(client, msg.Version)) {
+                                    return;
+                                }
                                 if (msg.Version != "Terraria" + 279) {
                                     sender.Kick(Lang.mp[4].ToNetworkText());
                                     break;
@@ -186,6 +189,14 @@ namespace UnifierTSL
                         case MessageID.ClientUUID: {
                                 var msg = new ClientUUID(ref readPtr);
                                 client.ClientUUID = RecievedUUID = msg.UUID;
+
+                                if (HandleJoin is not null && HandleJoin.Invoke(player, client, sender)) {
+                                    if (!client.PendingTermination || !client.PendingTerminationApproved) {
+                                        sender.Kick(NetworkText.FromLiteral("You are not allowed to join this server."));
+                                    }
+                                    return;
+                                }
+
                                 var joinServer = SwitchJoinServer?.Invoke(player, client);
                                 if (joinServer is null) {
                                     sender.Kick(NetworkText.FromLiteral("Unable to locate an available server to join."));
@@ -230,7 +241,7 @@ namespace UnifierTSL
         static readonly RoleLogger logger;
         public static RoleLogger Logger => logger;
         public static int ListenPort { get; private set; }
-        public static string ServerPassword { get; private set; } = "";
+        public static string ServerPassword { get; set; } = "";
         public static readonly RemoteClient[] globalClients = new RemoteClient[Netplay.MaxConnections];
         public static readonly LocalClientSender[] clientSenders = new LocalClientSender[Netplay.MaxConnections];
         public static readonly MessageBuffer[] globalMsgBuffers = new MessageBuffer[Netplay.MaxConnections + 1];
@@ -240,14 +251,21 @@ namespace UnifierTSL
         private static ImmutableArray<ServerContext> servers = [];
         public static ImmutableArray<ServerContext> Servers => servers;
         public static void AddServer(ServerContext server) {
-            ImmutableInterlocked.Update(ref servers, arr => arr.Add(server));
+            if (ImmutableInterlocked.Update(ref servers, arr => arr.Contains(server) ? arr : arr.Add(server))) {
+                ServerListAdded?.Invoke(server);
+            }
         }
         public static void RemoveServer(ServerContext server) {
-            ImmutableInterlocked.Update(ref servers, arr => arr.Remove(server));
+            if (ImmutableInterlocked.Update(ref servers, arr => arr.Remove(server))) {
+                ServerListRemoved?.Invoke(server);
+            }
         }
         public static ServerContext? GetClientCurrentlyServer(int clientIndex) => Volatile.Read(ref clientCurrentlyServers[clientIndex]);
         static void SetClientCurrentlyServer(int clientIndex, ServerContext? server) => Volatile.Write(ref clientCurrentlyServers[clientIndex], server);
-
+        public static Player GetPllayer(int clientIndex) {
+            var server = GetClientCurrentlyServer(clientIndex);
+            return server is null ? pendingConnects[clientIndex].player : server.Main.player[clientIndex];
+        }
 
         static TcpListener listener;
         static volatile bool isListening;
@@ -255,7 +273,12 @@ namespace UnifierTSL
         static volatile bool keepBroadcasting;
 
         public static event Func<TcpClient, ISocket>? CreateSocket;
+        public static event Func<Player, RemoteClient, LocalClientSender, bool>? HandleJoin;
         public static event Func<Player, RemoteClient, ServerContext?>? SwitchJoinServer;
+        public static event Func<RemoteClient, string, bool>? HandleConnect;
+        public static event Action<ServerContext>? ServerListAdded;
+        public static event Action<ServerContext>? ServerListRemoved;
+        public static event Action? ServerListChanged;
         public static event Action? Started;
 
         public static IPEndPoint ListeningEndpoint { get; private set; }
@@ -317,8 +340,11 @@ namespace UnifierTSL
             }
         }
 
-        static void ProcessBytes(On.Terraria.NetMessageSystemContext.orig_mfwh_CheckBytes _, NetMessageSystemContext netMsg, int clientIndex) {
-            var server = netMsg.root;
+        static void ProcessBytes(On.Terraria.NetMessageSystemContext.orig_mfwh_CheckBytes orig, NetMessageSystemContext netMsg, int clientIndex) {
+            if (netMsg.root is not ServerContext server) {
+                orig(netMsg, clientIndex);
+                return;
+            }
             var buffer = globalMsgBuffers[clientIndex];
             lock (buffer) {
                 if (server.Main.dedServ && server.Netplay.Clients[clientIndex].PendingTermination) {
@@ -334,7 +360,7 @@ namespace UnifierTSL
                         if (unreadLength >= packetLength && packetLength != 0) {
 
                             // buffer.GetData(server, readPosition + 2, packetLength - 2, out var _);
-                            NetPacketRegister.ProcessBytes(server, buffer, readPosition + 2, packetLength - 2);
+                            NetPacketHandler.ProcessBytes(server, buffer, readPosition + 2, packetLength - 2);
 
                             if (server.Main.dedServ && server.Netplay.Clients[clientIndex].PendingTermination) {
                                 server.Netplay.Clients[clientIndex].PendingTerminationApproved = true;
@@ -400,7 +426,7 @@ namespace UnifierTSL
                     if (server is not null) {
                         if (client.PendingTermination) {
                             if (client.PendingTerminationApproved) {
-                                // client.Reset(main);
+                                client.Reset(server);
                                 server.NetMessage.SyncDisconnectedPlayer(i);
 
                                 bool active = server.Main.player[i].active;

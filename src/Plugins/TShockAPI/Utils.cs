@@ -1,0 +1,1184 @@
+﻿/*
+TShock, a server mod for Terraria
+Copyright (C) 2011-2019 Pryaxis & TShock Contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General public static License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General public static License for more details.
+
+You should have received a copy of the GNU General public static License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+using Microsoft.Xna.Framework;
+using NuGet.Protocol.Plugins;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Text.RegularExpressions;
+using Terraria;
+using Terraria.ID;
+using Terraria.Localization;
+using Terraria.Utilities;
+using TShockAPI.Localization;
+using UnifiedServerProcess;
+using UnifierTSL.Servers;
+
+namespace TShockAPI
+{
+	/// <summary>
+	/// Utilities and other TShock core calls that don't fit anywhere else
+	/// </summary>
+	public static class Utils
+	{
+		/// <summary>
+		/// Hex code for a blue pastel color
+		/// </summary>
+		public const string BoldHighlight = "AAAAFF";
+		/// <summary>
+		/// Hex code for a red pastel color
+		/// </summary>
+		public const string RedHighlight = "FFAAAA";
+		/// <summary>
+		/// Hex code for a green pastel color
+		/// </summary>
+		public const string GreenHighlight = "AAFFAA";
+		/// <summary>
+		/// Hex code for a pink pastel color
+		/// </summary>
+		public const string PinkHighlight = "FFAAFF";
+		/// <summary>
+		/// Hex code for a yellow pastel color
+		/// </summary>
+		public const string YellowHighlight = "FFFAAA";
+		/// <summary>
+		/// Hex code for a white highlight
+		/// </summary>
+		public const string WhiteHighlight = "FFFFFF";
+		/// <summary>
+		/// Hex code for a cyan pastel color
+		/// </summary>
+		public const string CyanHighlight = "AAFFFF";
+
+		/// <summary>
+		/// The lowest id for a prefix.
+		/// </summary>
+		private const int FirstItemPrefix = 1;
+
+		/// <summary>
+		/// The highest id for a prefix.
+		/// </summary>
+		private const int LastItemPrefix = 83;
+
+		/// <summary>
+		/// Provides the real IP address from a RemoteEndPoint string that contains a port and an IP
+		/// </summary>
+		/// <param name="mess">A string IPv4 address in IP:PORT form.</param>
+		/// <returns>A string IPv4 address.</returns>
+		public static string GetRealIP(string mess)
+		{
+			return mess.Split(':')[0];
+		}
+
+		/// <summary>
+		/// It's a clamp function
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="value">Value to clamp</param>
+		/// <param name="max">Maximum bounds of the clamp</param>
+		/// <param name="min">Minimum bounds of the clamp</param>
+		/// <returns></returns>
+		public static T Clamp<T>(T value, T max, T min)
+			where T : IComparable<T>
+		{
+			T result = value;
+			if (value.CompareTo(max) > 0)
+				result = max;
+			if (value.CompareTo(min) < 0)
+				result = min;
+			return result;
+		}
+
+		/// <summary>Broadcast - Broadcasts a message to all players on the server, as well as the server console, and the logs.</summary>
+		/// <param name="msg">msg - The message to send</param>
+		/// <param name="red">red - The amount of red (0-255) in the color for supported destinations.</param>
+		/// <param name="green">green - The amount of green (0-255) in the color for supported destinations.</param>
+		/// <param name="blue">blue - The amount of blue (0-255) in the color for the supported destinations.</param>
+		public static void Broadcast(ServerContext server, string msg, byte red, byte green, byte blue)
+		{
+			var serverPlr = server.GetExtension<TSServerPlayer>();
+            serverPlr.BCMessage(msg, red, green, blue);
+		}
+
+		/// <summary>>Broadcast - Broadcasts a message to all players on the server, as well as the server console, and the logs.</summary>
+		/// <param name="msg">msg - The message to send</param>
+		/// <param name="color">color - The color object for supported destinations.</param>
+		public static void Broadcast(ServerContext server, string msg, Color color)
+		{
+			Broadcast(server, msg, color.R, color.G, color.B);
+		}
+
+		/// <summary>
+		/// Broadcasts a message from a Terraria player, not TShock
+		/// </summary>
+		/// <param name="ply">ply - the Terraria player index that will send the packet</param>
+		/// <param name="msg">msg - The message to send</param>
+		/// <param name="red">red - The amount of red (0-255) in the color for supported destinations.</param>
+		/// <param name="green">green - The amount of green (0-255) in the color for supported destinations.</param>
+		/// <param name="blue">blue - The amount of blue (0-255) in the color for the supported destinations.</param>
+		public static void Broadcast(ServerContext server, int ply, string msg, byte red, byte green, byte blue)
+		{
+			var serverPlr = server.GetExtension<TSServerPlayer>();
+            serverPlr.SendMessageFromPlayer(msg, red, green, blue, ply);
+            server.Log.Info(category: "Broadcast", message: GetString("{0}: {1}", server.Main.player[ply].name, msg));
+		}
+
+		/// <summary>
+		/// Sends message to all players with 'logs' permission.
+		/// </summary>
+		/// <param name="log">Message to send</param>
+		/// <param name="color">Color of the message</param>
+		/// <param name="excludedPlayer">The player to not send the message to.</param>
+		public static void SendLogs(ServerContext server, string log, Color color, TSPlayer? excludedPlayer = null)
+		{
+			server.Log.Info(log);
+			//server.GetExtension<TSServerPlayer>().SendMessage(log, color);
+			var setting = TShock.Config.GetServerSettings(server.Name);
+			foreach (TSPlayer player in TShock.Players) {
+                if (player is null) {
+                    continue;
+                }
+                if (player.GetCurrentServer() != server) {
+					continue;
+				}
+				if (player != excludedPlayer && player.Active && player.HasPermission(Permissions.logs) &&
+						player.DisplayLogs && !setting.DisableSpewLogs)
+					player.SendMessage(log, color);
+			}
+		}
+
+        /// <summary>
+        /// Gets the number of active players on the server.
+        /// </summary>
+        /// <returns>The number of active players on the server.</returns>
+        public static int GetActivePlayerCount() {
+            return TShock.Players.Count(p => null != p && p.Active && p.FinishedHandshake);
+        }
+        /// <summary>
+        /// Gets the number of active players on the server.
+        /// </summary>
+        /// <returns>The number of active players on the server.</returns>
+        public static int GetActivePlayerCount(ServerContext server) {
+            return TShock.Players.Count(p => null != p && p.Active && p.FinishedHandshake && p.GetCurrentServer() == server);
+        }
+
+        //Random should not be generated in a method
+        static Random r = new Random();
+
+		/// <summary>
+		/// Gets a random clear tile in range
+		/// </summary>
+		/// <param name="startTileX">Bound X</param>
+		/// <param name="startTileY">Bound Y</param>
+		/// <param name="tileXRange">Range on the X axis</param>
+		/// <param name="tileYRange">Range on the Y axis</param>
+		/// <param name="tileX">X location</param>
+		/// <param name="tileY">Y location</param>
+		public static void GetRandomClearTileWithInRange(ServerContext server, int startTileX, int startTileY, int tileXRange, int tileYRange,
+																							out int tileX, out int tileY)
+		{
+			int j = 0;
+			do
+			{
+				if (j == 100)
+				{
+					tileX = startTileX;
+					tileY = startTileY;
+					break;
+				}
+				tileX = startTileX + r.Next(tileXRange * -1, tileXRange);
+				tileY = startTileY + r.Next(tileYRange * -1, tileYRange);
+				j++;
+			} while (TilePlacementValid(server, tileX, tileY) && TileSolid(server, tileX, tileY));
+		}
+
+		/// <summary>
+		/// Determines if a tile is valid.
+		/// </summary>
+		/// <param name="tileX">Location X</param>
+		/// <param name="tileY">Location Y</param>
+		/// <returns>If the tile is valid</returns>
+		public static bool TilePlacementValid(ServerContext server, int tileX, int tileY)
+		{
+			return tileX >= 0 && tileX < server.Main.maxTilesX && tileY >= 0 && tileY < server.Main.maxTilesY;
+		}
+
+		/// <summary>
+		/// Checks if the tile is solid.
+		/// </summary>
+		/// <param name="tileX">Location X</param>
+		/// <param name="tileY">Location Y</param>
+		/// <returns>The tile's solidity.</returns>
+		public static bool TileSolid(ServerContext server, int tileX, int tileY)
+		{
+			return TilePlacementValid(server, tileX, tileY) && server.Main.tile[tileX, tileY].IsNotNull &&
+				server.Main.tile[tileX, tileY].active() && server.Main.tileSolid[server.Main.tile[tileX, tileY].type] &&
+				!server.Main.tile[tileX, tileY].inActive() && !server.Main.tile[tileX, tileY].halfBrick() &&
+				server.Main.tile[tileX, tileY].slope() == 0 && server.Main.tile[tileX, tileY].type != TileID.Bubble;
+		}
+
+		/// <summary>
+		/// Gets a list of items by ID, Name or Tag.
+		/// </summary>
+		/// <param name="text">Item ID, Name or Tag.</param>
+		/// <returns>A list of matching items.</returns>
+		public static List<Item> GetItemByIdOrName(string text)
+		{
+			int type = -1;
+			if (Int32.TryParse(text, out type))
+			{
+				if (type >= Terraria.ID.ItemID.Count)
+					return new List<Item>();
+				return new List<Item> { GetItemById(type) };
+			}
+			Item item = GetItemFromTag(text);
+			if (item != null)
+				return new List<Item>() { item };
+			return GetItemByName(text);
+		}
+
+		/// <summary>
+		/// Gets an item by ID
+		/// </summary>
+		/// <param name="id">ID</param>
+		/// <returns>Item</returns>
+		public static Item GetItemById(int id)
+		{
+			Item item = new Item();
+			item.netDefaults(TShock.ServerSample, id);
+			return item;
+		}
+
+		/// <summary>
+		/// Gets items by name
+		/// </summary>
+		/// <param name="name">name</param>
+		/// <returns>List of Items</returns>
+		public static List<Item> GetItemByName(string name)
+		{
+			var startswith = new List<int>();
+			var contains = new List<int>();
+			for (int i = 1; i < ItemID.Count; i++)
+			{
+				var currentName = Lang.GetItemNameValue(i);
+				if (!string.IsNullOrEmpty(currentName))
+				{
+					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+						return new List<Item> { GetItemById(i) };
+					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						startswith.Add(i);
+						continue;
+					}
+					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						contains.Add(i);
+						continue;
+					}
+				}
+				currentName = EnglishLanguage.GetItemNameById(i);
+				if (!string.IsNullOrEmpty(currentName))
+				{
+					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+						return new List<Item> { GetItemById(i) };
+					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						startswith.Add(i);
+						continue;
+					}
+					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						contains.Add(i);
+						continue;
+					}
+				}
+			}
+
+			if (startswith.Count != 1)
+				startswith.AddRange(contains);
+			return startswith.Select(GetItemById).ToList();
+		}
+
+		/// <summary>
+		/// Gets an item based on a chat item tag.
+		/// </summary>
+		/// <param name="tag">A tag in the [i/s#/p#:netid] format.</param>
+		/// <returns>The item represented by the tag.</returns>
+		public static Item GetItemFromTag(string tag)
+		{
+			Regex regex = new Regex(@"\[i(tem)?(?:\/s(?<Stack>\d{1,4}))?(?:\/p(?<Prefix>\d{1,3}))?:(?<NetID>-?\d{1,4})\]");
+			Match match = regex.Match(tag);
+			if (!match.Success)
+				return null;
+			Item item = new Item();
+			item.netDefaults(TShock.ServerSample, Int32.Parse(match.Groups["NetID"].Value));
+			if (!String.IsNullOrWhiteSpace(match.Groups["Stack"].Value))
+				item.stack = Int32.Parse(match.Groups["Stack"].Value);
+			if (!String.IsNullOrWhiteSpace(match.Groups["Prefix"].Value))
+				item.prefix = Byte.Parse(match.Groups["Prefix"].Value);
+			return item;
+		}
+
+		/// <summary>
+		/// Gets an NPC by ID or Name
+		/// </summary>
+		/// <param name="idOrName"></param>
+		/// <returns>List of NPCs</returns>
+		public static List<NPC> GetNPCByIdOrName(string idOrName)
+		{
+			int type = -1;
+			if (int.TryParse(idOrName, out type))
+			{
+				if (type >= Terraria.ID.NPCID.Count)
+					return new List<NPC>();
+				return new List<NPC> { GetNPCById(type) };
+			}
+			return GetNPCByName(idOrName);
+		}
+
+		/// <summary>
+		/// Gets an NPC by ID
+		/// </summary>
+		/// <param name="id">ID</param>
+		/// <returns>NPC</returns>
+		public static NPC GetNPCById(int id)
+		{
+			NPC npc = new NPC();
+			npc.SetDefaults(TShock.ServerSample, id);
+			return npc;
+		}
+
+		/// <summary>
+		/// Gets a NPC by name
+		/// </summary>
+		/// <param name="name">Name</param>
+		/// <returns>List of matching NPCs</returns>
+		public static List<NPC> GetNPCByName(string name)
+		{
+			var startswith = new List<int>();
+			var contains = new List<int>();
+			for (int i = -17; i < NPCID.Count; i++)
+			{
+				var currentName = Lang.GetNPCNameValue(i);
+				if (!string.IsNullOrEmpty(currentName))
+				{
+					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+						return new List<NPC> { GetNPCById(i) };
+					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						startswith.Add(i);
+						continue;
+					}
+					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						contains.Add(i);
+						continue;
+					}
+				}
+				currentName = EnglishLanguage.GetNpcNameById(i);
+				if (!string.IsNullOrEmpty(currentName))
+				{
+					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+						return new List<NPC> { GetNPCById(i) };
+					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						startswith.Add(i);
+						continue;
+					}
+					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						contains.Add(i);
+						continue;
+					}
+				}
+			}
+
+			if (startswith.Count != 1)
+				startswith.AddRange(contains);
+			return startswith.Select(GetNPCById).ToList();
+		}
+
+		/// <summary>
+		/// Gets a buff name by id
+		/// </summary>
+		/// <param name="id">ID</param>
+		/// <returns>name</returns>
+		public static string GetBuffName(int id)
+		{
+			return (id > 0 && id < Terraria.ID.BuffID.Count) ? Lang.GetBuffName(id) : null;
+		}
+
+		/// <summary>
+		/// Gets the description of a buff
+		/// </summary>
+		/// <param name="id">ID</param>
+		/// <returns>description</returns>
+		public static string GetBuffDescription(int id)
+		{
+			return (id > 0 && id < Terraria.ID.BuffID.Count) ? Lang.GetBuffDescription(id) : null;
+		}
+
+		/// <summary>
+		/// Gets a list of buffs by name
+		/// </summary>
+		/// <param name="name">name</param>
+		/// <returns>Matching list of buff ids</returns>
+		public static List<int> GetBuffByName(string name)
+		{
+			var startswith = new List<int>();
+			var contains = new List<int>();
+			for (int i = 1; i < BuffID.Count; i++)
+			{
+				var currentName = Lang.GetBuffName(i);
+				if (!string.IsNullOrWhiteSpace(currentName))
+				{
+					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+						return new List<int> { i };
+					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						startswith.Add(i);
+						continue;
+					}
+					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						contains.Add(i);
+						continue;
+					}
+				}
+				currentName = EnglishLanguage.GetBuffNameById(i);
+				if (!string.IsNullOrWhiteSpace(currentName))
+				{
+					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+						return new List<int> { i };
+					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						startswith.Add(i);
+						continue;
+					}
+					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						contains.Add(i);
+						continue;
+					}
+				}
+			}
+
+			if (startswith.Count != 1)
+				startswith.AddRange(contains);
+			return startswith;
+		}
+
+		/// <summary>
+		/// Gets a prefix based on its id
+		/// </summary>
+		/// <param name="id">ID</param>
+		/// <returns>Prefix name</returns>
+		public static string GetPrefixById(int id)
+		{
+			return id < FirstItemPrefix || id > LastItemPrefix ? "" : Lang.prefix[id].ToString() ?? "";
+		}
+
+		/// <summary>
+		/// Gets a list of prefixes by name
+		/// </summary>
+		/// <param name="name">Name</param>
+		/// <returns>List of prefix IDs</returns>
+		public static List<int> GetPrefixByName(string name)
+		{
+			var startswith = new List<int>();
+			var contains = new List<int>();
+			for (int i = FirstItemPrefix; i <= LastItemPrefix; i++)
+			{
+				var currentName = Lang.prefix[i].ToString();
+				if (!string.IsNullOrWhiteSpace(currentName))
+				{
+					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+						return new List<int> { i };
+					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						startswith.Add(i);
+						continue;
+					}
+					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						contains.Add(i);
+						continue;
+					}
+				}
+				currentName = EnglishLanguage.GetPrefixById(i);
+				if (!string.IsNullOrWhiteSpace(currentName))
+				{
+					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+						return new List<int> { i };
+					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						startswith.Add(i);
+						continue;
+					}
+					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+					{
+						contains.Add(i);
+						continue;
+					}
+				}
+			}
+
+			if (startswith.Count != 1)
+				startswith.AddRange(contains);
+			return startswith;
+		}
+
+		/// <summary>
+		/// Gets a prefix by ID or name
+		/// </summary>
+		/// <param name="idOrName">ID or name</param>
+		/// <returns>List of prefix IDs</returns>
+		public static List<int> GetPrefixByIdOrName(string idOrName)
+		{
+			int type = -1;
+			if (int.TryParse(idOrName, out type) && type >= FirstItemPrefix && type <= LastItemPrefix)
+			{
+				return new List<int> { type };
+			}
+			return GetPrefixByName(idOrName);
+		}
+
+		/// <summary>
+		/// Stops the server after kicking all players with a reason message, and optionally saving the world
+		/// </summary>
+		/// <param name="save">bool perform a world save before stop (default: true)</param>
+		/// <param name="reason">string reason (default: "Server shutting down!")</param>
+		public static void StopServer(ServerContext server, bool save = true, string reason = "Server shutting down!")
+		{
+			if (save)
+				SaveManager.SaveWorld(server);
+
+			foreach (var player in TShock.Players.Where(p => p != null))
+			{
+				if (player.GetCurrentServer() != server) {
+					continue;
+				}
+				if (player.IsLoggedIn)
+				{
+					player.SaveServerCharacter();
+				}
+				player.Disconnect(reason);
+			}
+
+			// Broadcast so console can see we are shutting down as well
+			Utils.Broadcast(server, reason, Color.Red);
+
+            // Disconnect after kick as that signifies server is exiting and could cause a race
+            server.Netplay.Disconnect = true;
+		}
+
+		/// <summary>
+		/// Reloads all configuration settings, groups, regions and raises the reload event.
+		/// </summary>
+		public static void Reload()
+		{
+			FileTools.SetupMiscFiles();
+			TShock.HandleCommandLinePostConfigLoad(Environment.GetCommandLineArgs());
+			TShock.Groups.LoadPermisions();
+			TShock.Regions.Reload();
+			TShock.ItemBans.DataModel.UpdateItemBans();
+			TShock.ProjectileBans.UpdateBans();
+			TShock.TileBans.UpdateBans();
+			TShock.Bans.UpdateBans();
+		}
+
+		/// <summary>
+		/// Returns an IPv4 address from a DNS query
+		/// </summary>
+		/// <param name="hostname">string ip</param>
+		public static string GetIPv4AddressFromHostname(string hostname)
+		{
+			try
+			{
+				//Get the ipv4 address from GetHostAddresses, if an ip is passed it will return that ip
+				var ip = Dns.GetHostAddresses(hostname).FirstOrDefault(i => i.AddressFamily == AddressFamily.InterNetwork);
+				//if the dns query was successful then return it, otherwise return an empty string
+				return ip != null ? ip.ToString() : "";
+			}
+			catch (SocketException)
+			{
+			}
+			return "";
+		}
+
+		/// <summary>
+		/// Checks if world has hit the max number of chests
+		/// </summary>
+		/// <returns>True if the entire chest array is used</returns>
+		public static bool HasWorldReachedMaxChests(ServerContext server)
+		{
+			for (int i = 0; i < server.Main.chest.Length; i++)
+			{
+				if (server.Main.chest[i] == null)
+					return false;
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// Attempts to parse a string as a timespan (_d_m_h_s).
+		/// </summary>
+		/// <param name="str">The time string.</param>
+		/// <param name="seconds">The seconds.</param>
+		/// <returns>Whether the string was parsed successfully.</returns>
+		public static bool TryParseTime(string str, out int seconds)
+		{
+			seconds = 0;
+
+			if (string.IsNullOrWhiteSpace(str))
+			{
+				return false;
+			}
+
+			var sb = new StringBuilder(3);
+			for (int i = 0; i < str.Length; i++)
+			{
+				if (char.IsDigit(str[i]) || str[i] == '-' || str[i] == '+' || str[i] == ' ')
+					sb.Append(str[i]);
+				else
+				{
+					int num;
+					if (!int.TryParse(sb.ToString(), out num))
+						return false;
+
+					sb.Clear();
+					switch (str[i])
+					{
+						case 's':
+							seconds += num;
+							break;
+						case 'm':
+							seconds += num * 60;
+							break;
+						case 'h':
+							seconds += num * 60 * 60;
+							break;
+						case 'd':
+							seconds += num * 60 * 60 * 24;
+							break;
+						default:
+							return false;
+					}
+				}
+			}
+			if (sb.Length != 0)
+				return false;
+			return true;
+		}
+
+		/// <summary>
+		/// Attempts to parse a string as a positive timespan (_d_m_h_s).
+		/// </summary>
+		/// <param name="str">The time string.</param>
+		/// <param name="seconds">The seconds.</param>
+		/// <returns>Whether the string was parsed successfully.</returns>
+		public static bool TryParseTime(string str, out ulong seconds)
+		{
+			seconds = 0;
+
+			if (string.IsNullOrWhiteSpace(str))
+			{
+				return false;
+			}
+
+			var sb = new StringBuilder(3);
+			for (int i = 0; i < str.Length; i++)
+			{
+				if (char.IsDigit(str[i]) || str[i] == '-' || str[i] == '+' || str[i] == ' ')
+					sb.Append(str[i]);
+				else
+				{
+					int num;
+					if (!int.TryParse(sb.ToString().Trim(' '), out num))
+						return false;
+
+					sb.Clear();
+
+					if (num == 0)
+					{
+						continue;
+					}
+
+					int numSeconds;
+					switch (str[i])
+					{
+						case 's':
+							numSeconds = num;
+							break;
+						case 'm':
+							numSeconds = num * 60;
+							break;
+						case 'h':
+							numSeconds = num * 60 * 60;
+							break;
+						case 'd':
+							numSeconds = num * 60 * 60 * 24;
+							break;
+						default:
+							return false;
+					}
+
+					if (numSeconds > 0)
+					{
+						if (ulong.MaxValue - seconds < (uint)numSeconds)
+						{
+							return false;
+						}
+
+						seconds += (uint)numSeconds;
+					}
+					else if (seconds >= (uint)Math.Abs(numSeconds))
+					{
+						seconds -= (uint)Math.Abs(numSeconds);
+					}
+					else
+					{
+						return false;
+					}
+				}
+			}
+			if (sb.Length != 0)
+				return false;
+			return true;
+		}
+
+		/// <summary>
+		/// Searches for a projectile by identity and owner
+		/// </summary>
+		/// <param name="identity">identity</param>
+		/// <param name="owner">owner</param>
+		/// <returns>projectile ID</returns>
+		public static int SearchProjectile(ServerContext server, short identity, int owner)
+		{
+			for (int i = 0; i < Main.maxProjectiles; i++)
+			{
+				if (server.Main.projectile[i].identity == identity && server.Main.projectile[i].owner == owner)
+					return i;
+			}
+			return Main.maxProjectiles;
+		}
+
+		/// <summary>
+		/// Enumerates boundary points of the given region's rectangle.
+		/// </summary>
+		/// <param name="regionArea">The region's area to enumerate through.</param>
+		/// <returns>The enumerated boundary points.</returns>
+		public static IEnumerable<Point> EnumerateRegionBoundaries(Rectangle regionArea)
+		{
+			for (int x = 0; x < regionArea.Width + 1; x++)
+			{
+				yield return new Point(regionArea.Left + x, regionArea.Top);
+				yield return new Point(regionArea.Left + x, regionArea.Bottom);
+			}
+
+			for (int y = 1; y < regionArea.Height; y++)
+			{
+				yield return new Point(regionArea.Left, regionArea.Top + y);
+				yield return new Point(regionArea.Right, regionArea.Top + y);
+			}
+		}
+
+		/// <summary>EncodeColor - Encodes a color as an int.</summary>
+		/// <param name="color">color - The color to encode</param>
+		/// <returns>int? - The encoded color</returns>
+		public static int? EncodeColor(Color? color)
+		{
+			if (color == null)
+				return null;
+
+			return BitConverter.ToInt32(new[] { color.Value.R, color.Value.G, color.Value.B, color.Value.A }, 0);
+		}
+
+		/// <summary>DecodeColor - Decodes a color encoded by the EncodeColor function.</summary>
+		/// <param name="encodedColor">encodedColor - The encoded color</param>
+		/// <returns>Color? - The decoded color</returns>
+		public static Color? DecodeColor(int? encodedColor)
+		{
+			if (encodedColor == null)
+				return null;
+
+			byte[] data = BitConverter.GetBytes(encodedColor.Value);
+			return new Color(data[0], data[1], data[2], data[3]);
+		}
+
+		/// <summary>
+		/// Encodes a Boolean Array as an int.
+		/// </summary>
+		/// <param name="bools">The boolean array to encode.</param>
+		/// <returns>The encoded int.</returns>
+		public static int? EncodeBoolArray(bool[] bools)
+		{
+			if (bools == null)
+				return null;
+
+			int result = 0;
+			for (int i = 0; i < bools.Length; i++)
+				if (bools[i])
+					result |= (1 << i);
+
+			return result;
+		}
+
+		/// <summary>
+		/// Decodes a Boolean Array from an int.
+		/// </summary>
+		/// <param name="encodedbools">The encoded Boolean Array.</param>
+		/// <returns>The resulting Boolean Array.</returns>
+		public static bool[] DecodeBoolArray(int? encodedbools)
+		{
+			if (encodedbools == null)
+				return null;
+
+			bool[] result = new bool[10];
+			for (int i = 0; i < result.Length; i++)
+				result[i] = (encodedbools & 1 << i) != 0;
+
+			return result;
+		}
+
+		/// <summary>EncodeBitsByte - Encodes a BitsByte as a byte.</summary>
+		/// <param name="bitsByte">bitsByte - The BitsByte object</param>
+		/// <returns>byte? - The converted byte</returns>
+		public static byte? EncodeBitsByte(BitsByte? bitsByte)
+		{
+			if (bitsByte == null)
+				return null;
+
+			byte result = 0;
+			for (int i = 0; i < 8; i++)
+				if (bitsByte.Value[i])
+					result |= (byte)(1 << i);
+
+			return result;
+		}
+
+		/// <summary>DecodeBitsByte - Decodes a bitsbyte from an int.</summary>
+		/// <param name="encodedBitsByte">encodedBitsByte - The encoded bitsbyte object.</param>
+		/// <returns>BitsByte? - The decoded bitsbyte object</returns>
+		public static BitsByte? DecodeBitsByte(int? encodedBitsByte)
+		{
+			if (encodedBitsByte == null)
+				return null;
+
+			BitsByte result = new BitsByte();
+			for (int i = 0; i < 8; i++)
+				result[i] = (encodedBitsByte & 1 << i) != 0;
+
+			return result;
+		}
+
+		/// <summary>GetResponseNoException - Gets a web response without generating an exception.</summary>
+		/// <param name="req">req - The request to send.</param>
+		/// <returns>HttpWebResponse - The response object.</returns>
+		public static HttpWebResponse GetResponseNoException(HttpWebRequest req)
+		{
+			try
+			{
+				return (HttpWebResponse)req.GetResponse();
+			}
+			catch (WebException we)
+			{
+				var resp = we.Response as HttpWebResponse;
+				if (resp == null)
+					throw;
+				return resp;
+			}
+		}
+
+		/// <summary>
+		/// Colors the given text by correctly applying the color chat tag.
+		/// </summary>
+		/// <param name="text">The text to color.</param>
+		/// <param name="color">The color to apply.</param>
+		/// <returns>The <paramref name="text"/>, surrounded by the color tag with the appropriated hex code.</returns>
+		public static string ColorTag(string text, Color color)
+		{
+			return String.Format("[c/{0}:{1}]", color.Hex3(), text);
+		}
+
+		/// <summary>
+		/// Converts an item into its text representation using the item chat tag.
+		/// </summary>
+		/// <param name="item">The item to convert.</param>
+		/// <returns>The <paramref name="item"/> NetID surrounded by the item tag with proper stack/prefix data.</returns>
+		public static string ItemTag(Item item)
+		{
+			int netID = item.netID;
+			int stack = item.stack;
+			int prefix = item.prefix;
+			string options = stack > 1 ? "/s" + stack : prefix != 0 ? "/p" + prefix : "";
+			return String.Format("[i{0}:{1}]", options, netID);
+		}
+
+		/// <summary>
+		/// Gets a list of points selected by a mass-wiring tool.
+		/// </summary>
+		/// <param name="start">The starting point for the selection.</param>
+		/// <param name="end">The ending point for the selection.</param>
+		/// <param name="direction">False if facing left, True if facing right.</param>
+		/// <returns>
+		/// A list of coordinates containing the <paramref name="start"/> and <paramref name="end"/>
+		/// points and a list of points between them, forming an L shape based on <paramref name="direction"/>.
+		/// </returns>
+		public static List<Point> GetMassWireOperationRange(Point start, Point end, bool direction = false)
+		{
+			List<Point> points = new List<Point>();
+
+			#region Tile Selection Logic stolen from Wiring.cs
+
+			// Slightly modified version of Wiring.MassWireOperationInner, ignores a player's wire count
+			int num = Math.Sign(end.X - start.X);
+			int num2 = Math.Sign(end.Y - start.Y);
+			Point pt = new Point();
+			int num3;
+			int num4;
+			int num5;
+			if (direction)
+			{
+				pt.X = start.X;
+				num3 = start.Y;
+				num4 = end.Y;
+				num5 = num2;
+			}
+			else
+			{
+				pt.Y = start.Y;
+				num3 = start.X;
+				num4 = end.X;
+				num5 = num;
+			}
+			int num6 = num3;
+			while (num6 != num4)
+			{
+				if (direction)
+				{
+					pt.Y = num6;
+				}
+				else
+				{
+					pt.X = num6;
+				}
+				points.Add(pt);
+				num6 += num5;
+			}
+			if (direction)
+			{
+				pt.Y = end.Y;
+				num3 = start.X;
+				num4 = end.X;
+				num5 = num;
+			}
+			else
+			{
+				pt.X = end.X;
+				num3 = start.Y;
+				num4 = end.Y;
+				num5 = num2;
+			}
+			int num7 = num3;
+			while (num7 != num4)
+			{
+				if (!direction)
+				{
+					pt.Y = num7;
+				}
+				else
+				{
+					pt.X = num7;
+				}
+				points.Add(pt);
+				num7 += num5;
+			}
+			points.Add(end);
+
+			#endregion
+
+			return points;
+		}
+
+		/// <summary>
+		/// Dumps information and optionally exits afterwards
+		/// </summary>
+		/// <param name="exit"></param>
+		public static void Dump(bool exit = true)
+		{
+			// Lang.setLang(true);
+
+			Directory.CreateDirectory("docs");
+
+			Configuration.TShockConfig.DumpDescriptions();
+			Permissions.DumpDescriptions();
+			Configuration.ServerSideConfig.DumpDescriptions();
+			RestManager.DumpDescriptions();
+
+			if (exit)
+			{
+				Environment.Exit(1);
+			}
+		}
+
+		/// <summary>Dumps a matrix of all permissions &amp; all groups in Markdown table format.</summary>
+		/// <param name="path">The save destination.</param>
+		internal static void DumpPermissionMatrix(string path)
+		{
+			StringBuilder output = new StringBuilder();
+			output.Append("|Permission|");
+
+			// Traverse to build group name list
+			foreach (Group g in TShock.Groups.groups)
+			{
+				output.Append("[[");
+				output.Append(g.Name);
+				output.Append("]]");
+				output.Append("|");
+			}
+
+			output.AppendLine();
+			output.Append("|-------|");
+
+			foreach (Group g in TShock.Groups.groups)
+			{
+				output.Append("-------|");
+			}
+			output.AppendLine();
+
+			foreach (var field in typeof(Permissions).GetFields().OrderBy(f => f.Name))
+			{
+				output.Append("|[[");
+				output.Append((string)field.GetValue(null));
+				output.Append("]]|");
+
+				foreach (Group g in TShock.Groups.groups)
+				{
+					if (g.HasPermission((string)field.GetValue(null)))
+					{
+						output.Append("✔|");
+					}
+					else
+					{
+						output.Append("|");
+					}
+				}
+				output.AppendLine();
+			}
+
+			File.WriteAllText(path, output.ToString());
+		}
+
+		/// <summary>Starts an invasion on the server.</summary>
+		/// <param name="type">The invasion type id.</param>
+		internal static void StartInvasion(ServerContext server, int type)
+		{
+			int invasionSize = 0;
+			var setting = TShock.Config.GetServerSettings(server.Name);
+
+			if (setting.InfiniteInvasion)
+			{
+				// Not really an infinite size
+				invasionSize = 20000000;
+			}
+			else
+			{
+				invasionSize = 100 + (setting.InvasionMultiplier * GetActivePlayerCount());
+			}
+
+			// Order matters
+			// StartInvasion will reset the invasion size
+
+			server.Main.StartInvasion(type);
+
+			// Note: This is a workaround to previously providing the size as a parameter in StartInvasion
+			// Have to set start size to report progress correctly
+			server.Main.invasionSizeStart = invasionSize;
+			server.Main.invasionSize = invasionSize;
+		}
+
+		/// <summary>Verifies that each stack in each chest is valid and not over the max stack count.</summary>
+		internal static void FixChestStacks(ServerContext server)
+		{
+			var setting = TShock.Config.GetServerSettings(server.Name);
+
+			if (setting.IgnoreChestStacksOnLoad)
+				return;
+
+			foreach (Chest chest in server.Main.chest)
+			{
+				if (chest != null)
+				{
+					foreach (Item item in chest.item)
+					{
+						if (item != null && item.stack > item.maxStack)
+							item.stack = item.maxStack;
+					}
+				}
+			}
+		}
+
+		// Some terminals doesn't supports XTerm escape sequences for setting the title
+		private static bool ShouldSkipTitle = !System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) && !(Environment.GetEnvironmentVariable("TERM")?.Contains("xterm") ?? false);
+
+		/// <summary>Determines the distance between two vectors.</summary>
+		/// <param name="value1">The first vector location.</param>
+		/// <param name="value2">The second vector location.</param>
+		/// <returns>The distance between the two vectors.</returns>
+		public static float Distance(Vector2 value1, Vector2 value2)
+		{
+			float num2 = value1.X - value2.X;
+			float num = value1.Y - value2.Y;
+			float num3 = (num2 * num2) + (num * num);
+			return (float)Math.Sqrt(num3);
+		}
+
+		/// <summary>Checks to see if a location is in the spawn protection area.</summary>
+		/// <param name="x">The x coordinate to check.</param>
+		/// <param name="y">The y coordinate to check.</param>
+		/// <returns>If the given x,y location is in the spawn area.</returns>
+		public static bool IsInSpawn(ServerContext server, int x, int y)
+		{
+			Vector2 tile = new Vector2(x, y);
+			Vector2 spawn = new Vector2(server.Main.spawnTileX, server.Main.spawnTileY);
+			return Distance(spawn, tile) <= TShock.Config.GetServerSettings(server.Name).SpawnProtectionRadius;
+		}
+
+        internal static void ComputeMaxStyles() {
+            var item = new Item();
+            for (int i = 0; i < Terraria.ID.ItemID.Count; i++) {
+                item.netDefaults(TShock.ServerSample, i);
+                if (item.placeStyle >= 0) {
+                    if (Bouncer.MaxPlaceStyles.ContainsKey(item.createTile)) {
+                        if (item.placeStyle > Bouncer.MaxPlaceStyles[item.createTile])
+                            Bouncer.MaxPlaceStyles[item.createTile] = item.placeStyle;
+                    }
+                    else
+                        Bouncer.MaxPlaceStyles.Add(item.createTile, item.placeStyle);
+                }
+            }
+        }
+    }
+}

@@ -70,7 +70,12 @@ namespace UnifierTSL.Logging
                     sourceLineNumber: sourceLineNumber,
                     ref metadataAllocHandle
                 );
-                logger.Log(in logEntry);
+                if (_injectors.Length > 0) {
+                    foreach (var injector in _injectors) {
+                        injector.InjectMetadata(ref logEntry);
+                    }
+                }
+                logger.Log(ref logEntry);
             }
             finally {
                 metadataAllocHandle.Free();
@@ -111,8 +116,12 @@ namespace UnifierTSL.Logging
                         logEntry.SetMetadata(element.Key, element.Value);
                     }
                 }
-
-                logger.Log(in logEntry);
+                if (_injectors.Length > 0) {
+                    foreach (var injector in _injectors) {
+                        injector.InjectMetadata(ref logEntry);
+                    }
+                }
+                logger.Log(ref logEntry);
             }
             finally {
                 metadataAllocHandle.Free();
@@ -157,7 +166,12 @@ namespace UnifierTSL.Logging
                     sourceLineNumber: sourceLineNumber,
                     ref metadataAllocHandle
                 );
-                logger.Log(in logEntry);
+                if (_injectors.Length > 0) {
+                    foreach (var injector in _injectors) {
+                        injector.InjectMetadata(ref logEntry);
+                    }
+                }
+                logger.Log(ref logEntry);
             }
             finally {
                 metadataAllocHandle.Free();
@@ -212,8 +226,12 @@ namespace UnifierTSL.Logging
                         logEntry.SetMetadata(element.Key, element.Value);
                     }
                 }
-
-                logger.Log(in logEntry);
+                if (_injectors.Length > 0) {
+                    foreach (var injector in _injectors) {
+                        injector.InjectMetadata(ref logEntry);
+                    }
+                }
+                logger.Log(ref logEntry);
             }
             finally {
                 metadataAllocHandle.Free();

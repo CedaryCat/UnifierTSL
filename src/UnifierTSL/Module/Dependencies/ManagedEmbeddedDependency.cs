@@ -1,16 +1,21 @@
-﻿using System.Reflection;
+﻿using NuGet.Versioning;
+using System.Collections.Immutable;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using UnifierTSL.Logging;
 using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.Module.Dependencies
 {
     public class ManagedEmbeddedDependency(Assembly plugin, string embeddedPath) : ModuleDependency
     {
-        public class EmbeddedLibraryExtractor : IDependencyLibraryExtractor
+        class EmbeddedLibraryExtractor : IDependencyLibraryExtractor
         {
             private readonly Assembly plugin;
             private readonly string embeddedPath;
+            public readonly string LibraryName;
+            public readonly NuGetVersion Version;
 
             public EmbeddedLibraryExtractor(Assembly plugin, string embeddedPath) {
                 this.plugin = plugin;
@@ -20,24 +25,33 @@ namespace UnifierTSL.Module.Dependencies
 
                 if (MetadataBlobHelpers.TryReadAssemblyIdentity(stream, out var name, out var version)) {
                     LibraryName = name;
-                    Version = version;
+                    Version = new NuGetVersion(version);
                 }
                 else {
                     throw new InvalidOperationException($"Unable to read assembly identity from embedded resource '{embeddedPath}'. Ensure it is a valid .NET assembly.");
                 }
             }
 
-            public string LibraryName { get; }
-            public Version Version { get; }
-
             public Stream Extract() {
                 return plugin.GetManifestResourceStream(embeddedPath) ?? throw new FileNotFoundException($"Embedded resource '{embeddedPath}' not found.");
             }
+
+            ImmutableArray<LibraryEntry> IDependencyLibraryExtractor.Extract(RoleLogger logger) {
+                return [
+                    new LibraryEntry(
+                        new Lazy<Stream>(() => plugin.GetManifestResourceStream(embeddedPath) ?? throw new FileNotFoundException($"Embedded resource '{embeddedPath}' not found.")),
+                        DependencyKind.ManagedAssembly,
+                        Path.Combine("lib", LibraryName + ".dll"),
+                        Version,
+                        LibraryName
+                    )
+                ];
+            }
         }
-        public override string Name => LibraryExtractor.LibraryName;
-        public override Version Version => LibraryExtractor.Version;
-        public override DependencyKind Kind => DependencyKind.ManagedAssembly;
-        public override string ExpectedPath => Path.Combine(LibraryExtractor.LibraryName + ".dll");
-        public override IDependencyLibraryExtractor LibraryExtractor { get; } = new EmbeddedLibraryExtractor(plugin, embeddedPath);
+        public override string Name => extractor.LibraryName;
+        public override NuGetVersion Version => new(extractor.Version);
+
+        readonly EmbeddedLibraryExtractor extractor = new(plugin, embeddedPath);
+        public override IDependencyLibraryExtractor LibraryExtractor => extractor;
     }
 }

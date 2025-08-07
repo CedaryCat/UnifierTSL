@@ -30,6 +30,7 @@ namespace UnifierTSL
             UnifierApi.Logger.Info($"Unifier Terraria-Server-Launcher Running\r\n" +
                 $"Version Info: \r\n" +
                 $"  Terraria v{version.TerrariaVersion} & OTAPI v{version.OTAPIVersion}\r\n" +
+                $"  Unified-Server-Process v{version.USPVersion}\r\n" +
                 $"  UnifierApi v{version.UnifierApiVersion} & PluginApi v{PluginOrchestrator.ApiVersion}\r\n" +
                 $"Current Process ID: {Environment.ProcessId}");
 
@@ -59,9 +60,8 @@ namespace UnifierTSL
                          ? "Server is running without a password. -anyone can join."
                          : $"Server is running with password: '{UnifiedServerCoordinator.ServerPassword}'"));
 
-            while (true) {
-                Console.ReadLine();
-            }
+            UnifierApi.EventHub.Coordinator.Started.Invoke(default);
+            UnifierApi.EventHub.Chat.KeepReadingInput();
         }
     }
 }
