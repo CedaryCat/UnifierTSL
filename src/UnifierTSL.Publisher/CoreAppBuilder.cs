@@ -16,7 +16,7 @@ namespace UnifierTSL.Publisher
         /// using Microsoft.NET.HostModel.
         /// </summary>
         /// <returns>Result containing paths to the packaged executable and dependencies.</returns>
-        public CoreAppBuilderResult Build() {
+        public CoreAppBuilderResult Build(string rid) {
             var targetFrameworkDir = new DirectoryInfo(Directory.GetCurrentDirectory());
             var solutionDir = targetFrameworkDir
                 .Parent! // configuration (Debug/Release)
@@ -38,7 +38,7 @@ namespace UnifierTSL.Publisher
             // Step 1: Run dotnet build
             var buildProcess = Process.Start(new ProcessStartInfo {
                 FileName = "dotnet",
-                Arguments = $"build \"{projectPath}\" -c Release",
+                Arguments = $"build \"{projectPath}\" -c Release -r {rid}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -74,16 +74,16 @@ namespace UnifierTSL.Publisher
             // Step 4: Generate executable using AppHost
             var appHostTemplate = DotnetSdkHelper.GetBestMatchedAppHostPath();
 
-            var outputExe = Path.Combine(publishDir, $"{projectName}.exe");
+            var executable = Path.Combine(publishDir, projectName + FileHelpers.ExecutableExtension());
 
             HostWriter.CreateAppHost(
                 appHostSourceFilePath: appHostTemplate,
-                appHostDestinationFilePath: outputExe,
+                appHostDestinationFilePath: executable,
                 appBinaryFilePath: Path.Combine("lib", $"{projectName}.dll"),
                 windowsGraphicalUserInterface: false);
 
             return new CoreAppBuilderResult(
-                OutputExecutable: outputExe,
+                OutputExecutable: executable,
                 PdbFile: pdbPath,
                 RuntimesPath: Path.Combine(buildDir, "runtimes"),
                 OtherDependencyDlls: [..dependencies, ..dependenciesPdb, runtimeConfigPath, depsJsonPath]

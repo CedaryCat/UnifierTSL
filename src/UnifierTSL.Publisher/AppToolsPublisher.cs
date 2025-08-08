@@ -21,7 +21,7 @@ namespace UnifierTSL.Publisher
         /// and returns the results as an ImmutableArray.
         /// </summary>
         /// <returns>An ImmutableArray containing the output files of the published applications.</returns>
-        public ImmutableArray<string> PublishApps() {
+        public ImmutableArray<string> PublishApps(string rid) {
 
             var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
                          // target framework folder
@@ -43,7 +43,7 @@ namespace UnifierTSL.Publisher
 
                 var startInfo = new ProcessStartInfo {
                     FileName = "dotnet",
-                    Arguments = $"publish \"{projectPath}\" -c Release -p:PublishSingleFile=true -p:SelfContained=false -o {outputDir}",
+                    Arguments = $"publish \"{projectPath}\" -c Release -p:PublishSingleFile=true -p:SelfContained=false -o \"{outputDir}\" -r {rid}",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

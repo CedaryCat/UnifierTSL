@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace UnifierTSL.Publisher
 {
@@ -14,24 +15,25 @@ namespace UnifierTSL.Publisher
             }
             excludedPlugins ??= [];
 
-            var task = Run(excludedPlugins);
+            var task = Run(RuntimeInformation.RuntimeIdentifier, excludedPlugins);
             task.Wait();
             if (task.IsFaulted) throw task.Exception;
         }
 
-        static async Task Run(IReadOnlyList<string> excludedPlugins) {
-            var packages = PackageLayoutManager.CreateSupportPackages();
-            await packages.InputAppTools(
+        static async Task Run(string rid, IReadOnlyList<string> excludedPlugins) {
+            var package = new PackageLayoutManager(rid);
+
+            await package.InputAppTools(
                 new AppToolsPublisher([
                     "UnifierTSL.ConsoleClient\\UnifierTSL.ConsoleClient.csproj",
                 ])
-                .PublishApps());
+                .PublishApps(rid));
 
-            await packages.InputPlugins(
-                new PluginsBuilder("Plugins").BuildPlugins(excludedPlugins));
+            await package.InputPlugins(
+                new PluginsBuilder("Plugins").BuildPlugins(rid, excludedPlugins));
 
-            await packages.InputCoreProgram(
-                new CoreAppBuilder("UnifierTSL\\UnifierTSL.csproj").Build());
+            await package.InputCoreProgram(
+                new CoreAppBuilder("UnifierTSL\\UnifierTSL.csproj").Build(rid));
         }
     }
 }

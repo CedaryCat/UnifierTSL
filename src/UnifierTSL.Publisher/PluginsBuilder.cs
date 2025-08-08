@@ -6,7 +6,7 @@ namespace UnifierTSL.Publisher
 {
     public class PluginsBuilder(string RelativePluginProjectDir)
     {
-        public ImmutableArray<string> BuildPlugins() {
+        public ImmutableArray<string> BuildPlugins(string rid) {
             var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
                 // target framework folder
                 .Parent! // configuration (Debug or Release) folder
@@ -23,9 +23,9 @@ namespace UnifierTSL.Publisher
                 .SelectMany(d => d.GetFiles("*.csproj"))
                 .ToList();
 
-            return Build(solutionDir, projects);
+            return Build(rid, solutionDir, projects);
         }
-        public ImmutableArray<string> BuildPlugins(params IReadOnlyList<string> excludedProjectNames) {
+        public ImmutableArray<string> BuildPlugins(string rid, params IReadOnlyList<string> excludedProjectNames) {
             var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
                 // target framework folder
                 .Parent! // configuration (Debug or Release) folder
@@ -48,10 +48,10 @@ namespace UnifierTSL.Publisher
                 projects.Add(project);
             }
 
-            return Build(solutionDir, projects);
+            return Build(rid, solutionDir, projects);
         }
 
-        static ImmutableArray<string> Build(string solutionDir, List<FileInfo> projects) {
+        static ImmutableArray<string> Build(string rid, string solutionDir, List<FileInfo> projects) {
             string[] files = new string[projects.Count * 2]; // dll and pdb
 
             for (int i = 0; i < projects.Count; i++) {
@@ -67,7 +67,7 @@ namespace UnifierTSL.Publisher
 
                 var startInfo = new ProcessStartInfo {
                     FileName = "dotnet",
-                    Arguments = $"build \"{project.FullName}\" -c Release -o \"{outputDir}\"",
+                    Arguments = $"build \"{project.FullName}\" -c Release -o \"{outputDir}\" -r {rid}",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
