@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: ["win-x64", "osx-x64", "linux-x64", "linux-arm64", "linux-arm"]
 
     steps:
     - uses: actions/checkout@v4
@@ -29,23 +32,11 @@ jobs:
       run: |
         cd src/UnifierTSL.Publisher/bin/Release/net9.0
         dotnet UnifierTSL.Publisher.dll
-
-    - name: Pack
-      run: |
-        find . -type d -name "utsl-*" | while read -r folder; do
-          folder_name=$(basename "$folder")
-          (cd "$(dirname "$folder")" && zip -9 -r "${folder_name}.zip" "$folder_name")
-          echo "Zipped $folder_name to ${folder_name}.zip"
-        done
-      shell: bash
-
-    - name: Upload Artifacts
-      if: success()
+        cp -r utsl-${{ matrix.arch }} ${{ github.workspace }}/
+    
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: utsl-packages
-        path: "**/utsl-*.zip"
-    
-    - name: Debug directory structure on failure
-      if: failure()
-      run: tree -a $GITHUB_WORKSPACE
+        name: utsl-${{ matrix.arch }}
+        path: utsl-${{ matrix.arch }}
+        compression-level: 9
