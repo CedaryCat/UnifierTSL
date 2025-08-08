@@ -29,7 +29,7 @@ namespace UnifierTSL.Publisher
             var projectName = Path.GetFileNameWithoutExtension(relativeProjectPath);
 
             var projectDir = Path.GetDirectoryName(projectPath)!;
-            var buildDir = Path.Combine(projectDir, "bin", "Release", targetFrameworkDir.Name);
+            var buildDir = Path.Combine(projectDir, "bin", "Release", targetFrameworkDir.Name, rid);
 
             var publishDir = Path.Combine("core-publish", projectName);
 
