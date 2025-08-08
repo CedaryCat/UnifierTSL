@@ -104,7 +104,7 @@ namespace UnifierTSL.Events.Handlers
             }
             msgBuffer.GetData(info.LocalReciever.Server, begin, length, out _);
         }
-        static unsafe void PrecessPacket_F<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INonLengthAware, INonSideSpecific, INetPacket {
+        static unsafe void PrecessPacket_F<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INonLengthAware, INonSideSpecific, INetPacket {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -118,7 +118,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        static unsafe void PrecessPacket_FL<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INetPacket, ILengthAware, INonSideSpecific {
+        static unsafe void PrecessPacket_FL<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, ILengthAware, INonSideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -132,7 +132,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        static unsafe void PrecessPacket_FS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INetPacket, INonLengthAware, ISideSpecific {
+        static unsafe void PrecessPacket_FS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, INonLengthAware, ISideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -147,7 +147,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        static unsafe void PrecessPacket_FLS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : unmanaged, INetPacket, ILengthAware, ISideSpecific {
+        static unsafe void PrecessPacket_FLS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, ILengthAware, ISideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -162,7 +162,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        static unsafe void PrecessPacket_D<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INonLengthAware, INonSideSpecific, INetPacket {
+        static unsafe void PrecessPacket_D<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INonLengthAware, INonSideSpecific, INetPacket {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -176,7 +176,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        static unsafe void PrecessPacket_DL<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, INonSideSpecific {
+        static unsafe void PrecessPacket_DL<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, INonSideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -190,7 +190,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        static unsafe void PrecessPacket_DS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INetPacket, INonLengthAware, ISideSpecific {
+        static unsafe void PrecessPacket_DS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, INonLengthAware, ISideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -205,14 +205,14 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        static unsafe void PrecessPacket_DLS<TPacket>(ref readonly RecieveBytesInfo info) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, ISideSpecific {
+        static unsafe void PrecessPacket_DLS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, ISideSpecific {
             var boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.IsServerSide = true;
             args.Packet.ReadContent(ref ptr, args.rawDataEnd);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
@@ -309,16 +309,16 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.CombatTextInt: PrecessPacket_F<CombatTextInt>(in info); return;
                 case MessageID.NetModules: {
                         switch ((NetModuleType)Unsafe.Read<short>(Unsafe.Add<byte>(ptr, 1))) {
-                            case NetModuleType.NetLiquidModule: PrecessPacket_D<NetLiquidModule>(in info); return;
-                            case NetModuleType.NetTextModule: PrecessPacket_DS<NetTextModule>(in info); return;
-                            case NetModuleType.NetPingModule: PrecessPacket_F<NetPingModule>(in info); return;
-                            case NetModuleType.NetAmbienceModule: PrecessPacket_F<NetAmbienceModule>(in info); return;
-                            case NetModuleType.NetBestiaryModule: PrecessPacket_F<NetBestiaryModule>(in info); return;
-                            case NetModuleType.NetCreativeUnlocksModule: PrecessPacket_F<NetCreativeUnlocksModule>(in info); return;
-                            case NetModuleType.NetCreativePowersModule: PrecessPacket_DL<NetCreativePowersModule>(in info); return;
-                            case NetModuleType.NetCreativeUnlocksPlayerReportModule: PrecessPacket_F<NetCreativeUnlocksPlayerReportModule>(in info); return;
-                            case NetModuleType.NetTeleportPylonModule: PrecessPacket_F<NetTeleportPylonModule>(in info); return;
-                            case NetModuleType.NetParticlesModule: PrecessPacket_F<NetParticlesModule>(in info); return;
+                            case NetModuleType.NetLiquidModule: PrecessPacket_D<NetLiquidModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetTextModule: PrecessPacket_DS<NetTextModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetPingModule: PrecessPacket_F<NetPingModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetAmbienceModule: PrecessPacket_F<NetAmbienceModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetBestiaryModule: PrecessPacket_F<NetBestiaryModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetCreativeUnlocksModule: PrecessPacket_F<NetCreativeUnlocksModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetCreativePowersModule: PrecessPacket_DL<NetCreativePowersModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetCreativeUnlocksPlayerReportModule: PrecessPacket_F<NetCreativeUnlocksPlayerReportModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetTeleportPylonModule: PrecessPacket_F<NetTeleportPylonModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetParticlesModule: PrecessPacket_F<NetParticlesModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetCreativePowerPermissionsModule: PrecessPacket_F<NetCreativePowerPermissionsModule>(in info); return;
                             default: return;
                         }
