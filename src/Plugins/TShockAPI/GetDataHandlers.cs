@@ -45,12 +45,15 @@ namespace TShockAPI
             NetPacketHandler.Register<SpawnBoss>(HandleSpawnBoss, HandlerPriority.Low);
             NetPacketHandler.Register<PaintTile>(HandlePaintTile, HandlerPriority.Low);
             NetPacketHandler.Register<PaintWall>(HandlePaintWall, HandlerPriority.Low);
+            NetPacketHandler.Register<Teleport>(HandleTeleport, HandlerPriority.Low);
+            NetPacketHandler.Register<BugCatching>(HandleCatchNpc, HandlerPriority.Low);
             NetPacketHandler.Register<TeleportationPotion>(HandleTeleportationPotion, HandlerPriority.Low);
             NetPacketHandler.Register<AnglerQuestFinished>(HandleCompleteAnglerQuest, HandlerPriority.Low);
             NetPacketHandler.Register<AnglerQuestCountSync>(HandleNumberOfAnglerQuestsCompleted, HandlerPriority.Low);
             NetPacketHandler.Register<TileEntityPlacement>(HandlePlaceTileEntity, HandlerPriority.Low);
             NetPacketHandler.Register<SyncExtraValue>(HandleSyncExtraValue, HandlerPriority.Low);
             NetPacketHandler.Register<MurderSomeoneElsesProjectile>(HandleKillPortal, HandlerPriority.Low);
+            NetPacketHandler.Register<ToggleParty>(HandleToggleParty, HandlerPriority.Low);
             NetPacketHandler.Register<TeleportNPCThroughPortal>(HandleNpcTeleportPortal, HandlerPriority.Low);
             NetPacketHandler.Register<CrystalInvasionStart>(HandleOldOnesArmy, HandlerPriority.Low);
             NetPacketHandler.Register<PlayerDeathV2>(HandlePlayerKillMeV2, HandlerPriority.Low);
