@@ -29,8 +29,7 @@ namespace UnifierTSL.Publisher
             var projectName = Path.GetFileNameWithoutExtension(relativeProjectPath);
 
             var projectDir = Path.GetDirectoryName(projectPath)!;
-            var buildDir = Path.Combine(projectDir, "bin", "Release", targetFrameworkDir.Name, rid);
-
+            var buildDir = Path.Combine(projectDir, "bin", "Release", targetFrameworkDir.Name);
             var publishDir = Path.Combine("core-publish", projectName);
 
             Directory.CreateDirectory(publishDir);
@@ -38,7 +37,7 @@ namespace UnifierTSL.Publisher
             // Step 1: Run dotnet build
             var buildProcess = Process.Start(new ProcessStartInfo {
                 FileName = "dotnet",
-                Arguments = $"build \"{projectPath}\" -c Release -r {rid}",
+                Arguments = $"build \"{projectPath}\" -c Release",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -72,9 +71,9 @@ namespace UnifierTSL.Publisher
                 .ToArray();
 
             // Step 4: Generate executable using AppHost
-            var appHostTemplate = DotnetSdkHelper.GetBestMatchedAppHostPath();
+            var appHostTemplate = DotnetSdkHelper.GetBestMatchedAppHostPath(rid);
 
-            var executable = Path.Combine(publishDir, projectName + FileHelpers.ExecutableExtension());
+            var executable = Path.Combine(publishDir, projectName + FileHelpers.ExecutableExtension(rid));
 
             HostWriter.CreateAppHost(
                 appHostSourceFilePath: appHostTemplate,

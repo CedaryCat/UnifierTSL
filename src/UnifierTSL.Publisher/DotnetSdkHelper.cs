@@ -8,7 +8,7 @@ namespace UnifierTSL.Publisher
 {
     public static class DotnetSdkHelper
     {
-        public static string GetBestMatchedAppHostPath() {
+        public static string GetBestMatchedAppHostPath(string rid) {
             Version currentRuntimeVersion = GetCurrentRuntimeVersion();
             string sdkBasePath = GetDotnetSdkBasePath();
 
@@ -24,7 +24,7 @@ namespace UnifierTSL.Publisher
                 .FirstOrDefault() ?? throw new InvalidOperationException($"No matching SDK version found for runtime major version {currentRuntimeVersion.Major}");
 
             string matchedSdkPath = Path.Combine(sdkBasePath, matchedSdkDir.ToString());
-            string appHostFileName = "apphost" + FileHelpers.ExecutableExtension();
+            string appHostFileName = "apphost" + FileHelpers.ExecutableExtension(rid);
             string apphostPath = Path.Combine(matchedSdkPath, "AppHostTemplate", appHostFileName);
 
             if (!File.Exists(apphostPath))

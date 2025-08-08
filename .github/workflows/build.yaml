@@ -8,10 +8,21 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: ["win-x64", "osx-x64", "linux-x64", "linux-arm64", "linux-arm"]
+        include:
+          - os: windows-latest
+            arch: win-x64
+          - os: macos-latest
+            arch: osx-x64
+          - os: ubuntu-latest
+            arch: linux-x64
+          - os: ubuntu-latest
+            arch: linux-arm64
+          - os: ubuntu-latest
+            arch: linux-arm
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
