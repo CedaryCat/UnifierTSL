@@ -319,7 +319,7 @@ namespace UnifierTSL.Events.Handlers
                             case NetModuleType.NetCreativeUnlocksPlayerReportModule: PrecessPacket_F<NetCreativeUnlocksPlayerReportModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetTeleportPylonModule: PrecessPacket_F<NetTeleportPylonModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetParticlesModule: PrecessPacket_F<NetParticlesModule>(in info, contentOffset: 3); return;
-                            case NetModuleType.NetCreativePowerPermissionsModule: PrecessPacket_F<NetCreativePowerPermissionsModule>(in info); return;
+                            case NetModuleType.NetCreativePowerPermissionsModule: PrecessPacket_F<NetCreativePowerPermissionsModule>(in info, contentOffset: 3); return;
                             default: return;
                         }
                     }
