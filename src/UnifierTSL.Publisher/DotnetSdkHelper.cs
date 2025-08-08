@@ -24,10 +24,10 @@ namespace UnifierTSL.Publisher
                 .FirstOrDefault() ?? throw new InvalidOperationException($"No matching SDK version found for runtime major version {currentRuntimeVersion.Major}");
 
             string matchedSdkPath = Path.Combine(sdkBasePath, matchedSdkDir.ToString());
-            string apphostPath = Path.Combine(matchedSdkPath, "AppHostTemplate", "apphost.exe");
+            string apphostPath = Path.Combine(matchedSdkPath, "AppHostTemplate", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "apphost.exe" : "apphost");
 
             if (!File.Exists(apphostPath))
-                throw new FileNotFoundException($"apphost.exe not found at path: {apphostPath}");
+                throw new FileNotFoundException($"apphost not found at path: {apphostPath}");
 
             return apphostPath;
         }
