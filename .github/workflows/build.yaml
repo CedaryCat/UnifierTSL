@@ -1,0 +1,45 @@
+name: .NET CI
+
+on:
+  push:
+    branches: [ "main", "chore/setup-action" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build Publisher
+      run: dotnet build src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -c Release
+
+    - name: Run Publisher
+      working-directory: src/UnifierTSL.Publisher/bin/Release/net9.0
+      run: dotnet UnifierTSL.Publisher.dll
+
+    - name: Pack
+      run: |
+        find . -type d -name "utsl-*" | while read -r folder; do
+          folder_name=$(basename "$folder")
+          (cd "$(dirname "$folder")" && zip -9 -r "${folder_name}.zip" "$folder_name")
+          echo "Zipped $folder_name to ${folder_name}.zip"
+        done
+      shell: bash
+
+    - name: Upload Artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: utsl-packages
+        path: "**/utsl-*.zip"
