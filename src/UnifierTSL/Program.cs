@@ -7,6 +7,7 @@ namespace UnifierTSL
     {
         static void Main(string[] args) {
             Initializer.InitializeResolver();
+            UnifierApi.HandleCommandLinePreRun(args);
             Run(args);
         }
 

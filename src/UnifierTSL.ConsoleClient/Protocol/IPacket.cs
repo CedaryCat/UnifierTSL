@@ -52,7 +52,7 @@ namespace UnifierTSL.ConsoleClient.Protocol
             }
         }
         public static int GetStringBufferSize(string text) {
-            return text.Length * sizeof(char) + sizeof(int);
+            return text.Length * 4 + sizeof(int);
         }
         public static int WriteString(Span<byte> buffer, string text) {
             int index = 0;

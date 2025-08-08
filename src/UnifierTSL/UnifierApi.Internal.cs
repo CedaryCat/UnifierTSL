@@ -1,4 +1,5 @@
-﻿using Terraria.Utilities;
+﻿using Terraria.Localization;
+using Terraria.Utilities;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
 using UnifierTSL.FileSystem;
@@ -64,6 +65,23 @@ namespace UnifierTSL
 
             HandleCommandLine(launcherArgs);
             ReadLauncherArgs();
+        }
+
+        internal static void HandleCommandLinePreRun(string[] launcherArgs) {
+            Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);
+            foreach (var arg in args) {
+                var firstValue = arg.Value[0];
+                switch (arg.Key) {
+                    case "-culture":
+                    case "-lang":
+                    case "-language": {
+                            if (int.TryParse(firstValue, out var langId) && GameCulture._legacyCultures.TryGetValue(langId, out var culture)) {
+                                GameCulture.DefaultCulture = culture;
+                            }
+                        }
+                        break;
+                }
+            }
         }
         static void HandleCommandLine(string[] launcherArgs) {
             Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);

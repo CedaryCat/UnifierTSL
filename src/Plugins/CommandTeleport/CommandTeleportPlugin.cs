@@ -22,6 +22,7 @@ namespace CommandTeleport
             Commands.ChatCommands.Add(new Command([Permissions.ServerTransfer], Command_Transfer, "transfer", "connect", "tr", "worldwarp", "ww"));
             Commands.ChatCommands.Add(new Command([Permissions.ListServers], Command_ListServers, "servers", "serverlist"));
 
+            Directory.CreateDirectory(configRegistrar.Directory);
             string setupCheckFile = Path.Combine(configRegistrar.Directory, "complete.permissions.setup");
             if (!File.Exists(setupCheckFile)) {
                 TShock.Groups.AddPermissions("default", [Permissions.ServerTransfer, Permissions.ListServers]);
