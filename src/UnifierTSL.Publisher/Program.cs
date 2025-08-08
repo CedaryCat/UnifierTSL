@@ -7,6 +7,14 @@ namespace UnifierTSL.Publisher
     {
         static void Main(string[] args) {
             var options = CLIHelper.ParseArguements(args);
+            string rid;
+            if (!options.TryGetValue("--rid", out var rids)) {
+                throw new ArgumentException("--rid is required.");
+            }
+            if (rids.Count != 1) { 
+                throw new ArgumentException("--rid must be specified exactly once.");
+            }
+            rid = rids[0];
             if (options.TryGetValue("--excluded-plugins", out var excludedPlugins)) {
                 excludedPlugins = [.. excludedPlugins
                     .Select(p => p.Split(',' , StringSplitOptions.RemoveEmptyEntries))
@@ -15,7 +23,7 @@ namespace UnifierTSL.Publisher
             }
             excludedPlugins ??= [];
 
-            var task = Run(RuntimeInformation.RuntimeIdentifier, excludedPlugins);
+            var task = Run(rid, excludedPlugins);
             task.Wait();
             if (task.IsFaulted) throw task.Exception;
         }

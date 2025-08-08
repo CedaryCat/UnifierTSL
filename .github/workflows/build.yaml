@@ -31,7 +31,7 @@ jobs:
       
       run: |
         cd src/UnifierTSL.Publisher/bin/Release/net9.0
-        dotnet UnifierTSL.Publisher.dll
+        dotnet UnifierTSL.Publisher.dll --rid ${{ matrix.arch }} --excluded-plugins ExamplePlugin
         cp -r utsl-${{ matrix.arch }} ${{ github.workspace }}/
     
     - name: Upload artifacts
