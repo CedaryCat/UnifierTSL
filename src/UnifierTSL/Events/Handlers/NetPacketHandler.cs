@@ -111,7 +111,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.ReadContent(ref ptr);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
                 args.LocalReciever.AsRecieveFromSender_FixedPkt(args.RecieveFrom, args.Packet);
@@ -125,7 +125,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.ReadContent(ref ptr, args.rawDataEnd);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
                 args.LocalReciever.AsRecieveFromSender_FixedPkt(args.RecieveFrom, args.Packet);
@@ -139,7 +139,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.IsServerSide = true;
             args.Packet.ReadContent(ref ptr);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
@@ -154,7 +154,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.IsServerSide = true;
             args.Packet.ReadContent(ref ptr, args.rawDataEnd);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
@@ -169,7 +169,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.ReadContent(ref ptr);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
                 args.LocalReciever.AsRecieveFromSender_DynamicPkt(args.RecieveFrom, args.Packet);
@@ -183,7 +183,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.ReadContent(ref ptr, args.rawDataEnd);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
                 args.LocalReciever.AsRecieveFromSender_DynamicPkt(args.RecieveFrom, args.Packet);
@@ -197,7 +197,7 @@ namespace UnifierTSL.Events.Handlers
                 return;
             }
             var args = new RecievePacketEvent<TPacket>(in info);
-            var ptr = Unsafe.Add<byte>(args.rawDataBegin, 1);
+            var ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.IsServerSide = true;
             args.Packet.ReadContent(ref ptr);
             if (PrecessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
