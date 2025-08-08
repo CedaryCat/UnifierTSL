@@ -1,4 +1,6 @@
-﻿namespace UnifierTSL.Publisher
+﻿using System.Runtime.InteropServices;
+
+namespace UnifierTSL.Publisher
 {
     public static class FileHelpers
     {
@@ -9,6 +11,9 @@
             using var srcStr = File.OpenRead(src);
             using var destStr = File.Create(dest);
             await srcStr.CopyToAsync(destStr);
+        }
+        public static string ExecutableExtension() { 
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "";
         }
     }
 }

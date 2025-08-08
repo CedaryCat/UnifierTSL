@@ -1,20 +1,19 @@
 ﻿using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 
 namespace UnifierTSL.Publisher
 {
     public class PackageLayoutManager
     {
-        static readonly string[] runtimeIdentifiers = ["win-x64", "linux-arm", "linux-arm64", "linux-x64", "osx-x64"];
         public readonly string RID;
         public readonly string PublishPath;
         public readonly string LibraryPath;
         public readonly string RuntimesPath;
         public readonly string AppPath;
         public readonly string PluginsPath;
-        public static ImmutableArray<PackageLayoutManager> CreateSupportPackages() => [.. runtimeIdentifiers.Select(rid => new PackageLayoutManager(rid))];
-        private PackageLayoutManager(string rid) {
+        public PackageLayoutManager(string rid) {
             RID = rid;
-            PublishPath = "utsl-" + rid;
+            PublishPath = "utsl-" + RID;
             LibraryPath = Path.Combine(PublishPath, "lib");
             RuntimesPath = Path.Combine(PublishPath, "runtimes");
             AppPath = Path.Combine(PublishPath, "app");
@@ -90,23 +89,6 @@ namespace UnifierTSL.Publisher
                         await FileHelpers.SafeCopy(file.FullName, destPath);
                     }));
                 }
-            }
-        }
-    }
-    public static class PackageLayoutManagerExt {
-        public static async Task InputAppTools(this IEnumerable<PackageLayoutManager> packages, ImmutableArray<string> appPaths) {
-            foreach (var package in packages) {
-                await package.InputAppTools(appPaths);
-            }
-        }
-        public static async Task InputPlugins(this IEnumerable<PackageLayoutManager> packages, ImmutableArray<string> pluginFiles) {
-            foreach (var package in packages) {
-                await package.InputPlugins(pluginFiles);
-            }
-        }
-        public static async Task InputCoreProgram(this IEnumerable<PackageLayoutManager> packages, CoreAppBuilderResult result) {
-            foreach (var package in packages) {
-                await package.InputCoreProgram(result);
             }
         }
     }

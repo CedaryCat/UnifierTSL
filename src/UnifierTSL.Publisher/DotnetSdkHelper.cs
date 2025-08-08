@@ -24,10 +24,11 @@ namespace UnifierTSL.Publisher
                 .FirstOrDefault() ?? throw new InvalidOperationException($"No matching SDK version found for runtime major version {currentRuntimeVersion.Major}");
 
             string matchedSdkPath = Path.Combine(sdkBasePath, matchedSdkDir.ToString());
-            string apphostPath = Path.Combine(matchedSdkPath, "AppHostTemplate", RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "apphost.exe" : "apphost");
+            string appHostFileName = "apphost" + FileHelpers.ExecutableExtension();
+            string apphostPath = Path.Combine(matchedSdkPath, "AppHostTemplate", appHostFileName);
 
             if (!File.Exists(apphostPath))
-                throw new FileNotFoundException($"apphost not found at path: {apphostPath}");
+                throw new FileNotFoundException($"{appHostFileName} not found at path: {apphostPath}");
 
             return apphostPath;
         }
@@ -37,14 +38,14 @@ namespace UnifierTSL.Publisher
         }
 
         private static string GetDotnetSdkBasePath() {
-            string basePath;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet", "sdk");
-            else
-                basePath = "/usr/share/dotnet/sdk";
-
-            return basePath;
+            var currentDotnetDir = new DirectoryInfo(RuntimeEnvironment.GetRuntimeDirectory());
+            var basePath = currentDotnetDir
+                         // version folder
+                .Parent! // framework folder
+                .Parent! // shared folder
+                .Parent! // dotnet folder
+                .FullName;
+            return Path.Combine(basePath, "sdk");
         }
     }
 }
