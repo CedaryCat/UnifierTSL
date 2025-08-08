@@ -23,7 +23,7 @@ namespace UnifierTSL.Publisher
             var packages = PackageLayoutManager.CreateSupportPackages();
             await packages.InputAppTools(
                 new AppToolsPublisher([
-                    "UnifierTSL.ConsoleClient\\UnifierTSL.ConsoleClient.csproj",
+                    "UnifierTSL.ConsoleClient/UnifierTSL.ConsoleClient.csproj",
                 ])
                 .PublishApps());
 
@@ -31,7 +31,7 @@ namespace UnifierTSL.Publisher
                 new PluginsBuilder("Plugins").BuildPlugins(excludedPlugins));
 
             await packages.InputCoreProgram(
-                new CoreAppBuilder("UnifierTSL\\UnifierTSL.csproj").Build());
+                new CoreAppBuilder("UnifierTSL/UnifierTSL.csproj").Build());
         }
     }
 }

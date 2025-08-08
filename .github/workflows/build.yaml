@@ -19,14 +19,16 @@ jobs:
         dotnet-version: 9.0.x
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore src/
 
     - name: Build Publisher
-      run: dotnet build src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -c Release
+      run: dotnet build --no-restore src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -c Release
 
     - name: Run Publisher
-      working-directory: src/UnifierTSL.Publisher/bin/Release/net9.0
-      run: dotnet UnifierTSL.Publisher.dll
+      
+      run: |
+        cd src/UnifierTSL.Publisher/bin/Release/net9.0
+        dotnet UnifierTSL.Publisher.dll
 
     - name: Pack
       run: |
@@ -43,3 +45,7 @@ jobs:
       with:
         name: utsl-packages
         path: "**/utsl-*.zip"
+    
+    - name: Debug directory structure on failure
+      if: failure()
+      run: tree -a $GITHUB_WORKSPACE
