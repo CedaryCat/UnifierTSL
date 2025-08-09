@@ -37,7 +37,7 @@ namespace UnifierTSL.Publisher
             // Step 1: Run dotnet build
             var buildProcess = Process.Start(new ProcessStartInfo {
                 FileName = "dotnet",
-                Arguments = $"build \"{projectPath}\" -c Release -r {rid}",
+                Arguments = $"build \"{projectPath}\" -c Release",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
