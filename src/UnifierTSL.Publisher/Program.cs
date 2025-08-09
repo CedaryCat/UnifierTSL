@@ -33,7 +33,7 @@ namespace UnifierTSL.Publisher
 
             await package.InputAppTools(
                 new AppToolsPublisher([
-                    "UnifierTSL.ConsoleClient\\UnifierTSL.ConsoleClient.csproj",
+                    Path.Combine("UnifierTSL.ConsoleClient", "UnifierTSL.ConsoleClient.csproj"),
                 ])
                 .PublishApps(rid));
 
@@ -41,7 +41,7 @@ namespace UnifierTSL.Publisher
                 new PluginsBuilder("Plugins").BuildPlugins(rid, excludedPlugins));
 
             await package.InputCoreProgram(
-                new CoreAppBuilder("UnifierTSL\\UnifierTSL.csproj").Build(rid));
+                new CoreAppBuilder(Path.Combine("UnifierTSL", "UnifierTSL.csproj")).Build(rid));
         }
     }
 }

@@ -1,8 +1,7 @@
 {
   "profiles": {
     "UnifierTSL.Publisher": {
-      "commandName": "Project",
-      "commandLineArgs": "--rid osx-x64"
+      "commandName": "Project"
     }
   }
 }
