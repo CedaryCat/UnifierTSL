@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
 using System.Runtime.CompilerServices;
 using UnifiedServerProcess;
+using UnifierTSL.FileSystem;
 
 namespace UnifierTSL.CLI
 {
@@ -123,7 +124,7 @@ namespace UnifierTSL.CLI
                 catch { }
 
                 // start new process
-                var clientExePath = Path.Combine("app", $"{nameof(UnifierTSL)}.{nameof(ConsoleClient)}.exe");
+                var clientExePath = Path.Combine("app", $"{nameof(UnifierTSL)}.{nameof(ConsoleClient)}{FileSystemHelper.GetExecutableExtension()}");
                 var startInfo = new ProcessStartInfo {
                     FileName = clientExePath,
                     Arguments = _pipeName,

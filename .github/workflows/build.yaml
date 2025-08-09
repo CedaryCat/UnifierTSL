@@ -1,0 +1,53 @@
+name: .NET CI
+
+on:
+  push:
+    branches: [ "main", "chore/setup-action" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            arch: win-x64
+          - os: macos-latest
+            arch: osx-x64
+          - os: ubuntu-latest
+            arch: linux-x64
+          - os: ubuntu-latest
+            arch: linux-arm64
+          - os: ubuntu-latest
+            arch: linux-arm
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore src/
+
+    - name: Build Publisher
+      run: dotnet build --no-restore src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -c Release
+
+    - name: Run Publisher
+      
+      run: |
+        cd src/UnifierTSL.Publisher/bin/Release/net9.0
+        dotnet UnifierTSL.Publisher.dll --rid ${{ matrix.arch }} --excluded-plugins ExamplePlugin
+        cp -r utsl-${{ matrix.arch }} ${{ github.workspace }}/
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: utsl-${{ matrix.arch }}
+        path: utsl-${{ matrix.arch }}
+        compression-level: 9

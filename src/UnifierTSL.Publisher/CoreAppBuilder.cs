@@ -30,7 +30,6 @@ namespace UnifierTSL.Publisher
 
             var projectDir = Path.GetDirectoryName(projectPath)!;
             var buildDir = Path.Combine(projectDir, "bin", "Release", targetFrameworkDir.Name);
-
             var publishDir = Path.Combine("core-publish", projectName);
 
             Directory.CreateDirectory(publishDir);
@@ -72,9 +71,9 @@ namespace UnifierTSL.Publisher
                 .ToArray();
 
             // Step 4: Generate executable using AppHost
-            var appHostTemplate = DotnetSdkHelper.GetBestMatchedAppHostPath();
-
-            var executable = Path.Combine(publishDir, projectName + FileHelpers.ExecutableExtension());
+            var appHostTemplate = DotnetSdkHelper.GetBestMatchedAppHostPath(rid);
+            
+            var executable = Path.Combine(publishDir, projectName + FileHelpers.ExecutableExtension(rid));
 
             HostWriter.CreateAppHost(
                 appHostSourceFilePath: appHostTemplate,

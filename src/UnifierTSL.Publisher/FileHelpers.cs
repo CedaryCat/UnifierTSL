@@ -12,8 +12,12 @@ namespace UnifierTSL.Publisher
             using var destStr = File.Create(dest);
             await srcStr.CopyToAsync(destStr);
         }
-        public static string ExecutableExtension() { 
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "";
+      
+        public static string ExecutableExtension(string rid) { 
+            if (rid.StartsWith("win")) return ".exe";
+            if (rid.StartsWith("osx")) return "";
+            if (rid.StartsWith("linux")) return "";
+            throw new NotSupportedException(rid);
         }
     }
 }
