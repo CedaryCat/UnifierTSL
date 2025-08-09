@@ -12,6 +12,7 @@ namespace UnifierTSL.Publisher
             using var destStr = File.Create(dest);
             await srcStr.CopyToAsync(destStr);
         }
+      
         public static string ExecutableExtension(string rid) { 
             if (rid.StartsWith("win")) return ".exe";
             if (rid.StartsWith("osx")) return "";

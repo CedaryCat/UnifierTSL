@@ -24,7 +24,9 @@ namespace UnifierTSL.Publisher
                 .FirstOrDefault() ?? throw new InvalidOperationException($"No matching SDK version found for runtime major version {currentRuntimeVersion.Major}");
 
             string matchedSdkPath = Path.Combine(sdkBasePath, matchedSdkDir.ToString());
+          
             string appHostFileName = "apphost" + FileHelpers.ExecutableExtension(rid);
+          
             string apphostPath = Path.Combine(matchedSdkPath, "AppHostTemplate", appHostFileName);
 
             if (!File.Exists(apphostPath))

@@ -24,6 +24,7 @@ namespace UnifierTSL.Publisher
             excludedPlugins ??= [];
 
             var task = Run(rid, excludedPlugins);
+          
             task.Wait();
             if (task.IsFaulted) throw task.Exception;
         }
@@ -41,7 +42,8 @@ namespace UnifierTSL.Publisher
                 new PluginsBuilder("Plugins").BuildPlugins(rid, excludedPlugins));
 
             await package.InputCoreProgram(
-                new CoreAppBuilder(Path.Combine("UnifierTSL", "UnifierTSL.csproj")).Build(rid));
+            
+            new CoreAppBuilder(Path.Combine("UnifierTSL", "UnifierTSL.csproj")).Build(rid));
         }
     }
 }

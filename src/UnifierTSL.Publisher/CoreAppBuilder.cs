@@ -37,7 +37,7 @@ namespace UnifierTSL.Publisher
             // Step 1: Run dotnet build
             var buildProcess = Process.Start(new ProcessStartInfo {
                 FileName = "dotnet",
-                Arguments = $"build \"{projectPath}\" -c Release",
+                Arguments = $"build \"{projectPath}\" -c Release -r {rid}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -72,7 +72,7 @@ namespace UnifierTSL.Publisher
 
             // Step 4: Generate executable using AppHost
             var appHostTemplate = DotnetSdkHelper.GetBestMatchedAppHostPath(rid);
-
+            
             var executable = Path.Combine(publishDir, projectName + FileHelpers.ExecutableExtension(rid));
 
             HostWriter.CreateAppHost(

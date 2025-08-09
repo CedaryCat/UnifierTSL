@@ -315,14 +315,14 @@ namespace TShockAPI
 
         static bool OnHardUpdate(On.OTAPI.HooksSystemContext.WorldGenSystemContext.orig_InvokeHardmodeTileUpdate orig,
             OTAPI.HooksSystemContext.WorldGenSystemContext self, int x, int y, ushort type) {
-            if (self.root is ServerContext server && OnCreep(server, type)) {
+            if (self.root is ServerContext server && !OnCreep(server, type)) {
                 return false;
             }
             return orig(self, x, y, type);
         }
 
         private static void OnWorldGrassSpread(On.Terraria.WorldGenSystemContext.orig_SpreadGrass orig, WorldGenSystemContext self, int i, int j, int dirt, int grass, bool repeat, TileColorCache color) {
-            if (self.root is ServerContext server && OnCreep(server, grass)) {
+            if (self.root is ServerContext server && !OnCreep(server, grass)) {
                 return;
             }
             orig(self, i, j, dirt, grass, repeat, color);
