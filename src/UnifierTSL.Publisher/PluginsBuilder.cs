@@ -67,7 +67,7 @@ namespace UnifierTSL.Publisher
 
                 var startInfo = new ProcessStartInfo {
                     FileName = "dotnet",
-                    Arguments = $"build \"{project.FullName}\" -c Release -o \"{outputDir}\" -r {rid}",
+                    Arguments = $"build \"{project.FullName}\" -c Release -o \"{outputDir}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
