@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
+using UnifierTSL.FileSystem;
 using UnifierTSL.Module.Dependencies;
 
 namespace UnifierTSL.Module
@@ -78,25 +79,28 @@ namespace UnifierTSL.Module
             return LoadUnmanagedDll(unmanagedDllName);
         }
 
-        protected override nint LoadUnmanagedDll(string unmanagedDllName) {
+        protected override nint LoadUnmanagedDll(string unmanagedLibName) {
             var currentRid = RuntimeInformation.RuntimeIdentifier;
             var fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
 
             var moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
 
-            string extension = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll" :
-                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? ".so" :
-                RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib" :
-                throw new PlatformNotSupportedException("Unsupported OS platform");
+            var fileName1 = FileSystemHelper.GetDynamicLibraryFileName(unmanagedLibName, withPrefix: true);
+            var fileName2 = FileSystemHelper.GetDynamicLibraryFileName(unmanagedLibName, withPrefix: false);
+
 
             foreach (var rid in fallbackRids) {
-                var currentPath = Path.Combine(moduleDir, "runtimes", rid, "native", unmanagedDllName + extension);
+                var currentPath = Path.Combine(moduleDir, "runtimes", rid, "native", fileName1);
+                if (File.Exists(currentPath)) {
+                    return LoadUnmanagedDllFromPath(currentPath);
+                }
+                currentPath = Path.Combine(moduleDir, "runtimes", rid, "native", fileName2);
                 if (File.Exists(currentPath)) {
                     return LoadUnmanagedDllFromPath(currentPath);
                 }
             }
 
-            return base.LoadUnmanagedDll(unmanagedDllName);
+            return base.LoadUnmanagedDll(unmanagedLibName);
         }
 
         Assembly LoadFromModuleContext(AssemblyName _, string assemblyPath) {

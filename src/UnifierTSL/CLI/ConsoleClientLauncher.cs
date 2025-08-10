@@ -1,10 +1,11 @@
-﻿using UnifierTSL.Servers;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using UnifiedServerProcess;
 using UnifierTSL.FileSystem;
+using UnifierTSL.Servers;
 
 namespace UnifierTSL.CLI
 {
@@ -125,15 +126,11 @@ namespace UnifierTSL.CLI
 
                 // start new process
                 var clientExePath = Path.Combine("app", $"{nameof(UnifierTSL)}.{nameof(ConsoleClient)}{FileSystemHelper.GetExecutableExtension()}");
-                var startInfo = new ProcessStartInfo {
-                    FileName = clientExePath,
-                    Arguments = _pipeName,
-                    UseShellExecute = true,
-                    CreateNoWindow = false
+                var startInfo = CreateStartInfo(clientExePath, _pipeName);
+                _clientProcess = new() {
+                    StartInfo = startInfo,
+                    EnableRaisingEvents = true
                 };
-
-                _clientProcess = new Process { StartInfo = startInfo };
-                _clientProcess.EnableRaisingEvents = true;
                 _clientProcess.Exited += (sender, args) => {
                     _pipeServer?.Dispose();
                     if (IsRunning) {
@@ -144,6 +141,98 @@ namespace UnifierTSL.CLI
                 _clientProcess.Start();
             }
         }
+        public static ProcessStartInfo CreateStartInfo(string clientExePath, string pipeName) {
+            ProcessStartInfo startInfo;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                // On Windows, UseShellExecute=true will automatically show a console window
+                startInfo = new ProcessStartInfo {
+                    FileName = clientExePath,
+                    Arguments = pipeName,
+                    UseShellExecute = true,
+                    CreateNoWindow = false
+                };
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                var terminal = FindAvailableTerminalLinux();
+                if (terminal == null)
+                    throw new Exception("No available terminal emulator found (gnome-terminal, xterm, konsole)");
+
+                // The argument format differs depending on the terminal emulator
+                string args = terminal switch {
+                    "gnome-terminal" => $"--wait -- bash -c \"\\\"{clientExePath}\\\" \\\"{pipeName}\\\"; exit\"",
+                    "xterm" => $"-e \"{clientExePath} {pipeName}\"",
+                    "konsole" => $"-e \"{clientExePath} {pipeName}\"",
+                    _ => throw new Exception("Unknown terminal emulator")
+                };
+
+                startInfo = new ProcessStartInfo {
+                    FileName = terminal,
+                    Arguments = args,
+                    UseShellExecute = false,
+                    CreateNoWindow = false
+                };
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                // On macOS, use osascript to open Terminal.app and run the command
+                string command = $"{EscapeBashArg(clientExePath)} {EscapeBashArg(pipeName)}";
+
+                string appleScript = $@"
+            tell application ""Terminal""
+                activate
+                do script ""{command}""
+            end tell
+        ";
+
+                startInfo = new ProcessStartInfo {
+                    FileName = "osascript",
+                    Arguments = $"-e \"{appleScript.Replace("\"", "\\\"")}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+            }
+            else {
+                throw new PlatformNotSupportedException("The current operating system does not support starting a new terminal");
+            }
+
+            return startInfo;
+        }
+
+        private static string? FindAvailableTerminalLinux() {
+            string[] terminals = { "gnome-terminal", "xterm", "konsole" };
+            foreach (var term in terminals) {
+                if (IsCommandAvailable(term))
+                    return term;
+            }
+            return null;
+        }
+
+        private static bool IsCommandAvailable(string command) {
+            try {
+                using var process = new Process {
+                    StartInfo = new ProcessStartInfo {
+                        FileName = "which",
+                        Arguments = command,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                    }
+                };
+                process.Start();
+                process.WaitForExit();
+                return process.ExitCode == 0;
+            }
+            catch {
+                return false;
+            }
+        }
+
+        // Escape bash arguments simply by wrapping them in single quotes and escaping existing single quotes
+        private static string EscapeBashArg(string arg) {
+            return $"'{arg.Replace("'", "'\\''")}'";
+        }
+
         private void StartListeningThread() {
             var listenThread = new Thread(ListenForMessage) {
                 IsBackground = true

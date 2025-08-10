@@ -57,7 +57,7 @@ namespace UnifierTSL.Module.Dependencies
                     Logger
                 );
 
-                var packagePathResolver = new PackagePathResolver(globalPackagesPath);
+                var packagePathResolver = new StandardPackagePathResolver(globalPackagesPath);
 
                 await PackageExtractor.ExtractPackageAsync(
                     source: null,
@@ -72,6 +72,13 @@ namespace UnifierTSL.Module.Dependencies
                 return versionFolder;
             });
         }
+        private class StandardPackagePathResolver(string rootDirectory) : PackagePathResolver(rootDirectory)
+        {
+            public override string GetPackageDirectoryName(PackageIdentity packageIdentity) {
+                return Path.Combine(packageIdentity.Id.ToLowerInvariant(), packageIdentity.Version.ToNormalizedString());
+            }
+        }
+
         public static async Task<List<PackageIdentity>> ResolveDependenciesAsync(string packageId, string version, string targetFramework) {
             var rootPackage = new PackageIdentity(packageId, NuGetVersion.Parse(version));
             var resolved = new Dictionary<string, PackageIdentity>(StringComparer.OrdinalIgnoreCase);
@@ -100,7 +107,7 @@ namespace UnifierTSL.Module.Dependencies
 
                 // try to read nuspec from local cache
                 var localPackage = localRepo.FindPackagesById(current.Id, NullLogger.Instance, CancellationToken.None)
-                    .First(pkg => pkg.Identity.Version == current.Version);
+                    .FirstOrDefault(pkg => pkg.Identity.Version == current.Version);
                 if (localPackage != null) {
                     var nuspecReader = localPackage.Nuspec;
                     dependencyGroups = nuspecReader.GetDependencyGroups();
