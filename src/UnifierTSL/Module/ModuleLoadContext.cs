@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.IO;
@@ -119,7 +119,7 @@ namespace UnifierTSL.Module
             return LoadUnmanagedDll(unmanagedDllName);
         }
 
-        protected override nint LoadUnmanagedDll(string unmanagedDllName) {
+        protected override nint LoadUnmanagedDll(string unmanagedLibName) {
             var currentRid = RuntimeInformation.RuntimeIdentifier;
             var fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
 
@@ -139,7 +139,7 @@ namespace UnifierTSL.Module
                 return LoadUnmanagedDllFromPath(Path.Combine(moduleDir, match.FilePath));
             }
 
-            return base.LoadUnmanagedDll(unmanagedDllName);
+            return base.LoadUnmanagedDll(unmanagedLibName);
         }
 
         Assembly LoadFromModuleContext(AssemblyName _, string assemblyPath) {

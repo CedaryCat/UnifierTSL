@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
 namespace UnifierTSL.FileSystem
 {
@@ -20,5 +20,8 @@ namespace UnifierTSL.FileSystem
 
             return ex.HResult == HR_FILE_IN_USE || ex.HResult == HR_LOCK_VIOLATION;
         }
+        public static string GetDynamicLibraryExtension() => GetLibraryExtension();
+        public static string GetDynamicLibraryPrefix() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "" : "lib";
+        public static string GetDynamicLibraryFileName(string name, bool withPrefix = true) => $"{(withPrefix ? GetDynamicLibraryPrefix() : "")}{name}{GetDynamicLibraryExtension()}";
     }
 }
