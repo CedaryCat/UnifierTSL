@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TShockAPI", "Plugins\TShock
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandTeleport", "Plugins\CommandTeleport\CommandTeleport.csproj", "{EA6F2D31-8F6A-53CE-5CA4-F8481CF9FB12}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamplePlugin.Features", "Plugins\ExamplePlugin.Features\ExamplePlugin.Features.csproj", "{267B5891-EF3F-FD6D-6202-7B2B0B23904F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{EA6F2D31-8F6A-53CE-5CA4-F8481CF9FB12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA6F2D31-8F6A-53CE-5CA4-F8481CF9FB12}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA6F2D31-8F6A-53CE-5CA4-F8481CF9FB12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{267B5891-EF3F-FD6D-6202-7B2B0B23904F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{267B5891-EF3F-FD6D-6202-7B2B0B23904F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{267B5891-EF3F-FD6D-6202-7B2B0B23904F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{267B5891-EF3F-FD6D-6202-7B2B0B23904F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -55,6 +61,7 @@ Global
 		{E544C650-F2C8-4EC5-9986-875CB6815A53} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{13E2C459-FA2C-40F0-B2B8-416229CD3E6C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{EA6F2D31-8F6A-53CE-5CA4-F8481CF9FB12} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{267B5891-EF3F-FD6D-6202-7B2B0B23904F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5155DB4A-01D5-4819-A6C0-AAB563EC3BE0}

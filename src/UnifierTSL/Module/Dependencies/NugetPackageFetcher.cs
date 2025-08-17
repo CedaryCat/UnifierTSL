@@ -6,7 +6,7 @@ using UnifierTSL.Logging;
 
 namespace UnifierTSL.Module.Dependencies
 {
-    public class NugetPackageFetcher(RoleLogger logger, string packageId, string version)
+    public sealed class NugetPackageFetcher(RoleLogger logger, string packageId, string version)
     {
         public readonly PackageIdentity PackageIdentity = new PackageIdentity(packageId, NuGetVersion.Parse(version));
         public string? PackagePath { get; private set; }

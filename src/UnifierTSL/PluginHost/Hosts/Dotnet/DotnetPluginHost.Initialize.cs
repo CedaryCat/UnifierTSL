@@ -17,43 +17,47 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 
 		public async Task InitializePluginsAsync(CancellationToken cancellationToken = default) {
 
-#warning TODO Unload old plugins?
-			var infos = PluginDiscoverer.DiscoverPlugins("plugins", PluginDiscoveryMode.UpdatedOnly);
+			var infos = PluginDiscoverer.DiscoverPlugins("plugins", PluginDiscoveryMode.NewOnly);
 
             foreach (var info in infos) {
-                PluginLoader.LoadPlugin(info);
+                PluginLoader.LoadPlugin(info, out _);
             }
 
 			var plugins = SortPlugins();
 			
 			// Call BeforeGlobalInitialize method of all plugins
 			foreach (var container in plugins) {
-				container.Plugin.BeforeGlobalInitialize(plugins);
+				if (container.LoadStatus is PluginLoadStatus.NotLoaded) {
+                    container.Plugin.BeforeGlobalInitialize(plugins);
+                }
 			}
 
 			// Perform asynchronous initialization and wait for all initialization to complete
 			await InitializeAllAsync(Logger, plugins, cancellationToken);
 		}
 		static async Task InitializeAllAsync(RoleLogger logger, ImmutableArray<IPluginContainer> sortedPlugins, CancellationToken token) {
-			var initTasks = new Dictionary<PluginContainer, Task>();
+			var initTasks = new List<Task>();
 			var initInfos = new PluginInitInfo[sortedPlugins.Length];
 
 			for (int i = 0; i < sortedPlugins.Length; i++) {
 				var current = (PluginContainer)sortedPlugins[i];
 
 				// Extract the initialization information of the preceding plugins (in order)
-				var prior = initInfos[..i]; // Snapshot for ReadOnlyMemory
+				var prior = initInfos[..i];
 
-				// Call InitializeAsync
-				var task = InitializePlugin(logger, current, [.. prior], token);
-
-				// Save Task and Plugins information
-				initTasks[current] = task;
+				Task task;
+				if (current.LoadStatus is PluginLoadStatus.NotLoaded) {
+                    task = InitializePlugin(logger, current, [.. prior], token);
+                    initTasks.Add(task);
+                }
+				else {
+					task = Task.CompletedTask;
+				}
 				initInfos[i] = new PluginInitInfo(current, task, token);
 			}
 
 			// Wait for all initialization tasks to complete
-			await Task.WhenAll(initTasks.Values);
+			await Task.WhenAll(initTasks);
 
 			if (initTasks.Count > 0) {
 				logger.Info(

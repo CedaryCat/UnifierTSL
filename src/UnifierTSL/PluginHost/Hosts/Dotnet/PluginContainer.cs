@@ -13,7 +13,7 @@ using UnifierTSL.PluginService;
 
 namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
-    public class PluginContainer(PluginMetadata metadata, ModuleAssemblyInfo module, IPlugin plugin) : IPluginContainer
+    public class PluginContainer(PluginMetadata metadata, LoadedModule module, IPlugin plugin) : IPluginContainer
     {
         public PluginMetadata Metadata => metadata;
 
@@ -23,7 +23,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
         public Version Version => metadata.Version;
         public IPlugin Plugin => plugin;
         public FileSignature Location => module.Signature;
-        public ModuleAssemblyInfo Module => module;
+        public LoadedModule Module => module;
         public Assembly PluginAssembly => module.Assembly;
 
         public PluginLoadStatus LoadStatus { get; internal set; }

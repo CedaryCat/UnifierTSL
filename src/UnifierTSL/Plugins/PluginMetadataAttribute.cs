@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnifierTSL.Module;
+using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.Plugins
 {
@@ -15,6 +16,15 @@ namespace UnifierTSL.Plugins
         public Version Version { get; } = new Version(version);
         public string Author { get; } = author;
         public string Description { get; } = description;
+
+        public static PluginMetadata FromAttributeMetadata(ParsedCustomAttribute metadataAttr) {
+            return new PluginMetadata(
+                (string?)metadataAttr.ConstructorArguments[0] ?? throw new ArgumentNullException(nameof(name)),
+                new Version((string?)metadataAttr.ConstructorArguments[1] ?? throw new ArgumentNullException(nameof(version))),
+                (string?)metadataAttr.ConstructorArguments[2] ?? throw new ArgumentNullException(nameof(author)),
+                (string?)metadataAttr.ConstructorArguments[3] ?? throw new ArgumentNullException(nameof(description)));
+        }
+
         public PluginMetadata ToPluginMetadata() {
             return new PluginMetadata(Name, Version, Author, Description);
         }

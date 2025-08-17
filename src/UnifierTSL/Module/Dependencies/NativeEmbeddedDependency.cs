@@ -7,7 +7,7 @@ using UnifierTSL.Logging;
 
 namespace UnifierTSL.Module.Dependencies
 {
-    public class NativeEmbeddedDependency : ModuleDependency
+    public sealed class NativeEmbeddedDependency : ModuleDependency
     {
         private readonly Assembly plugin;
         private readonly NuGetVersion version;

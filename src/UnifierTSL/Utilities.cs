@@ -119,13 +119,46 @@ namespace UnifierTSL
             }
         }
         public static class IO {
-            public static FileStream SafeFileCreate(string path) {
+            public static async Task<bool> SafeCopyAsync(string src, string dest) {
+                var destDir = Path.GetDirectoryName(dest)!;
+                Directory.CreateDirectory(destDir);
+                using var srcStr = File.OpenRead(src);
+                try {
+                    using var destStr = File.Create(dest);
+                    await srcStr.CopyToAsync(destStr);
+                }
+                catch {
+                    return false;
+                }
+                return true;
+            }
+            public static bool SafeCopy(string src, string dest) {
+                var destDir = Path.GetDirectoryName(dest)!;
+                Directory.CreateDirectory(destDir);
+                using var srcStr = File.OpenRead(src);
+                try {
+                    using var destStr = File.Create(dest);
+                    srcStr.CopyTo(destStr);
+                }
+                catch {
+                    return false;
+                }
+                return true;
+            }
+            public static FileStream? SafeFileCreate(string path, out Exception? exception) {
                 var directory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
                     Directory.CreateDirectory(directory);
                 }
 
-                return File.Create(path);
+                exception = null;
+                try {
+                    return File.Create(path);
+                }
+                catch (Exception ex) {
+                    exception = ex;
+                    return null;
+                }
             }
 
             public static int RemoveEmptyDirectories(string path, bool includeRoot = true) {

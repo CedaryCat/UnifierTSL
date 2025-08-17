@@ -1,7 +1,10 @@
-﻿using System.Reflection;
+﻿using System.Collections.Immutable;
+using System.Reflection;
+using System.Reflection.Metadata;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;
 using UnifierTSL.Plugins;
+using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
@@ -20,112 +23,91 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 
         public IReadOnlyList<IPluginInfo> DiscoverPlugins(string pluginsDirectory, PluginDiscoveryMode discoveryMode) {
             var moduleLoader = new ModuleAssemblyLoader(pluginsDirectory);
+            var modules = moduleLoader.PreloadModules(ModuleSearchMode.Any).ToList();
 
-            List<ModuleAssemblyInfo> modules = [];
-
-            if (discoveryMode is PluginDiscoveryMode.All) {
-                List<Assembly> remove = [];
-                foreach (var plugin in host.Plugins) {
-                    remove.Add(plugin.PluginAssembly);
+            foreach (var plugin in host.Plugins) {
+                if (discoveryMode is PluginDiscoveryMode.All) {
+                    continue;
                 }
-                ModuleAssemblyLoader.ClearCache(remove);
-                modules.AddRange(moduleLoader.Load(out _));
-            }
-            else if (discoveryMode is PluginDiscoveryMode.UpdatedOnly) {
-                modules.AddRange(moduleLoader.Load(out _));
-            }
-            else if (discoveryMode is PluginDiscoveryMode.NewOnly) {
-                var newers = moduleLoader.Load(out var outdated);
-                foreach (var newer in newers) {
-                    if (outdated.Any(o => o.Assembly.Location == newer.Assembly.Location)) {
+                else if (discoveryMode is PluginDiscoveryMode.UpdatedOnly) {
+                    var info = modules.FirstOrDefault(m => m.FileSignature.FilePath == plugin.Location.FilePath);
+                    if (info is null) {
                         continue;
                     }
-                    modules.Add(newer);
+                    if (info.FileSignature.Hash == plugin.Location.Hash) {
+                        modules.Remove(info);
+                    }
+                    // moduleLoader.ForceUnload(plugin.Module);
+                }
+                else if (discoveryMode is PluginDiscoveryMode.NewOnly) {
+                    var info = modules.FirstOrDefault(m => m.FileSignature.FilePath == plugin.Location.FilePath);
+                    if (info is null) {
+                        continue;
+                    }
+                    modules.Remove(info);
                 }
             }
 
             List<IPluginInfo> pluginInfos = [];
-
             foreach (var module in modules) {
-                foreach (var type in module.Assembly.DefinedTypes) {
-                    if (!type.IsClass
-                        || type.IsAbstract
-                        || type.IsInterface
-                        || !typeof(IPlugin).IsAssignableFrom(type)
-                        || !type.GetConstructors().Any(c => !c.IsStatic && c.GetParameters().Length == 0))
-                        continue;
-
-                    var metadataAttr = type.GetCustomAttribute<PluginMetadataAttribute>();
-                    if (metadataAttr is null) continue;
-
-                    var dependencyAttr = type.GetCustomAttribute<ModuleDependenciesAttribute>();
-                    var info = new DotnetPluginInfo(type, module, metadataAttr.ToPluginMetadata());
-                    pluginInfos.Add(info);
-                }
+                pluginInfos.AddRange(ExtractPluginInfos(module));
             }
 
+            return pluginInfos;
+        }
+
+        static List<DotnetPluginInfo> ExtractPluginInfos(ModulePreloadInfo module) {
+            using var stream = File.OpenRead(module.FileSignature.FilePath);
+            var reader = MetadataBlobHelpers.GetPEReader(stream)?.GetMetadataReader();
+            if (reader is null)
+                return [];
+            List<DotnetPluginInfo> pluginInfos = [];
+            foreach (var typeHandle in reader.TypeDefinitions) {
+                var typeDef = reader.GetTypeDefinition(typeHandle);
+                if ((typeDef.Attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface)
+                    continue;
+                if (typeDef.Attributes.HasFlag(TypeAttributes.Abstract))
+                    continue;
+                if (!MetadataBlobHelpers.HasDefaultConstructor(reader, typeDef))
+                    continue;
+                if (!MetadataBlobHelpers.TryReadTypeAttributeData(reader, typeDef, typeof(PluginMetadataAttribute).FullName!, out var metadataAttr))
+                    continue;
+                var metadata = PluginMetadataAttribute.FromAttributeMetadata(metadataAttr);
+                pluginInfos.Add(new DotnetPluginInfo(reader.GetString(typeDef.Namespace), reader.GetString(typeDef.Name), module, metadata));
+            }
             return pluginInfos;
         }
 
         public bool TryDiscoverPlugin(string pluginPath, PluginDiscoveryMode discoveryMode, out IReadOnlyList<IPluginInfo> pluginInfos) {
             var pluginsDirectory = Path.GetDirectoryName(pluginPath)!;
             var moduleLoader = new ModuleAssemblyLoader(pluginsDirectory);
-
-            ModuleAssemblyInfo? module;
-            if (discoveryMode is PluginDiscoveryMode.All) {
-                var existingAsm = host.Plugins.FirstOrDefault(p => p.PluginAssembly.Location == pluginPath)?.PluginAssembly;
-                if (existingAsm is not null) {
-                    ModuleAssemblyLoader.ClearCache([existingAsm]);
-                }
-                if (!moduleLoader.TryLoadSpecific(pluginPath, out module, out _)) {
-                    pluginInfos = [];
-                    return false;
-                }
-            }
-            else if (discoveryMode is PluginDiscoveryMode.UpdatedOnly) {
-                if (!moduleLoader.TryLoadSpecific(pluginPath, out module, out _)) {
-                    pluginInfos = [];
-                    return false;
-                }
-                if (module.Signature.QuickEquals(pluginPath)) {
-                    pluginInfos = [];
-                    return true;
-                }
-            }
-            else if (discoveryMode is PluginDiscoveryMode.NewOnly) {
-                if (!moduleLoader.TryLoadSpecific(pluginPath, out module, out var outdated)) {
-                    pluginInfos = [];
-                    return false;
-                }
-                if (outdated is not null) {
-                    pluginInfos = [];
-                    return true;
-                }
-            }
-            else {
+            var info = moduleLoader.PreloadModule(pluginPath);
+            if (info is null) {
                 pluginInfos = [];
                 return false;
             }
 
-            List<IPluginInfo> infos = [];
-
-            foreach (var type in module.Assembly.DefinedTypes) {
-                if (!type.IsClass
-                    || type.IsAbstract
-                    || type.IsInterface
-                    || !typeof(IPlugin).IsAssignableFrom(type)
-                    || !type.GetConstructors().Any(c => !c.IsStatic && c.GetParameters().Length == 0))
-                    continue;
-
-                var metadataAttr = type.GetCustomAttribute<PluginMetadataAttribute>();
-                if (metadataAttr is null) continue;
-
-                var dependencyAttr = type.GetCustomAttribute<ModuleDependenciesAttribute>();
-                var info = new DotnetPluginInfo(type, module, metadataAttr.ToPluginMetadata());
-                infos.Add(info);
+            bool canDiscover = false;
+            if (discoveryMode is PluginDiscoveryMode.All) {
+                canDiscover = true;
+            }
+            else if (discoveryMode is PluginDiscoveryMode.UpdatedOnly) {
+                if (!moduleLoader.TryGetExistingModule(info.FileSignature.FilePath, out var existingModule) || existingModule.Signature.Hash != info.FileSignature.Hash) {
+                    canDiscover = true;
+                }
+            }
+            else if (discoveryMode is PluginDiscoveryMode.NewOnly) {
+                if (!moduleLoader.TryGetExistingModule(info.FileSignature.FilePath, out var existingModule)) {
+                    canDiscover = true;
+                }
             }
 
-            pluginInfos = infos;
+            if (canDiscover) {
+                pluginInfos = ExtractPluginInfos(info);
+                return true;
+            }
+
+            pluginInfos = [];
             return true;
         }
     }

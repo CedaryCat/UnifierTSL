@@ -3,6 +3,8 @@
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
     public abstract class ModuleDependenciesAttribute : Attribute
     {
+        // Ensure that the attribute is not inherited by external assemblies
+        internal ModuleDependenciesAttribute() { }
         public abstract IDependencyProvider DependenciesProvider { get; }
     }
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]

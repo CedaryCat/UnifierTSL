@@ -6,6 +6,7 @@ namespace UnifierTSL
     internal class Program
     {
         static void Main(string[] args) {
+            Thread.Sleep(10000);
             Initializer.InitializeResolver();
             UnifierApi.HandleCommandLinePreRun(args);
             Run(args);

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using UnifierTSL.Reflection.Metadata.DecodeProviders;
 
 
 namespace UnifierTSL.Reflection.Metadata
@@ -14,7 +12,6 @@ namespace UnifierTSL.Reflection.Metadata
     }
     public static class AttributeParser
     {
-
         public static bool TryParseCustomAttribute(CustomAttribute attr, MetadataReader reader, out ParsedCustomAttribute parsedAttr) {
             try {
                 // Resolve constructor parameter types
@@ -120,39 +117,6 @@ namespace UnifierTSL.Reflection.Metadata
                 0x0e => typeof(string),
                 _ => throw new NotSupportedException($"Unsupported ElementType code: 0x{typeCode:X2}")
             };
-        }
-
-        // Only decodes primitive types
-        private class SimpleTypeProvider : ISignatureTypeProvider<Type, object?>
-        {
-            public Type GetPrimitiveType(PrimitiveTypeCode typeCode) =>
-                typeCode switch {
-                    PrimitiveTypeCode.Int32 => typeof(int),
-                    PrimitiveTypeCode.String => typeof(string),
-                    PrimitiveTypeCode.Boolean => typeof(bool),
-                    PrimitiveTypeCode.Int16 => typeof(short),
-                    PrimitiveTypeCode.Int64 => typeof(long),
-                    PrimitiveTypeCode.Byte => typeof(byte),
-                    PrimitiveTypeCode.Char => typeof(char),
-                    PrimitiveTypeCode.Single => typeof(float),
-                    PrimitiveTypeCode.Double => typeof(double),
-                    PrimitiveTypeCode.Void => typeof(void),
-                    _ => throw new NotSupportedException($"Primitive type {typeCode} not supported")
-                };
-            public Type GetArrayType(Type elementType, ArrayShape shape) => typeof(Array); // Not supported here
-            public Type GetByReferenceType(Type elementType) => elementType;
-            public Type GetFunctionPointerType(MethodSignature<Type> signature) => typeof(IntPtr);
-            public Type GetGenericInstantiation(Type genericType, ImmutableArray<Type> typeArguments) => typeof(object);
-            public Type GetGenericMethodParameter(object? genericContext, int index) => typeof(object);
-            public Type GetGenericTypeParameter(object? genericContext, int index) => typeof(object);
-            public Type GetModifiedType(Type modifier, Type unmodifiedType, bool isRequired) => unmodifiedType;
-            public Type GetPinnedType(Type elementType) => elementType;
-            public Type GetPointerType(Type elementType) => typeof(IntPtr);
-            public Type GetSZArrayType(Type elementType) => elementType.MakeArrayType();
-            public Type GetTypeFromSpecification(MetadataReader reader, object? genericContext, TypeSpecificationHandle handle, byte rawTypeKind) => typeof(object);
-
-            public Type GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) => typeof(object);
-            public Type GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) => typeof(object);
         }
     }
 }

@@ -8,7 +8,7 @@ using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.Module.Dependencies
 {
-    public class ManagedEmbeddedDependency(Assembly plugin, string embeddedPath) : ModuleDependency
+    public sealed class ManagedEmbeddedDependency(Assembly plugin, string embeddedPath) : ModuleDependency
     {
         class EmbeddedLibraryExtractor : IDependencyLibraryExtractor
         {
@@ -22,8 +22,8 @@ namespace UnifierTSL.Module.Dependencies
                 this.embeddedPath = embeddedPath;
 
                 using var stream = Extract();
-
-                if (MetadataBlobHelpers.TryReadAssemblyIdentity(stream, out var name, out var version)) {
+                using var peReader = MetadataBlobHelpers.GetPEReader(stream);
+                if (peReader is not null && MetadataBlobHelpers.TryReadAssemblyIdentity(peReader.GetMetadataReader(), out var name, out var version)) {
                     LibraryName = name;
                     Version = new NuGetVersion(version);
                 }

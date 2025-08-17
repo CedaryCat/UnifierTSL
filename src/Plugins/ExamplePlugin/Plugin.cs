@@ -1,7 +1,12 @@
 ﻿using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using UnifierTSL;
 using UnifierTSL.Logging;
+using UnifierTSL.Module;
 using UnifierTSL.Plugins;
+
+[assembly: CoreModule]
+[assembly: InternalsVisibleTo("ExamplePlugin.Features")]
 
 namespace ExamplePlugin
 {
@@ -15,7 +20,8 @@ namespace ExamplePlugin
         public Plugin() {
             logger = UnifierApi.CreateLogger(this);
         }
-
+        internal const int Order = 6;
+        public override int InitializationOrder => Order;
         public override async Task InitializeAsync(
             IPluginConfigRegistrar configRegistrar,
             ImmutableArray<PluginInitInfo> priorInitializations,
