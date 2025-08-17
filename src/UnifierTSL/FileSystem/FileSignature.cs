@@ -3,6 +3,8 @@
 namespace UnifierTSL.FileSystem
 {
     public record FileSignature(string FilePath, string Hash, DateTime LastWriteTimeUtc) {
+        public string FilePath { get; init; } = new FileInfo(FilePath).FullName;
+        public string RelativePath => Path.GetRelativePath(Directory.GetCurrentDirectory(), FilePath);
         public static FileSignature Generate(string filePath) {
             using var sha256 = SHA256.Create();
             byte[] hashBytes;

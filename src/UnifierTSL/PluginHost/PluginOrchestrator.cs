@@ -36,7 +36,7 @@ namespace UnifierTSL.PluginHost
 
         private List<IPluginHost> ExtractCustomHosts() {
             List<IPluginHost> hosts = [];
-            var modules = new ModuleAssemblyLoader("plugins").Load(out _);
+            var modules = new ModuleAssemblyLoader("plugins").Load();
             foreach (var module in modules) {
                 foreach (var type in module.Assembly.DefinedTypes) {
                     if (!type.IsClass

@@ -9,7 +9,7 @@ using UnifierTSL.Logging;
 
 namespace UnifierTSL.Module.Dependencies
 {
-    public class NugetDependency : ModuleDependency
+    public sealed class NugetDependency : ModuleDependency
     {
         private readonly string packageId;
         private readonly NuGetVersion version;

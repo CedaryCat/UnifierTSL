@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -9,7 +10,7 @@ using UnifierTSL.Module.Dependencies;
 
 namespace UnifierTSL.Module
 {
-    public class ModuleLoadContext : AssemblyLoadContext, IDisposable
+    public class ModuleLoadContext : AssemblyLoadContext
     {
         bool _disposed;
         readonly AssemblyDependencyResolver UTSLResolver;
@@ -19,7 +20,20 @@ namespace UnifierTSL.Module
             UTSLResolver = new(hostAssembly.Location);
             this.moduleFile = moduleFile;
             Resolving += OnResolving;
+            Unloading += OnUnloading;
             ResolvingUnmanagedDll += OnResolvingUnmanagedDll;
+        }
+        ImmutableArray<Func<Task>> _disposeActions = [];
+        public void AddDisposeAction(Func<Task> action) {
+            if (_disposed) {
+                throw new InvalidOperationException("Dispose has already been called.");
+            }
+            ImmutableInterlocked.Update(ref _disposeActions, x => x.Add(action));
+        }
+        private void OnUnloading(AssemblyLoadContext context) {
+            _disposed = true;
+            Task.WaitAll([.. _disposeActions.Select(x => x())]);
+            _disposeActions = [];
         }
 
         protected virtual bool IsUTSLCoreLibs(AssemblyName assemblyName) {
@@ -40,6 +54,17 @@ namespace UnifierTSL.Module
             }
             return false;
         }
+        /// <summary>
+        /// Raised when attempting to resolve a shared assembly with strict matching rules (name + version).
+        /// Triggered before custom resolvers.
+        /// </summary>
+        public event Func<AssemblyLoadContext, AssemblyName, Assembly?>? ResolvingSharedAssemblyPreferred;
+
+        /// <summary>
+        /// Raised as a final fallback to resolve a shared assembly with relaxed matching rules (name only).
+        /// Triggered after all other resolution attempts have failed.
+        /// </summary>
+        public event Func<AssemblyLoadContext, AssemblyName, Assembly?>? ResolvingSharedAssemblyFallback;
 
         private Assembly? OnResolving(AssemblyLoadContext context, AssemblyName name) {
             if (context != this) {
@@ -58,6 +83,15 @@ namespace UnifierTSL.Module
                 return LoadFromHostContext(assemblyName, utslCoreLibPath);
             }
 
+            if (ResolvingSharedAssemblyPreferred is not null) {
+                foreach (var resolver in ResolvingSharedAssemblyPreferred.GetInvocationList().Cast<Func<AssemblyLoadContext, AssemblyName, Assembly?>>()) {
+                    var result = resolver(this, assemblyName);
+                    if (result is not null) {
+                        return result;
+                    }
+                }
+            }
+
             var moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
             var matchFile = Path.Combine(moduleDir, "lib", assemblyName.Name + ".dll");
 
@@ -69,13 +103,19 @@ namespace UnifierTSL.Module
                 return LoadFromHostContext(assemblyName, utslCoreLibPath);
             }
 
+            if (ResolvingSharedAssemblyFallback is not null) {
+                foreach (var resolver in ResolvingSharedAssemblyFallback.GetInvocationList().Cast<Func<AssemblyLoadContext, AssemblyName, Assembly?>>()) {
+                    var result = resolver(this, assemblyName);
+                    if (result is not null) {
+                        return result;
+                    }
+                }
+            }
+
             return base.Load(assemblyName);
         }
 
         private nint OnResolvingUnmanagedDll(Assembly pInvokeUser, string unmanagedDllName) {
-            if (!Assemblies.Contains(pInvokeUser)) {
-                return nint.Zero;
-            }
             return LoadUnmanagedDll(unmanagedDllName);
         }
 
@@ -84,42 +124,40 @@ namespace UnifierTSL.Module
             var fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
 
             var moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
+            var extension = FileSystemHelper.GetLibraryExtension();
 
-            var fileName1 = FileSystemHelper.GetDynamicLibraryFileName(unmanagedLibName, withPrefix: true);
-            var fileName2 = FileSystemHelper.GetDynamicLibraryFileName(unmanagedLibName, withPrefix: false);
+            var config = DependenciesConfiguration.LoadDependenicesConfig(moduleDir);
 
+            var match = config.Dependencies.Values
+                .SelectMany(x => x.Manifests)
+                .Where(x => !x.Obsolete)
+                .Where(x => Path.GetFileName(x.FilePath).StartsWith(unmanagedLibName + "."))
+                .Where(x => Path.GetExtension(x.FilePath) == extension)
+                .FirstOrDefault();
 
-            foreach (var rid in fallbackRids) {
-                var currentPath = Path.Combine(moduleDir, "runtimes", rid, "native", fileName1);
-                if (File.Exists(currentPath)) {
-                    return LoadUnmanagedDllFromPath(currentPath);
-                }
-                currentPath = Path.Combine(moduleDir, "runtimes", rid, "native", fileName2);
-                if (File.Exists(currentPath)) {
-                    return LoadUnmanagedDllFromPath(currentPath);
-                }
+            if (match is not null) { 
+                return LoadUnmanagedDllFromPath(Path.Combine(moduleDir, match.FilePath));
             }
 
             return base.LoadUnmanagedDll(unmanagedLibName);
         }
 
         Assembly LoadFromModuleContext(AssemblyName _, string assemblyPath) {
-            return LoadFromAssemblyPath(assemblyPath);
+            using var libStream = File.OpenRead(assemblyPath);
+            if (File.Exists(Path.ChangeExtension(assemblyPath, ".pdb"))) {
+                using var pdbStream = File.OpenRead(Path.ChangeExtension(assemblyPath, ".pdb"));
+                return LoadFromStream(libStream, pdbStream);
+            }
+            return LoadFromStream(libStream);
         }
 
-        readonly static ConcurrentDictionary<string, Assembly> HostAssemblyLoadCache = [];
         static Assembly LoadFromHostContext(AssemblyName asmName, string assemblyPath) {
-            var name = asmName.Name!;
-            return HostAssemblyLoadCache.GetOrAdd(name, _ => Default.LoadFromAssemblyPath(assemblyPath));
-        }
-
-        public void Dispose() {
-            if (_disposed) return;
-
-            _disposed = true;
-            Unload();
-
-            GC.SuppressFinalize(this);
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies()) { 
+                if (asm.GetName().Name == asmName.Name) {
+                    return asm;
+                }
+            }
+            return Default.LoadFromAssemblyPath(assemblyPath);
         }
     }
 }

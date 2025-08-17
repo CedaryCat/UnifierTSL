@@ -5,8 +5,10 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Runtime.Loader;
 using System.Text.Json;
+using UnifierTSL.Extensions;
 using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
 using UnifierTSL.Module.Dependencies;
@@ -14,6 +16,19 @@ using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.Module
 {
+    public enum ModuleSearchMode {
+        Any,
+        UpdatedOnly,
+        NewOnly,
+    }
+    public enum ModuleLoadResult { 
+        Success = 0,
+        InvalidLibrary,
+        AlreadyLoaded,
+        ExistingOldVersion,
+        CoreModuleNotFound,
+        Failed
+    }
     public class ModuleAssemblyLoader : ILoggerHost
     {
         private readonly string loadDirectory;
@@ -27,302 +42,320 @@ namespace UnifierTSL.Module
             Logger = UnifierApi.CreateLogger(this);
         }
 
-        private void PreloadModules() {
+        public ImmutableArray<ModulePreloadInfo> PreloadModules(ModuleSearchMode mode = ModuleSearchMode.NewOnly) {
             var modulesDir = new DirectoryInfo(loadDirectory);
             modulesDir.Create();
 
+            Dictionary<string, FileInfo> dlls = [];
             foreach (var dll in modulesDir.GetFiles("*.dll")) {
-                PreloadModule(dll.Name, out _, checkDirectory: false, checkFile: false);
+                dlls[dll.Name] = dll;
             }
-        }
-        private void PreloadModule(string filename, out string newLocation, bool checkDirectory = true, bool checkFile = true) {
-            if (checkDirectory) {
-                var modulesDir = new DirectoryInfo(loadDirectory);
-                modulesDir.Create();
-            }
-
-            newLocation = Path.Combine(loadDirectory, filename);
-
-            var dll = Path.Combine(loadDirectory, filename);
-
-            if (checkFile && !File.Exists(dll)) {
-                return;
-            }
-
-            using (var stream = File.OpenRead(dll)) {
-                if (!MetadataBlobHelpers.HasCustomAttribute(stream, "UnifierTSL.Module.ModuleDependenciesAttribute`1")) {
-                    return;
+            foreach (var dir in modulesDir.GetDirectories()) {
+                foreach (var dll in dir.GetFiles("*.dll")) {
+                    dlls[dll.Name] = dll;
                 }
             }
-            var name = Path.GetFileNameWithoutExtension(dll);
-            var moduleDir = Path.Combine(loadDirectory, name);
-            Directory.CreateDirectory(moduleDir);
-            using (var stream = File.OpenRead(dll)) {
-                using (var moved = File.OpenWrite(newLocation = Path.Combine(moduleDir, name + ".dll"))) {
-                    stream.CopyTo(moved);
-                }
-            }
-            File.SetCreationTime(newLocation, File.GetCreationTime(dll));
-            File.SetLastWriteTime(newLocation, File.GetLastWriteTime(dll));
-            File.SetLastAccessTime(newLocation, File.GetLastAccessTime(dll));
-            File.Delete(dll);
 
-            var pdb = Path.ChangeExtension(dll, ".pdb");
-            if (File.Exists(pdb)) {
-                var newPdb = Path.ChangeExtension(newLocation, ".pdb");
-                using (var stream = File.OpenRead(pdb)) {
-                    using (var moved = File.OpenWrite(newPdb)) {
-                        stream.CopyTo(moved);
+            var modules = new List<ModulePreloadInfo>();
+            foreach (var dll in dlls.Values) {
+                var info = PreloadModule(Path.GetRelativePath(Directory.GetCurrentDirectory(), dll.FullName));
+                if (info is null) {
+                    continue;
+                }
+
+                if (mode == ModuleSearchMode.NewOnly) {
+                    if (moduleCache.ContainsKey(info.FileSignature.FilePath)) {
+                        continue;
                     }
                 }
-                File.SetCreationTime(newPdb, File.GetCreationTime(pdb));
-                File.SetLastWriteTime(newPdb, File.GetLastWriteTime(pdb));
-                File.SetLastAccessTime(newPdb, File.GetLastAccessTime(pdb));
-                File.Delete(pdb);
-            }
-        }
-        private ImmutableArray<string> GetModulesPaths() {
-            List<string> modules = [];
-
-            foreach (var dll in Directory.GetFiles(loadDirectory, "*.dll")) {
-                if (!MetadataBlobHelpers.IsManagedAssembly(dll)) {
+                else if (mode == ModuleSearchMode.UpdatedOnly) {
+                    if (moduleCache.TryGetValue(info.FileSignature.FilePath, out var existing) && existing.Signature.Hash == info.FileSignature.Hash) {
+                        continue;
+                    }
+                }
+                else if (mode != ModuleSearchMode.Any) {
                     continue;
                 }
 
-                modules.Add(dll);
-            }
-
-            var modulesDir = new DirectoryInfo(loadDirectory);
-            foreach (var directory in modulesDir.GetDirectories()) {
-                var dll = Path.Combine(loadDirectory, directory.Name, directory.Name + ".dll");
-                if (!File.Exists(dll) || !MetadataBlobHelpers.IsManagedAssembly(dll)) {
-                    continue;
-                }
-
-                modules.Add(dll);
+                modules.Add(info);
             }
 
             return [.. modules];
         }
-        record ModuleInfo(AssemblyLoadContext Context, Assembly Assembly, IDependencyProvider? Dependencies);
-        public static void ClearCache() => moduleCache.Clear();
-        public static void ClearCache(IReadOnlyList<Assembly> assemblies) {
-            var rm = assemblies.ToHashSet();
-            List<string> keysToRemove = [];
-            foreach (var kv in moduleCache.ToArray()) {
-                if (rm.Contains(kv.Value.Assembly)) {
-                    keysToRemove.Add(kv.Key);
+        public ModulePreloadInfo? PreloadModule(string dll) {
+
+            if (!Directory.Exists(loadDirectory)) {
+                Directory.CreateDirectory(loadDirectory);
+            }
+
+            if (!File.Exists(dll)) {
+                return null;
+            }
+
+            string moduleName;
+            bool isCoreModule;
+            bool hasDependencies;
+            bool isRequiresCoreModule = false;
+            string? requiresCoreModule = null;
+
+            using (var stream = File.OpenRead(dll)) {
+                using var reader = MetadataBlobHelpers.GetPEReader(stream);
+                if (reader == null) {
+                    return null;
+                }
+                var metadataReader = reader.GetMetadataReader();
+                moduleName = MetadataBlobHelpers.ReadAssemblyName(metadataReader);
+                isCoreModule = MetadataBlobHelpers.HasCustomAttribute(metadataReader, typeof(CoreModuleAttribute).FullName!);
+                hasDependencies = MetadataBlobHelpers.HasCustomAttribute(metadataReader, typeof(ModuleDependenciesAttribute<>).FullName!);
+                if (MetadataBlobHelpers.TryReadAssemblyAttributeData(metadataReader, typeof(RequiresCoreModuleAttribute).FullName!, out var reqCoreModuleData)) {
+                    isRequiresCoreModule = true;
+                    requiresCoreModule = (string?)reqCoreModuleData.ConstructorArguments[0];
+                    if (string.IsNullOrWhiteSpace(requiresCoreModule)) {
+                        requiresCoreModule = null;
+                    }
                 }
             }
 
-            foreach (var key in keysToRemove) {
-                moduleCache.TryRemove(key, out _);
+            if (isRequiresCoreModule && isCoreModule) {
+                Logger.Warning(
+                    category: null,
+                    message: $"The module '{dll}' is a core module but has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute. Skipping it.");
+            }
+
+            if (isRequiresCoreModule && hasDependencies) {
+                Logger.Warning(
+                    category: null,
+                    message: $"The module '{dll}' has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute should not specify dependencies. Skipping it.");
+            }
+
+            if (isRequiresCoreModule && requiresCoreModule is null) {
+                Logger.Warning(
+                    category: null,
+                    message: $"The module '{dll}' has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute but no module name specified. Skipping it.");
+            }
+
+            var fileName = Path.GetFileName(dll);
+            string newLocation;
+
+            if (!hasDependencies && !isCoreModule && requiresCoreModule is null) {
+                newLocation = Path.Combine(loadDirectory, fileName);
+            }
+            else {
+                var moduleDir = Path.Combine(loadDirectory, (hasDependencies || isCoreModule) ? moduleName : requiresCoreModule!);
+                Directory.CreateDirectory(moduleDir);
+                newLocation = Path.Combine(moduleDir, Path.GetFileName(dll));
+            }
+
+            if (new FileInfo(newLocation).FullName != new FileInfo(dll).FullName) {
+
+                using (var stream = File.OpenRead(dll)) {
+                    using (var moved = File.OpenWrite(newLocation)) {
+                        stream.CopyTo(moved);
+                    }
+                }
+                File.SetCreationTime(newLocation, File.GetCreationTime(dll));
+                File.SetLastWriteTime(newLocation, File.GetLastWriteTime(dll));
+                File.SetLastAccessTime(newLocation, File.GetLastAccessTime(dll));
+                File.Delete(dll);
+
+                var pdb = Path.ChangeExtension(dll, ".pdb");
+                if (File.Exists(pdb)) {
+                    var newPdb = Path.ChangeExtension(newLocation, ".pdb");
+                    using (var stream = File.OpenRead(pdb)) {
+                        using (var moved = File.OpenWrite(newPdb)) {
+                            stream.CopyTo(moved);
+                        }
+                    }
+                    File.SetCreationTime(newPdb, File.GetCreationTime(pdb));
+                    File.SetLastWriteTime(newPdb, File.GetLastWriteTime(pdb));
+                    File.SetLastAccessTime(newPdb, File.GetLastAccessTime(pdb));
+                    File.Delete(pdb);
+                }
+            }
+
+            return new ModulePreloadInfo(FileSignature.Generate(newLocation), moduleName, isCoreModule, hasDependencies, requiresCoreModule);
+        }
+
+        record ModuleInfo(AssemblyLoadContext Context, Assembly Assembly, IDependencyProvider? Dependencies);
+        
+        public void ForceUnload(LoadedModule module) {
+            if (module.CoreModule is not null) {
+                ForceUnload(module.CoreModule);
+                return;
+            }
+            foreach (var m in module.GetDependentOrder(true, false)) {
+                Logger.Debug($"Unloading module {m.Signature.FilePath}");
+                m.Unload();
+                moduleCache.Remove(m.Signature.FilePath, out _);
             }
         }
-        public ImmutableArray<ModuleAssemblyInfo> Load(out ImmutableArray<ModuleAssemblyInfo> outdated) {
-            List<ModuleAssemblyInfo> modules = [];
-            List<ModuleAssemblyInfo> outdatedModules = [];
 
-            PreloadModules();
+        public bool TryGetExistingModule(string filename, [NotNullWhen(true)] out LoadedModule? module) => moduleCache.TryGetValue(filename, out module);
 
-            foreach (var dll in GetModulesPaths()) {
+        public ImmutableArray<LoadedModule> Load(ModuleSearchMode mode = ModuleSearchMode.NewOnly) {
+            List<LoadedModule> modules = [];
 
-                var fullPath = new FileInfo(dll).FullName;
+            var infos = PreloadModules(mode);
+            var independentModules = infos.Where(x => !x.IsRequiredCoreModule).ToArray();
+            var requiredCoreModules = infos.Where(x => x.IsRequiredCoreModule).ToArray();
 
-                if (moduleCache.TryGetValue(fullPath, out var cached) && cached.Signature.QuickEquals(dll)) {
-                    modules.Add(cached);
+            List<ModulePreloadInfo> failed = [];
+            foreach (var info in independentModules) {
+                var fullPath = info.FileSignature.FilePath;
+                if (moduleCache.TryGetValue(fullPath, out var cached)) {
+                    if (info.FileSignature.Hash != cached.Signature.Hash) {
+                        failed.Add(info);
+                    }
                     continue;
                 }
 
-                var context = CreateLoadContext(dll);
-                context.Resolving += OnResolving;
-                var asm = context.LoadFromAssemblyPath(fullPath);
+                var context = CreateLoadContext(fullPath);
+                context.ResolvingSharedAssemblyPreferred += OnResolvingPreferred;
+                context.ResolvingSharedAssemblyFallback += OnResolvingFallback;
+                var asm = context.LoadFromStream(fullPath);
                 var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
                 var dependenciesProvider = dependencyAttr?.DependenciesProvider;
 
                 var tmp = new ModuleInfo(context, asm, dependenciesProvider);
 
-                if (!UpdateDependencies(dll, tmp, out var dependencies)) { 
+                if (!UpdateDependencies(info.FileSignature.RelativePath, tmp, out var dependencies)) {
+                    context.Unload();
+                    failed.Add(info);
                     continue;
                 }
 
-                var signature = FileSignature.Generate(dll);
-                var info = new ModuleAssemblyInfo(context, asm, dependencies, signature);
-                modules.Add(info);
-
-                moduleCache.AddOrUpdate(fullPath, info, (_, existing) => {
-                    outdatedModules.Add(existing);
-                    return info;
-                });
+                var loaded = new LoadedModule(context, asm, dependencies, info.FileSignature, null);
+                modules.Add(loaded);
+                moduleCache.TryAdd(fullPath, loaded);
             }
 
-            outdated = [.. outdatedModules];
+            foreach (var info in requiredCoreModules) {
+                if (failed.Any(x => x.ModuleName == info.RequiresCoreModule)) {
+                    failed.Add(info);
+                    continue;
+                }
+                var coreModule = moduleCache.Values.FirstOrDefault(x => x.Assembly.GetName().Name == info.RequiresCoreModule);
+                if (coreModule is null) { 
+                    failed.Add(info);
+                    continue;
+                }
+                var match = coreModule.DependentModules.FirstOrDefault(m => m.Signature.FilePath == info.FileSignature.FilePath);
+                if (match is not null) {
+                    if (match.Signature.Hash == info.FileSignature.Hash) {
+                        continue;
+                    }
+                    else {
+                        failed.Add(info);
+                    }
+                }
+                var loaded = new LoadedModule(coreModule.Context, coreModule.Context.LoadFromStream(info.FileSignature.FilePath), [], info.FileSignature, coreModule);
+                modules.Add(loaded);
+                LoadedModule.Reference(coreModule, loaded);
+                moduleCache.TryAdd(info.FileSignature.FilePath, loaded);
+            }
             return [.. modules];
         }
 
-        private Assembly? OnResolving(AssemblyLoadContext context, AssemblyName name) {
-            foreach (var module in moduleCache.Values) {
-                if (module.Assembly.GetName().Name == name.Name) {
-                    return module.Assembly;
+        private Assembly? OnResolvingPreferred(AssemblyLoadContext context, AssemblyName name) {
+            var snapshot = moduleCache.Values.ToImmutableArray();
+            var module = snapshot.FirstOrDefault(x => x.Context == context);
+            if (module is null) {
+                return null;
+            }
+            foreach (var otherModule in snapshot) {
+                if (otherModule == module) { 
+                    continue;
+                }
+                if (otherModule.Assembly.GetName().FullName == name.FullName) {
+                    LoadedModule.Reference(otherModule, module);
+                    return otherModule.Assembly;
                 }
             }
             return null;
         }
 
-        private AssemblyLoadContext CreateLoadContext(string filePath) {
+        private Assembly? OnResolvingFallback(AssemblyLoadContext context, AssemblyName name) {
+            var snapshot = moduleCache.Values.ToImmutableArray();
+            var module = snapshot.FirstOrDefault(x => x.Context == context);
+            if (module is null) {
+                return null;
+            }
+            foreach (var otherModule in snapshot) {
+                if (otherModule == module) {
+                    continue;
+                }
+                if (otherModule.Assembly.GetName().Name == name.Name) {
+                    LoadedModule.Reference(otherModule, module);
+                    return otherModule.Assembly;
+                }
+            }
+            return null;
+        }
+
+        private ModuleLoadContext CreateLoadContext(string filePath) {
             return new ModuleLoadContext(new FileInfo(filePath));
         }
 
-        static readonly ConcurrentDictionary<string, ModuleAssemblyInfo> moduleCache = new(); 
+        static readonly ConcurrentDictionary<string, LoadedModule> moduleCache = new();
+        public bool TryLoadSpecific(ModulePreloadInfo preloadInfo, [NotNullWhen(true)] out LoadedModule? info, out ModuleLoadResult result) {
 
-        public bool TryLoadSpecific(string filename, [NotNullWhen(true)] out ModuleAssemblyInfo? info, out ModuleAssemblyInfo? outdated) {
-            outdated = null;
+            var fullPath = preloadInfo.FileSignature.FilePath;
+            var path = preloadInfo.FileSignature.RelativePath;
 
-            PreloadModule(filename, out var newLocation);
-
-            var fullPath = new FileInfo(newLocation).FullName;
-
-            if (moduleCache.TryGetValue(fullPath, out var cached) && cached.Signature.QuickEquals(newLocation)) {
-                info = cached;
-                return true;
-            }
-
-            if (!MetadataBlobHelpers.IsManagedAssembly(newLocation)) { 
+            if (moduleCache.TryGetValue(fullPath, out var cached)) {
+                if (cached.Signature.Hash == preloadInfo.FileSignature.Hash) {
+                    info = cached;
+                    result = ModuleLoadResult.AlreadyLoaded;
+                    return true;
+                }
                 info = null;
+                result = ModuleLoadResult.ExistingOldVersion;
                 return false;
             }
 
-            var context = CreateLoadContext(newLocation);
-            var asm = context.LoadFromAssemblyPath(fullPath);
-            var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
-            var dependenciesProvider = dependencyAttr?.DependenciesProvider;
+            LoadedModule loaded;
 
-            var tmp = new ModuleInfo(context, asm, dependenciesProvider);
+            if (preloadInfo.RequiresCoreModule is not null) {
+                var coreModule = moduleCache.Values.FirstOrDefault(x => x.Assembly.GetName().Name == preloadInfo.RequiresCoreModule);
+                if (coreModule is null) {
+                    info = null;
+                    result = ModuleLoadResult.CoreModuleNotFound;
+                    return false;
+                }
+                var context = coreModule.Context;
+                var asm = context.LoadFromStream(fullPath);
 
-            if (!UpdateDependencies(newLocation, tmp, out var dependencies)) {
-                info = null;
-                return false;
+                loaded = new LoadedModule(context, asm, [], preloadInfo.FileSignature, coreModule);
+                LoadedModule.Reference(coreModule, loaded);
+            }
+            else {
+                var context = CreateLoadContext(path);
+                var asm = context.LoadFromStream(fullPath);
+                var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
+                var dependenciesProvider = dependencyAttr?.DependenciesProvider;
+
+                var tmp = new ModuleInfo(context, asm, dependenciesProvider);
+                if (!UpdateDependencies(path, tmp, out var dependencies)) {
+                    info = null;
+                    result = ModuleLoadResult.Failed;
+                    return false;
+                }
+                loaded = new LoadedModule(context, asm, dependencies, preloadInfo.FileSignature, null);
             }
 
-            var signature = FileSignature.Generate(newLocation);
-
-            ModuleAssemblyInfo capturedInfo = new(context, asm, dependencies, signature);
-            ModuleAssemblyInfo? capturedOutdated = null;
-
-            moduleCache.AddOrUpdate(fullPath, capturedInfo, (_, existing) => {
-                capturedOutdated = existing;
-                return capturedInfo;
-            });
-
-            info = capturedInfo;
-            outdated = capturedOutdated;
+            moduleCache.TryAdd(fullPath, loaded);
+            info = loaded;
+            result = ModuleLoadResult.Success;
             return true;
         }
-
-        static DependenciesConfiguration LoadDependenicesConfig(string pluginDirectory) {
-            var configPath = Path.Combine(pluginDirectory, "dependencies.json");
-            if (!File.Exists(configPath)) {
-                return new DependenciesConfiguration { Dependencies = [] };
+        public bool TryLoadSpecific(string filePath, [NotNullWhen(true)] out LoadedModule? info, out ModuleLoadResult result) {
+            var preloadInfo = PreloadModule(filePath);
+            if (preloadInfo == null) { 
+                info = null;
+                result = ModuleLoadResult.InvalidLibrary;
+                return false;
             }
-            return JsonSerializer.Deserialize<DependenciesConfiguration>(File.ReadAllText(configPath))!;
-        }
-        void NormalizeDependenicesConfig(DependenciesConfiguration configuration, string pluginDirectory) {
-            foreach (var depEntry in configuration.Dependencies.Values.ToArray()) {
-
-                foreach (var item in depEntry.Manifests) {
-                    if (!File.Exists(Path.Combine(pluginDirectory, item.FilePath))) {
-                        configuration.Dependencies.Remove(depEntry.Name);
-                        Logger.Debug(
-                            category: "ConfNormalize",
-                            message: "The dependencies file missing, removing from the recorded configuration for update.");
-                        break;
-                    }
-                }
-
-                //if (!dependency.IsNativeLibrary) {
-                //    string? name;
-                //    Version? version;
-                //    using (var stream = File.OpenRead(Path.Combine(pluginDirectory, relativeFilePath))) {
-                //        // Try to read the assembly's identity (name and version) from the file.
-                //        if (!MetadataBlobHelpers.TryReadAssemblyIdentity(stream, out name, out version)) {
-                //            continue;
-                //        }
-                //    }
-
-                //    // If the assembly name in the file does not match the expected dependencies name,
-                //    // it likely means the file has been modified in a breaking way,
-                //    // and any original dependent plugins can no longer reliably depend on it.
-                //    if (dependency.Name != name) {
-                //        configuration.Dependencies.Remove(relativeFilePath);
-                //        Logger.Warning(
-                //            category: "ConfNormalize",
-                //            message: $"The assembly name ({name}) in the file does not match the expected dependencies name ({dependency.Name}).");
-                //    }
-                //}
-            }
-        }
-        /// <summary>
-        /// Ignore exceptions caused by external file access issues (e.g., file is in use or locked by another process).
-        /// These are not programming errors and should not cause the application to crash.
-        /// </summary>
-        /// <param name="ex"></param>
-        /// <returns></returns>
-        static bool IgnoreThisIOError(IOException ex) {
-            int HR_FILE_IN_USE = unchecked((int)0x80070020); // ERROR_SHARING_VIOLATION
-            int HR_LOCK_VIOLATION = unchecked((int)0x80070021); // ERROR_LOCK_VIOLATION
-
-            return ex.HResult == HR_FILE_IN_USE || ex.HResult == HR_LOCK_VIOLATION;
-        }
-        void AggressiveDependencyClean(DirectoryInfo pluginDirInfo, DependenciesConfiguration currentConfig) {
-            foreach (var file in pluginDirInfo.GetFiles("*.*", SearchOption.AllDirectories)) {
-                if (file.FullName == Path.Combine(pluginDirInfo.FullName, "dependencies.json")) {
-                    continue;
-                }
-
-                if (currentConfig.Dependencies.Keys.Any(path => Path.Combine(pluginDirInfo.FullName, path) == file.FullName)) {
-                    continue;
-                }
-
-                var deletePath = Path.GetRelativePath(pluginDirInfo.Parent!.FullName, file.FullName);
-                try {
-                    File.Delete(file.FullName);
-                    Logger.Debug(
-                        category: "DepsCleanUp",
-                        message: $"Deleted unused dependencies file '{deletePath}'");
-                }
-                catch (IOException ex) when (IgnoreThisIOError(ex)) {
-                    Logger.Warning(
-                        category: "DepsCleanUp",
-                        message: $"Failed to delete unused dependencies file '{deletePath}'.\r\n" +
-                        $"It is likely that the file is in use by another process. you can try to delete it manually.");
-                }
-                catch {
-                    throw;
-                }
-            }
-            Utilities.IO.RemoveEmptyDirectories(pluginDirInfo.FullName, false);
-        }
-        void SafeDependencyClean(DirectoryInfo pluginDirInfo, DependenciesConfiguration prevConfig, DependenciesConfiguration currentConfig) {
-            foreach (var oldDependenicyPair in prevConfig.Dependencies) {
-                if (!currentConfig.Dependencies.ContainsKey(oldDependenicyPair.Key)) {
-                    try {
-                        File.Delete(Path.Combine(pluginDirInfo.FullName, oldDependenicyPair.Key));
-                        Logger.Debug(
-                            category: "DepsCleanUp",
-                            message: $"Deleted unused dependencies file '{Path.Combine("bin", oldDependenicyPair.Key)}'");
-                    }
-                    catch (IOException ex) when (IgnoreThisIOError(ex)) {
-                        Logger.Warning(
-                            category: "DepsCleanUp",
-                            message: $"Failed to delete unused dependencies file '{Path.Combine("runtimes", oldDependenicyPair.Key)}'.\r\n" +
-                            $"It is likely that the file is in use by another process. you can try to delete it manually.");
-                    }
-                    catch {
-                        throw;
-                    }
-                }
-            }
-            Utilities.IO.RemoveEmptyDirectories(pluginDirInfo.FullName, false);
+            return TryLoadSpecific(preloadInfo, out info, out result);
         }
 
         bool UpdateDependencies(string dll, ModuleInfo info, out ImmutableArray<ModuleDependency> dependencies) {
@@ -337,22 +370,22 @@ namespace UnifierTSL.Module
             }
 
             var name = Path.GetFileNameWithoutExtension(dll);
-            var pluginDir = Path.GetDirectoryName(dll)!;
-            var pluginDirInfo = new DirectoryInfo(pluginDir);
+            var moduleDir = Path.GetDirectoryName(dll)!;
+            var moduleDirInfo = new DirectoryInfo(moduleDir);
 
-            if (pluginDirInfo.Name != name) {
+            if (moduleDirInfo.Name != name) {
                 Logger.Warning(
                     category: "UpdateDeps",
-                    message: "Module with dependencies must be in the same pluginDirInfo as the module to store dependencies.\r\n" +
+                    message: "Module with dependencies must be in the same moduleDirInfo as the module to store dependencies.\r\n" +
                             $"Module File: {dll}");
 
                 return false;
             }
 
-            pluginDirInfo.Create();
+            moduleDirInfo.Create();
 
-            var prevConfig = LoadDependenicesConfig(pluginDir);
-            NormalizeDependenicesConfig(prevConfig, pluginDir);
+            var prevConfig = new DependenciesConfiguration(Logger, DependenciesConfiguration.LoadDependenicesConfig(moduleDir));
+            prevConfig.NormalizeDependenicesConfig(moduleDir);
 
             try {
                 dependencies = info.Dependencies.GetDependencies()?.ToImmutableArray() ?? [];
@@ -367,17 +400,37 @@ namespace UnifierTSL.Module
                 return false;
             }
 
-            var currentConfig = new DependenciesConfiguration {
-                EnableAggressiveCleanUp = prevConfig.EnableAggressiveCleanUp,
+            var currentSetting = new DependenciesSetting {
+                EnableAggressiveCleanUp = prevConfig.Setting.EnableAggressiveCleanUp,
                 Dependencies = []
             };
 
             try {
-                Dictionary<string, LibraryEntry> highestVersion = new Dictionary<string, LibraryEntry>();
+                /*
+                 * This method updates plugin dependencies safely, handling potential file locks on Windows
+                 * caused by AssemblyLoadContext. Key points:
+                 *
+                 * 1. Detects which dependencies are new or have updated versions compared to previous configuration.
+                 * 2. Extracts library files for updated dependencies and tracks the highest version of each file.
+                 * 3. Attempts to copy each dependency file to the plugin directory.
+                 *    - If a file is locked (common with Windows AssemblyLoadContext), the new version is saved
+                 *      using a "Name.Version.Extension" format to avoid overwriting the locked file.
+                 *    - The configuration is updated to reference both the old locked file and the new versioned file,
+                 *      enabling proper tracking and future cleanup.
+                 * 4. Ensures all streams are safely disposed and exceptions are handled or propagated appropriately.
+                 *
+                 * This approach ensures that updated dependencies can be deployed even when previous assemblies
+                 * are still loaded, preventing file access conflicts while maintaining an accurate configuration state.
+                 */
+
+                // Dictionary to track the highest version of each dependency file encountered
+                Dictionary<string, (ModuleDependency dependency, LibraryEntry item)> highestVersion = [];
+
                 foreach (var dependency in dependencies) {
                     bool update = false;
 
-                    if (!prevConfig.Dependencies.TryGetValue(dependency.Name, out var existingDependency)) {
+                    // Check if this dependency is new or has changed since the previous configuration
+                    if (!prevConfig.Setting.Dependencies.TryGetValue(dependency.Name, out var existingDependency)) {
                         update = true;
                     }
                     else if (dependency.Name != existingDependency.Name) {
@@ -388,32 +441,97 @@ namespace UnifierTSL.Module
                     }
 
                     if (update) {
+                        // Extract the library files for the current dependency
                         var items = dependency.LibraryExtractor.Extract(Logger);
 
                         foreach (var item in items) {
-                            if (!highestVersion.TryAdd(item.FilePath, item)) {
-                                if (highestVersion[item.FilePath].Version < item.Version) {
-                                    highestVersion[item.FilePath] = item;
+                            var group = (dependency, item);
+
+                            // Keep track of the highest version for each file path
+                            if (!highestVersion.TryAdd(item.FilePath, group)) {
+                                if (highestVersion[item.FilePath].item.Version < item.Version) {
+                                    highestVersion[item.FilePath] = group;
                                 }
                             }
                         }
 
-                        currentConfig.Dependencies[dependency.Name] = new DependencyConfEntry {
+                        // Update the current configuration with the new dependency info
+                        currentSetting.Dependencies[dependency.Name] = new DependencyRecord {
                             Name = dependency.Name,
                             Version = dependency.Version,
                             Manifests = [.. items.Select(x => new DependencyItem(x.FilePath, x.Version))]
                         };
                     }
                     else {
-                        currentConfig.Dependencies[dependency.Name] = prevConfig.Dependencies[dependency.Name];
+                        // If no update is needed, retain the previous configuration
+                        currentSetting.Dependencies[dependency.Name] = prevConfig.Setting.Dependencies[dependency.Name];
                     }
                 }
 
+                // Copy the highest version of each dependency file to the plugin directory
                 foreach (var pair in highestVersion) {
                     var relativeDepPath = pair.Key;
-                    using var source = pair.Value.Stream.Value;
-                    using var destination = Utilities.IO.SafeFileCreate(Path.Combine(pluginDir, relativeDepPath));
-                    source.CopyTo(destination);
+                    var (dependency, item) = pair.Value;
+
+                    using var source = item.Stream.Value;
+                    FileStream? destination = null;
+
+                    try {
+                        // Attempt to create the destination file safely
+                        destination = Utilities.IO.SafeFileCreate(Path.Combine(moduleDir, relativeDepPath), out var ex);
+
+                        if (destination is not null) {
+                            // Copy the dependency file to the destination if no conflicts occurred
+                            source.CopyTo(destination);
+                        }
+                        else {
+                            // If file creation failed, check if it's due to file being locked by Windows (common with AssemblyLoadContext)
+                            if (prevConfig.Setting.Dependencies.TryGetValue(relativeDepPath, out var prevDependencyConf)
+                                && prevDependencyConf.Manifests.Any(x => x.FilePath == item.FilePath)
+                                && ex is IOException ioEx && FileSystemHelper.FileIsInUse(ioEx)) {
+
+                                var prevItem = prevDependencyConf.Manifests.First(x => x.FilePath == item.FilePath);
+                                // Generate a new path including the version number to avoid file lock conflicts
+                                var newPath = Path.ChangeExtension(item.FilePath, $"{item.Version}.{Path.GetExtension(item.FilePath)}");
+
+                                var currentItem = prevDependencyConf.Manifests.FirstOrDefault(x => x.FilePath == newPath && x.Version == item.Version);
+                                if (currentItem is null) {
+                                    currentItem = new DependencyItem(newPath, item.Version);
+
+                                    destination = Utilities.IO.SafeFileCreate(Path.Combine(moduleDir, newPath), out ex);
+                                    if (destination is null) {
+                                        if (ex is not null) {
+                                            throw ex;
+                                        }
+                                        else {
+                                            throw new Exception($"Failed to create file '{Path.Combine(moduleDir, newPath)}'");
+                                        }
+                                    }
+                                    // Copy the file content to the new versioned file
+                                    source.CopyTo(destination);
+                                }
+                                // Adjust current configuration:
+                                // 1. Remove the old manifest entry for the locked file
+                                // 2. Add the old dependency entry for tracking
+                                // 3. Add the new versioned dependency entry
+                                currentSetting.Dependencies[dependency.Name].Manifests.RemoveAll(x => x.FilePath == item.FilePath);
+                                prevItem.Obsolete = true;
+                                currentSetting.Dependencies[dependency.Name].Manifests.Add(prevItem);
+                                currentSetting.Dependencies[dependency.Name].Manifests.Add(currentItem);
+
+                            }
+                            else if (ex is not null) {
+                                // Propagate other exceptions
+                                throw ex;
+                            }
+                            else {
+                                throw new Exception($"Failed to create file '{Path.Combine(moduleDir, relativeDepPath)}'");
+                            }
+                        }
+                    }
+                    finally {
+                        destination?.Dispose();
+                    }
                 }
             }
             catch (Exception ex) {
@@ -426,22 +544,12 @@ namespace UnifierTSL.Module
                 return false;
             }
 
-            if (prevConfig.EnableAggressiveCleanUp) {
-                currentConfig.EnableAggressiveCleanUp = true;
-                AggressiveDependencyClean(pluginDirInfo, currentConfig);
-            }
-            else {
-                currentConfig.EnableAggressiveCleanUp = false;
-                SafeDependencyClean(pluginDirInfo, prevConfig, currentConfig);
-            }
-
-            // Write updated config to disk
-            var configPath = Path.Combine(pluginDirInfo.FullName, "dependencies.json");
-            File.WriteAllText(configPath, JsonSerializer.Serialize(currentConfig, serializerOptions));
+            currentSetting.EnableAggressiveCleanUp = prevConfig.Setting.EnableAggressiveCleanUp;
+            var currentConfig = new DependenciesConfiguration(Logger, currentSetting);
+            currentConfig.SpecificDependencyClean(moduleDir, prevConfig.Setting);
+            currentConfig.Save(moduleDir);
 
             return true;
         }
-
-        private static readonly JsonSerializerOptions serializerOptions = new() { WriteIndented = true };
     }
 }

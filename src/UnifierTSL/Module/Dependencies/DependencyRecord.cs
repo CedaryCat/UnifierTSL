@@ -4,14 +4,14 @@ using System.Text.Json.Serialization;
 
 namespace UnifierTSL.Module.Dependencies
 {
-    public class DependencyConfEntry
+    public sealed class DependencyRecord
     {
         public required string Name { get; set; }
         [JsonConverter(typeof(NuGetVersionJsonConverter))]
         public required NuGetVersion Version { get; set; }
         public required List<DependencyItem> Manifests { get; set; }
     }
-    public class DependencyItem
+    public sealed class DependencyItem
     {
         public DependencyItem() {
             FilePath = null!;
@@ -24,8 +24,9 @@ namespace UnifierTSL.Module.Dependencies
         public string FilePath { get; set; }
         [JsonConverter(typeof(NuGetVersionJsonConverter))]
         public NuGetVersion Version { get; set; }
+        public bool Obsolete { get; set; }
     }
-    public class NuGetVersionJsonConverter : JsonConverter<NuGetVersion>
+    public sealed class NuGetVersionJsonConverter : JsonConverter<NuGetVersion>
     {
         public override NuGetVersion? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
             var versionString = reader.GetString();

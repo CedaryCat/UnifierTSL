@@ -17,10 +17,10 @@ namespace UnifierTSL.Localization.Terraria
             Language.LoadFilesForCulture(GameCulture.FromCultureName(GameCulture.CultureName.English));
             Language.ProcessCopyCommandsInTexts();
 
-            var stream = File.OpenRead(typeof(Main).Assembly.Location);
-            var peReader = new PEReader(stream);
+            using var stream = File.OpenRead(typeof(Main).Assembly.Location);
+            using var peReader = MetadataBlobHelpers.GetPEReader(stream)!;
             var metadataReader = peReader.GetMetadataReader();
-            var attributes = MetadataBlobHelpers.ExtractCustomAttributeOnSpecificTypes(peReader, "Terraria.Chat.Commands", nameof(ChatCommandAttribute));
+            var attributes = MetadataBlobHelpers.ExtractCustomAttributeOnSpecificTypes(metadataReader, "Terraria.Chat.Commands", nameof(ChatCommandAttribute));
 
             foreach (var attribute in attributes) {
                 if (AttributeParser.TryParseCustomAttribute(attribute, metadataReader, out var parsedAttr)) {

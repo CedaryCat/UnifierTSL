@@ -1,11 +1,9 @@
-﻿using NuGet.Protocol.Plugins;
-using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
-using System.Text;
+using UnifierTSL.Reflection.Metadata.DecodeProviders;
 
 namespace UnifierTSL.Reflection.Metadata
 {
@@ -14,33 +12,80 @@ namespace UnifierTSL.Reflection.Metadata
         public static bool IsManagedAssembly(string filePath) {
             using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var reader = new PEReader(stream);
-            return reader.HasMetadata;
-        }
-        public static bool HasCustomAttribute(Stream assemblyStream, string attributeFullName) {
             try {
-                using var peReader = new PEReader(assemblyStream);
-
-                if (!peReader.HasMetadata) {
-                    return false;
-                }
-
-                var metadataReader = peReader.GetMetadataReader();
-                var assemblyDefinition = metadataReader.GetAssemblyDefinition();
-
-                foreach (var handle in assemblyDefinition.GetCustomAttributes()) {
-                    var attribute = metadataReader.GetCustomAttribute(handle);
-                    var fullName = GetAttributeFullName(metadataReader, attribute);
-
-                    if (fullName == attributeFullName) {
-                        return true;
-                    }
-                }
-
-                return false;
+                return reader.HasMetadata;
             }
             catch {
                 return false;
             }
+        }
+        public static PEReader? GetPEReader(Stream stream, bool leaveOpen = false) {
+            PEReader? reader = null;
+            try {
+                if (leaveOpen) {
+                    reader = new PEReader(stream, PEStreamOptions.LeaveOpen);
+                }
+                else {
+                    reader = new PEReader(stream);
+                }
+                if (reader.HasMetadata) {
+                    return reader;
+                }
+            }
+            catch {
+                reader?.Dispose();
+            }
+            return null;
+        }
+
+        public static bool HasCustomAttribute(MetadataReader metadataReader, string attributeFullName) {
+            var assemblyDefinition = metadataReader.GetAssemblyDefinition();
+
+            foreach (var handle in assemblyDefinition.GetCustomAttributes()) {
+                var attribute = metadataReader.GetCustomAttribute(handle);
+                var fullName = GetAttributeFullName(metadataReader, attribute);
+
+                if (fullName == attributeFullName) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool HasInterface(MetadataReader reader, TypeDefinition typeDef, string interfaceFullName) {
+            foreach (var ifaceHandle in typeDef.GetInterfaceImplementations()) {
+                var ifaceImpl = reader.GetInterfaceImplementation(ifaceHandle);
+                var ifaceType = ifaceImpl.Interface;
+                if (ifaceType.Kind == HandleKind.TypeReference) {
+                    var typeRef = reader.GetTypeReference((TypeReferenceHandle)ifaceType);
+                    var name = reader.GetString(typeRef.Name);
+                    var ns = reader.GetString(typeRef.Namespace);
+                    if ($"{ns}.{name}" == interfaceFullName) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        public static bool HasInterface<TInterface>(MetadataReader reader, TypeDefinition typeDef)
+            => HasInterface(reader, typeDef, typeof(TInterface).FullName!);
+
+        public static bool HasDefaultConstructor(MetadataReader reader, TypeDefinition typeDef) {
+            foreach (var methodHandle in typeDef.GetMethods()) {
+                var methodDef = reader.GetMethodDefinition(methodHandle);
+                var name = reader.GetString(methodDef.Name);
+                if (name != ".ctor")
+                    continue;
+
+                var sig = methodDef.DecodeSignature(new SimpleTypeProvider(), null);
+                if (!methodDef.Attributes.HasFlag(MethodAttributes.Static) &&
+                    methodDef.Attributes.HasFlag(MethodAttributes.Public) &&
+                    sig.ParameterTypes.Length == 0) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static string? GetAttributeFullName(MetadataReader metadataReader, CustomAttribute attribute) {
@@ -53,11 +98,10 @@ namespace UnifierTSL.Reflection.Metadata
                 attributeTypeHandle = memberRef.Parent;
 
                 if (attributeTypeHandle.Kind == HandleKind.TypeSpecification) {
-                    var typeSpecHandle = (TypeSpecificationHandle)attributeTypeHandle;
                     var typeSpec = metadataReader.GetTypeSpecification((TypeSpecificationHandle)attributeTypeHandle);
 
-                    var decoder = new Type2TextProvider(metadataReader);
-                    var sigDecoder = new SignatureDecoder<string, object>(decoder, metadataReader, null);
+                    var decoder = new Type2SimpleTextProvider();
+                    var sigDecoder = new SignatureDecoder<string, object?>(decoder, metadataReader, null!);
 
                     BlobReader blobReader = metadataReader.GetBlobReader(typeSpec.Signature);
                     name = sigDecoder.DecodeType(ref blobReader);
@@ -81,46 +125,6 @@ namespace UnifierTSL.Reflection.Metadata
             return name;
         }
 
-        class Type2TextProvider : ISignatureTypeProvider<string, object>
-        {
-            private readonly MetadataReader _reader;
-
-            public Type2TextProvider(MetadataReader reader) {
-                _reader = reader;
-            }
-
-            public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
-            public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) {
-                var typeDef = reader.GetTypeDefinition(handle);
-                var name = reader.GetString(typeDef.Name);
-                var ns = reader.GetString(typeDef.Namespace);
-                return string.IsNullOrEmpty(ns) ? name : $"{ns}.{name}";
-            }
-
-            public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) {
-                var typeRef = reader.GetTypeReference(handle);
-                var name = reader.GetString(typeRef.Name);
-                var ns = reader.GetString(typeRef.Namespace);
-                return string.IsNullOrEmpty(ns) ? name : $"{ns}.{name}";
-            }
-
-            public string GetTypeFromSpecification(MetadataReader reader, object genericContext, TypeSpecificationHandle handle, byte rawTypeKind) {
-                var typeSpec = reader.GetTypeSpecification(handle);
-                BlobReader blobReader = reader.GetBlobReader(typeSpec.Signature);
-                var decoder = new SignatureDecoder<string, object>(this, reader, genericContext);
-                return decoder.DecodeType(ref blobReader);
-            }
-            public string GetSZArrayType(string elementType) => elementType + "[]";
-            public string GetPointerType(string elementType) => elementType + "*";
-            public string GetByReferenceType(string elementType) => "ref " + elementType;
-            public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments) => $"{genericType}";
-            public string GetGenericMethodParameter(object genericContext, int index) => $"!!{index}";
-            public string GetGenericTypeParameter(object genericContext, int index) => $"!{index}";
-            public string GetModifiedType(string modifierType, string unmodifiedType, bool isRequired) => unmodifiedType;
-            public string GetPinnedType(string elementType) => elementType;
-            public string GetFunctionPointerType(MethodSignature<string> signature) => "fnptr";
-            public string GetArrayType(string elementType, ArrayShape shape) => elementType + "[]";
-        }
 
         static string GetFullTypeName(MetadataReader reader, TypeReferenceHandle handle) {
             var typeRef = reader.GetTypeReference(handle);
@@ -128,14 +132,8 @@ namespace UnifierTSL.Reflection.Metadata
             var namespaceName = reader.GetString(typeRef.Namespace);
             return $"{namespaceName}.{name}";
         }
-        public static List<CustomAttribute> ExtractCustomAttributeOnSpecificTypes(PEReader peReader, string targetNamespace, string attributeName) {
+        public static List<CustomAttribute> ExtractCustomAttributeOnSpecificTypes(MetadataReader metadataReader, string targetNamespace, string attributeName) {
             List<CustomAttribute> customAttributes = [];
-
-            if (!peReader.HasMetadata) {
-                return customAttributes;
-            }
-
-            var metadataReader = peReader.GetMetadataReader();
 
             foreach (var typeDefHandle in metadataReader.TypeDefinitions) {
                 var typeDef = metadataReader.GetTypeDefinition(typeDefHandle);
@@ -156,29 +154,19 @@ namespace UnifierTSL.Reflection.Metadata
             return customAttributes;
         }
 
-        public static bool TryReadAssemblyIdentity(Stream stream, [NotNullWhen(true)] out string? name, [NotNullWhen(true)] out Version? version) {
+        public static bool TryReadAssemblyIdentity(MetadataReader metadataReader, [NotNullWhen(true)] out string? name, [NotNullWhen(true)] out Version? version) {
             name = null;
             version = null;
-            try {
-                using var peReader = new PEReader(stream, PEStreamOptions.LeaveOpen);
 
-                if (!peReader.HasMetadata) {
-                    return false;
-                }
-                var metadataReader = peReader.GetMetadataReader();
+            var assemblyDef = metadataReader.GetAssemblyDefinition();
+            name = metadataReader.GetString(assemblyDef.Name);
+            version = assemblyDef.Version;
 
-                var assemblyDef = metadataReader.GetAssemblyDefinition();
-                name = metadataReader.GetString(assemblyDef.Name);
-                version = assemblyDef.Version;
-
-                if (metadataReader.TryReadVersionAttribute(assemblyDef, nameof(AssemblyFileVersionAttribute), out version)) {
-                    return true;
-                }
-                if (metadataReader.TryReadVersionAttribute(assemblyDef, nameof(AssemblyVersionAttribute), out version)) {
-                    return true;
-                }
+            if (metadataReader.TryReadVersionAttribute(assemblyDef, nameof(AssemblyFileVersionAttribute), out version)) {
+                return true;
             }
-            catch {
+            if (metadataReader.TryReadVersionAttribute(assemblyDef, nameof(AssemblyVersionAttribute), out version)) {
+                return true;
             }
             return false;
         }
@@ -203,7 +191,6 @@ namespace UnifierTSL.Reflection.Metadata
 
             return attrTypeName == attributeName;
         }
-
         private static bool TryReadVersionAttribute(this MetadataReader metadataReader, AssemblyDefinition assemblyDef, string attributeName, [NotNullWhen(true)] out Version? version) {
             foreach (var handle in assemblyDef.GetCustomAttributes()) {
                 var attribute = metadataReader.GetCustomAttribute(handle);
@@ -219,32 +206,40 @@ namespace UnifierTSL.Reflection.Metadata
             return false;
         }
 
-        public static int ReadCompressedUInt32(byte[] buffer, ref int index) {
-            byte b = buffer[index++];
-            if ((b & 0x80) == 0) {
-                return b;
-            }
-            else if ((b & 0xC0) == 0x80) {
-                return (b & 0x3F) << 8 | buffer[index++];
-            }
-            else {
-                return (b & 0x1F) << 24 | buffer[index++] << 16 | buffer[index++] << 8 | buffer[index++];
-            }
+        public static string ReadAssemblyName(MetadataReader metadataReader) {
+            var assemblyDef = metadataReader.GetAssemblyDefinition();
+            return metadataReader.GetString(assemblyDef.Name);
         }
 
-        public static string? TryReadStringFromAttributeBlob(byte[] blob) {
-            // See ECMA-335 II.23.3: Blob encoding: 0x01 + string length + UTF8 bytes
-            try {
-                int index = 0;
-                if (blob[index++] != 0x01) return null; // prolog
+        public static bool TryReadAssemblyAttributeData(MetadataReader metadataReader, string attributeFullName, out ParsedCustomAttribute attributeData) {
+            attributeData = default;
+            var assemblyDefinition = metadataReader.GetAssemblyDefinition();
 
-                int length = ReadCompressedUInt32(blob, ref index);
-                string result = Encoding.UTF8.GetString(blob, index, length);
-                return result;
+            foreach (var handle in assemblyDefinition.GetCustomAttributes()) {
+                var attribute = metadataReader.GetCustomAttribute(handle);
+                var fullName = GetAttributeFullName(metadataReader, attribute);
+
+                if (fullName != attributeFullName) {
+                    continue;
+                }
+
+                return AttributeParser.TryParseCustomAttribute(attribute, metadataReader, out attributeData);
             }
-            catch {
-                return null;
+            return false;
+        }
+        public static bool TryReadTypeAttributeData(MetadataReader metadataReader, TypeDefinition typeDef, string attributeFullName, out ParsedCustomAttribute attributeData) {
+            attributeData = default;
+            foreach (var handle in typeDef.GetCustomAttributes()) {
+                var attribute = metadataReader.GetCustomAttribute(handle);
+                var fullName = GetAttributeFullName(metadataReader, attribute);
+
+                if (fullName != attributeFullName) {
+                    continue;
+                }
+
+                return AttributeParser.TryParseCustomAttribute(attribute, metadataReader, out attributeData);
             }
+            return false;
         }
     }
 }

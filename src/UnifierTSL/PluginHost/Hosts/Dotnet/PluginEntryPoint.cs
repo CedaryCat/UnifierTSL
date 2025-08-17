@@ -2,9 +2,9 @@
 
 namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
-    public class PluginEntryPoint(Type pluginType) : IPluginEntryPoint
+    public class PluginEntryPoint(string pluginTypeFullName) : IPluginEntryPoint
     {
-        public object EntryPoint => pluginType;
-        public string EntryPointString => pluginType.FullName!;
+        public object EntryPoint => pluginTypeFullName;
+        public string EntryPointString => pluginTypeFullName;
     }
 }
