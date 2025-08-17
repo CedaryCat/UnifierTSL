@@ -131,7 +131,7 @@ namespace UnifierTSL.Module
             var match = config.Dependencies.Values
                 .SelectMany(x => x.Manifests)
                 .Where(x => !x.Obsolete)
-                .Where(x => Path.GetFileName(x.FilePath).StartsWith(unmanagedDllName + "."))
+                .Where(x => Path.GetFileName(x.FilePath).StartsWith(unmanagedLibName + "."))
                 .Where(x => Path.GetExtension(x.FilePath) == extension)
                 .FirstOrDefault();
 
