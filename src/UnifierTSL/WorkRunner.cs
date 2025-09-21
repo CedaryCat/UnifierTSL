@@ -1,5 +1,5 @@
-﻿using UnifierTSL.CLI;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using UnifierTSL.CLI;
 
 namespace UnifierTSL
 {
@@ -10,7 +10,7 @@ namespace UnifierTSL
                 category: $"TimedWork:{category}",
                 message: message);
 
-            var spinner = new ConsoleSpinner(100);
+            ConsoleSpinner spinner = new(100);
             spinner.Start();
             Stopwatch stopwatch = new();
             stopwatch.Start();
@@ -28,11 +28,11 @@ namespace UnifierTSL
                 category: $"TimedWork:{category}",
                 message: message);
 
-            var spinner = new ConsoleSpinner(100);
+            ConsoleSpinner spinner = new(100);
             spinner.Start();
             Stopwatch stopwatch = new();
             stopwatch.Start();
-            var output = work();
+            TOut? output = work();
             stopwatch.Stop();
             spinner.Stop();
             Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
@@ -48,7 +48,7 @@ namespace UnifierTSL
                 category: $"TimedWork:{category}",
                 message: message);
 
-            var spinner = new ConsoleSpinner(100);
+            ConsoleSpinner spinner = new(100);
             spinner.Start();
             Stopwatch stopwatch = new();
             stopwatch.Start();

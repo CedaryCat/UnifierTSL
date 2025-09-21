@@ -1,15 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace UnifierTSL.Extensions
 {
     public static class ColorExt
     {
-        private static readonly Dictionary<ConsoleColor, Color> _consoleColorMap = new Dictionary<ConsoleColor, Color> {
+        private static readonly Dictionary<ConsoleColor, Color> _consoleColorMap = new() {
             [ConsoleColor.Black] = new Color(0, 0, 0),
             [ConsoleColor.DarkBlue] = new Color(0, 0, 128),
             [ConsoleColor.DarkGreen] = new Color(0, 128, 0),
@@ -32,12 +27,12 @@ namespace UnifierTSL.Extensions
         /// Convert XNA color to the closest console color
         /// </summary>
         public static ConsoleColor ToConsoleColor(this Color color) {
-            var rgb = new Color(color.R, color.G, color.B);
+            Color rgb = new(color.R, color.G, color.B);
 
-            var closest = ConsoleColor.Gray;
+            ConsoleColor closest = ConsoleColor.Gray;
             double minDistance = double.MaxValue;
 
-            foreach (var kvp in _consoleColorMap) {
+            foreach (KeyValuePair<ConsoleColor, Color> kvp in _consoleColorMap) {
                 double distance = CalculateDistance(rgb, kvp.Value);
                 if (distance < minDistance) {
                     minDistance = distance;

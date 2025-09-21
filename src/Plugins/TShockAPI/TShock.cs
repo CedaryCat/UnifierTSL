@@ -89,7 +89,7 @@ namespace TShockAPI
         /// <summary>
         /// only used for creating sample like item, projectile and npc (SetDefaults() requires it).
         /// </summary>
-        internal static RootContext ServerSample = new("sample");
+        internal static SampleServer ServerSample = new();
         internal static int SetupToken = -1;
         /// <summary>Geo - Static reference to the GeoIP system which determines the location of an IP address.</summary>
         public static GeoIPCountry Geo;
@@ -102,7 +102,7 @@ namespace TShockAPI
         public static RestManager RestManager;
         internal static ModuleManager ModuleManager = new();
         static TShock() {
-            ServerSample.Main.player[ServerSample.Main.myPlayer] = new Player();
+            ServerSample.Main.player[Main.myPlayer] = new Player();
         }
         #endregion
 

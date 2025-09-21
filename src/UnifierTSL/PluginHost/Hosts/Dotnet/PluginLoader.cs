@@ -25,7 +25,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                     message: $"Plugins {pluginContainer.Name} is not a .Net Plugin, skipping.");
                 return;
             }
-            var loader = new ModuleAssemblyLoader("plugins");
+            ModuleAssemblyLoader loader = new("plugins");
             loader.ForceUnload(container.Module);
         }
 
@@ -37,7 +37,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                 return false;
             }
 
-            var loader = new ModuleAssemblyLoader("plugins");
+            ModuleAssemblyLoader loader = new("plugins");
             if (container.Module.CoreModule is not null) {
                 return false;
             }
@@ -51,7 +51,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
         }
 
         public IPluginContainer? LoadPlugin(IPluginInfo pluginInfo, out LoadDetails loadDetails) {
-            if (pluginInfo is not DotnetPluginInfo info) { 
+            if (pluginInfo is not DotnetPluginInfo info) {
                 Logger.Warning(
                     category: "Loading",
                     message: $"Plugins {pluginInfo.Name} is not a DotnetPluginInfo, skipping.");
@@ -59,8 +59,8 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                 return null;
             }
 
-            var loader = new ModuleAssemblyLoader("plugins");
-            if (!loader.TryLoadSpecific(info.Module, out var loaded, out var details)) {
+            ModuleAssemblyLoader loader = new("plugins");
+            if (!loader.TryLoadSpecific(info.Module, out LoadedModule? loaded, out ModuleLoadResult details)) {
                 switch (details) {
                     case ModuleLoadResult.InvalidLibrary:
                     case ModuleLoadResult.CoreModuleNotFound:
@@ -74,7 +74,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                         throw new Exception();
                 }
             }
-            var type = loaded.Assembly.GetType(info.EntryPoint.EntryPointString);
+            Type? type = loaded.Assembly.GetType(info.EntryPoint.EntryPointString);
             if (type is null) {
                 loadDetails = LoadDetails.Failed;
                 return null;
@@ -82,7 +82,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 
             IPlugin instance;
             try {
-                var boxed = Activator.CreateInstance(type) ?? throw new InvalidOperationException("Failed to create instance");
+                object boxed = Activator.CreateInstance(type) ?? throw new InvalidOperationException("Failed to create instance");
                 if (boxed is not IPlugin) {
                     Logger.WarningWithMetadata(
                         category: "Loading",
@@ -105,7 +105,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 
             loaded.Context.AddDisposeAction(async () => await instance.DisposeAsync());
 
-            var container = new PluginContainer(info.Metadata, loaded, instance);
+            PluginContainer container = new(info.Metadata, loaded, instance);
             ImmutableInterlocked.Update(ref host.Plugins, p => p.Add(container));
             loadDetails = LoadDetails.Success;
             return container;

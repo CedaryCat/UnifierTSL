@@ -11,7 +11,8 @@ using UnifierTSL.Servers;
 
 namespace UnifierTSL.Events.Handlers
 {
-    public readonly struct MessageEvent(MessageSender sender, string rawText, string text) : IEventContent {
+    public readonly struct MessageEvent(MessageSender sender, string rawText, string text) : IEventContent
+    {
         public readonly MessageSender Sender = sender;
         public readonly string RawText = rawText;
         public readonly string Text = text;
@@ -37,15 +38,15 @@ namespace UnifierTSL.Events.Handlers
             }
         }
     }
-    public struct ChatEvent(int player, string text, RootContext server) : IServerEventContent<RootContext>, IPlayerEventContent
+    public struct ChatEvent(int player, string text, ServerContext server) : IPlayerEventContent
     {
         public int Who { get; } = player;
         public string Text = text;
-        public RootContext Server { get; } = server;
+        public ServerContext Server { get; } = server;
     }
     public class ChatHandler
     {
-        static int isReadingInput = 0;
+        private static int isReadingInput = 0;
 
         internal void KeepReadingInput() {
             if (Interlocked.CompareExchange(ref isReadingInput, 1, 0) != 0) {
@@ -53,7 +54,7 @@ namespace UnifierTSL.Events.Handlers
             }
 
             while (true) {
-                var input = Console.ReadLine() ?? "";
+                string input = Console.ReadLine() ?? "";
                 try {
                     MessageEvent.Invoke(new MessageEvent(new(null, byte.MaxValue), input, input), out _);
                 }
@@ -71,62 +72,54 @@ namespace UnifierTSL.Events.Handlers
         public readonly ValueEventProvider<ChatEvent> ChatEvent = new();
         public readonly ReadonlyEventProvider<MessageEvent> MessageEvent = new();
 
-        bool ProcessConsoleMessage(On.OTAPI.HooksSystemContext.MainSystemContext.orig_InvokeCommandProcess orig, HooksSystemContext.MainSystemContext self,
+        private bool ProcessConsoleMessage(On.OTAPI.HooksSystemContext.MainSystemContext.orig_InvokeCommandProcess orig, HooksSystemContext.MainSystemContext self,
             string lowered, string raw) {
 
-            if (self.root is ServerContext server) {
-                MessageEvent.Invoke(new MessageEvent(new(server, byte.MaxValue), raw, raw), out var handled);
-                if (handled) {
-                    return false;
-                }
+            MessageEvent.Invoke(new MessageEvent(new(self.root.ToServer(), byte.MaxValue), raw, raw), out bool handled);
+            if (handled) {
+                return false;
             }
 
             return orig(self, lowered, raw);
         }
 
         private void ProcessIncomingMessage(On.Terraria.Chat.ChatCommandProcessor.orig_ProcessIncomingMessage orig, Terraria.Chat.ChatCommandProcessor self, RootContext root, Terraria.Chat.ChatMessage message, int clientId) {
-            
-            if (root is ServerContext server) {
-                var text = message.Text;
-                // Terraria now has chat commands on the client side.
-                // These commands remove the commands prefix (e.g. /me /playing) and send the command id instead
-                // In order for us to keep legacy code we must reverse this and get the prefix using the command id
-                foreach (var item in Terraria.UI.Chat.ChatManager.Commands._localizedCommands) {
-                    if (item.Value._name == message.CommandId._name) {
-                        if (!string.IsNullOrEmpty(text)) {
-                            text = EnglishLanguage.GetCommandPrefixByName(item.Value._name) + ' ' + text;
-                        }
-                        else {
-                            text = EnglishLanguage.GetCommandPrefixByName(item.Value._name);
-                        }
-                        break;
-                    }
-                }
 
-                MessageEvent.Invoke(new MessageEvent(new(server, (byte)clientId), message.Text, text), out var handled);
-                if (handled) {
-                    return;
+            string text = message.Text;
+            // Terraria now has chat commands on the client side.
+            // These commands remove the commands prefix (e.g. /me /playing) and send the command id instead
+            // In order for us to keep legacy code we must reverse this and get the prefix using the command id
+            foreach (KeyValuePair<LocalizedText, Terraria.Chat.ChatCommandId> item in Terraria.UI.Chat.ChatManager.Commands._localizedCommands) {
+                if (item.Value._name == message.CommandId._name) {
+                    if (!string.IsNullOrEmpty(text)) {
+                        text = EnglishLanguage.GetCommandPrefixByName(item.Value._name) + ' ' + text;
+                    }
+                    else {
+                        text = EnglishLanguage.GetCommandPrefixByName(item.Value._name);
+                    }
+                    break;
                 }
+            }
+
+            MessageEvent.Invoke(new MessageEvent(new(root.ToServer(), (byte)clientId), message.Text, text), out bool handled);
+            if (handled) {
+                return;
             }
 
             orig(self, root, message, clientId);
             return;
         }
         private void ProcessIncomingMessage(On.Terraria.Chat.Commands.SayChatCommand.orig_ProcessIncomingMessage orig, SayChatCommand self, RootContext root, string text, byte clientId) {
-            
-            var data = new ChatEvent(clientId, text, root);
-            ChatEvent.Invoke(ref data, out var handled);
+
+            ChatEvent data = new(clientId, text, root.ToServer());
+            ChatEvent.Invoke(ref data, out bool handled);
             if (handled) {
                 return;
             }
 
             orig(self, root, data.Text, clientId);
 
-            if (root is not ServerContext server) {
-                return;
-            }
-
-            var player = root.Main.player[clientId];
+            Terraria.Player player = root.Main.player[clientId];
 
             for (int i = 0; i < UnifiedServerCoordinator.globalClients.Length; i++) {
                 if (!UnifiedServerCoordinator.globalClients[i].IsActive) {
@@ -135,8 +128,8 @@ namespace UnifierTSL.Events.Handlers
                 if (i == clientId) {
                     continue;
                 }
-                var otherServer = UnifiedServerCoordinator.GetClientCurrentlyServer(i);
-                otherServer?.OnPlayerRecieveForwardedMsg(i, server, player, text);
+                ServerContext? otherServer = UnifiedServerCoordinator.GetClientCurrentlyServer(i);
+                otherServer?.OnPlayerRecieveForwardedMsg(i, root.ToServer(), player, text);
             }
         }
     }

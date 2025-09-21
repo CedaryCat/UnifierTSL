@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Terraria;
+﻿using Terraria;
 using Terraria.Utilities;
 using UnifierTSL.FileSystem;
 
@@ -10,27 +9,27 @@ namespace UnifierTSL
 
         // Just trigger the static constructor
 
-        public readonly static Lock ConsoleLock = new();
+        public static readonly Lock ConsoleLock = new();
         public static void Load() { }
 
-        static readonly Lock cultureFileLock = new();
-        static readonly Lock creativeSacrificesLock = new();
-        static readonly Lock favoritesFileLock = new();
-        
+        private static readonly Lock cultureFileLock = new();
+        private static readonly Lock creativeSacrificesLock = new();
+        private static readonly Lock favoritesFileLock = new();
+
         static SynchronizedGuard() {
             On.Terraria.GameContent.Creative.CreativeItemSacrificesCatalog.Initialize
-                += (orig, self) 
+                += (orig, self)
                 => { lock (creativeSacrificesLock) { orig(self); } };
-            On.Terraria.IO.FavoritesFile.Save 
+            On.Terraria.IO.FavoritesFile.Save
                 += (orig, file, root)
                 => { lock (favoritesFileLock) { orig(file, root); } };
             On.Terraria.IO.FavoritesFile.Load
                 += (orig, file, root)
                 => { lock (favoritesFileLock) { orig(file, root); } };
-            On.Terraria.IO.WorldFileSystemContext.mfwh_SaveWorld_bool_bool
-                += (orig, self, _, resetTime) 
+            On.Terraria.IO.WorldFileSystemContext.SaveWorld_bool_bool
+                += (orig, self, _, resetTime)
                 => {
-                    var s = self.root;
+                    UnifiedServerProcess.RootContext s = self.root;
                     if (s.Main.worldName == "") {
                         s.Main.worldName = "World";
                     }

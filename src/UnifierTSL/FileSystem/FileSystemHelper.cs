@@ -1,15 +1,15 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace UnifierTSL.FileSystem
 {
     public static class FileSystemHelper
     {
-        public static string GetExecutableExtension() => 
+        public static string GetExecutableExtension() =>
             RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" :
             RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "" :
             RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "" :
             throw new PlatformNotSupportedException("Unsupported OS platform");
-        public static string GetLibraryExtension() => 
+        public static string GetLibraryExtension() =>
             RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll" :
             RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? ".so" :
             RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib" :
@@ -20,8 +20,5 @@ namespace UnifierTSL.FileSystem
 
             return ex.HResult == HR_FILE_IN_USE || ex.HResult == HR_LOCK_VIOLATION;
         }
-        public static string GetDynamicLibraryExtension() => GetLibraryExtension();
-        public static string GetDynamicLibraryPrefix() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "" : "lib";
-        public static string GetDynamicLibraryFileName(string name, bool withPrefix = true) => $"{(withPrefix ? GetDynamicLibraryPrefix() : "")}{name}{GetDynamicLibraryExtension()}";
     }
 }

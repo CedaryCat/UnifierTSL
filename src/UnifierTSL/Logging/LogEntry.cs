@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using UnifierTSL.Logging.LogTrace;
 using UnifierTSL.Logging.Metadata;
 
@@ -42,17 +37,17 @@ namespace UnifierTSL.Logging
     {
         public readonly bool HasTraceContext => !Unsafe.IsNullRef(in TraceContext);
         public void SetMetadata(string key, string value) {
-            ref var metadata = ref this.metadata;
+            ref MetadataCollection metadata = ref this.metadata;
             metadata.Set(key, value);
         }
         public readonly string? GetMetadata(string key) {
-            if (metadata.TryGet(key, out var value)) {
+            if (metadata.TryGet(key, out string? value)) {
                 return value;
             }
             return null;
         }
 
-        public readonly override string ToString() {
+        public override readonly string ToString() {
             return $"[{Level}][{Role}]{Message}";
         }
 

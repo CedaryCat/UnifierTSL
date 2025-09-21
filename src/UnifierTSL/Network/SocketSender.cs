@@ -1,27 +1,30 @@
-﻿using Terraria.Localization;
+﻿using System.Buffers;
+using Terraria.Localization;
 using Terraria.Net.Sockets;
 using TrProtocol.NetPackets;
-using System.Buffers;
 
 namespace UnifierTSL.Network
 {
     public abstract class SocketSender() : PacketSender
     {
         public abstract ISocket Socket { get; }
-        public override void SendData(byte[] data, int index, int size) {
-            var sk = Socket;
-            if (!sk.IsConnected()) {
+        public virtual void SentData() { }
+        public sealed override void SendData(byte[] data, int index, int size) {
+            ISocket sk = Socket;
+            if (!(sk?.IsConnected() ?? false)) {
                 return;
             }
             sk.AsyncSend(data, index, size, _ => { }, null);
+            SentData();
         }
 
-        public override void SendData(byte[] data, int index, int size, SocketSendCallback callback, object? state = null) {
-            var sk = Socket;
-            if (!sk.IsConnected()) {
+        public sealed override void SendData(byte[] data, int index, int size, SocketSendCallback callback, object? state = null) {
+            ISocket sk = Socket;
+            if (!(sk?.IsConnected() ?? false)) {
                 return;
             }
             sk.AsyncSend(data, index, size, callback, state);
+            SentData();
         }
 
         protected sealed override byte[] AllocateBuffer(int size) {
@@ -29,8 +32,8 @@ namespace UnifierTSL.Network
         }
 
         protected sealed override void SendDataAndFreeBuffer(byte[] buffer, int index, int size) {
-            var sk = Socket;
-            if (!sk.IsConnected()) {
+            ISocket sk = Socket;
+            if (!(sk?.IsConnected() ?? false)) {
                 ArrayPool<byte>.Shared.Return(buffer);
                 return;
             }
@@ -42,17 +45,19 @@ namespace UnifierTSL.Network
             catch {
                 ArrayPool<byte>.Shared.Return(buffer);
             }
+            SentData();
         }
-        record FreeBufferState(byte[] Buffer, SocketSendCallback Callback, object? State);
+
+        private record FreeBufferState(byte[] Buffer, SocketSendCallback Callback, object? State);
         protected sealed override void SendDataAndFreeBuffer(byte[] buffer, int index, int size, SocketSendCallback callback, object? state = null) {
-            var sk = Socket;
-            if (!sk.IsConnected()) {
+            ISocket sk = Socket;
+            if (!(sk?.IsConnected() ?? false)) {
                 ArrayPool<byte>.Shared.Return(buffer);
                 return;
             }
             try {
                 sk.AsyncSendNoCopy(buffer, index, size, static boxedState => {
-                    var state = (FreeBufferState)boxedState;
+                    FreeBufferState state = (FreeBufferState)boxedState;
                     ArrayPool<byte>.Shared.Return(state.Buffer);
                     state.Callback(state.State);
                 }, new FreeBufferState(buffer, callback, state));
@@ -60,10 +65,14 @@ namespace UnifierTSL.Network
             catch {
                 ArrayPool<byte>.Shared.Return(buffer);
             }
+            SentData();
         }
         public virtual void Kick(NetworkText reason, bool bg = false) {
+            ISocket sk = Socket;
+            if (sk is null) {
+                return;
+            }
             SendDynamicPacket(new Kick(reason));
-            var sk = Socket;
             if (bg) {
                 Console.WriteLine(Language.GetTextValue("CLI.ClientWasBooted", sk.GetRemoteAddress().ToString(), reason));
             }

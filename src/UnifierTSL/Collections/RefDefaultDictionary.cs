@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace UnifierTSL.Collections
 {
@@ -48,7 +43,7 @@ namespace UnifierTSL.Collections
         /// <returns></returns>
         public TValue this[TKey key] {
             get {
-                if (_dict.TryGetValue(key, out var value)) {
+                if (_dict.TryGetValue(key, out TValue? value)) {
                     return value;
                 }
                 if (_getDefaultValue is not null) {

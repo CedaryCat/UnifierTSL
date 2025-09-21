@@ -15,10 +15,10 @@ namespace UnifierTSL.Reflection.Metadata
         public static bool TryParseCustomAttribute(CustomAttribute attr, MetadataReader reader, out ParsedCustomAttribute parsedAttr) {
             try {
                 // Resolve constructor parameter types
-                var parameterTypes = ResolveConstructorParameterTypes(attr.Constructor, reader);
+                List<Type> parameterTypes = ResolveConstructorParameterTypes(attr.Constructor, reader);
 
                 // Read blob
-                var blobReader = reader.GetBlobReader(attr.Value);
+                BlobReader blobReader = reader.GetBlobReader(attr.Value);
 
                 // 3. Validate prolog
                 if (blobReader.ReadUInt16() != 0x0001) {
@@ -27,13 +27,13 @@ namespace UnifierTSL.Reflection.Metadata
                 }
 
                 // Read fixed constructor args
-                var constructorArgs = new object?[parameterTypes.Count];
+                object?[] constructorArgs = new object?[parameterTypes.Count];
                 for (int i = 0; i < parameterTypes.Count; i++) {
                     constructorArgs[i] = ReadFixedArg(ref blobReader, parameterTypes[i]);
                 }
 
                 // Read named arguments (fields/properties)
-                var namedArgs = new Dictionary<string, object?>();
+                Dictionary<string, object?> namedArgs = [];
                 ushort namedCount = blobReader.ReadUInt16();
 
                 for (int i = 0; i < namedCount; i++) {
@@ -64,19 +64,19 @@ namespace UnifierTSL.Reflection.Metadata
             BlobReader sigReader;
 
             if (ctorHandle.Kind == HandleKind.MemberReference) {
-                var memberRef = reader.GetMemberReference((MemberReferenceHandle)ctorHandle);
+                MemberReference memberRef = reader.GetMemberReference((MemberReferenceHandle)ctorHandle);
                 sigReader = reader.GetBlobReader(memberRef.Signature);
             }
             else if (ctorHandle.Kind == HandleKind.MethodDefinition) {
-                var methodDef = reader.GetMethodDefinition((MethodDefinitionHandle)ctorHandle);
+                MethodDefinition methodDef = reader.GetMethodDefinition((MethodDefinitionHandle)ctorHandle);
                 sigReader = reader.GetBlobReader(methodDef.Signature);
             }
             else {
                 throw new NotSupportedException($"Unsupported handle kind: {ctorHandle.Kind}");
             }
 
-            var decoder = new SignatureDecoder<Type, object?>(new SimpleTypeProvider(), reader, genericContext: null);
-            var methodSig = decoder.DecodeMethodSignature(ref sigReader);
+            SignatureDecoder<Type, object?> decoder = new(new SimpleTypeProvider(), reader, genericContext: null);
+            MethodSignature<Type> methodSig = decoder.DecodeMethodSignature(ref sigReader);
 
             return [.. methodSig.ParameterTypes];
         }

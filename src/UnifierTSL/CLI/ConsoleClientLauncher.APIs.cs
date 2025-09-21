@@ -1,6 +1,6 @@
 ﻿namespace UnifierTSL.CLI
 {
-    partial class ConsoleClientLauncher
+    public partial class ConsoleClientLauncher
     {
         #region Write overloads
         public override void Write(char value) => Write(value.ToString());

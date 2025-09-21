@@ -7,7 +7,7 @@ namespace TShockAPI.Configuration
         private TSettings settings;
         public TSettings Settings => settings;
 
-        public static event Action<ConfigFile<TSettings>>? OnConfigRead;
+        public event Action<ConfigFile<TSettings>>? OnConfigRead;
         public ConfigFile(IPluginConfigRegistrar configRegistrar, string fileNameWithoutExtension, Func<TSettings> defaultSettingFactory) {
             settingsHandle = configRegistrar
                 .CreateConfigRegistration<TSettings>(fileNameWithoutExtension + ".json")
@@ -18,7 +18,7 @@ namespace TShockAPI.Configuration
             settings = settingsHandle.Request();
         }
 
-        private ValueTask<bool> OnSettingsChanged(TSettings? config) {
+        private ValueTask<bool> OnSettingsChanged(IPluginConfigHandle<TSettings> handle, TSettings? config) {
             if (config is null) {
                 return new ValueTask<bool>(true);
             }

@@ -29,7 +29,7 @@ namespace UnifierTSL.Logging
         /// <param name="sourceFilePath">The path of the source file that emitted the log (auto-filled).</param>
         /// <param name="memberName">The name of the member emitting the log (auto-filled).</param>
         /// <param name="sourceLineNumber">The source line number where the log was emitted (auto-filled).</param>
-        public void Log(
+        void Log(
             LogLevel level,
             string message,
             string? overwriteCategory = null,
@@ -51,7 +51,7 @@ namespace UnifierTSL.Logging
         /// <param name="sourceFilePath">The path of the source file that emitted the log (auto-filled).</param>
         /// <param name="memberName">The name of the member emitting the log (auto-filled).</param>
         /// <param name="sourceLineNumber">The source line number where the log was emitted (auto-filled).</param>
-        public void Log(
+        void Log(
             LogLevel level,
             string message,
             ReadOnlySpan<KeyValueMetadata> metadata,

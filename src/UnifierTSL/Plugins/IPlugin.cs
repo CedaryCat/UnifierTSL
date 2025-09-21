@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using UnifierTSL.Module;
 using UnifierTSL.PluginService;
 
 namespace UnifierTSL.Plugins

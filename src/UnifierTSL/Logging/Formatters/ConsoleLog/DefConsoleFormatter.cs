@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace UnifierTSL.Logging.Formatters.ConsoleLog
 {
@@ -12,23 +8,23 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
         public string FormatName => "Default Console Formatter";
         public string Description => "A default console formatter implementation";
 
-        static readonly char[] separator = ['\r', '\n'];
+        private static readonly char[] separator = ['\r', '\n'];
 
         public void Format(scoped in LogEntry entry, scoped ref ColoredSegment buffer, out int written) {
             written = 0;
 
             string levelText = entry.Level switch {
-                LogLevel.Trace =>    "[Trace]",
-                LogLevel.Debug =>    "[Debug]",
-                LogLevel.Info =>     "[+Info]",
-                LogLevel.Success =>  "[Succe]",
-                LogLevel.Warning =>  "[+Warn]",
-                LogLevel.Error =>    "[Error]",
+                LogLevel.Trace => "[Trace]",
+                LogLevel.Debug => "[Debug]",
+                LogLevel.Info => "[+Info]",
+                LogLevel.Success => "[Succe]",
+                LogLevel.Warning => "[+Warn]",
+                LogLevel.Error => "[Error]",
                 LogLevel.Critical => "[Criti]",
-                _ =>                 "[+-·-+]"
+                _ => "[+-·-+]"
             };
-            string roleCatText = string.IsNullOrEmpty(entry.Category) 
-                ? $"[{entry.Role}]" 
+            string roleCatText = string.IsNullOrEmpty(entry.Category)
+                ? $"[{entry.Role}]"
                 : $"[{entry.Role}|{entry.Category}]";
 
             ConsoleColor fgLevel = GetLevelColor(entry.Level);
@@ -57,7 +53,7 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
                 string label = isHandled ? "Handled Exception:" : "Unexpected Exception:";
                 string[] exceptionLines = entry.Exception.ToString().Split(separator, StringSplitOptions.RemoveEmptyEntries);
 
-                var sb = new StringBuilder();
+                StringBuilder sb = new();
                 sb.AppendLine($" │ {label}");
 
                 for (int i = 0; i < exceptionLines.Length; i++) {
@@ -74,7 +70,7 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
             }
         }
 
-        static ConsoleColor GetLevelColor(LogLevel level) => level switch {
+        private static ConsoleColor GetLevelColor(LogLevel level) => level switch {
             LogLevel.Trace => ConsoleColor.Gray,
             LogLevel.Debug => ConsoleColor.Blue,
             LogLevel.Info => ConsoleColor.White,
@@ -85,11 +81,11 @@ namespace UnifierTSL.Logging.Formatters.ConsoleLog
             _ => ConsoleColor.White
         };
 
-        static ConsoleColor GetRoleCategoryFg(scoped in LogEntry entry) => ConsoleColor.Cyan;
-        static ConsoleColor GetRoleCategoryBg(scoped in LogEntry entry) => ConsoleColor.Black;
-        static string FormatMultiline(IEnumerable<string> lines) {
-            var sb = new StringBuilder();
-            var arr = lines.ToArray();
+        private static ConsoleColor GetRoleCategoryFg(scoped in LogEntry entry) => ConsoleColor.Cyan;
+        private static ConsoleColor GetRoleCategoryBg(scoped in LogEntry entry) => ConsoleColor.Black;
+        private static string FormatMultiline(IEnumerable<string> lines) {
+            StringBuilder sb = new();
+            string[] arr = lines.ToArray();
             for (int i = 0; i < arr.Length; i++) {
                 if (i == arr.Length - 1)
                     sb.AppendLine($" └── {arr[i]}");

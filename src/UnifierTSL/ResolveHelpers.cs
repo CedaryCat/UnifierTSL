@@ -1,7 +1,7 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
-using UnifierTSL.FileSystem;
 using UnifierTSL.Module.Dependencies;
 
 namespace UnifierTSL
@@ -9,37 +9,47 @@ namespace UnifierTSL
     public static class ResolveHelpers
     {
         internal static Assembly? ResolveAssembly(AssemblyLoadContext context, AssemblyName name) {
-            var terrariaAssembly = typeof(Terraria.Program).Assembly;
-            string resourceName = name.Name + ".dll";
-            string? text = Array.Find(terrariaAssembly.GetManifestResourceNames(), element => element.EndsWith(resourceName));
-            if (text is not null) {
-                using var stream = terrariaAssembly.GetManifestResourceStream(text)!;
-                var assembly = context.LoadFromStream(stream);
+            string libraryDir = Path.Combine(Directory.GetCurrentDirectory(), "lib");
+            string fileName = Path.Combine(libraryDir, name.Name + ".dll");
+            if (File.Exists(fileName)) {
+                return context.LoadFromAssemblyPath(Path.Combine(libraryDir, name.Name + ".dll"));
+            }
+            if (name.Name != "Terraria" && name.Name != "OTAPI" && TryResolveTerrariaEmbeddedAssembly(context, name, out Assembly? assembly)) {
                 return assembly;
             }
             return null;
         }
 
-        internal static nint ResolveNativeDll(Assembly _, string unmanagedLibName) {
-            var currentRid = RuntimeInformation.RuntimeIdentifier;
-            var fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
+        private static bool TryResolveTerrariaEmbeddedAssembly(AssemblyLoadContext context, AssemblyName name, [NotNullWhen(true)] out Assembly? assembly) {
+            Assembly terrariaAssembly = typeof(Terraria.Program).Assembly;
+            string resourceName = name.Name + ".dll";
+            string? text = Array.Find(terrariaAssembly.GetManifestResourceNames(), element => element.EndsWith(resourceName));
+            if (text is not null) {
+                using Stream stream = terrariaAssembly.GetManifestResourceStream(text)!;
+                assembly = context.LoadFromStream(stream);
+                return true;
+            }
+            assembly = null;
+            return false;
+        }
 
-            var dir = Directory.GetCurrentDirectory();
+        internal static nint ResolveNativeDll(Assembly _, string unmanagedDllName) {
+            string currentRid = RuntimeInformation.RuntimeIdentifier;
+            IEnumerable<string> fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
 
-            var fileName1 = FileSystemHelper.GetDynamicLibraryFileName(unmanagedLibName, withPrefix: true);
-            var fileName2 = FileSystemHelper.GetDynamicLibraryFileName(unmanagedLibName, withPrefix: false);
+            string dir = Directory.GetCurrentDirectory();
 
-            foreach (var rid in fallbackRids) {
-                var currentPath = Path.Combine(dir, "runtimes", rid, "native", fileName1);
-                if (File.Exists(currentPath)) {
-                    return NativeLibrary.Load(currentPath);
-                }
-                currentPath = Path.Combine(dir, "runtimes", rid, "native", fileName2);
+            string extension = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? ".so" :
+                RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib" :
+                throw new PlatformNotSupportedException("Unsupported OS platform");
+
+            foreach (string rid in fallbackRids) {
+                string currentPath = Path.Combine(dir, "runtimes", rid, "native", unmanagedDllName + extension);
                 if (File.Exists(currentPath)) {
                     return NativeLibrary.Load(currentPath);
                 }
             }
-
             return nint.Zero;
         }
     }

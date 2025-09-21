@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnifierTSL.Logging;
+﻿using System.Collections.Concurrent;
 
 namespace UnifierTSL.FileSystem
 {
@@ -42,8 +36,8 @@ namespace UnifierTSL.FileSystem
         /// Register a monitor for a specific file. Returns a handle which can be used to unsubscribe or perform internal writes.
         /// </summary>
         public IFileMonitorHandle Register(string filePath, FileSystemEventHandler modified, ErrorEventHandler? error = null) {
-            var full = Path.GetFullPath(Path.Combine(_rootDirectory, filePath));
-            var monitor = _monitors.GetOrAdd(full, fp => new ContentAwareFileMonitor(fp));
+            string full = Path.GetFullPath(Path.Combine(_rootDirectory, filePath));
+            ContentAwareFileMonitor monitor = _monitors.GetOrAdd(full, fp => new ContentAwareFileMonitor(fp));
 
             monitor.Modified += modified;
 
@@ -56,7 +50,7 @@ namespace UnifierTSL.FileSystem
         /// Used for internal removal of a registered handler (can be partial or full unregistration).
         /// </summary>
         private void UnregisterInternal(string full, FileSystemEventHandler? modified, ErrorEventHandler? error) {
-            if (_monitors.TryGetValue(full, out var monitor)) {
+            if (_monitors.TryGetValue(full, out ContentAwareFileMonitor? monitor)) {
                 if (modified != null)
                     monitor.Modified -= modified;
                 if (error != null)
@@ -71,22 +65,22 @@ namespace UnifierTSL.FileSystem
         }
 
         private void OnFsEvent(object? sender, FileSystemEventArgs e) {
-            var full = Path.GetFullPath(e.FullPath);
-            if (_monitors.TryGetValue(full, out var monitor)) {
+            string full = Path.GetFullPath(e.FullPath);
+            if (_monitors.TryGetValue(full, out ContentAwareFileMonitor? monitor)) {
                 monitor.HandleExternalFsEvent(e);
             }
         }
 
         private void OnRenamed(object? sender, RenamedEventArgs e) {
-            var newFull = Path.GetFullPath(e.FullPath);
-            var oldFull = Path.GetFullPath(e.OldFullPath);
+            string newFull = Path.GetFullPath(e.FullPath);
+            string oldFull = Path.GetFullPath(e.OldFullPath);
 
             // If a monitored file was renamed to a new monitored _fullPath, treat appropriately.
-            if (_monitors.TryGetValue(newFull, out var newMonitor)) {
+            if (_monitors.TryGetValue(newFull, out ContentAwareFileMonitor? newMonitor)) {
                 newMonitor.HandleExternalFsEvent(new FileSystemEventArgs(WatcherChangeTypes.Renamed, Path.GetDirectoryName(newFull)!, Path.GetFileName(newFull)));
             }
 
-            if (_monitors.TryGetValue(oldFull, out var oldMonitor)) {
+            if (_monitors.TryGetValue(oldFull, out ContentAwareFileMonitor? oldMonitor)) {
                 // If a monitored file was renamed away, also trigger for the new name if needed.
                 // Some semantics could vary; we just alert on rename into.
                 if (!string.Equals(oldFull, newFull, StringComparison.OrdinalIgnoreCase)) {
@@ -123,7 +117,7 @@ namespace UnifierTSL.FileSystem
             if (_disposed) return;
             _disposed = true;
 
-            foreach (var kv in _monitors) {
+            foreach (KeyValuePair<string, ContentAwareFileMonitor> kv in _monitors) {
                 kv.Value.Dispose();
             }
             _monitors.Clear();

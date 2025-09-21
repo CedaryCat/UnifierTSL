@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UnifierTSL.Events.Core
+﻿namespace UnifierTSL.Events.Core
 {
     public enum HandlerPriority : byte
     {

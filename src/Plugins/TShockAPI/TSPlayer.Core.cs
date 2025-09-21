@@ -15,7 +15,7 @@ namespace TShockAPI
 {
     public partial class TSPlayer
     {
-        public Player TPlayer => FakePlayer ?? UnifiedServerCoordinator.GetPllayer(Index);
+        public Player TPlayer => FakePlayer ?? UnifiedServerCoordinator.GetPlayer(Index);
         public bool RealPlayer {
             get { return Index >= 0 && Index < Main.maxPlayers && TPlayer != null; }
         }

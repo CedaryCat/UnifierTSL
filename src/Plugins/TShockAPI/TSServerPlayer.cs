@@ -32,7 +32,7 @@ using UnifierTSL.Servers;
 
 namespace TShockAPI
 {
-	public class TSServerPlayer : TSPlayer
+	public class TSServerPlayer : TSPlayer, IExtensionData
 	{
         public static string AccountName = GetParticularString("The account name of server console.", "ServerConsole");
 		public readonly ServerContext Server;
@@ -268,5 +268,9 @@ namespace TShockAPI
 
 			return _consoleColorMap.Values.ElementAt(index);
 		}
-	}
+
+        public void Dispose() { 
+			GC.SuppressFinalize(this);
+		}
+    }
 }

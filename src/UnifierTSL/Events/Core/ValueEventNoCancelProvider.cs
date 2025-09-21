@@ -20,19 +20,19 @@ namespace UnifierTSL.Events.Core
         public void Register(ValueNoCancelEventDelegate<TEvent> handler, HandlerPriority priority) =>
             Register(new PriorityItem(handler, priority));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UnRegister(ValueNoCancelEventDelegate<TEvent> handler) 
+        public void UnRegister(ValueNoCancelEventDelegate<TEvent> handler)
             => Unregister(x => x.Handler == handler);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(ref TEvent data) {
-            var handlers = _snapshot.AsSpan();
+            Span<PriorityItem> handlers = _snapshot.AsSpan();
             if (handlers.Length == 0) {
                 return;
             }
-            var args = new ValueEventNoCancelArgs<TEvent>(ref data);
-            ref var r0 = ref MemoryMarshal.GetReference(handlers);
+            ValueEventNoCancelArgs<TEvent> args = new(ref data);
+            ref PriorityItem r0 = ref MemoryMarshal.GetReference(handlers);
             for (int i = 0; i < handlers.Length; i++) {
                 Unsafe.Add(ref r0, i).Handler(ref args);
-                if (args.StopMovementUp) {
+                if (args.StopPropagation) {
                     break;
                 }
             }

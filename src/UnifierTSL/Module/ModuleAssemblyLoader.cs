@@ -1,13 +1,9 @@
-﻿using Mono.Cecil;
-using NuGet.Versioning;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.Loader;
-using System.Text.Json;
 using UnifierTSL.Extensions;
 using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
@@ -16,12 +12,14 @@ using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.Module
 {
-    public enum ModuleSearchMode {
+    public enum ModuleSearchMode
+    {
         Any,
         UpdatedOnly,
         NewOnly,
     }
-    public enum ModuleLoadResult { 
+    public enum ModuleLoadResult
+    {
         Success = 0,
         InvalidLibrary,
         AlreadyLoaded,
@@ -43,22 +41,22 @@ namespace UnifierTSL.Module
         }
 
         public ImmutableArray<ModulePreloadInfo> PreloadModules(ModuleSearchMode mode = ModuleSearchMode.NewOnly) {
-            var modulesDir = new DirectoryInfo(loadDirectory);
+            DirectoryInfo modulesDir = new(loadDirectory);
             modulesDir.Create();
 
             Dictionary<string, FileInfo> dlls = [];
-            foreach (var dll in modulesDir.GetFiles("*.dll")) {
-                dlls[dll.Name] = dll;
-            }
-            foreach (var dir in modulesDir.GetDirectories()) {
-                foreach (var dll in dir.GetFiles("*.dll")) {
+            foreach (DirectoryInfo dir in modulesDir.GetDirectories()) {
+                foreach (FileInfo dll in dir.GetFiles("*.dll")) {
                     dlls[dll.Name] = dll;
                 }
             }
+            foreach (FileInfo dll in modulesDir.GetFiles("*.dll")) {
+                dlls[dll.Name] = dll;
+            }
 
-            var modules = new List<ModulePreloadInfo>();
-            foreach (var dll in dlls.Values) {
-                var info = PreloadModule(Path.GetRelativePath(Directory.GetCurrentDirectory(), dll.FullName));
+            List<ModulePreloadInfo> modules = [];
+            foreach (FileInfo dll in dlls.Values) {
+                ModulePreloadInfo? info = PreloadModule(Path.GetRelativePath(Directory.GetCurrentDirectory(), dll.FullName));
                 if (info is null) {
                     continue;
                 }
@@ -69,7 +67,7 @@ namespace UnifierTSL.Module
                     }
                 }
                 else if (mode == ModuleSearchMode.UpdatedOnly) {
-                    if (moduleCache.TryGetValue(info.FileSignature.FilePath, out var existing) && existing.Signature.Hash == info.FileSignature.Hash) {
+                    if (moduleCache.TryGetValue(info.FileSignature.FilePath, out LoadedModule? existing) && existing.Signature.Hash == info.FileSignature.Hash) {
                         continue;
                     }
                 }
@@ -98,16 +96,16 @@ namespace UnifierTSL.Module
             bool isRequiresCoreModule = false;
             string? requiresCoreModule = null;
 
-            using (var stream = File.OpenRead(dll)) {
-                using var reader = MetadataBlobHelpers.GetPEReader(stream);
+            using (FileStream stream = File.OpenRead(dll)) {
+                using System.Reflection.PortableExecutable.PEReader? reader = MetadataBlobHelpers.GetPEReader(stream);
                 if (reader == null) {
                     return null;
                 }
-                var metadataReader = reader.GetMetadataReader();
+                MetadataReader metadataReader = reader.GetMetadataReader();
                 moduleName = MetadataBlobHelpers.ReadAssemblyName(metadataReader);
                 isCoreModule = MetadataBlobHelpers.HasCustomAttribute(metadataReader, typeof(CoreModuleAttribute).FullName!);
                 hasDependencies = MetadataBlobHelpers.HasCustomAttribute(metadataReader, typeof(ModuleDependenciesAttribute<>).FullName!);
-                if (MetadataBlobHelpers.TryReadAssemblyAttributeData(metadataReader, typeof(RequiresCoreModuleAttribute).FullName!, out var reqCoreModuleData)) {
+                if (MetadataBlobHelpers.TryReadAssemblyAttributeData(metadataReader, typeof(RequiresCoreModuleAttribute).FullName!, out ParsedCustomAttribute reqCoreModuleData)) {
                     isRequiresCoreModule = true;
                     requiresCoreModule = (string?)reqCoreModuleData.ConstructorArguments[0];
                     if (string.IsNullOrWhiteSpace(requiresCoreModule)) {
@@ -134,22 +132,22 @@ namespace UnifierTSL.Module
                     message: $"The module '{dll}' has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute but no module name specified. Skipping it.");
             }
 
-            var fileName = Path.GetFileName(dll);
+            string fileName = Path.GetFileName(dll);
             string newLocation;
 
             if (!hasDependencies && !isCoreModule && requiresCoreModule is null) {
                 newLocation = Path.Combine(loadDirectory, fileName);
             }
             else {
-                var moduleDir = Path.Combine(loadDirectory, (hasDependencies || isCoreModule) ? moduleName : requiresCoreModule!);
+                string moduleDir = Path.Combine(loadDirectory, (hasDependencies || isCoreModule) ? moduleName : requiresCoreModule!);
                 Directory.CreateDirectory(moduleDir);
                 newLocation = Path.Combine(moduleDir, Path.GetFileName(dll));
             }
 
             if (new FileInfo(newLocation).FullName != new FileInfo(dll).FullName) {
 
-                using (var stream = File.OpenRead(dll)) {
-                    using (var moved = File.OpenWrite(newLocation)) {
+                using (FileStream stream = File.OpenRead(dll)) {
+                    using (FileStream moved = File.OpenWrite(newLocation)) {
                         stream.CopyTo(moved);
                     }
                 }
@@ -158,11 +156,11 @@ namespace UnifierTSL.Module
                 File.SetLastAccessTime(newLocation, File.GetLastAccessTime(dll));
                 File.Delete(dll);
 
-                var pdb = Path.ChangeExtension(dll, ".pdb");
+                string pdb = Path.ChangeExtension(dll, ".pdb");
                 if (File.Exists(pdb)) {
-                    var newPdb = Path.ChangeExtension(newLocation, ".pdb");
-                    using (var stream = File.OpenRead(pdb)) {
-                        using (var moved = File.OpenWrite(newPdb)) {
+                    string newPdb = Path.ChangeExtension(newLocation, ".pdb");
+                    using (FileStream stream = File.OpenRead(pdb)) {
+                        using (FileStream moved = File.OpenWrite(newPdb)) {
                             stream.CopyTo(moved);
                         }
                     }
@@ -176,14 +174,14 @@ namespace UnifierTSL.Module
             return new ModulePreloadInfo(FileSignature.Generate(newLocation), moduleName, isCoreModule, hasDependencies, requiresCoreModule);
         }
 
-        record ModuleInfo(AssemblyLoadContext Context, Assembly Assembly, IDependencyProvider? Dependencies);
-        
+        private record ModuleInfo(AssemblyLoadContext Context, Assembly Assembly, IDependencyProvider? Dependencies);
+
         public void ForceUnload(LoadedModule module) {
             if (module.CoreModule is not null) {
                 ForceUnload(module.CoreModule);
                 return;
             }
-            foreach (var m in module.GetDependentOrder(true, false)) {
+            foreach (LoadedModule m in module.GetDependentOrder(true, false)) {
                 Logger.Debug($"Unloading module {m.Signature.FilePath}");
                 m.Unload();
                 moduleCache.Remove(m.Signature.FilePath, out _);
@@ -195,51 +193,51 @@ namespace UnifierTSL.Module
         public ImmutableArray<LoadedModule> Load(ModuleSearchMode mode = ModuleSearchMode.NewOnly) {
             List<LoadedModule> modules = [];
 
-            var infos = PreloadModules(mode);
-            var independentModules = infos.Where(x => !x.IsRequiredCoreModule).ToArray();
-            var requiredCoreModules = infos.Where(x => x.IsRequiredCoreModule).ToArray();
+            ImmutableArray<ModulePreloadInfo> infos = PreloadModules(mode);
+            ModulePreloadInfo[] independentModules = infos.Where(x => !x.IsRequiredCoreModule).ToArray();
+            ModulePreloadInfo[] requiredCoreModules = infos.Where(x => x.IsRequiredCoreModule).ToArray();
 
             List<ModulePreloadInfo> failed = [];
-            foreach (var info in independentModules) {
-                var fullPath = info.FileSignature.FilePath;
-                if (moduleCache.TryGetValue(fullPath, out var cached)) {
+            foreach (ModulePreloadInfo? info in independentModules) {
+                string fullPath = info.FileSignature.FilePath;
+                if (moduleCache.TryGetValue(fullPath, out LoadedModule? cached)) {
                     if (info.FileSignature.Hash != cached.Signature.Hash) {
                         failed.Add(info);
                     }
                     continue;
                 }
 
-                var context = CreateLoadContext(fullPath);
+                ModuleLoadContext context = CreateLoadContext(fullPath);
                 context.ResolvingSharedAssemblyPreferred += OnResolvingPreferred;
                 context.ResolvingSharedAssemblyFallback += OnResolvingFallback;
-                var asm = context.LoadFromStream(fullPath);
-                var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
-                var dependenciesProvider = dependencyAttr?.DependenciesProvider;
+                Assembly asm = context.LoadFromStream(fullPath);
+                ModuleDependenciesAttribute? dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
+                IDependencyProvider? dependenciesProvider = dependencyAttr?.DependenciesProvider;
 
-                var tmp = new ModuleInfo(context, asm, dependenciesProvider);
+                ModuleInfo tmp = new(context, asm, dependenciesProvider);
 
-                if (!UpdateDependencies(info.FileSignature.RelativePath, tmp, out var dependencies)) {
+                if (!UpdateDependencies(info.FileSignature.RelativePath, tmp, out ImmutableArray<ModuleDependency> dependencies)) {
                     context.Unload();
                     failed.Add(info);
                     continue;
                 }
 
-                var loaded = new LoadedModule(context, asm, dependencies, info.FileSignature, null);
+                LoadedModule loaded = new(context, asm, dependencies, info.FileSignature, null);
                 modules.Add(loaded);
                 moduleCache.TryAdd(fullPath, loaded);
             }
 
-            foreach (var info in requiredCoreModules) {
+            foreach (ModulePreloadInfo? info in requiredCoreModules) {
                 if (failed.Any(x => x.ModuleName == info.RequiresCoreModule)) {
                     failed.Add(info);
                     continue;
                 }
-                var coreModule = moduleCache.Values.FirstOrDefault(x => x.Assembly.GetName().Name == info.RequiresCoreModule);
-                if (coreModule is null) { 
+                LoadedModule? coreModule = moduleCache.Values.FirstOrDefault(x => x.Assembly.GetName().Name == info.RequiresCoreModule);
+                if (coreModule is null) {
                     failed.Add(info);
                     continue;
                 }
-                var match = coreModule.DependentModules.FirstOrDefault(m => m.Signature.FilePath == info.FileSignature.FilePath);
+                LoadedModule? match = coreModule.DependentModules.FirstOrDefault(m => m.Signature.FilePath == info.FileSignature.FilePath);
                 if (match is not null) {
                     if (match.Signature.Hash == info.FileSignature.Hash) {
                         continue;
@@ -248,7 +246,7 @@ namespace UnifierTSL.Module
                         failed.Add(info);
                     }
                 }
-                var loaded = new LoadedModule(coreModule.Context, coreModule.Context.LoadFromStream(info.FileSignature.FilePath), [], info.FileSignature, coreModule);
+                LoadedModule loaded = new(coreModule.Context, coreModule.Context.LoadFromStream(info.FileSignature.FilePath), [], info.FileSignature, coreModule);
                 modules.Add(loaded);
                 LoadedModule.Reference(coreModule, loaded);
                 moduleCache.TryAdd(info.FileSignature.FilePath, loaded);
@@ -257,13 +255,13 @@ namespace UnifierTSL.Module
         }
 
         private Assembly? OnResolvingPreferred(AssemblyLoadContext context, AssemblyName name) {
-            var snapshot = moduleCache.Values.ToImmutableArray();
-            var module = snapshot.FirstOrDefault(x => x.Context == context);
+            ImmutableArray<LoadedModule> snapshot = moduleCache.Values.ToImmutableArray();
+            LoadedModule? module = snapshot.FirstOrDefault(x => x.Context == context);
             if (module is null) {
                 return null;
             }
-            foreach (var otherModule in snapshot) {
-                if (otherModule == module) { 
+            foreach (LoadedModule? otherModule in snapshot) {
+                if (otherModule == module) {
                     continue;
                 }
                 if (otherModule.Assembly.GetName().FullName == name.FullName) {
@@ -275,20 +273,29 @@ namespace UnifierTSL.Module
         }
 
         private Assembly? OnResolvingFallback(AssemblyLoadContext context, AssemblyName name) {
-            var snapshot = moduleCache.Values.ToImmutableArray();
-            var module = snapshot.FirstOrDefault(x => x.Context == context);
-            if (module is null) {
-                return null;
-            }
-            foreach (var otherModule in snapshot) {
-                if (otherModule == module) {
-                    continue;
+            ImmutableArray<LoadedModule> snapshot = moduleCache.Values.ToImmutableArray();
+            LoadedModule? module = snapshot.FirstOrDefault(x => x.Context == context);
+
+            if (module is not null) {
+                foreach (LoadedModule? otherModule in snapshot) {
+                    if (otherModule == module) {
+                        continue;
+                    }
+                    if (otherModule.Assembly.GetName().Name == name.Name) {
+                        LoadedModule.Reference(otherModule, module);
+                        return otherModule.Assembly;
+                    }
+                    if (otherModule.TryProxyLoad(module, name, out Assembly? result)) {
+                        return result;
+                    }
                 }
-                if (otherModule.Assembly.GetName().Name == name.Name) {
-                    LoadedModule.Reference(otherModule, module);
-                    return otherModule.Assembly;
-                }
             }
+
+            Assembly? defaultAsm = AssemblyLoadContext.Default.Assemblies.FirstOrDefault(x => x.GetName().Name == name.Name);
+            if (defaultAsm is not null) {
+                return defaultAsm;
+            }
+
             return null;
         }
 
@@ -296,13 +303,13 @@ namespace UnifierTSL.Module
             return new ModuleLoadContext(new FileInfo(filePath));
         }
 
-        static readonly ConcurrentDictionary<string, LoadedModule> moduleCache = new();
+        private static readonly ConcurrentDictionary<string, LoadedModule> moduleCache = new();
         public bool TryLoadSpecific(ModulePreloadInfo preloadInfo, [NotNullWhen(true)] out LoadedModule? info, out ModuleLoadResult result) {
 
-            var fullPath = preloadInfo.FileSignature.FilePath;
-            var path = preloadInfo.FileSignature.RelativePath;
+            string fullPath = preloadInfo.FileSignature.FilePath;
+            string path = preloadInfo.FileSignature.RelativePath;
 
-            if (moduleCache.TryGetValue(fullPath, out var cached)) {
+            if (moduleCache.TryGetValue(fullPath, out LoadedModule? cached)) {
                 if (cached.Signature.Hash == preloadInfo.FileSignature.Hash) {
                     info = cached;
                     result = ModuleLoadResult.AlreadyLoaded;
@@ -316,26 +323,26 @@ namespace UnifierTSL.Module
             LoadedModule loaded;
 
             if (preloadInfo.RequiresCoreModule is not null) {
-                var coreModule = moduleCache.Values.FirstOrDefault(x => x.Assembly.GetName().Name == preloadInfo.RequiresCoreModule);
+                LoadedModule? coreModule = moduleCache.Values.FirstOrDefault(x => x.Assembly.GetName().Name == preloadInfo.RequiresCoreModule);
                 if (coreModule is null) {
                     info = null;
                     result = ModuleLoadResult.CoreModuleNotFound;
                     return false;
                 }
-                var context = coreModule.Context;
-                var asm = context.LoadFromStream(fullPath);
+                ModuleLoadContext context = coreModule.Context;
+                Assembly asm = context.LoadFromStream(fullPath);
 
                 loaded = new LoadedModule(context, asm, [], preloadInfo.FileSignature, coreModule);
                 LoadedModule.Reference(coreModule, loaded);
             }
             else {
-                var context = CreateLoadContext(path);
-                var asm = context.LoadFromStream(fullPath);
-                var dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
-                var dependenciesProvider = dependencyAttr?.DependenciesProvider;
+                ModuleLoadContext context = CreateLoadContext(path);
+                Assembly asm = context.LoadFromStream(fullPath);
+                ModuleDependenciesAttribute? dependencyAttr = asm.GetCustomAttribute<ModuleDependenciesAttribute>();
+                IDependencyProvider? dependenciesProvider = dependencyAttr?.DependenciesProvider;
 
-                var tmp = new ModuleInfo(context, asm, dependenciesProvider);
-                if (!UpdateDependencies(path, tmp, out var dependencies)) {
+                ModuleInfo tmp = new(context, asm, dependenciesProvider);
+                if (!UpdateDependencies(path, tmp, out ImmutableArray<ModuleDependency> dependencies)) {
                     info = null;
                     result = ModuleLoadResult.Failed;
                     return false;
@@ -349,8 +356,8 @@ namespace UnifierTSL.Module
             return true;
         }
         public bool TryLoadSpecific(string filePath, [NotNullWhen(true)] out LoadedModule? info, out ModuleLoadResult result) {
-            var preloadInfo = PreloadModule(filePath);
-            if (preloadInfo == null) { 
+            ModulePreloadInfo? preloadInfo = PreloadModule(filePath);
+            if (preloadInfo == null) {
                 info = null;
                 result = ModuleLoadResult.InvalidLibrary;
                 return false;
@@ -358,7 +365,7 @@ namespace UnifierTSL.Module
             return TryLoadSpecific(preloadInfo, out info, out result);
         }
 
-        bool UpdateDependencies(string dll, ModuleInfo info, out ImmutableArray<ModuleDependency> dependencies) {
+        private bool UpdateDependencies(string dll, ModuleInfo info, out ImmutableArray<ModuleDependency> dependencies) {
             dependencies = [];
 
             if (string.IsNullOrEmpty(dll)) {
@@ -369,9 +376,9 @@ namespace UnifierTSL.Module
                 return true;
             }
 
-            var name = Path.GetFileNameWithoutExtension(dll);
-            var moduleDir = Path.GetDirectoryName(dll)!;
-            var moduleDirInfo = new DirectoryInfo(moduleDir);
+            string name = Path.GetFileNameWithoutExtension(dll);
+            string moduleDir = Path.GetDirectoryName(dll)!;
+            DirectoryInfo moduleDirInfo = new(moduleDir);
 
             if (moduleDirInfo.Name != name) {
                 Logger.Warning(
@@ -384,7 +391,7 @@ namespace UnifierTSL.Module
 
             moduleDirInfo.Create();
 
-            var prevConfig = new DependenciesConfiguration(Logger, DependenciesConfiguration.LoadDependenicesConfig(moduleDir));
+            DependenciesConfiguration prevConfig = new(Logger, DependenciesConfiguration.LoadDependenicesConfig(moduleDir));
             prevConfig.NormalizeDependenicesConfig(moduleDir);
 
             try {
@@ -400,7 +407,7 @@ namespace UnifierTSL.Module
                 return false;
             }
 
-            var currentSetting = new DependenciesSetting {
+            DependenciesSetting currentSetting = new() {
                 EnableAggressiveCleanUp = prevConfig.Setting.EnableAggressiveCleanUp,
                 Dependencies = []
             };
@@ -426,11 +433,11 @@ namespace UnifierTSL.Module
                 // Dictionary to track the highest version of each dependency file encountered
                 Dictionary<string, (ModuleDependency dependency, LibraryEntry item)> highestVersion = [];
 
-                foreach (var dependency in dependencies) {
+                foreach (ModuleDependency dependency in dependencies) {
                     bool update = false;
 
                     // Check if this dependency is new or has changed since the previous configuration
-                    if (!prevConfig.Setting.Dependencies.TryGetValue(dependency.Name, out var existingDependency)) {
+                    if (!prevConfig.Setting.Dependencies.TryGetValue(dependency.Name, out DependencyRecord? existingDependency)) {
                         update = true;
                     }
                     else if (dependency.Name != existingDependency.Name) {
@@ -442,10 +449,10 @@ namespace UnifierTSL.Module
 
                     if (update) {
                         // Extract the library files for the current dependency
-                        var items = dependency.LibraryExtractor.Extract(Logger);
+                        ImmutableArray<LibraryEntry> items = dependency.LibraryExtractor.Extract(Logger);
 
-                        foreach (var item in items) {
-                            var group = (dependency, item);
+                        foreach (LibraryEntry item in items) {
+                            (ModuleDependency dependency, LibraryEntry item) group = (dependency, item);
 
                             // Keep track of the highest version for each file path
                             if (!highestVersion.TryAdd(item.FilePath, group)) {
@@ -469,16 +476,16 @@ namespace UnifierTSL.Module
                 }
 
                 // Copy the highest version of each dependency file to the plugin directory
-                foreach (var pair in highestVersion) {
-                    var relativeDepPath = pair.Key;
-                    var (dependency, item) = pair.Value;
+                foreach (KeyValuePair<string, (ModuleDependency dependency, LibraryEntry item)> pair in highestVersion) {
+                    string relativeDepPath = pair.Key;
+                    (ModuleDependency dependency, LibraryEntry item) = pair.Value;
 
-                    using var source = item.Stream.Value;
+                    using Stream source = item.Stream.Value;
                     FileStream? destination = null;
 
                     try {
                         // Attempt to create the destination file safely
-                        destination = Utilities.IO.SafeFileCreate(Path.Combine(moduleDir, relativeDepPath), out var ex);
+                        destination = Utilities.IO.SafeFileCreate(Path.Combine(moduleDir, relativeDepPath), out Exception? ex);
 
                         if (destination is not null) {
                             // Copy the dependency file to the destination if no conflicts occurred
@@ -486,15 +493,15 @@ namespace UnifierTSL.Module
                         }
                         else {
                             // If file creation failed, check if it's due to file being locked by Windows (common with AssemblyLoadContext)
-                            if (prevConfig.Setting.Dependencies.TryGetValue(relativeDepPath, out var prevDependencyConf)
+                            if (prevConfig.Setting.Dependencies.TryGetValue(relativeDepPath, out DependencyRecord? prevDependencyConf)
                                 && prevDependencyConf.Manifests.Any(x => x.FilePath == item.FilePath)
                                 && ex is IOException ioEx && FileSystemHelper.FileIsInUse(ioEx)) {
 
-                                var prevItem = prevDependencyConf.Manifests.First(x => x.FilePath == item.FilePath);
+                                DependencyItem prevItem = prevDependencyConf.Manifests.First(x => x.FilePath == item.FilePath);
                                 // Generate a new path including the version number to avoid file lock conflicts
-                                var newPath = Path.ChangeExtension(item.FilePath, $"{item.Version}.{Path.GetExtension(item.FilePath)}");
+                                string newPath = Path.ChangeExtension(item.FilePath, $"{item.Version}.{Path.GetExtension(item.FilePath)}");
 
-                                var currentItem = prevDependencyConf.Manifests.FirstOrDefault(x => x.FilePath == newPath && x.Version == item.Version);
+                                DependencyItem? currentItem = prevDependencyConf.Manifests.FirstOrDefault(x => x.FilePath == newPath && x.Version == item.Version);
                                 if (currentItem is null) {
                                     currentItem = new DependencyItem(newPath, item.Version);
 
@@ -545,7 +552,7 @@ namespace UnifierTSL.Module
             }
 
             currentSetting.EnableAggressiveCleanUp = prevConfig.Setting.EnableAggressiveCleanUp;
-            var currentConfig = new DependenciesConfiguration(Logger, currentSetting);
+            DependenciesConfiguration currentConfig = new(Logger, currentSetting);
             currentConfig.SpecificDependencyClean(moduleDir, prevConfig.Setting);
             currentConfig.Save(moduleDir);
 

@@ -1,5 +1,4 @@
-﻿using ReLogic.Utilities;
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Terraria;
 using Terraria.Chat.Commands;
@@ -17,13 +16,13 @@ namespace UnifierTSL.Localization.Terraria
             Language.LoadFilesForCulture(GameCulture.FromCultureName(GameCulture.CultureName.English));
             Language.ProcessCopyCommandsInTexts();
 
-            using var stream = File.OpenRead(typeof(Main).Assembly.Location);
-            using var peReader = MetadataBlobHelpers.GetPEReader(stream)!;
-            var metadataReader = peReader.GetMetadataReader();
-            var attributes = MetadataBlobHelpers.ExtractCustomAttributeOnSpecificTypes(metadataReader, "Terraria.Chat.Commands", nameof(ChatCommandAttribute));
+            using FileStream stream = File.OpenRead(typeof(Main).Assembly.Location);
+            using PEReader peReader = MetadataBlobHelpers.GetPEReader(stream)!;
+            MetadataReader metadataReader = peReader.GetMetadataReader();
+            List<CustomAttribute> attributes = MetadataBlobHelpers.ExtractCustomAttributeOnSpecificTypes(metadataReader, "Terraria.Chat.Commands", nameof(ChatCommandAttribute));
 
-            foreach (var attribute in attributes) {
-                if (AttributeParser.TryParseCustomAttribute(attribute, metadataReader, out var parsedAttr)) {
+            foreach (CustomAttribute attribute in attributes) {
+                if (AttributeParser.TryParseCustomAttribute(attribute, metadataReader, out ParsedCustomAttribute parsedAttr)) {
                     if (parsedAttr.ConstructorArguments[0] is not string value) {
                         continue;
                     }

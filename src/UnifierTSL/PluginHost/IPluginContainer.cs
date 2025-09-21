@@ -13,7 +13,7 @@ namespace UnifierTSL.PluginService
         IPlugin Plugin { get; }
         FileSignature Location { get; }
         PluginLoadStatus LoadStatus { get; }
-        public Exception? LoadError { get; }
+        Exception? LoadError { get; }
         PluginStatus Status { get; set; }
     }
     public enum PluginLoadStatus
@@ -23,7 +23,8 @@ namespace UnifierTSL.PluginService
         Failed,
         Unloaded
     }
-    public enum PluginStatus {
+    public enum PluginStatus
+    {
         Enabled,
         Disabled
     }

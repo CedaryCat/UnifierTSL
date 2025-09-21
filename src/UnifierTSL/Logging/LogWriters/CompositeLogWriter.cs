@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnifierTSL.Logging.Formatters;
 
 namespace UnifierTSL.Logging.LogWriters
@@ -19,16 +14,16 @@ namespace UnifierTSL.Logging.LogWriters
         private CompositeLogWriter(ImmutableArray<ILogWriter> writers) {
             Writers = writers;
         }
-        readonly ImmutableArray<ILogWriter> Writers;
+        private readonly ImmutableArray<ILogWriter> Writers;
         public void GetAvailableFormatters(out FormatterSelectionContext availableFormatters) {
             availableFormatters = FormatterSelectionContext.Empty;
         }
 
         public void Write(scoped in LogEntry log) {
-            var writers = Writers.AsSpan();
-            var len = writers.Length;
+            ReadOnlySpan<ILogWriter> writers = Writers.AsSpan();
+            int len = writers.Length;
             if (len > 0) {
-                ref var w0 = ref MemoryMarshal.GetReference(writers);
+                ref ILogWriter w0 = ref MemoryMarshal.GetReference(writers);
                 for (int i = 0; i < len; i++) {
                     Unsafe.Add(ref w0, i).Write(in log);
                 }
@@ -54,8 +49,8 @@ namespace UnifierTSL.Logging.LogWriters
         }
 
         public static ILogWriter? operator -(CompositeLogWriter left, ILogWriter right) {
-            var newWriters = left.Writers.Remove(right);
-            if (newWriters.Length == 0) { 
+            ImmutableArray<ILogWriter> newWriters = left.Writers.Remove(right);
+            if (newWriters.Length == 0) {
                 return null;
             }
             if (newWriters.Length == 1) {
@@ -76,8 +71,8 @@ namespace UnifierTSL.Logging.LogWriters
         }
 
         public static ILogWriter? operator -(CompositeLogWriter left, CompositeLogWriter right) {
-            var newWriters = left.Writers.ToHashSet();
-            foreach (var writer in right.Writers) {
+            HashSet<ILogWriter> newWriters = left.Writers.ToHashSet();
+            foreach (ILogWriter writer in right.Writers) {
                 newWriters.Remove(writer);
             }
             if (newWriters.Count == 0) {

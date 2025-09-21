@@ -23,11 +23,11 @@ namespace UnifierTSL.Module.Dependencies
             this.plugin = plugin;
             version = libraryVersion;
 
-            var currentRid = RuntimeInformation.RuntimeIdentifier;
-            var fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
+            string currentRid = RuntimeInformation.RuntimeIdentifier;
+            IEnumerable<string> fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
 
-            foreach (var rid in fallbackRids) {
-                if (TryExtractNativeLibrary(plugin, libraryName, rid, out var fileNameWithExt, out var resourcePath)) {
+            foreach (string rid in fallbackRids) {
+                if (TryExtractNativeLibrary(plugin, libraryName, rid, out string? fileNameWithExt, out string? resourcePath)) {
                     this.rid = rid;
                     embeddedPath = resourcePath;
                     this.fileNameWithExt = fileNameWithExt;
@@ -41,11 +41,11 @@ namespace UnifierTSL.Module.Dependencies
 
             LibraryExtractor = new EmbeddedLibraryResolver(plugin, libraryVersion, rid, fileNameWithExt, libraryName, embeddedPath);
         }
-        static bool TryExtractNativeLibrary(Assembly plugin, string libraryName, string rid,
+        private static bool TryExtractNativeLibrary(Assembly plugin, string libraryName, string rid,
             [NotNullWhen(true)] out string? fileNameWithExt,
             [NotNullWhen(true)] out string? resourcePath) {
 
-            var baseResourceName = $"Native\\libs\\{libraryName}\\{rid}\\";
+            string baseResourceName = $"Native\\libs\\{libraryName}\\{rid}\\";
             resourcePath = plugin.GetManifestResourceNames().FirstOrDefault(n => n.StartsWith(baseResourceName));
 
             if (resourcePath == null) {
@@ -53,12 +53,12 @@ namespace UnifierTSL.Module.Dependencies
                 return false;
             }
 
-            var fileNameParts = resourcePath[baseResourceName.Length..].Split('\\');
+            string[] fileNameParts = resourcePath[baseResourceName.Length..].Split('\\');
             fileNameWithExt = fileNameParts.Last();
             return true;
         }
 
-        class EmbeddedLibraryResolver(Assembly plugin, NuGetVersion version, string rid, string fileNameWithExt, string libraryName, string embeddedPath) : IDependencyLibraryExtractor
+        private class EmbeddedLibraryResolver(Assembly plugin, NuGetVersion version, string rid, string fileNameWithExt, string libraryName, string embeddedPath) : IDependencyLibraryExtractor
         {
             public ImmutableArray<LibraryEntry> Extract(RoleLogger logger) {
                 return [

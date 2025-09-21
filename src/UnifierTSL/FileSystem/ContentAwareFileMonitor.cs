@@ -13,10 +13,10 @@ namespace UnifierTSL.FileSystem
         private string? _lastHash;
         private readonly TimeSpan _debounceInterval = TimeSpan.FromMilliseconds(300);
         private DateTime _lastEventTime = DateTime.MinValue;
-        volatile bool _handlingScheduled = false;
+        private volatile bool _handlingScheduled = false;
 
-        volatile int _pendingInternalWriteVersion = 0;
-        volatile int _lastInternalWriteVersionAcknowledged = 0;
+        private volatile int _pendingInternalWriteVersion = 0;
+        private volatile int _lastInternalWriteVersionAcknowledged = 0;
 
         private bool _disposed = false;
 
@@ -27,7 +27,7 @@ namespace UnifierTSL.FileSystem
 
         public ContentAwareFileMonitor(string filePath) {
             _filePath = Path.GetFullPath(filePath);
-            var dir = Path.GetDirectoryName(_filePath)!;
+            string dir = Path.GetDirectoryName(_filePath)!;
             if (!Directory.Exists(dir)) {
                 Directory.CreateDirectory(dir);
             }
@@ -112,10 +112,10 @@ namespace UnifierTSL.FileSystem
         }
 
         public async Task WriteInternallyAsync(Func<Task> writeAction) {
-            var newVersion = Interlocked.Increment(ref _pendingInternalWriteVersion);
+            int newVersion = Interlocked.Increment(ref _pendingInternalWriteVersion);
             try {
                 await writeAction();
-                var newHash = TryComputeHashWithRetry();
+                string? newHash = TryComputeHashWithRetry();
                 if (newHash != null) {
                     lock (_sync) {
                         _lastHash = newHash;
@@ -130,10 +130,10 @@ namespace UnifierTSL.FileSystem
         }
 
         public void WriteInternally(Action writeAction) {
-            var newVersion = Interlocked.Increment(ref _pendingInternalWriteVersion);
+            int newVersion = Interlocked.Increment(ref _pendingInternalWriteVersion);
             try {
                 writeAction();
-                var newHash = TryComputeHashWithRetry();
+                string? newHash = TryComputeHashWithRetry();
                 if (newHash != null) {
                     lock (_sync) {
                         _lastHash = newHash;
@@ -153,9 +153,9 @@ namespace UnifierTSL.FileSystem
                     if (!File.Exists(_filePath))
                         return null;
 
-                    using var fs = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    using var sha = SHA256.Create();
-                    var hash = sha.ComputeHash(fs);
+                    using FileStream fs = new(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    using SHA256 sha = SHA256.Create();
+                    byte[] hash = sha.ComputeHash(fs);
                     return Convert.ToBase64String(hash);
                 }
                 catch (IOException) {
@@ -185,5 +185,4 @@ namespace UnifierTSL.FileSystem
             Error = null;
         }
     }
-
 }

@@ -4,11 +4,11 @@ namespace UnifierTSL.Servers
 {
     public interface IWorldDataProvider
     {
-        public string WorldName { get; }
-        public string WorldFileName { get; }
-        public WorldFileData ApplyMetadata(ServerContext server); 
+        string WorldName { get; }
+        string WorldFileName { get; }
+        WorldFileData ApplyMetadata(ServerContext server);
 
-        public static IWorldDataProvider GenerateOrLoadExisting(string worldName, int worldSize, int difficulty = 2, int worldEvil = 0, string seed = "")
+        static IWorldDataProvider GenerateOrLoadExisting(string worldName, int worldSize, int difficulty = 2, int worldEvil = 0, string seed = "")
             => new GenerateOrLoadProvider(worldName, worldSize, difficulty, worldEvil, seed);
         private class GenerateOrLoadProvider(string worldName, int worldSize, int difficulty = 2, int worldEvil = 0, string seed = "") : IWorldDataProvider
         {
@@ -17,7 +17,7 @@ namespace UnifierTSL.Servers
 
             public WorldFileData ApplyMetadata(ServerContext server) {
                 server.Main.worldName = worldName;
-                var worldPath = Utilities.IO.GetWorldPathFromName(worldName, true);
+                string worldPath = Utilities.IO.GetWorldPathFromName(worldName, true);
                 if (File.Exists(worldPath)) {
                     server.Main.ActiveWorldFileData = server.WorldFile.GetAllMetadata(worldPath, false);
                 }
@@ -53,14 +53,14 @@ namespace UnifierTSL.Servers
             }
         }
 
-        public static IWorldDataProvider FromBytes(string worldName, byte[] worldFileData) => new FromBytesProvider(worldName, worldFileData);
+        static IWorldDataProvider FromBytes(string worldName, byte[] worldFileData) => new FromBytesProvider(worldName, worldFileData);
         private class FromBytesProvider(string worldName, byte[] worldFileData) : IWorldDataProvider
         {
             public string WorldName => worldName;
             public string WorldFileName => Path.GetFileName(Utilities.IO.GetWorldPathFromName(worldName, true));
 
             public WorldFileData ApplyMetadata(ServerContext server) {
-                var worldPath = Utilities.IO.GetWorldPathFromName(worldName, true);
+                string worldPath = Utilities.IO.GetWorldPathFromName(worldName, true);
                 File.WriteAllBytes(worldPath, worldFileData);
                 server.Main.ActiveWorldFileData = server.WorldFile.GetAllMetadata(worldPath, false);
                 return server.Main.ActiveWorldFileData;

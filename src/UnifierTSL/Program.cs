@@ -5,15 +5,14 @@ namespace UnifierTSL
 {
     internal class Program
     {
-        static void Main(string[] args) {
-            Thread.Sleep(10000);
+        private static void Main(string[] args) {
             Initializer.InitializeResolver();
             UnifierApi.HandleCommandLinePreRun(args);
             Run(args);
         }
 
-        static void Run(string[] args) {
-            var version = UnifierApi.VersionHelper;
+        private static void Run(string[] args) {
+            VersionHelper version = UnifierApi.VersionHelper;
 
             Console.Title = "UnifierTSLauncher";
 
@@ -48,7 +47,7 @@ namespace UnifierTSL
             string currentServers = "";
             if (UnifiedServerCoordinator.Servers.Length > 0) {
                 currentServers = "Current Servers: \r\n";
-                foreach (var server in UnifiedServerCoordinator.Servers) {
+                foreach (Servers.ServerContext server in UnifiedServerCoordinator.Servers) {
                     currentServers += $"  {server.Name} Running on world: {server.worldDataProvider.WorldFileName}\r\n";
                 }
             }
@@ -57,8 +56,8 @@ namespace UnifierTSL
                 category: "Startup",
                 message: "UnifierTSL started successfully! \r\n" +
                          currentServers +
-                         Language.GetTextValue("CLI.ListeningOnPort", UnifiedServerCoordinator.ListenPort) + "\r\n" + 
-                         (string.IsNullOrEmpty(UnifiedServerCoordinator.ServerPassword) 
+                         Language.GetTextValue("CLI.ListeningOnPort", UnifiedServerCoordinator.ListenPort) + "\r\n" +
+                         (string.IsNullOrEmpty(UnifiedServerCoordinator.ServerPassword)
                          ? "Server is running without a password. -anyone can join."
                          : $"Server is running with password: '{UnifiedServerCoordinator.ServerPassword}'"));
 

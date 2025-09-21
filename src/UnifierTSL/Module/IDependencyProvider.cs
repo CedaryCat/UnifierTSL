@@ -4,6 +4,6 @@ namespace UnifierTSL.Module
 {
     public interface IDependencyProvider
     {
-        public abstract IReadOnlyList<ModuleDependency> GetDependencies();
+        abstract IReadOnlyList<ModuleDependency> GetDependencies();
     }
 }

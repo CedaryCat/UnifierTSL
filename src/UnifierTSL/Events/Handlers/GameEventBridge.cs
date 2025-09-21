@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using UnifiedServerProcess;
 using UnifierTSL.Events.Core;
+using UnifierTSL.Extensions;
+using UnifierTSL.Servers;
 
 namespace UnifierTSL.Events.Handlers
 {
@@ -20,47 +22,48 @@ namespace UnifierTSL.Events.Handlers
             On.OTAPI.HooksSystemContext.WorldGenSystemContext.InvokeHardmodeTileUpdate += OnHardmodeTileUpdate;
         }
 
-        private bool OnHardmodeTileUpdate(On.OTAPI.HooksSystemContext.WorldGenSystemContext.orig_InvokeHardmodeTileUpdate orig, 
+        private bool OnHardmodeTileUpdate(On.OTAPI.HooksSystemContext.WorldGenSystemContext.orig_InvokeHardmodeTileUpdate orig,
             OTAPI.HooksSystemContext.WorldGenSystemContext self, int x, int y, ushort type) {
-            var data = new GameHardmodeTileUpdateEvent(x, y, type, self.root);
-            GameHardmodeTileUpdate.Invoke(data, out var handled);
+            GameHardmodeTileUpdateEvent data = new(x, y, type, self.root.ToServer());
+            GameHardmodeTileUpdate.Invoke(data, out bool handled);
             return !handled;
         }
 
-        private bool OnHardmodeTilePlace(On.OTAPI.HooksSystemContext.WorldGenSystemContext.orig_InvokeHardmodeTilePlace orig, 
+        private bool OnHardmodeTilePlace(On.OTAPI.HooksSystemContext.WorldGenSystemContext.orig_InvokeHardmodeTilePlace orig,
             OTAPI.HooksSystemContext.WorldGenSystemContext self, int x, int y, int type, bool mute, bool forced, int plr, int style) {
-            var data = new GameHardmodeTileUpdateEvent(x, y, type, self.root);
-            GameHardmodeTileUpdate.Invoke(data, out var handled);
+            GameHardmodeTileUpdateEvent data = new(x, y, type, self.root.ToServer());
+            GameHardmodeTileUpdate.Invoke(data, out bool handled);
             return !handled;
         }
 
         private void OnStartServer(On.Terraria.NetplaySystemContext.orig_StartServer orig, Terraria.NetplaySystemContext self) {
-            var data = new ServerEvent(self.root);
-            GamePostInitialize.Invoke(data);
             orig(self);
+            ServerEvent data = new(self.root.ToServer());
+            GamePostInitialize.Invoke(data);
         }
 
         private void OnInitialize(On.Terraria.Main.orig_Initialize orig, Terraria.Main self, RootContext root) {
-            var data = new ServerEvent(root);
+            ServerEvent data = new(root.ToServer());
             GameInitialize.Invoke(data);
             orig(self, root);
         }
 
         private void OnUpdate(On.Terraria.Main.orig_Update orig, Terraria.Main self, RootContext root, GameTime gameTime) {
-            var data = new ServerEvent(root);
+            ServerEvent data = new(root.ToServer());
             PreUpdate.Invoke(data);
             orig(self, root, gameTime);
             PostUpdate.Invoke(data);
         }
     }
-    public readonly struct ServerEvent(RootContext server) : IServerEventContent<RootContext> {
-        public readonly RootContext Server { get; } = server;
+    public readonly struct ServerEvent(ServerContext server) : IServerEventContent
+    {
+        public readonly ServerContext Server { get; } = server;
     }
-    public readonly struct GameHardmodeTileUpdateEvent(int x, int y, int type, RootContext server) : IServerEventContent<RootContext>
+    public readonly struct GameHardmodeTileUpdateEvent(int x, int y, int type, ServerContext server) : IServerEventContent
     {
         public readonly int X = x;
         public readonly int Y = y;
         public readonly int Type = type;
-        public readonly RootContext Server { get; } = server;
+        public readonly ServerContext Server { get; } = server;
     }
 }

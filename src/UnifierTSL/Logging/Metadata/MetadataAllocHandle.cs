@@ -1,17 +1,17 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace UnifierTSL.Logging.Metadata
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal unsafe struct MetadataAllocHandle {
+    internal unsafe struct MetadataAllocHandle
+    {
         // [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Modified via unsafe code.")]
-        object? managedData;
-        nint unmanagedData;
+        private object? managedData;
+        private nint unmanagedData;
 
-        readonly delegate*<ref MetadataAllocHandle, int, Span<KeyValueMetadata>> allocFunc;
-        readonly delegate*<ref MetadataAllocHandle, void> freeFunc;
+        private readonly delegate*<ref MetadataAllocHandle, int, Span<KeyValueMetadata>> allocFunc;
+        private readonly delegate*<ref MetadataAllocHandle, void> freeFunc;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<KeyValueMetadata> Allocate(int capacity) => allocFunc(ref Unsafe.AsRef(ref this), capacity);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

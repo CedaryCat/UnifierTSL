@@ -17,18 +17,19 @@ using static TShockAPI.TShock;
 
 namespace TShockAPI
 {
-    public class TSServerData
+    public class TSServerData : IExtensionData
     {
         internal DateTime LastSecondCheck = DateTime.UtcNow;
 
         /// <summary>LastSave - Used to keep track of SSC save intervals.</summary>
         internal DateTime LastSave = DateTime.UtcNow;
+        public void Dispose() { }
     }
     public static class MiscHandler
     {
         public static void Attach() {
             TShock.Config.OnConfigRead += Config_OnConfigRead;
-            UnifiedServerCoordinator.ServerListAdded += OnServerListAdded;
+            UnifierApi.EventHub.Server.AddServer.Register(OnServerListAdded, HandlerPriority.Normal);
             UnifierApi.EventHub.Coordinator.Started.Register(OnPostInit, HandlerPriority.Normal);
             On.Terraria.Main.Update += OnUpdate;
             On.OTAPI.HooksSystemContext.WorldGenSystemContext.InvokeHardmodeTileUpdate += OnHardUpdate;
@@ -56,10 +57,13 @@ namespace TShockAPI
             TShock.ApplyConfig();
         }
 
-        private static void OnServerListAdded(ServerContext server) {
+
+        private static void OnServerListAdded(ref ReadonlyNoCancelEventArgs<AddServer> args) {
+            var server = args.Content.Server;
             var settings = TShock.Config.GetServerSettings(server.Name);
             server.NPC.defaultMaxSpawns = settings.DefaultMaximumSpawns;
             server.NPC.defaultSpawnRate = settings.DefaultSpawnRate;
+            server.Main.ServerSideCharacter = TShock.ServerSideCharacterConfig.Settings.Enabled;
         }
 
         
@@ -421,13 +425,13 @@ namespace TShockAPI
             }
 
             if (Bans.CheckBan(player)) {
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
             if (Config.GlobalSettings.KickEmptyUUID && String.IsNullOrWhiteSpace(player.UUID)) {
                 player.Kick(GetString("Your client sent a blank UUID. Configure it to send one or use a different client."), true, true, null, false);
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -560,12 +564,12 @@ namespace TShockAPI
                 var settings = Config.GetServerSettings(server.Name);
                 if (!tsplr.HasPermission(Permissions.canchat)) {
                     args.Handled = true;
-                    args.StopMovementUp = true;
+                    args.StopPropagation = true;
                 }
                 else if (tsplr.mute) {
                     tsplr.SendErrorMessage(GetString("You are muted!"));
                     args.Handled = true;
-                    args.StopMovementUp = true;
+                    args.StopPropagation = true;
                 }
                 else if (!settings.EnableChatAboveHeads) {
                     text = string.Format(settings.ChatFormat, tsplr.Group.Name, tsplr.Group.Prefix, tsplr.Name, tsplr.Group.Suffix,
@@ -629,14 +633,14 @@ namespace TShockAPI
             var player = TShock.Players[args.Content.RecieveFrom.ID];
             if (player == null || !player.ConnectionAlive) {
                 args.Handled = true;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
             if ((player.State < (int)ConnectionState.Complete || player.Dead) && (int)type > 12 && (int)type != 16 && (int)type != 42 && (int)type != 50 &&
                 (int)type != 38 && (int)type != 21 && (int)type != 22 && type != PacketTypes.SyncLoadout) {
                 args.Handled = true;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
         }

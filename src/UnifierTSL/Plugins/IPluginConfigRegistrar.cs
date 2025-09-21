@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UnifierTSL.Plugins
+﻿namespace UnifierTSL.Plugins
 {
     /// <summary>
     /// Entry point for registering plugin configuration files.
@@ -14,7 +8,7 @@ namespace UnifierTSL.Plugins
         /// <summary>
         /// The directory in which to look for configuration files for this plugin.
         /// </summary>
-        public string Directory { get; }
+        string Directory { get; }
         /// <summary>
         /// Default options for each plugin, independent of one another.  
         /// When creating an <see cref="IConfigRegistrationBuilder"/>, these options are used as the initial configuration.  
@@ -22,7 +16,7 @@ namespace UnifierTSL.Plugins
         /// A plugin can predefine this configuration during initialization and then call <c>CreateConfigRegistration</c>  
         /// to avoid repeating the same setup for every configuration file.
         /// </summary>
-        public IConfigOption DefaultOption { get; }
+        IConfigOption DefaultOption { get; }
 
         /// <summary>
         /// Begins registration of a configuration using one of the built-in formats.

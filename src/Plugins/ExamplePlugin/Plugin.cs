@@ -37,7 +37,7 @@ namespace ExamplePlugin
                 .WithDefault(() => new ExampleConfig { Name = "Example", Message = "Hello World!" })
                 .Complete();
 
-            configHandle.OnChangedAsync += (config) => {
+            configHandle.OnChangedAsync += (handle, config) => {
                 if (config is null) {
                     logger.Info("Config set to null");
                 }
