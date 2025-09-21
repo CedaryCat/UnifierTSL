@@ -63,7 +63,7 @@ namespace TShockAPI
             if (settings.RegionProtectGemLocks) {
                 if (!_regionManager.CanBuild(server, args.Packet.Position.X, args.Packet.Position.Y, player)) {
                     args.HandleMode = PacketHandleMode.Cancel;
-                    args.StopMovementUp = true;
+                    args.StopPropagation = true;
                     return;
                 }
             }
@@ -173,7 +173,7 @@ namespace TShockAPI
                 // Revert all tile changes and handle the event
                 player.SendTileSquareCentered(pos.X, pos.Y, 4);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -193,7 +193,7 @@ namespace TShockAPI
                 // Revert all tile changes and handle the event
                 player.SendTileSquareCentered(pos.X, pos.Y, 4);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 

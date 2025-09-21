@@ -373,7 +373,7 @@ namespace TShockAPI.Handlers
                 return;
             }
 
-			args.StopMovementUp = true;
+			args.StopPropagation = true;
 			args.HandleMode = PacketHandleMode.Cancel;
 
 			var rect = args.Packet.Data;

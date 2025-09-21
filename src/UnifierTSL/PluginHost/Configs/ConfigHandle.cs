@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using UnifierTSL.FileSystem;
+﻿using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
 using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;
@@ -18,21 +17,21 @@ namespace UnifierTSL.PluginHost.Configs
             Func<TConfig, bool>? Validator
         );
 
-        record LoggerHost(string Name, string? CurrentLogCategory) : ILoggerHost;
-        readonly RoleLogger Logger;
-        readonly IPluginContainer Owner;
-        readonly IConfigFormatProvider FormatProvider;
-        readonly ConfigOption Option;
-        readonly string filePath;
+        private record LoggerHost(string Name, string? CurrentLogCategory) : ILoggerHost;
+        private readonly RoleLogger Logger;
+        private readonly IPluginContainer Owner;
+        private readonly IConfigFormatProvider FormatProvider;
+        private readonly ConfigOption Option;
+        private readonly string filePath;
 
-        readonly IFileMonitorHandle monitor;
+        private readonly IFileMonitorHandle monitor;
 
-        TConfig? CachedConfig = null;
+        private TConfig? CachedConfig = null;
 
         public ConfigHandle(
             string configsPath,
             IPluginContainer plugin,
-            IConfigFormatProvider formatProvider, 
+            IConfigFormatProvider formatProvider,
             ConfigOption option) {
 
             Logger = UnifierApi.CreateLogger(new LoggerHost("PluginConfig", $"P:{plugin.Name}"));
@@ -63,11 +62,11 @@ namespace UnifierTSL.PluginHost.Configs
                     [new("PluginFile", Owner.Location.FilePath)]);
                 return;
             }
-            var newConfig = ReturnDeserializedOrCache(text, null);
+            TConfig? newConfig = ReturnDeserializedOrCache(text, null);
 
             if (OnChangedAsync is not null) {
-                foreach (var executor in OnChangedAsync.GetInvocationList().Cast<AsyncConfigChangedHandler<TConfig?>>()) {
-                    if (await executor.Invoke(newConfig)) {
+                foreach (AsyncConfigChangedHandler<TConfig> executor in OnChangedAsync.GetInvocationList().Cast<AsyncConfigChangedHandler<TConfig>>()) {
+                    if (await executor.Invoke(this, newConfig)) {
                         return;
                     }
                 }
@@ -86,13 +85,13 @@ namespace UnifierTSL.PluginHost.Configs
         }
 
         #region Helper Methods
-        void EnsureDirectoryExists() {
-            var dir = Path.GetDirectoryName(filePath)!;
+        private void EnsureDirectoryExists() {
+            string dir = Path.GetDirectoryName(filePath)!;
             if (!Directory.Exists(dir)) {
                 Directory.CreateDirectory(dir);
             }
         }
-        string SerializeToText(TConfig? newConfig) {
+        private string SerializeToText(TConfig? newConfig) {
             string result;
             try {
                 result = FormatProvider.Serialize(newConfig);
@@ -123,7 +122,7 @@ namespace UnifierTSL.PluginHost.Configs
 
             return result;
         }
-        TConfig? ReturnDeserializedOrCache(string text, Exception? readException) {
+        private TConfig? ReturnDeserializedOrCache(string text, Exception? readException) {
             TConfig? result;
 
             if (readException is not null) {
@@ -187,7 +186,7 @@ namespace UnifierTSL.PluginHost.Configs
 
         #region Implementation
         public string FilePath => filePath;
-        public event AsyncConfigChangedHandler<TConfig?>? OnChangedAsync;
+        public event AsyncConfigChangedHandler<TConfig>? OnChangedAsync;
         public TConfig? ModifyInMemory(Func<TConfig?, TConfig?> updater) => CachedConfig = updater(CachedConfig);
         public void Overwrite(TConfig? newConfig) {
             CachedConfig = newConfig;
@@ -263,7 +262,7 @@ namespace UnifierTSL.PluginHost.Configs
             try {
                 CachedConfig = FormatProvider.Deserialize<TConfig>(text);
             }
-            catch (Exception ex) { 
+            catch (Exception ex) {
                 if (Option.DeseriFailureHandling is DeserializationFailureHandling.ThrowException) {
                     throw;
                 }

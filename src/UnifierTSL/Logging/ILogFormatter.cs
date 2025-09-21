@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UnifierTSL.Logging
+﻿namespace UnifierTSL.Logging
 {
     public interface IInspectableFormatter
     {
@@ -41,7 +35,7 @@ namespace UnifierTSL.Logging
         /// </remarks>
         int GetEstimatedSize(scoped in LogEntry entry);
         dynamic IInspectableFormatter.Sample(in LogEntry entry) {
-            var formatted = new TOutput[GetEstimatedSize(entry)];
+            TOutput[] formatted = new TOutput[GetEstimatedSize(entry)];
             Format(entry, ref formatted[0], out int written);
             return formatted.AsSpan(0, written).ToArray();
         }

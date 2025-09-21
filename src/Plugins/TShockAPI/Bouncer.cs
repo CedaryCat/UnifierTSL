@@ -600,7 +600,7 @@ namespace TShockAPI
 
             if (tsPlayer.RequestedSection) {
                 server.Log.Debug(GetString("Bouncer / OnGetSection rejected GetSection packet from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
                 return;
             }
             tsPlayer.RequestedSection = true;
@@ -608,7 +608,7 @@ namespace TShockAPI
             if (String.IsNullOrEmpty(tsPlayer.Name)) {
                 server.Log.Debug(GetString("Bouncer / OnGetSection rejected empty player name."));
                 tsPlayer.Kick(GetString("Your client sent a blank character name."), true, true);
-                args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+                args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
                 return;
             }
 
@@ -633,7 +633,7 @@ namespace TShockAPI
 			{
 				server.Log.Info(GetString("Bouncer / OnPlayerUpdate force kicked (attempted to set velocity to infinity) from {0}", tsPlayer.Name));
 				tsPlayer.Kick(GetString("Detected DOOM set to ON position."), true, true);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -641,7 +641,7 @@ namespace TShockAPI
 			{
 				server.Log.Info(GetString("Bouncer / OnPlayerUpdate force kicked (attempted to set velocity to NaN) from {0}", tsPlayer.Name));
 				tsPlayer.Kick(GetString("Detected DOOM set to ON position."), true, true);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -649,7 +649,7 @@ namespace TShockAPI
 			{
 				server.Log.Info(GetString("Bouncer / OnPlayerUpdate force kicked (attempted to set velocity +/- 50000) from {0}", tsPlayer.Name));
 				tsPlayer.Kick(GetString("Detected DOOM set to ON position."), true, true);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -657,28 +657,28 @@ namespace TShockAPI
 			{
 				server.Log.Info(GetString("Bouncer / OnPlayerUpdate force kicked (attempted to set position to infinity or NaN) from {0}", tsPlayer.Name));
 				tsPlayer.Kick(GetString("Detected DOOM set to ON position."), true, true);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (pos.X < 0 || pos.Y < 0 || pos.X >= server.Main.maxTilesX * 16 - 16 || pos.Y >= server.Main.maxTilesY * 16 - 16)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerUpdate rejected from (position check) {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (item < 0 || item >= tsPlayer.TPlayer.inventory.Length)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerUpdate rejected from (inventory length) {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (tsPlayer.LastNetPosition == Vector2.Zero)
 			{
 				server.Log.Info(GetString("Bouncer / OnPlayerUpdate *would have rejected* from (last network position zero) {0}", tsPlayer.Name));
-				// args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				// args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				// return;
 			}
 
@@ -722,11 +722,11 @@ namespace TShockAPI
 							tsPlayer.Spawn(PlayerSpawnContext.RecallFromItem);
 						}
 						server.Log.Debug(GetString("Bouncer / OnPlayerUpdate rejected from (??) {0}", tsPlayer.Name));
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 					server.Log.Debug(GetString("Bouncer / OnPlayerUpdate rejected from (below ??) {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -734,7 +734,7 @@ namespace TShockAPI
 				if (tsPlayer.Dead)
 				{
 					server.Log.Debug(GetString("Bouncer / OnPlayerUpdate rejected from (corpses don't move) {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 			}
@@ -780,7 +780,7 @@ namespace TShockAPI
 				if (!Utils.TilePlacementValid(server, tileX, tileY))
 				{
 					server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (tile placement valid) {0} {1} {2}", tsPlayer.Name, action, editData));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -801,7 +801,7 @@ namespace TShockAPI
 
 					GetRollbackRectSize(server, tileX, tileY, out byte width, out byte length, out int offsetY);
 					tsPlayer.SendTileRect((short)(tileX - width), (short)(tileY + offsetY), (byte)(width * 2), (byte)(length + 1));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -811,7 +811,7 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from editData out of bounds {0} {1} {2}", tsPlayer.Name, action, editData));
 					tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -825,7 +825,7 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (pdm) {0} {1} {2}", tsPlayer.Name, action, editData));
 					tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -839,7 +839,7 @@ namespace TShockAPI
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (tb) {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
 						tsPlayer.SendErrorMessage(GetString("You do not have permission to place this tile."));
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 
@@ -861,7 +861,7 @@ namespace TShockAPI
 							server.Log.Error(GetString("Bouncer / OnTileEdit rejected from (placestyle) {0} {1} {2} placeStyle: {3} expectedStyle: {4}",
 								tsPlayer.Name, action, editData, requestedPlaceStyle, actualItemPlaceStyle));
 							tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-							args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+							args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 							return;
 						}
 
@@ -872,7 +872,7 @@ namespace TShockAPI
 							server.Log.Error(GetString("Bouncer / OnTileEdit rejected from (placestyle) {0} {1} {2} placeStyle: {3} expectedStyle: {4}",
 								tsPlayer.Name, action, editData, requestedPlaceStyle, correctedPlaceStyle));
 							tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-							args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+							args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 							return;
 						}
 					}
@@ -885,7 +885,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (axe) {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 					// If the tile is a hammer tile and they aren't selecting a hammer, they're hacking.
@@ -893,7 +893,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (hammer) {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 					// If the tile is a pickaxe tile and they aren't selecting a pickaxe, they're hacking.
@@ -911,7 +911,7 @@ namespace TShockAPI
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (pick) {0} {1} {2}", tsPlayer.Name, action,
 							editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 				}
@@ -922,7 +922,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (hammer2) {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 				}
@@ -941,7 +941,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (inconceivable rope coil) {0} {1} {2} selectedItem:{3} itemCreateTile:{4}", tsPlayer.Name, action, editData, selectedItem.netID, selectedItem.createTile));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 				}
@@ -952,7 +952,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (ms1) {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 
@@ -961,7 +961,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from using ice rod but not placing ice block {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					}
 					/// If they aren't selecting the item which creates the tile, they're hacking.
 					if ((action == TileEditAction.PlaceTile || action == TileEditAction.ReplaceTile) && editData != selectedItem.createTile)
@@ -971,7 +971,7 @@ namespace TShockAPI
 						{
 							server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from tile placement not matching selected item createTile {0} {1} {2} selectedItemID:{3} createTile:{4}", tsPlayer.Name, action, editData, selectedItem.netID, selectedItem.createTile));
 							tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-							args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+							args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 							return;
 						}
 					}
@@ -980,7 +980,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from wall placement not matching selected item createWall {0} {1} {2} selectedItemID:{3} createWall:{4}", tsPlayer.Name, action, editData, selectedItem.netID, selectedItem.createWall));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 					if (action == TileEditAction.PlaceTile && (editData == TileID.Containers || editData == TileID.Containers2))
@@ -990,7 +990,7 @@ namespace TShockAPI
 							server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (chestcap) {0} {1} {2}", tsPlayer.Name, action, editData));
 							tsPlayer.SendErrorMessage(GetString("The world's chest limit has been reached - unable to place more."));
 							tsPlayer.SendTileSquareCentered(tileX, tileY, 3);
-							args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+							args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 							return;
 						}
 					}
@@ -1008,7 +1008,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from place wire from {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 				}
@@ -1022,7 +1022,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from wire cutter from {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 				}
@@ -1033,7 +1033,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from actuator/presserator from {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 				}
@@ -1043,7 +1043,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from sts allow cut from {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 					return;
@@ -1053,7 +1053,7 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from disable from {0} {1} {2}", tsPlayer.Name, action, editData));
 					tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -1064,7 +1064,7 @@ namespace TShockAPI
 
 					GetRollbackRectSize(server, tileX, tileY, out byte width, out byte length, out int offsetY);
 					tsPlayer.SendTileRect((short)(tileX - width), (short)(tileY + offsetY), (byte)(width * 2), (byte)(length + 1));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -1089,7 +1089,7 @@ namespace TShockAPI
 
 					server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from explosives/fuses from {0} {1} {2}", tsPlayer.Name, action, editData));
 					tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -1107,7 +1107,7 @@ namespace TShockAPI
 
 					server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from tile kill threshold from {0}, (value: {1})", tsPlayer.Name, tsPlayer.TileKillThreshold));
 					server.Log.Debug(GetString("If this player wasn't hacking, please report the tile kill threshold they were disabled for to TShock so we can improve this!"));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -1125,7 +1125,7 @@ namespace TShockAPI
 
 					server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from tile place threshold from {0}, (value: {1})", tsPlayer.Name, tsPlayer.TilePlaceThreshold));
 					server.Log.Debug(GetString("If this player wasn't hacking, please report the tile place threshold they were disabled for to TShock so we can improve this!"));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -1133,7 +1133,7 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from throttled from {0} {1} {2}", tsPlayer.Name, action, editData));
 					tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -1166,7 +1166,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from weird confusing flow control from {0}", tsPlayer.Name));
 				server.Log.Debug(GetString("If you're seeing this message and you know what that player did, please report it to TShock for further investigation."));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -1247,7 +1247,7 @@ namespace TShockAPI
             pkt.Owner = args.Packet.Owner;
             OnItemDrop(args.LocalReciever.Server, args.GetTSPlayer(), pkt, ref args.HandleMode);
 			if (args.HandleMode == PacketHandleMode.Cancel) {
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
             }
         }
         /// <summary>Registered when items fall to the ground to prevent cheating.</summary>
@@ -1390,14 +1390,14 @@ namespace TShockAPI
 			if (!float.IsFinite(pos.X) || !float.IsFinite(pos.Y))
 			{
 				server.Log.Info(GetString("Bouncer / OnNewProjectile rejected set position to infinity or NaN from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (!float.IsFinite(vel.X) || !float.IsFinite(vel.Y))
 			{
 				server.Log.Info(GetString("Bouncer / OnNewProjectile rejected set velocity to infinity or NaN from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1405,7 +1405,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from above projectile limit from {0}", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1415,7 +1415,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from permission check from {0} {1}", tsPlayer.Name, type));
 				tsPlayer.SendErrorMessage(GetString("You do not have permission to create that projectile."));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1424,7 +1424,7 @@ namespace TShockAPI
 				tsPlayer.Disable(GetString("Projectile damage is higher than {0}.", setting.MaxProjDamage), DisableFlags.WriteToLogAndConsole);
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from projectile damage limit from {0} {1}/{2}", tsPlayer.Name, damage, setting.MaxProjDamage));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1432,7 +1432,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from disabled from {0}", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1467,7 +1467,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from hostile projectile from {0}", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1478,7 +1478,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from tombstones from {0}", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1523,7 +1523,7 @@ namespace TShockAPI
 
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from projectile create threshold from {0} {1}/{2}", tsPlayer.Name, tsPlayer.ProjectileThreshold, setting.ProjectileThreshold));
 				server.Log.Debug(GetString("If this player wasn't hacking, please report the projectile create threshold they were disabled for to TShock so we can improve this!"));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1531,7 +1531,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from bouncer throttle from {0}", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1544,7 +1544,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from bouncer modified AI from {0}.", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1560,7 +1560,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from bouncer modified Zenith projectile from {0}.", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1605,7 +1605,7 @@ namespace TShockAPI
 
 			if (server.Main.npc[id] == null)
 			{
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1623,7 +1623,7 @@ namespace TShockAPI
 
 				server.Log.Debug(GetString("Bouncer / OnNPCStrike rejected from damage threshold from {0} {1}/{2}", tsPlayer.Name, damage, setting.MaxDamage));
 				server.Log.Debug(GetString("If this player wasn't hacking, please report the damage threshold they were disabled for to TShock so we can improve this!"));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1631,7 +1631,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNPCStrike rejected from disabled from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1640,7 +1640,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNPCStrike rejected from range checks from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1648,7 +1648,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnNPCStrike rejected from bouncer throttle from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -1667,7 +1667,7 @@ namespace TShockAPI
             if (index < 0)
 			{
 				server.Log.Debug(GetString("Bouncer / OnProjectileKill rejected from negative projectile index from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1675,7 +1675,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnProjectileKill rejected from disabled from {0}", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1683,7 +1683,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnProjectileKill rejected from bouncer throttle from {0}", tsPlayer.Name));
 				tsPlayer.RemoveProjectile(ident, owner);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -1705,7 +1705,7 @@ namespace TShockAPI
 			if (tsPlayer.TPlayer.chest != id)
 			{
 				server.Log.Debug(GetString("Bouncer / OnChestItemChange rejected from chest mismatch from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1713,21 +1713,21 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnChestItemChange rejected from disable from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.ChestItem, "", id, slot);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (!tsPlayer.HasBuildPermission(server.Main.chest[id].x, server.Main.chest[id].y) && setting.RegionProtectChests)
 			{
 				server.Log.Debug(GetString("Bouncer / OnChestItemChange rejected from region protection? from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (!tsPlayer.IsInRange(server.Main.chest[id].x, server.Main.chest[id].y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnChestItemChange rejected from range check from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -1745,21 +1745,21 @@ namespace TShockAPI
 			if (tsPlayer.IsBeingDisabled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnChestOpen rejected from disabled from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (!tsPlayer.IsInRange(pos.X, pos.Y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnChestOpen rejected from range check from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (!tsPlayer.HasBuildPermission(pos.X, pos.Y) && setting.RegionProtectChests)
 			{
 				server.Log.Debug(GetString("Bouncer / OnChestOpen rejected from region check from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1783,7 +1783,7 @@ namespace TShockAPI
 			if (!Utils.TilePlacementValid(server, tileX, tileY) || (tsPlayer.Dead && setting.PreventDeadModification))
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceChest rejected from invalid check from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1791,7 +1791,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceChest rejected from disabled from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 3);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1799,7 +1799,7 @@ namespace TShockAPI
 			{
 				server.Log.Error(GetString("Bouncer / OnPlaceChest / rejected from invalid place style from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 3);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1811,7 +1811,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceChest rejected from weird check from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 3);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1823,7 +1823,7 @@ namespace TShockAPI
 					server.Log.Debug(GetString("Bouncer / OnPlaceChest rejected from weird placement check from {0}", tsPlayer.Name));
 					//Prevent a dresser from being placed on a teleporter, as this can cause client and server crashes.
 					tsPlayer.SendTileSquareCentered(tileX, tileY, 3);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 			}
@@ -1832,7 +1832,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceChest rejected from invalid permission from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 3);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1840,7 +1840,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceChest rejected from range check from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 3);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -1879,7 +1879,7 @@ namespace TShockAPI
 					)
 				{
 					server.Log.Debug(GetString("Bouncer / OnPlayerZone rejected from {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 			}
@@ -1896,7 +1896,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerAnimation rejected from disabled from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.PlayerAnimation, "", tsPlayer.Index);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1904,7 +1904,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerAnimation rejected from throttle from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.PlayerAnimation, "", tsPlayer.Index);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -1925,7 +1925,7 @@ namespace TShockAPI
 			if (!Utils.TilePlacementValid(server, tileX, tileY) || (tsPlayer.Dead && setting.PreventDeadModification))
 			{
 				server.Log.Debug(GetString("Bouncer / OnLiquidSet rejected invalid check from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1933,7 +1933,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnLiquidSet rejected disabled from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1951,7 +1951,7 @@ namespace TShockAPI
 
 				server.Log.Debug(GetString("Bouncer / OnLiquidSet rejected from liquid threshold from {0} {1}/{2}", tsPlayer.Name, tsPlayer.TileLiquidThreshold, setting.TileLiquidThreshold));
 				server.Log.Debug(GetString("If this player wasn't hacking, please report the tile liquid threshold they were disabled for to TShock so we can improve this!"));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -1990,7 +1990,7 @@ namespace TShockAPI
 					tsPlayer.SendErrorMessage(GetString("You do not have permission to perform this action."));
 					tsPlayer.Disable(reason, DisableFlags.WriteToLogAndConsole);
 					tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				}
 
 				if (TShock.ItemBans.DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(selectedItemType), tsPlayer))
@@ -2089,7 +2089,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnLiquidSet rejected build permission from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2097,7 +2097,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnLiquidSet rejected range checks from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2105,7 +2105,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnLiquidSet rejected throttle from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -2124,7 +2124,7 @@ namespace TShockAPI
 			void Reject(ref RecievePacketEvent<AddPlayerBuff> args, bool shouldResync = true)
 			{
                 args.HandleMode = PacketHandleMode.Cancel;
-				args.StopMovementUp = true;
+				args.StopPropagation = true;
 
 				if (shouldResync)
 					tsPlayer.SendData(PacketTypes.PlayerBuff, number: id);
@@ -2239,7 +2239,7 @@ namespace TShockAPI
 			if (id >= server.Main.npc.Length)
 			{
 				server.Log.Debug(GetString("Bouncer / OnNPCAddBuff rejected out of bounds NPC update from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2248,14 +2248,14 @@ namespace TShockAPI
 			if (npc == null)
 			{
 				server.Log.Debug(GetString("Bouncer / OnNPCAddBuff rejected null npc from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (tsPlayer.IsBeingDisabled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnNPCAddBuff rejected disabled from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2302,7 +2302,7 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnNPCAddBuff rejected abnormal buff ({0}, last for {4}) added to {1} ({2}) from {3}.", type, npc.TypeName, npc.netID, tsPlayer.Name, time));
 					tsPlayer.Kick(GetString($"Added buff to {npc.TypeName} NPC abnormally."), true);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				}
 			}
 		}
@@ -2330,7 +2330,7 @@ namespace TShockAPI
 				tsPlayer.SendData(PacketTypes.UpdateNPCHome, "", id, server.Main.npc[id].homeTileX, server.Main.npc[id].homeTileY,
 									 Convert.ToByte(server.Main.npc[id].homeless));
 				server.Log.Debug(GetString("Bouncer / OnUpdateNPCHome rejected npc home build permission from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2340,7 +2340,7 @@ namespace TShockAPI
 				tsPlayer.SendData(PacketTypes.UpdateNPCHome, "", id, server.Main.npc[id].homeTileX, server.Main.npc[id].homeTileY,
 									 Convert.ToByte(server.Main.npc[id].homeless));
 				server.Log.Debug(GetString("Bouncer / OnUpdateNPCHome rejected range checks from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -2359,7 +2359,7 @@ namespace TShockAPI
 			if (amount <= 0 || TShock.Players[plr] == null || !TShock.Players[plr].Active)
 			{
 				server.Log.Debug(GetString("Bouncer / OnHealOtherPlayer rejected null checks"));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2370,7 +2370,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnHealOtherPlayer 0.2 check from {0}", tsPlayer.Name));
 				tsPlayer.Disable(GetString("HealOtherPlayer cheat attempt!"), DisableFlags.WriteToLogAndConsole);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2386,14 +2386,14 @@ namespace TShockAPI
 				}
 				server.Log.Debug(GetString("Bouncer / OnHealOtherPlayer rejected heal other threshold from {0} {1}/{2}", tsPlayer.Name, tsPlayer.HealOtherThreshold, setting.HealOtherThreshold));
 				server.Log.Debug(GetString("If this player wasn't hacking, please report the HealOtherPlayer threshold they were disabled for to TShock so we can improve this!"));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (tsPlayer.IsBeingDisabled() || tsPlayer.IsBouncerThrottled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnHealOtherPlayer rejected disabled/throttled from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2420,7 +2420,7 @@ namespace TShockAPI
 			if (x >= server.Main.maxTilesX * 16 - 16 || x < 0 || y >= server.Main.maxTilesY * 16 - 16 || y < 0)
 			{
 				server.Log.Debug(GetString("Bouncer / OnReleaseNPC rejected out of bounds from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2428,7 +2428,7 @@ namespace TShockAPI
 			if (tsPlayer.IsBeingDisabled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnReleaseNPC rejected npc release from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2437,7 +2437,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnReleaseNPC released different critter from {0}", tsPlayer.Name));
 				tsPlayer.Kick(GetString("Released critter was not from its item."), true);
 				args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
 			}
 
 			// if released npc not from its item (from crafted packet)
@@ -2480,7 +2480,7 @@ namespace TShockAPI
 			if (tsPlayer.IsBouncerThrottled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnReleaseNPC rejected throttle from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -2501,28 +2501,28 @@ namespace TShockAPI
 			if (!Utils.TilePlacementValid(server, x, y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected valid placements from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (type < 0 || type >= Terraria.ID.TileID.Count)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected out of bounds tile from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (x < 0 || x >= server.Main.maxTilesX)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected out of bounds tile x from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (y < 0 || y >= server.Main.maxTilesY)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected out of bounds tile y from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2532,7 +2532,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected fake containers from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(x, y, 4);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2542,7 +2542,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected banned tiles from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(x, y, 1);
 				tsPlayer.SendErrorMessage(GetString("You do not have permission to place this tile."));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2550,7 +2550,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected dead people don't do things from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(x, y, 4);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2558,7 +2558,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected disabled from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(x, y, 4);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2570,7 +2570,7 @@ namespace TShockAPI
 					server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected rubblemaker I can't believe it's not rubble! from {0}",
 						tsPlayer.Name));
 					tsPlayer.SendTileSquareCentered(x, y, 4);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 			}
@@ -2580,7 +2580,7 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected Axe of Regrowth only places saplings {0}", tsPlayer.Name));
 					tsPlayer.SendTileSquareCentered(x, y, 4);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 			}
@@ -2593,7 +2593,7 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected awkward tile creation/selection from {0}", tsPlayer.Name));
 					tsPlayer.SendTileSquareCentered(x, y, 4);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
@@ -2605,7 +2605,7 @@ namespace TShockAPI
 					{
 						server.Log.Error(GetString("Bouncer / OnPlaceObject rejected object placement with invalid style {1} (expected {2}) from {0}", tsPlayer.Name, style, tsPlayer.SelectedItem.placeStyle));
 						tsPlayer.SendTileSquareCentered(x, y, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 				}
@@ -2615,7 +2615,7 @@ namespace TShockAPI
 			if (tileData == null)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected null tile data from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2635,7 +2635,7 @@ namespace TShockAPI
 					{
 						server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected mad loop from {0}", tsPlayer.Name));
 						tsPlayer.SendTileSquareCentered(i, j, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
 					}
 				}
@@ -2651,7 +2651,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected range checks from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(x, y, 4);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2660,7 +2660,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected tile place threshold from {0} {1}/{2}", tsPlayer.Name, tsPlayer.TilePlaceThreshold, setting.TilePlaceThreshold));
 				tsPlayer.Disable(GetString("Reached TilePlace threshold."), DisableFlags.WriteToLogAndConsole);
 				tsPlayer.SendTileSquareCentered(x, y, 4);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2685,28 +2685,28 @@ namespace TShockAPI
             if (!Utils.TilePlacementValid(server, pos.X, pos.Y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceTileEntity rejected tile placement valid from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (tsPlayer.IsBeingDisabled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceTileEntity rejected disabled from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (!tsPlayer.HasBuildPermission(pos.X, pos.Y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceTileEntity rejected permissions from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (!tsPlayer.IsInRange(pos.X, pos.Y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceTileEntity rejected range checks from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -2720,14 +2720,14 @@ namespace TShockAPI
             var pos = args.Packet.Position;
 
 			if (!server.TileEntity.ByPosition.TryGetValue(pos, out var entity) || entity is not TEItemFrame itemFrame) {
-                args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+                args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
                 return;
             }
 
             if (!Utils.TilePlacementValid(server, pos.X, pos.Y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceItemFrame rejected tile placement valid from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2735,7 +2735,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceItemFrame rejected disabled from {0}", tsPlayer.Name));
 				server.NetMessage.SendData((int)PacketTypes.UpdateTileEntity, -1, -1, NetworkText.Empty, itemFrame.ID, 0, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2748,7 +2748,7 @@ namespace TShockAPI
 				
 				server.Log.Debug(GetString("Bouncer / OnPlaceItemFrame rejected permissions from {0}", tsPlayer.Name));
 				server.NetMessage.SendData((int)PacketTypes.UpdateTileEntity, -1, -1, NetworkText.Empty, itemFrame.ID, 0, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2756,7 +2756,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceItemFrame rejected range checks from {0}", tsPlayer.Name));
 				server.NetMessage.SendData((int)PacketTypes.UpdateTileEntity, -1, -1, NetworkText.Empty, itemFrame.ID, 0, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -2773,7 +2773,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnPlayerPortalTeleport rejected untargetable teleport from {0}", tsPlayer.Name));
 				//If the player who sent the packet is not the player being teleported, cancel this packet
 				tsPlayer.Disable(GetString("Malicious portal attempt."), DisableFlags.WriteToLogAndConsole); //Todo: this message is not particularly clear - suggestions wanted
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2782,7 +2782,7 @@ namespace TShockAPI
 				|| pos.Y > server.Main.maxTilesY || pos.Y < 0)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerPortalTeleport rejected teleport out of bounds from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2790,7 +2790,7 @@ namespace TShockAPI
 			if (tsPlayer.IsBeingDisabled() || tsPlayer.IsBouncerThrottled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerPortalTeleport rejected disabled/throttled from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -2807,21 +2807,21 @@ namespace TShockAPI
             if (pos.X < 0 || pos.Y < 0 || pos.X >= server.Main.maxTilesX || pos.Y >= server.Main.maxTilesY)
 			{
 				server.Log.Debug(GetString("Bouncer / OnGemLockToggle rejected boundaries check from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (!Utils.TilePlacementValid(server, pos.X, pos.Y) || (tsPlayer.Dead && setting.PreventDeadModification))
 			{
 				server.Log.Debug(GetString("Bouncer / OnGemLockToggle invalid placement/deadmod from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (tsPlayer.IsBeingDisabled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnGemLockToggle rejected disabled from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2830,7 +2830,7 @@ namespace TShockAPI
 				if (!tsPlayer.HasBuildPermission(pos.X, pos.Y))
 				{
 					server.Log.Debug(GetString("Bouncer / OnGemLockToggle rejected permissions check from {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 			}
@@ -2868,21 +2868,21 @@ namespace TShockAPI
 				if (!Utils.TilePlacementValid(server, x, y) || (tsPlayer.Dead && setting.PreventDeadModification))
 				{
 					server.Log.Debug(GetString("Bouncer / OnMassWireOperation rejected valid placement from {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
 				if (tsPlayer.IsBeingDisabled())
 				{
 					server.Log.Debug(GetString("Bouncer / OnMassWireOperation rejected disabled from {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
 				if (!tsPlayer.HasBuildPermission(x, y))
 				{
 					server.Log.Debug(GetString("Bouncer / OnMassWireOperation rejected build perms from {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 			}
@@ -2906,7 +2906,7 @@ namespace TShockAPI
 			if (id >= Main.maxPlayers || TShock.Players[id] == null || !TShock.Players[id].Active)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerDamage rejected null check"));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2916,7 +2916,7 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnPlayerDamage rejected damage threshold from {0} {1}/{2}", tsPlayer.Name, damage, setting.MaxDamage));
 					tsPlayer.Kick(GetString("Player damage exceeded {0}.", setting.MaxDamage));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 				else
@@ -2926,7 +2926,7 @@ namespace TShockAPI
 				}
 				tsPlayer.SendData(PacketTypes.PlayerHp, "", id);
 				tsPlayer.SendData(PacketTypes.PlayerUpdate, "", id);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2935,7 +2935,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnPlayerDamage rejected hostile from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.PlayerHp, "", id);
 				tsPlayer.SendData(PacketTypes.PlayerUpdate, "", id);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2944,7 +2944,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnPlayerDamage rejected disabled from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.PlayerHp, "", id);
 				tsPlayer.SendData(PacketTypes.PlayerUpdate, "", id);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2953,7 +2953,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnPlayerDamage rejected range checks from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.PlayerHp, "", id);
 				tsPlayer.SendData(PacketTypes.PlayerUpdate, "", id);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2962,7 +2962,7 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnPlayerDamage rejected throttled from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.PlayerHp, "", id);
 				tsPlayer.SendData(PacketTypes.PlayerUpdate, "", id);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -2982,7 +2982,7 @@ namespace TShockAPI
 				(reason._sourcePlayerIndex == -1 || reason._sourceNPCIndex != -1 || reason._sourceOtherIndex != -1 || reason._sourceCustomReason != null))
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerDamage rejected custom death message from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}
@@ -3004,14 +3004,14 @@ namespace TShockAPI
 				server.Log.Debug(GetString("Bouncer / OnKillMe rejected high damage from {0} {1}", tsPlayer.Name, damage));
 				tsPlayer.Kick(GetString("Failed to shade polygon normals."), true, true);
 				server.Log.Error(GetString("Death Exploit Attempt: Damage {0}", damage));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
 			if (id >= Main.maxPlayers)
 			{
 				server.Log.Debug(GetString("Bouncer / OnKillMe rejected index check from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -3022,13 +3022,13 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnKillMe rejected bad length death text from {0}", tsPlayer.Name));
 					TShock.Players[id].Kick(GetString("Death reason outside of normal bounds."), true);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 				if (setting.DisableCustomDeathMessages && playerDeathReason._sourceCustomReason != null)
 				{
 					server.Log.Debug(GetString("Bouncer / OnKillMe rejected custom death message from {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 			}
@@ -3050,31 +3050,31 @@ namespace TShockAPI
 			if (!FishingRodItemIDs.Contains(tsPlayer.SelectedItem.type))
 			{
 				server.Log.Debug(GetString("Bouncer / OnFishOutNPC rejected for not using a fishing rod! - From {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 			if (projectile.Type == 0 || projectile.Killed) /// The bobber projectile is never killed when the NPC spawns. Type can only be 0 if no recent projectile is found that is named Bobber.
 			{
 				server.Log.Debug(GetString("Bouncer / OnFishOutNPC rejected for not finding active bobber projectile! - From {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 			if (!FishableNpcIDs.Contains(args.Packet.Start))
 			{
 				server.Log.Debug(GetString("Bouncer / OnFishOutNPC rejected for the NPC not being on the fishable NPCs list! - From {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 			if (args.Packet.Start == NPCID.DukeFishron && !tsPlayer.HasPermission(Permissions.summonboss))
 			{
 				server.Log.Debug(GetString("Bouncer / OnFishOutNPC rejected summon boss permissions from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 			if (!tsPlayer.IsInRange(args.Packet.Position.X, args.Packet.Position.Y, 55))
 			{
 				server.Log.Debug(GetString("Bouncer / OnFishOutNPC rejected range checks from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 			}
 		}
 
@@ -3094,7 +3094,7 @@ namespace TShockAPI
             if (!Utils.TilePlacementValid(server, pos.X, pos.Y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnFoodPlatterTryPlacing rejected tile placement valid from {0}", tsPlayer.Name));
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -3102,7 +3102,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnFoodPlatterTryPlacing rejected item not placed by hand from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(pos.X, pos.Y, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 			if (tsPlayer.IsBeingDisabled())
@@ -3112,7 +3112,7 @@ namespace TShockAPI
 				item.netDefaults(server, itemId);
 				tsPlayer.GiveItemCheck(itemId, item.Name, args.Packet.Stack, args.Packet.Prefix);
 				tsPlayer.SendTileSquareCentered(pos.X, pos.Y, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -3123,7 +3123,7 @@ namespace TShockAPI
 				item.netDefaults(server, itemId);
 				tsPlayer.GiveItemCheck(itemId, item.Name, args.Packet.Stack, args.Packet.Prefix);
 				tsPlayer.SendTileSquareCentered(pos.X, pos.Y, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 
@@ -3131,7 +3131,7 @@ namespace TShockAPI
 			{
 				server.Log.Debug(GetString("Bouncer / OnFoodPlatterTryPlacing rejected range checks from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(pos.X, pos.Y, 1);
-				args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true;
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
 			}
 		}

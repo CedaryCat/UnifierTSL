@@ -67,12 +67,14 @@
         /// <summary>
         /// Change notification. Return true to indicate that the change has been handled and the cache should not be updated again.
         /// </summary>
-        event AsyncConfigChangedHandler<TConfig?> OnChangedAsync;
+        event AsyncConfigChangedHandler<TConfig> OnChangedAsync;
 
         /// <summary>
         /// Full file path of the underlying configuration file.
         /// </summary>
         string FilePath { get; }
     }
-    public delegate ValueTask<bool> AsyncConfigChangedHandler<TConfig>(TConfig config) where TConfig : class?;
+    public delegate ValueTask<bool> AsyncConfigChangedHandler<TConfig>(
+        IPluginConfigHandle<TConfig> handle,
+        TConfig? config) where TConfig : class; // But load from disk may return null
 }

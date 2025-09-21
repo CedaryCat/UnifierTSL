@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnifierTSL.Logging;
+﻿using UnifierTSL.Logging;
 using UnifierTSL.PluginService;
 
 namespace UnifierTSL.PluginHost
 {
-    public interface IPluginHost : IKeySelector<string>, ILoggerHost { 
+    public interface IPluginHost : IKeySelector<string>, ILoggerHost
+    {
         IReadOnlyList<IPluginContainer> Plugins { get; }
         IPluginDiscoverer PluginDiscoverer { get; }
         IPluginLoader PluginLoader { get; }

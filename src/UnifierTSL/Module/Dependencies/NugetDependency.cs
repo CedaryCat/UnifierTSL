@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Threading.Tasks;
 using UnifierTSL.Logging;
 
 namespace UnifierTSL.Module.Dependencies
@@ -30,11 +29,11 @@ namespace UnifierTSL.Module.Dependencies
             this.version = new(version);
             targetFramework = GetNuGetShortFolderName(plugin) ?? throw new Exception("");
         }
-        static string? GetNuGetShortFolderName(Assembly assembly) {
-            var attr = assembly.GetCustomAttribute<TargetFrameworkAttribute>();
+        private static string? GetNuGetShortFolderName(Assembly assembly) {
+            TargetFrameworkAttribute? attr = assembly.GetCustomAttribute<TargetFrameworkAttribute>();
             if (attr == null) return null;
 
-            var framework = NuGetFramework.Parse(attr.FrameworkName);
+            NuGetFramework framework = NuGetFramework.Parse(attr.FrameworkName);
             return framework.GetShortFolderName();
         }
 
@@ -47,30 +46,30 @@ namespace UnifierTSL.Module.Dependencies
         {
             public async Task<ImmutableArray<LibraryEntry>> Extract(RoleLogger logger) {
                 logger.Info($"Resolving dependencies for {packageId} ({version})");
-                var packages = NugetPackageCache.ResolveDependenciesAsync(packageId, version.ToNormalizedString(), targetFramework)
+                List<NuGet.Packaging.Core.PackageIdentity> packages = NugetPackageCache.ResolveDependenciesAsync(packageId, version.ToNormalizedString(), targetFramework)
                     .GetAwaiter()
                     .GetResult();
                 logger.Success($"Resolved dependencies for {packageId} ({version}) successfully: \r\n{string.Join("\r\n", packages)}");
                 List<LibraryEntry> entries = [];
 
-                foreach (var package in packages) {
-                    var downloader = new NugetPackageFetcher(logger, package.Id, package.Version.ToNormalizedString());
-                    foreach (var lib in await downloader.GetManagedLibsPathsAsync(package.Id, package.Version.ToNormalizedString(), targetFramework)) { 
+                foreach (NuGet.Packaging.Core.PackageIdentity package in packages) {
+                    NugetPackageFetcher downloader = new(logger, package.Id, package.Version.ToNormalizedString());
+                    foreach (string lib in await downloader.GetManagedLibsPathsAsync(package.Id, package.Version.ToNormalizedString(), targetFramework)) {
                         entries.Add(new LibraryEntry(
-                            new Lazy<Stream>(() => File.OpenRead(lib)), 
-                            DependencyKind.ManagedAssembly, 
+                            new Lazy<Stream>(() => File.OpenRead(lib)),
+                            DependencyKind.ManagedAssembly,
                             Path.Combine("lib", Path.GetFileName(lib)),
-                            package.Version, 
+                            package.Version,
                             package.Id));
                     }
-                    var currentRid = RuntimeInformation.RuntimeIdentifier;
-                    foreach (var lib in await downloader.GetNativeLibsPathsAsync(package.Id, package.Version.ToNormalizedString(), currentRid)) {
-                        var nativeDirInfo = new DirectoryInfo(Path.GetDirectoryName(lib)!);
+                    string currentRid = RuntimeInformation.RuntimeIdentifier;
+                    foreach (string lib in await downloader.GetNativeLibsPathsAsync(package.Id, package.Version.ToNormalizedString(), currentRid)) {
+                        DirectoryInfo nativeDirInfo = new(Path.GetDirectoryName(lib)!);
                         // path: runtimes/<rid>/native/<file>
                         if (nativeDirInfo.Name != "native" || nativeDirInfo.Parent!.Parent!.Name != "runtimes") {
                             throw new InvalidOperationException("Invalid package structure.");
                         }
-                        var rid = nativeDirInfo.Parent!.Name;
+                        string rid = nativeDirInfo.Parent!.Name;
 
                         entries.Add(new LibraryEntry(
                             new Lazy<Stream>(() => File.OpenRead(lib)),

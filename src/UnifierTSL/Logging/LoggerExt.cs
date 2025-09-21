@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using UnifierTSL.Logging;
 using UnifierTSL.Logging.Metadata;
 
@@ -183,8 +182,8 @@ public static class LoggerExt
         [CallerMemberName] string? member = null,
         [CallerLineNumber] int line = 0)
         where TLogger : IStandardLogger =>
-        logger.Log(level, message, category, ex, eventId, file, member, line); 
-    
+        logger.Log(level, message, category, ex, eventId, file, member, line);
+
     public static void LogHandledExceptionWithMetadata<TLogger>(this TLogger logger, string message,
         Exception ex,
         ReadOnlySpan<KeyValueMetadata> metadata,

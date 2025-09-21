@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Terraria;
+﻿using Terraria;
 using Terraria.Localization;
 
 namespace UnifierTSL.Servers
@@ -15,8 +10,8 @@ namespace UnifierTSL.Servers
                 return;
             }
             ChatHelper.SendChatMessageToClientAs(
-                255, 
-                NetworkText.FromLiteral($"[Realm·{otherServer.Name}] <{sender.name}>: {text}"), 
+                255,
+                NetworkText.FromLiteral($"[Realm·{otherServer.Name}] <{sender.name}>: {text}"),
                 sender.ChatColor(),
                 receiver);
         }

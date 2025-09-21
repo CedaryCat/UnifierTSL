@@ -1,6 +1,4 @@
-﻿using UnifierTSL.PluginHost;
-
-namespace UnifierTSL.PluginHost.Hosts.Dotnet
+﻿namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
     public class PluginEntryPoint(string pluginTypeFullName) : IPluginEntryPoint
     {

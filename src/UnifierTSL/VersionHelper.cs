@@ -10,8 +10,8 @@ namespace UnifierTSL
         public readonly string USPVersion;
 
         public VersionHelper() {
-            var utsl = typeof(Program).Assembly;
-            var otapi = typeof(Terraria.Main).Assembly;
+            Assembly utsl = typeof(Program).Assembly;
+            Assembly otapi = typeof(Terraria.Main).Assembly;
 
             UnifierApiVersion = utsl.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version;
             TerrariaVersion = otapi.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version;
@@ -19,7 +19,7 @@ namespace UnifierTSL
                 .Where(a => a.Key == "USPBuildVersion")
                 .Single().Value!;
 
-            var informationalVersionAttr = otapi.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            AssemblyInformationalVersionAttribute? informationalVersionAttr = otapi.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             OTAPIVersion = informationalVersionAttr!.InformationalVersion.Split('+').First();
         }
     }

@@ -5,7 +5,7 @@ namespace UnifierTSL.Logging.Metadata
 {
     public ref struct MetadataCollection
     {
-        readonly ref MetadataAllocHandle _metadataAllocHandle;
+        private readonly ref MetadataAllocHandle _metadataAllocHandle;
         private Span<KeyValueMetadata> _entries;
         private int _count;
 
@@ -26,7 +26,7 @@ namespace UnifierTSL.Logging.Metadata
                 return;
             }
             if (_count >= _entries.Length) {
-                var newEntries = _metadataAllocHandle.Allocate(_entries.Length * 2);
+                Span<KeyValueMetadata> newEntries = _metadataAllocHandle.Allocate(_entries.Length * 2);
                 _entries[.._count].CopyTo(newEntries);
                 _entries = newEntries;
             }
@@ -37,7 +37,7 @@ namespace UnifierTSL.Logging.Metadata
                 return;
             }
 
-            int insertIndex = ~index; 
+            int insertIndex = ~index;
             ShiftRight(insertIndex);
             _entries[insertIndex] = new KeyValueMetadata(key, value);
             _count++;
@@ -75,7 +75,7 @@ namespace UnifierTSL.Logging.Metadata
                 if (cmp < 0) high = mid - 1;
                 else low = mid + 1;
             }
-            return ~low; 
+            return ~low;
         }
     }
 }

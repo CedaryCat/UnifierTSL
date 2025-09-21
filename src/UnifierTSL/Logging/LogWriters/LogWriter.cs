@@ -42,9 +42,9 @@ namespace UnifierTSL.Logging.LogWriters
     /// <typeparam name="TInput">The type of input data to be written, which must be non-nullable.</typeparam>
     public abstract class LogWriter<TInput> : ILogWriter where TInput : notnull
     {
-        readonly ILogFormatter<TInput> defFormatter;
-        ILogFormatter<TInput> curFormatter;
-        readonly HashSet<ILogFormatter<TInput>> availableFormatters = new();
+        private readonly ILogFormatter<TInput> defFormatter;
+        private ILogFormatter<TInput> curFormatter;
+        private readonly HashSet<ILogFormatter<TInput>> availableFormatters = [];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LogWriter{TInput}"/> class with a default formatter.
@@ -90,17 +90,17 @@ namespace UnifierTSL.Logging.LogWriters
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private readonly ref struct InnerSelectionContext(ref InnerSelectionContext.InnerHandle element0, int length)
         {
-            readonly int Length = length;
-            readonly ref InnerHandle datas = ref element0;
+            private readonly int Length = length;
+            private readonly ref InnerHandle datas = ref element0;
             [StructLayout(LayoutKind.Sequential, Pack = 1)]
             public readonly struct InnerHandle(nint fuction, LogWriter<TInput> writer, ILogFormatter<TInput> formatter)
             {
-                readonly nint fuction = fuction;
-                readonly LogWriter<TInput> writer = writer;
-                readonly ILogFormatter<TInput> formatter = formatter;
+                private readonly nint fuction = fuction;
+                private readonly LogWriter<TInput> writer = writer;
+                private readonly ILogFormatter<TInput> formatter = formatter;
             }
         }
-        static void SwitchFormatter(LogWriter<TInput> writer, ILogFormatter<TInput> formatter) {
+        private static void SwitchFormatter(LogWriter<TInput> writer, ILogFormatter<TInput> formatter) {
             if (formatter is null) {
                 return;
             }
@@ -110,8 +110,8 @@ namespace UnifierTSL.Logging.LogWriters
         }
         public unsafe void GetAvailableFormatters(out FormatterSelectionContext availableFormatters) {
             delegate*<LogWriter<TInput>, ILogFormatter<TInput>, void> fptr = &SwitchFormatter;
-            var snapshot = this.availableFormatters.Select(x => new InnerSelectionContext.InnerHandle((nint)fptr, this, x)).ToArray();
-            var context = new InnerSelectionContext(ref snapshot[0], snapshot.Length);
+            InnerSelectionContext.InnerHandle[] snapshot = this.availableFormatters.Select(x => new InnerSelectionContext.InnerHandle((nint)fptr, this, x)).ToArray();
+            InnerSelectionContext context = new(ref snapshot[0], snapshot.Length);
             availableFormatters = Unsafe.As<InnerSelectionContext, FormatterSelectionContext>(ref context);
         }
         /// <summary>
@@ -131,7 +131,7 @@ namespace UnifierTSL.Logging.LogWriters
             try {
                 bufferSize = curFormatter.GetEstimatedSize(log);
                 buffer = ArrayPool<TInput>.Shared.Rent(bufferSize);
-                curFormatter.Format(in log, ref buffer[0], out var written);
+                curFormatter.Format(in log, ref buffer[0], out int written);
                 formatted = buffer.AsSpan(0, written);
             }
             catch (Exception ex) {
@@ -144,11 +144,11 @@ namespace UnifierTSL.Logging.LogWriters
                     message: $"Failed to format log entry [TimestampUtc:{log.TimestampUtc:u}] using formatter '{curFormatter.FormatName}'. " +
                              $"Original log entry has been re-formatted using the default formatter.",
                     exception: ex,
-                    out var errorLog);
+                    out LogEntry errorLog);
 
                 bufferSize = defFormatter.GetEstimatedSize(errorLog);
                 buffer = ArrayPool<TInput>.Shared.Rent(bufferSize);
-                defFormatter.Format(in errorLog, ref buffer[0], out var written);
+                defFormatter.Format(in errorLog, ref buffer[0], out int written);
                 formatted = buffer.AsSpan(0, written);
                 Write(in errorLog, formatted);
                 ArrayPool<TInput>.Shared.Return(buffer);

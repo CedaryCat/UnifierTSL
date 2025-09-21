@@ -8,23 +8,23 @@ namespace UnifierTSL.Reflection.Metadata.DecodeProviders
     {
         public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
         public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) {
-            var typeDef = reader.GetTypeDefinition(handle);
-            var name = reader.GetString(typeDef.Name);
-            var ns = reader.GetString(typeDef.Namespace);
+            TypeDefinition typeDef = reader.GetTypeDefinition(handle);
+            string name = reader.GetString(typeDef.Name);
+            string ns = reader.GetString(typeDef.Namespace);
             return string.IsNullOrEmpty(ns) ? name : $"{ns}.{name}";
         }
 
         public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) {
-            var typeRef = reader.GetTypeReference(handle);
-            var name = reader.GetString(typeRef.Name);
-            var ns = reader.GetString(typeRef.Namespace);
+            TypeReference typeRef = reader.GetTypeReference(handle);
+            string name = reader.GetString(typeRef.Name);
+            string ns = reader.GetString(typeRef.Namespace);
             return string.IsNullOrEmpty(ns) ? name : $"{ns}.{name}";
         }
 
         public string GetTypeFromSpecification(MetadataReader reader, object? genericContext, TypeSpecificationHandle handle, byte rawTypeKind) {
-            var typeSpec = reader.GetTypeSpecification(handle);
+            TypeSpecification typeSpec = reader.GetTypeSpecification(handle);
             BlobReader blobReader = reader.GetBlobReader(typeSpec.Signature);
-            var decoder = new SignatureDecoder<string, object?>(this, reader, genericContext);
+            SignatureDecoder<string, object?> decoder = new(this, reader, genericContext);
             return decoder.DecodeType(ref blobReader);
         }
         public string GetSZArrayType(string elementType) => elementType + "[]";

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Immutable;
 
 namespace UnifierTSL.Extensions
 {
@@ -13,9 +8,9 @@ namespace UnifierTSL.Extensions
         /// Fluent method for adding an item to an ImmutableDictionary
         /// </summary>
         public static ImmutableDictionary<TKey, TValue>.Builder AddItem<TKey, TValue>(
-            this ImmutableDictionary<TKey, TValue>.Builder builder, 
+            this ImmutableDictionary<TKey, TValue>.Builder builder,
             TKey key,
-            TValue value) 
+            TValue value)
             where TKey : notnull {
             builder.Add(key, value);
             return builder;
@@ -27,7 +22,7 @@ namespace UnifierTSL.Extensions
             this ImmutableDictionary<TKey, TValue>.Builder builder,
             IEnumerable<(TKey key, TValue value)> items)
             where TKey : notnull {
-            foreach (var (key, value) in items) {
+            foreach ((TKey key, TValue value) in items) {
                 builder.Add(key, value);
             }
             return builder;
@@ -39,7 +34,7 @@ namespace UnifierTSL.Extensions
             this ImmutableDictionary<TKey, TValue>.Builder builder,
             IEnumerable<TValue> items) where TValue : notnull, IKeySelector<TKey>
             where TKey : notnull {
-            foreach (var item in items) {
+            foreach (TValue item in items) {
                 builder.Add(item.Key, item);
             }
             return builder;
@@ -62,7 +57,7 @@ namespace UnifierTSL.Extensions
             this ImmutableDictionary<TKey, TValue>.Builder builder,
             IEnumerable<(TKey key, TValue value)> items)
             where TKey : notnull {
-            foreach (var (key, value) in items) {
+            foreach ((TKey key, TValue value) in items) {
                 builder[key] = value;
             }
             return builder;
@@ -74,7 +69,7 @@ namespace UnifierTSL.Extensions
             this ImmutableDictionary<TKey, TValue>.Builder builder,
             IEnumerable<TValue> items) where TValue : notnull, IKeySelector<TKey>
             where TKey : notnull {
-            foreach (var item in items) {
+            foreach (TValue item in items) {
                 builder[item.Key] = item;
             }
             return builder;

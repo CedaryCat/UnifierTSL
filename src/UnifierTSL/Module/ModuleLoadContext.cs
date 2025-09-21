@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Immutable;
-using System.IO;
+﻿using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
@@ -12,10 +9,10 @@ namespace UnifierTSL.Module
 {
     public class ModuleLoadContext : AssemblyLoadContext
     {
-        bool _disposed;
-        readonly AssemblyDependencyResolver UTSLResolver;
-        readonly Assembly hostAssembly = typeof(UnifierApi).Assembly;
-        readonly FileInfo moduleFile;
+        private bool _disposed;
+        private readonly AssemblyDependencyResolver UTSLResolver;
+        private readonly Assembly hostAssembly = typeof(UnifierApi).Assembly;
+        private readonly FileInfo moduleFile;
         public ModuleLoadContext(FileInfo moduleFile) : base(isCollectible: true) {
             UTSLResolver = new(hostAssembly.Location);
             this.moduleFile = moduleFile;
@@ -23,7 +20,9 @@ namespace UnifierTSL.Module
             Unloading += OnUnloading;
             ResolvingUnmanagedDll += OnResolvingUnmanagedDll;
         }
-        ImmutableArray<Func<Task>> _disposeActions = [];
+        public override string ToString() => $"{moduleFile.Name} ({base.ToString()})";
+
+        private ImmutableArray<Func<Task>> _disposeActions = [];
         public void AddDisposeAction(Func<Task> action) {
             if (_disposed) {
                 throw new InvalidOperationException("Dispose has already been called.");
@@ -34,6 +33,15 @@ namespace UnifierTSL.Module
             _disposed = true;
             Task.WaitAll([.. _disposeActions.Select(x => x())]);
             _disposeActions = [];
+        }
+        private static bool IsFrameworkAssembly(AssemblyName assemblyName) {
+            var token = BitConverter.ToString(assemblyName.GetPublicKeyToken() ?? Array.Empty<byte>());
+            if (token is 
+                "B0-3F-5F-7F-11-D5-0A-3A" or // System.Runtime.Loader
+                "CC-7B-13-FF-CD-2D-DD-51" // netstandard
+                )
+                return true;
+            return false;
         }
 
         protected virtual bool IsUTSLCoreLibs(AssemblyName assemblyName) {
@@ -72,28 +80,32 @@ namespace UnifierTSL.Module
             }
             return Load(name);
         }
-
         protected override Assembly? Load(AssemblyName assemblyName) {
+
+            if (IsFrameworkAssembly(assemblyName)) {
+                return Assembly.Load(assemblyName);
+            }
+
             if (assemblyName.Name == hostAssembly.GetName().Name) {
                 return hostAssembly;
             }
 
-            var utslCoreLibPath = UTSLResolver.ResolveAssemblyToPath(assemblyName);
+            string? utslCoreLibPath = UTSLResolver.ResolveAssemblyToPath(assemblyName);
             if (IsUTSLCoreLibs(assemblyName) && utslCoreLibPath is not null) {
                 return LoadFromHostContext(assemblyName, utslCoreLibPath);
             }
 
             if (ResolvingSharedAssemblyPreferred is not null) {
-                foreach (var resolver in ResolvingSharedAssemblyPreferred.GetInvocationList().Cast<Func<AssemblyLoadContext, AssemblyName, Assembly?>>()) {
-                    var result = resolver(this, assemblyName);
+                foreach (Func<AssemblyLoadContext, AssemblyName, Assembly?> resolver in ResolvingSharedAssemblyPreferred.GetInvocationList().Cast<Func<AssemblyLoadContext, AssemblyName, Assembly?>>()) {
+                    Assembly? result = resolver(this, assemblyName);
                     if (result is not null) {
                         return result;
                     }
                 }
             }
 
-            var moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
-            var matchFile = Path.Combine(moduleDir, "lib", assemblyName.Name + ".dll");
+            string moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
+            string matchFile = Path.Combine(moduleDir, "lib", assemblyName.Name + ".dll");
 
             if (File.Exists(matchFile)) {
                 return LoadFromModuleContext(assemblyName, new FileInfo(matchFile).FullName);
@@ -104,8 +116,8 @@ namespace UnifierTSL.Module
             }
 
             if (ResolvingSharedAssemblyFallback is not null) {
-                foreach (var resolver in ResolvingSharedAssemblyFallback.GetInvocationList().Cast<Func<AssemblyLoadContext, AssemblyName, Assembly?>>()) {
-                    var result = resolver(this, assemblyName);
+                foreach (Func<AssemblyLoadContext, AssemblyName, Assembly?> resolver in ResolvingSharedAssemblyFallback.GetInvocationList().Cast<Func<AssemblyLoadContext, AssemblyName, Assembly?>>()) {
+                    Assembly? result = resolver(this, assemblyName);
                     if (result is not null) {
                         return result;
                     }
@@ -119,40 +131,40 @@ namespace UnifierTSL.Module
             return LoadUnmanagedDll(unmanagedDllName);
         }
 
-        protected override nint LoadUnmanagedDll(string unmanagedLibName) {
-            var currentRid = RuntimeInformation.RuntimeIdentifier;
-            var fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
+        protected override nint LoadUnmanagedDll(string unmanagedDllName) {
+            string currentRid = RuntimeInformation.RuntimeIdentifier;
+            IEnumerable<string> fallbackRids = RidGraph.Instance.ExpandRuntimeIdentifier(currentRid);
 
-            var moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
-            var extension = FileSystemHelper.GetLibraryExtension();
+            string moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
+            string extension = FileSystemHelper.GetLibraryExtension();
 
-            var config = DependenciesConfiguration.LoadDependenicesConfig(moduleDir);
+            DependenciesSetting config = DependenciesConfiguration.LoadDependenicesConfig(moduleDir);
 
-            var match = config.Dependencies.Values
+            DependencyItem? match = config.Dependencies.Values
                 .SelectMany(x => x.Manifests)
                 .Where(x => !x.Obsolete)
-                .Where(x => Path.GetFileName(x.FilePath).StartsWith(unmanagedLibName + "."))
+                .Where(x => Path.GetFileName(x.FilePath).StartsWith(unmanagedDllName + "."))
                 .Where(x => Path.GetExtension(x.FilePath) == extension)
                 .FirstOrDefault();
 
-            if (match is not null) { 
+            if (match is not null) {
                 return LoadUnmanagedDllFromPath(Path.Combine(moduleDir, match.FilePath));
             }
 
-            return base.LoadUnmanagedDll(unmanagedLibName);
+            return base.LoadUnmanagedDll(unmanagedDllName);
         }
 
-        Assembly LoadFromModuleContext(AssemblyName _, string assemblyPath) {
-            using var libStream = File.OpenRead(assemblyPath);
+        private Assembly LoadFromModuleContext(AssemblyName _, string assemblyPath) {
+            using FileStream libStream = File.OpenRead(assemblyPath);
             if (File.Exists(Path.ChangeExtension(assemblyPath, ".pdb"))) {
-                using var pdbStream = File.OpenRead(Path.ChangeExtension(assemblyPath, ".pdb"));
+                using FileStream pdbStream = File.OpenRead(Path.ChangeExtension(assemblyPath, ".pdb"));
                 return LoadFromStream(libStream, pdbStream);
             }
             return LoadFromStream(libStream);
         }
 
-        static Assembly LoadFromHostContext(AssemblyName asmName, string assemblyPath) {
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies()) { 
+        private static Assembly LoadFromHostContext(AssemblyName asmName, string assemblyPath) {
+            foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies()) {
                 if (asm.GetName().Name == asmName.Name) {
                     return asm;
                 }

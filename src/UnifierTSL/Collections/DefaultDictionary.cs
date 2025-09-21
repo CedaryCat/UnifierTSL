@@ -8,7 +8,7 @@
 
         private readonly Func<TKey, TValue>? _getDefaultValue2;
         public DefaultDictionary() {
-            _dict = new Dictionary<TKey, TValue>();
+            _dict = [];
             _getDefaultValue = delegate { return default; };
         }
         public DefaultDictionary(IDictionary<TKey, TValue> dictionary) {
@@ -20,11 +20,11 @@
             _getDefaultValue = getDefaultValue;
         }
         public DefaultDictionary(Func<TValue> getDefaultValue) {
-            _dict = new Dictionary<TKey, TValue>();
+            _dict = [];
             _getDefaultValue = getDefaultValue;
         }
         public DefaultDictionary(Func<TKey, TValue> getDefaultValue) {
-            _dict = new Dictionary<TKey, TValue>();
+            _dict = [];
             _getDefaultValue2 = getDefaultValue;
         }
         TValue IReadOnlyDictionary<TKey, TValue>.this[TKey key] => this[key];
@@ -36,7 +36,7 @@
         /// <returns></returns>
         public TValue this[TKey key] {
             get {
-                if (_dict.TryGetValue(key, out var value)) {
+                if (_dict.TryGetValue(key, out TValue value)) {
                     return value;
                 }
                 if (_getDefaultValue != null) value = _getDefaultValue.Invoke();
@@ -45,11 +45,8 @@
                 return value;
             }
             set {
-                if (_dict.ContainsKey(key)) {
+                if (!_dict.TryAdd(key, value)) {
                     _dict[key] = value;
-                }
-                else {
-                    _dict.Add(key, value);
                 }
             }
         }
@@ -65,11 +62,8 @@
         public bool IsReadOnly => false;
 
         public void Add(TKey key, TValue value) {
-            if (_dict.ContainsKey(key)) {
+            if (!_dict.TryAdd(key, value)) {
                 _dict[key] = value;
-            }
-            else {
-                _dict.Add(key, value);
             }
         }
 

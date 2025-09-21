@@ -157,7 +157,7 @@ namespace TShockAPI
                 SendCorrectiveMessage(player, itemName);
 
                 player.TPlayer.Update(server, player.TPlayer.whoAmI);
-				args.StopMovementUp = true;
+				args.StopPropagation = true;
 				args.HandleMode = PacketHandleMode.Overwrite;
                 return;
             }
@@ -175,7 +175,7 @@ namespace TShockAPI
             if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player)) {
                 SendCorrectiveMessage(player, item.Name);
 				args.HandleMode = PacketHandleMode.Cancel;
-				args.StopMovementUp = true;
+				args.StopPropagation = true;
                 return;
             }
         }

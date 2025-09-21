@@ -78,7 +78,7 @@ namespace TShockAPI.Configuration
             cachedServerSettings = builder.ToImmutable();
         }
 
-        private ValueTask<bool> OnServerSettingChanged(Dictionary<string, JObject>? serverSettings) {
+        private ValueTask<bool> OnServerSettingChanged(IPluginConfigHandle<Dictionary<string, JObject>> handle, Dictionary<string, JObject>? serverSettings) {
             if (serverSettings is null) {
                 return new ValueTask<bool>(true);
             }
@@ -112,7 +112,7 @@ namespace TShockAPI.Configuration
             return new ValueTask<bool>(false);
         }
 
-        private ValueTask<bool> OnDefaultSettingChanged(JObject? config) {
+        private ValueTask<bool> OnDefaultSettingChanged(IPluginConfigHandle<JObject> handle, JObject? config) {
             TSettings? settings = null;
             try {
                 settings = config?.ToObject<TSettings>();

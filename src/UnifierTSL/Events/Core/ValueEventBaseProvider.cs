@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
+﻿using System.Collections.ObjectModel;
 
 namespace UnifierTSL.Events.Core
 {
@@ -12,9 +9,9 @@ namespace UnifierTSL.Events.Core
         private static readonly Comparer<THandler> _comparer = Comparer<THandler>.Create((a, b) => a.Priority.CompareTo(b.Priority));
         public void Register(THandler handler) {
             lock (_sync) {
-                var old = _snapshot;
+                THandler[] old = _snapshot;
                 int len = old.Length;
-                var tmp = new THandler[len + 1];
+                THandler[] tmp = new THandler[len + 1];
                 int idx = Array.BinarySearch(old, handler, _comparer);
                 if (idx < 0) idx = ~idx;
                 Array.Copy(old, 0, tmp, 0, idx);
@@ -24,14 +21,14 @@ namespace UnifierTSL.Events.Core
             }
         }
 
-        public void Unregister(Predicate<THandler> predicate) {
+        protected void Unregister(Predicate<THandler> predicate) {
             lock (_sync) {
-                var old = _snapshot;
+                THandler[] old = _snapshot;
                 int len = old.Length;
                 if (len == 0) return;
                 int idx = Array.FindIndex(old, predicate);
                 if (idx < 0) return;
-                var tmp = new THandler[len - 1];
+                THandler[] tmp = new THandler[len - 1];
                 Array.Copy(old, 0, tmp, 0, idx);
                 Array.Copy(old, idx + 1, tmp, idx, len - idx - 1);
                 _snapshot = tmp;
@@ -45,7 +42,7 @@ namespace UnifierTSL.Events.Core
         public EventProvider() {
             allEvents.Add(this);
         }
-        private static List<EventProvider> allEvents = new List<EventProvider>();
+        private static List<EventProvider> allEvents = [];
         public static ReadOnlyCollection<EventProvider> AllEvents => allEvents.AsReadOnly();
         public abstract int HandlerCount { get; }
     }

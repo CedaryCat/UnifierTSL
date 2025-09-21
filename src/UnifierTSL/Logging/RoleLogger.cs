@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnifierTSL.Logging.LogTrace;
 using UnifierTSL.Logging.Metadata;
 
@@ -26,8 +21,8 @@ namespace UnifierTSL.Logging
             ImmutableInterlocked.Update(ref _injectors, arr => arr.Remove(injector));
         }
 
-        readonly Logger logger;
-        readonly ILoggerHost role;
+        private readonly Logger logger;
+        private readonly ILoggerHost role;
 
         internal RoleLogger(ILoggerHost host, Logger logger) {
             this.logger = logger;
@@ -35,16 +30,16 @@ namespace UnifierTSL.Logging
         }
 
         public RoleLogger CloneForHost(ILoggerHost host, bool inheritInjectors = false) {
-            var roleLogger = new RoleLogger(host, logger);
+            RoleLogger roleLogger = new(host, logger);
             if (inheritInjectors) {
-                foreach (var injector in _injectors) {
+                foreach (ILogMetadataInjector injector in _injectors) {
                     roleLogger.AddMetadataInjector(injector);
                 }
             }
             return roleLogger;
         }
         public RoleLogger Clone(bool inheritInjectors = false) => CloneForHost(role, inheritInjectors);
-        
+
         public void Log(
             LogLevel level,
             string message,
@@ -55,9 +50,9 @@ namespace UnifierTSL.Logging
             [CallerMemberName] string? memberName = null,
             [CallerLineNumber] int? sourceLineNumber = null) {
 
-            var metadataAllocHandle = Logger.CreateMetadataAllocHandle();
+            MetadataAllocHandle metadataAllocHandle = Logger.CreateMetadataAllocHandle();
             try {
-                var logEntry = new LogEntry(
+                LogEntry logEntry = new(
                     timestampUtc: DateTimeOffset.UtcNow,
                     level: level,
                     eventId: eventId,
@@ -71,7 +66,7 @@ namespace UnifierTSL.Logging
                     ref metadataAllocHandle
                 );
                 if (_injectors.Length > 0) {
-                    foreach (var injector in _injectors) {
+                    foreach (ILogMetadataInjector injector in _injectors) {
                         injector.InjectMetadata(ref logEntry);
                     }
                 }
@@ -92,9 +87,9 @@ namespace UnifierTSL.Logging
             [CallerMemberName] string? memberName = null,
             [CallerLineNumber] int? sourceLineNumber = null) {
 
-            var metadataAllocHandle = Logger.CreateMetadataAllocHandle();
+            MetadataAllocHandle metadataAllocHandle = Logger.CreateMetadataAllocHandle();
             try {
-                var logEntry = new LogEntry(
+                LogEntry logEntry = new(
                     timestampUtc: DateTimeOffset.UtcNow,
                     level: level,
                     eventId: eventId,
@@ -108,16 +103,16 @@ namespace UnifierTSL.Logging
                     ref metadataAllocHandle
                 );
 
-                var metadataLen = metadata.Length;
+                int metadataLen = metadata.Length;
                 if (metadataLen > 0) {
-                    ref var e0 = ref MemoryMarshal.GetReference(metadata);
+                    ref KeyValueMetadata e0 = ref MemoryMarshal.GetReference(metadata);
                     for (int i = 0; i < metadata.Length; i++) {
-                        var element = Unsafe.Add(ref e0, i);
+                        KeyValueMetadata element = Unsafe.Add(ref e0, i);
                         logEntry.SetMetadata(element.Key, element.Value);
                     }
                 }
                 if (_injectors.Length > 0) {
-                    foreach (var injector in _injectors) {
+                    foreach (ILogMetadataInjector injector in _injectors) {
                         injector.InjectMetadata(ref logEntry);
                     }
                 }
@@ -150,9 +145,9 @@ namespace UnifierTSL.Logging
             [CallerMemberName] string? memberName = null,
             [CallerLineNumber] int? sourceLineNumber = null) {
 
-            var metadataAllocHandle = Logger.CreateMetadataAllocHandle();
+            MetadataAllocHandle metadataAllocHandle = Logger.CreateMetadataAllocHandle();
             try {
-                var logEntry = new LogEntry(
+                LogEntry logEntry = new(
                     timestampUtc: DateTimeOffset.UtcNow,
                     level: level,
                     eventId: eventId,
@@ -167,7 +162,7 @@ namespace UnifierTSL.Logging
                     ref metadataAllocHandle
                 );
                 if (_injectors.Length > 0) {
-                    foreach (var injector in _injectors) {
+                    foreach (ILogMetadataInjector injector in _injectors) {
                         injector.InjectMetadata(ref logEntry);
                     }
                 }
@@ -201,9 +196,9 @@ namespace UnifierTSL.Logging
             [CallerFilePath] string? sourceFilePath = null,
             [CallerMemberName] string? memberName = null,
             [CallerLineNumber] int? sourceLineNumber = null) {
-            var metadataAllocHandle = Logger.CreateMetadataAllocHandle();
+            MetadataAllocHandle metadataAllocHandle = Logger.CreateMetadataAllocHandle();
             try {
-                var logEntry = new LogEntry(
+                LogEntry logEntry = new(
                     timestampUtc: DateTimeOffset.UtcNow,
                     level: level,
                     eventId: eventId,
@@ -218,16 +213,16 @@ namespace UnifierTSL.Logging
                     ref metadataAllocHandle
                 );
 
-                var metadataLen = metadata.Length;
+                int metadataLen = metadata.Length;
                 if (metadataLen > 0) {
-                    ref var e0 = ref MemoryMarshal.GetReference(metadata);
+                    ref KeyValueMetadata e0 = ref MemoryMarshal.GetReference(metadata);
                     for (int i = 0; i < metadata.Length; i++) {
-                        var element = Unsafe.Add(ref e0, i);
+                        KeyValueMetadata element = Unsafe.Add(ref e0, i);
                         logEntry.SetMetadata(element.Key, element.Value);
                     }
                 }
                 if (_injectors.Length > 0) {
-                    foreach (var injector in _injectors) {
+                    foreach (ILogMetadataInjector injector in _injectors) {
                         injector.InjectMetadata(ref logEntry);
                     }
                 }

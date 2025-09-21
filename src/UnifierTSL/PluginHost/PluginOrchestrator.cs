@@ -11,19 +11,19 @@ namespace UnifierTSL.PluginHost
     {
         public static Version ApiVersion => new(1, 0, 0);
 
-        readonly ImmutableDictionary<string, IPluginHost> registeredPluginHosts;
-        readonly ImmutableArray<IPluginHost> hosts;
+        private readonly ImmutableDictionary<string, IPluginHost> registeredPluginHosts;
+        private readonly ImmutableArray<IPluginHost> hosts;
         public ImmutableArray<IPluginHost> RegisteredPluginHosts => hosts;
 
         string ILoggerHost.Name => "PluginOrchestrator";
         string? ILoggerHost.CurrentLogCategory => null;
-        readonly RoleLogger Logger;
+        private readonly RoleLogger Logger;
 
         public IPluginHost GetPluginHost(string name) => registeredPluginHosts[name];
         public PluginOrchestrator() {
             Logger = UnifierApi.CreateLogger(this);
 
-            var customHosts = ExtractCustomHosts();
+            List<IPluginHost> customHosts = ExtractCustomHosts();
 
             registeredPluginHosts = ImmutableDictionary
                 .CreateBuilder<string, IPluginHost>()
@@ -36,9 +36,9 @@ namespace UnifierTSL.PluginHost
 
         private List<IPluginHost> ExtractCustomHosts() {
             List<IPluginHost> hosts = [];
-            var modules = new ModuleAssemblyLoader("plugins").Load();
-            foreach (var module in modules) {
-                foreach (var type in module.Assembly.DefinedTypes) {
+            ImmutableArray<LoadedModule> modules = new ModuleAssemblyLoader("plugins").Load();
+            foreach (LoadedModule module in modules) {
+                foreach (TypeInfo type in module.Assembly.DefinedTypes) {
                     if (!type.IsClass
                         || type.IsAbstract
                         || type.IsInterface
@@ -46,7 +46,7 @@ namespace UnifierTSL.PluginHost
                         || !type.GetConstructors().Any(c => !c.IsStatic && c.GetParameters().Length == 0))
                         continue;
 
-                    var attr = type.GetCustomAttribute<PluginHostAttribute>();
+                    PluginHostAttribute? attr = type.GetCustomAttribute<PluginHostAttribute>();
                     if (attr is null) {
                         continue;
                     }
@@ -82,19 +82,19 @@ namespace UnifierTSL.PluginHost
         }
 
         public async Task InitializeAllAsync(CancellationToken cancellationToken = default) {
-            foreach (var host in hosts) { 
+            foreach (IPluginHost host in hosts) {
                 await host.InitializePluginsAsync(cancellationToken);
             }
         }
 
         public async Task ShutdownAllAsync(CancellationToken cancellationToken = default) {
-            foreach (var host in hosts) {
+            foreach (IPluginHost host in hosts) {
                 await host.ShutdownAsync(cancellationToken);
             }
         }
 
         public async Task UnloadAllAsync(CancellationToken cancellationToken = default) {
-            foreach (var host in hosts) {
+            foreach (IPluginHost host in hosts) {
                 await host.UnloadPluginsAsync(cancellationToken);
             }
         }

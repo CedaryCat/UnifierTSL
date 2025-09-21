@@ -7,7 +7,7 @@ namespace UnifierTSL.Module.Dependencies
 {
     public class DependenciesConfiguration
     {
-        readonly RoleLogger Logger;
+        private readonly RoleLogger Logger;
         public readonly DependenciesSetting Setting;
 
         public DependenciesConfiguration(RoleLogger logger, DependenciesSetting setting) {
@@ -16,7 +16,7 @@ namespace UnifierTSL.Module.Dependencies
         }
 
         public static DependenciesSetting LoadDependenicesConfig(string moduleDirectory) {
-            var configPath = Path.Combine(moduleDirectory, "dependencies.json");
+            string configPath = Path.Combine(moduleDirectory, "dependencies.json");
             if (!File.Exists(configPath)) {
                 return new DependenciesSetting { Dependencies = [] };
             }
@@ -24,7 +24,7 @@ namespace UnifierTSL.Module.Dependencies
         }
 
         public static bool TryLoadDependenicesConfig(string moduleDirectory, [NotNullWhen(true)] out DependenciesSetting? config) {
-            var configPath = Path.Combine(moduleDirectory, "dependencies.json");
+            string configPath = Path.Combine(moduleDirectory, "dependencies.json");
             if (!File.Exists(configPath)) {
                 config = null;
                 return false;
@@ -34,15 +34,15 @@ namespace UnifierTSL.Module.Dependencies
         }
 
         private static readonly JsonSerializerOptions serializerOptions = new() { WriteIndented = true };
-        public void Save(string moduleDirectory) { 
-            var configPath = Path.Combine(moduleDirectory, "dependencies.json");
+        public void Save(string moduleDirectory) {
+            string configPath = Path.Combine(moduleDirectory, "dependencies.json");
             File.WriteAllText(configPath, JsonSerializer.Serialize(Setting, serializerOptions));
         }
 
         public void NormalizeDependenicesConfig(string moduleDirectory) {
-            foreach (var depEntry in Setting.Dependencies.Values.ToArray()) {
+            foreach (DependencyRecord? depEntry in Setting.Dependencies.Values.ToArray()) {
 
-                foreach (var item in depEntry.Manifests) {
+                foreach (DependencyItem item in depEntry.Manifests) {
                     if (!File.Exists(Path.Combine(moduleDirectory, item.FilePath))) {
                         Setting.Dependencies.Remove(depEntry.Name);
                         Logger.Debug(
@@ -75,8 +75,8 @@ namespace UnifierTSL.Module.Dependencies
             }
         }
         public void AggressiveDependencyClean(string moduleDirectory) {
-            var moduleDirInfo = new DirectoryInfo(moduleDirectory);
-            foreach (var file in moduleDirInfo.GetFiles("*.*", SearchOption.AllDirectories)) {
+            DirectoryInfo moduleDirInfo = new(moduleDirectory);
+            foreach (FileInfo file in moduleDirInfo.GetFiles("*.*", SearchOption.AllDirectories)) {
                 if (file.FullName == Path.Combine(moduleDirInfo.FullName, "dependencies.json")) {
                     continue;
                 }
@@ -85,7 +85,7 @@ namespace UnifierTSL.Module.Dependencies
                     continue;
                 }
 
-                var deletePath = Path.GetRelativePath(moduleDirInfo.Parent!.FullName, file.FullName);
+                string deletePath = Path.GetRelativePath(moduleDirInfo.Parent!.FullName, file.FullName);
                 try {
                     File.Delete(file.FullName);
                     Logger.Debug(
@@ -106,8 +106,8 @@ namespace UnifierTSL.Module.Dependencies
         }
 
         public void SafeDependencyClean(string moduleDirectory, DependenciesSetting previous) {
-            var moduleDirInfo = new DirectoryInfo(moduleDirectory);
-            foreach (var oldDependenicyPair in previous.Dependencies) {
+            DirectoryInfo moduleDirInfo = new(moduleDirectory);
+            foreach (KeyValuePair<string, DependencyRecord> oldDependenicyPair in previous.Dependencies) {
                 if (!Setting.Dependencies.ContainsKey(oldDependenicyPair.Key)) {
                     try {
                         File.Delete(Path.Combine(moduleDirInfo.FullName, oldDependenicyPair.Key));

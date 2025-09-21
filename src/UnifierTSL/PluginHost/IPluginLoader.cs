@@ -76,7 +76,8 @@ namespace UnifierTSL.PluginHost
         /// </returns>
         bool TryUnloadPlugin(IPluginContainer pluginContainer);
     }
-    public enum LoadDetails {
+    public enum LoadDetails
+    {
         /// <summary>The plugin was successfully loaded.</summary>
         Success,
         /// <summary>A plugin with the same <c>FileSignature</c> is already loaded; the existing instance was returned.</summary>
@@ -86,8 +87,9 @@ namespace UnifierTSL.PluginHost
         /// <summary>Loading the plugin failed.</summary>
         Failed
     }
-    public enum UnloadDetails {
-        Success, 
+    public enum UnloadDetails
+    {
+        Success,
         DependencyBlocked,
         HostRefused
     }

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UnifierTSL.Logging.LogFilters
+﻿namespace UnifierTSL.Logging.LogFilters
 {
     public class EmptyLogFilter : ILogFilter
     {

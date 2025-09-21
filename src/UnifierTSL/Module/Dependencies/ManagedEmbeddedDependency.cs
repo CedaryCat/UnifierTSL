@@ -10,7 +10,7 @@ namespace UnifierTSL.Module.Dependencies
 {
     public sealed class ManagedEmbeddedDependency(Assembly plugin, string embeddedPath) : ModuleDependency
     {
-        class EmbeddedLibraryExtractor : IDependencyLibraryExtractor
+        private class EmbeddedLibraryExtractor : IDependencyLibraryExtractor
         {
             private readonly Assembly plugin;
             private readonly string embeddedPath;
@@ -21,9 +21,9 @@ namespace UnifierTSL.Module.Dependencies
                 this.plugin = plugin;
                 this.embeddedPath = embeddedPath;
 
-                using var stream = Extract();
-                using var peReader = MetadataBlobHelpers.GetPEReader(stream);
-                if (peReader is not null && MetadataBlobHelpers.TryReadAssemblyIdentity(peReader.GetMetadataReader(), out var name, out var version)) {
+                using Stream stream = Extract();
+                using PEReader? peReader = MetadataBlobHelpers.GetPEReader(stream);
+                if (peReader is not null && MetadataBlobHelpers.TryReadAssemblyIdentity(peReader.GetMetadataReader(), out string? name, out Version? version)) {
                     LibraryName = name;
                     Version = new NuGetVersion(version);
                 }
@@ -51,7 +51,7 @@ namespace UnifierTSL.Module.Dependencies
         public override string Name => extractor.LibraryName;
         public override NuGetVersion Version => new(extractor.Version);
 
-        readonly EmbeddedLibraryExtractor extractor = new(plugin, embeddedPath);
+        private readonly EmbeddedLibraryExtractor extractor = new(plugin, embeddedPath);
         public override IDependencyLibraryExtractor LibraryExtractor => extractor;
     }
 }

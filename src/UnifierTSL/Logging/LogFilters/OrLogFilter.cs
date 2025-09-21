@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace UnifierTSL.Logging.LogFilters
 {
@@ -14,10 +9,10 @@ namespace UnifierTSL.Logging.LogFilters
         private ImmutableArray<ILogFilter> Filters = [.. filters.Where(x => x is not EmptyLogFilter)];
 
         public bool ShouldLog(in LogEntry entry) {
-            var handlers = Filters.AsSpan();
-            var len = handlers.Length;
+            ReadOnlySpan<ILogFilter> handlers = Filters.AsSpan();
+            int len = handlers.Length;
             if (len == 0) return true;
-            ref var r0 = ref MemoryMarshal.GetReference(handlers);
+            ref ILogFilter r0 = ref MemoryMarshal.GetReference(handlers);
             for (int i = 0; i < len; i++) {
                 if (Unsafe.Add(ref r0, i).ShouldLog(entry)) {
                     return true;

@@ -12,16 +12,16 @@ namespace UnifierTSL.PluginHost.ConfigFormats
 
         public string Serialize<TConfig>(TConfig? config) where TConfig : class {
             // If given config is null, create an empty object because TOML doesn't allow null
-            var toml = Toml.FromModel(config ?? new object());
+            string toml = Toml.FromModel(config ?? new object());
             return toml.ToString();
         }
 
         public TConfig? Deserialize<TConfig>(string content) where TConfig : class, new() {
             if (string.IsNullOrWhiteSpace(content)) return null;
 
-            var doc = Toml.Parse(content);
+            DocumentSyntax doc = Toml.Parse(content);
             if (doc.HasErrors) {
-                var errors = doc.Diagnostics
+                IEnumerable<string> errors = doc.Diagnostics
                      .Where(d => d.Kind == DiagnosticMessageKind.Error)
                      .Select(d => d.ToString());
 

@@ -20,7 +20,7 @@ namespace UnifierTSL.Logging
         /// <param name="log">The log entry to be written.</param>
         void Write(scoped in LogEntry log);
 
-        public static CompositeLogWriter operator +(ILogWriter left, ILogWriter right) {
+        static CompositeLogWriter operator +(ILogWriter left, ILogWriter right) {
             if (left is CompositeLogWriter leftComp) {
                 return leftComp + right;
             }
@@ -30,7 +30,7 @@ namespace UnifierTSL.Logging
             return new CompositeLogWriter(left, right);
         }
 
-        public static ILogWriter? operator -(ILogWriter left, ILogWriter right) {
+        static ILogWriter? operator -(ILogWriter left, ILogWriter right) {
             if (left is CompositeLogWriter leftComp) {
                 return leftComp - right;
             }

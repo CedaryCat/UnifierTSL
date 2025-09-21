@@ -4,6 +4,7 @@ using Terraria.ID;
 using UnifiedServerProcess;
 using UnifierTSL.Localization.Terraria;
 using UnifierTSL.Network;
+using UnifierTSL.Servers;
 
 namespace UnifierTSL
 {
@@ -26,10 +27,14 @@ namespace UnifierTSL
         public static void Initialize() {
             Terraria.Program.SavePath = Platform.Get<IPathService>().GetStoragePath("Terraria");
             Terraria.Main.SkipAssemblyLoad = true;
+            Terraria.Main.rand ??= new((int)DateTime.Now.Ticks);
             EnglishLanguage.Load();
             GlobalInitializer.Initialize();
             SynchronizedGuard.Load();
             UnifiedNetworkPatcher.Load();
+            UnifiedServerCoordinator.Load();
+            ServerContext.Initialize();
+
             InitSets();
         }
 

@@ -71,7 +71,7 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerInfo rejected plugin phase {0}", args.Packet.Name));
                 tsPlayer.Kick(GetString("A plugin on this server stopped your login."), true, true);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -124,7 +124,7 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerInfo rejected name length 0"));
                 tsPlayer.Kick(GetString("You have been Bounced."), true, true);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -132,7 +132,7 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / rejecting player for name prefix starting with tsi: or tsn:."));
                 tsPlayer.Kick(GetString("Illegal name: prefixes tsi: and tsn: are forbidden."), true, true);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -179,21 +179,21 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerInfo rejected softcore required"));
                 tsPlayer.Kick(GetString("You need to join with a softcore player."), true, true);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
             if (setting.MediumcoreOnly && difficulty < 1) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerInfo rejected mediumcore required"));
                 tsPlayer.Kick(GetString("You need to join with a mediumcore player or higher."), true, true);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
             if (setting.HardcoreOnly && difficulty < 2) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerInfo rejected hardcore required"));
                 tsPlayer.Kick(GetString("You need to join with a hardcore player."), true, true);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
             tsPlayer.Difficulty = difficulty;
@@ -223,7 +223,7 @@ namespace TShockAPI
             if (/*OnPlayerSlot(tsPlayer, args.Data, plr, slot, stack, prefix, type) ||*/ plr != tsPlayer.Index || slot < 0 ||
                 slot > NetItem.MaxInventory) {
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -231,7 +231,7 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerSlot rejected ignore ssc packets"));
                 tsPlayer.SendData(PacketTypes.PlayerSlot, "", tsPlayer.Index, slot, prefix);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -279,7 +279,7 @@ namespace TShockAPI
 
                     if (!TShock.Groups.AssertGroupValid(tsPlayer, group, true)) {
                         args.HandleMode = PacketHandleMode.Cancel;
-                        args.StopMovementUp = true;
+                        args.StopPropagation = true;
                         return;
                     }
 
@@ -359,7 +359,7 @@ namespace TShockAPI
             if (tsPlayer.Dead && tsPlayer.RespawnTimer > 0) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawn rejected dead player spawn request {0}", tsPlayer.Name));
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -428,7 +428,7 @@ namespace TShockAPI
                 tsPlayer.TPlayer.numberOfDeathsPVE = numberOfDeathsPVE;
                 tsPlayer.TPlayer.numberOfDeathsPVP = numberOfDeathsPVP;
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
             }
             return;
         }
@@ -439,7 +439,7 @@ namespace TShockAPI
                 var server = args.LocalReciever.Server;
                 server.Log.Debug(GetString("GetDataHandlers / OnPlayerUpdate rejected from null player."));
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
         }
@@ -464,7 +464,7 @@ namespace TShockAPI
 
             if (/*OnPlayerHP(tsPlayer, args.Data, plr, cur, max) || cur <= 0 || max <= 0 || */tsPlayer.IgnoreSSCPackets) {
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -472,7 +472,7 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerHp rejected over max hp {0}", tsPlayer.Name));
                 tsPlayer.Disable("Maximum HP beyond limit", DisableFlags.WriteToLogAndConsole);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -492,19 +492,19 @@ namespace TShockAPI
             short y = args.Packet.Position.Y;
 
             //if (OnDoorUse(tsPlayer, args.Data, x, y, direction, doorAction))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             ushort tileType = server.Main.tile[x, y].type;
 
             if (x >= server.Main.maxTilesX || y >= server.Main.maxTilesY || x < 0 || y < 0) // Check for out of range
             {
                 server.Log.Debug(GetString("GetDataHandlers / HandleDoorUse rejected out of range door {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (Enum.IsDefined(doorAction)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleDoorUse rejected type 0 5 check {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
 
@@ -512,7 +512,7 @@ namespace TShockAPI
                                               && tileType != TileID.TallGateClosed && tileType != TileID.TallGateOpen
                                               && tileType != TileID.TrapdoorClosed && tileType != TileID.TrapdoorOpen) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleDoorUse rejected door gap check {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -523,12 +523,12 @@ namespace TShockAPI
             var id = args.Packet.ItemSlot;
             var owner = args.Packet.OtherPlayerSlot;
 
-            if (id < 0 || id > 400) { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            if (id < 0 || id > 400) { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (id == 400 && owner == 255) {
                 tsPlayer.IgnoreSSCPackets = false; 
                 args.HandleMode = PacketHandleMode.Cancel; 
-                args.StopMovementUp = true; 
+                args.StopPropagation = true; 
                 return;
             }
         }
@@ -539,7 +539,7 @@ namespace TShockAPI
             // Never sent by vanilla client, ignore this
             server.Log.Debug(GetString("GetDataHandlers / HandleNpcItemStrike surprise packet! Someone tell the TShock team! {0}", tsPlayer.Name));
             args.HandleMode = PacketHandleMode.Cancel; 
-            args.StopMovementUp = true; 
+            args.StopPropagation = true; 
             return;
         }
 
@@ -574,13 +574,13 @@ namespace TShockAPI
             var crit = args.Packet;
 
             //if (OnNPCStrike(tsPlayer, args.Data, id, direction, dmg, knockback, crit))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (server.Main.npc[id].townNPC && !tsPlayer.HasPermission(Permissions.hurttownnpc)) {
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to hurt Town NPCs."));
                 tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
                 server.Log.Debug(GetString($"GetDataHandlers / HandleNpcStrike rejected npc strike {tsPlayer.Name}"));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (server.Main.npc[id].netID == NPCID.EmpressButterfly) {
@@ -588,7 +588,7 @@ namespace TShockAPI
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to summon the Empress of Light."));
                     tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
                     server.Log.Debug(GetString($"GetDataHandlers / HandleNpcStrike rejected EoL summon from {tsPlayer.Name}"));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
                 else if (!setting.AnonymousBossInvasions) {
                     Utils.Broadcast(server, GetString($"{tsPlayer.Name} summoned the Empress of Light!"), 175, 75, 255);
@@ -602,7 +602,7 @@ namespace TShockAPI
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to summon the Lunatic Cultist!"));
                     tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
                     server.Log.Debug(GetString($"GetDataHandlers / HandleNpcStrike rejected Cultist summon from {tsPlayer.Name}"));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
         }
@@ -618,7 +618,7 @@ namespace TShockAPI
             var index = Utils.SearchProjectile(server, ident, owner);
 
             //if (OnProjectileKill(tsPlayer, args.Data, ident, owner, index)) {
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             //}
 
             short type = (short)server.Main.projectile[index].type;
@@ -628,7 +628,7 @@ namespace TShockAPI
             if (type == ProjectileID.Tombstone) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleProjectileKill rejected tombstone {0}", tsPlayer.Name));
                 tsPlayer.RemoveProjectile(ident, owner);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (TShock.ProjectileBans.ProjectileIsBanned(type, tsPlayer) && !setting.IgnoreProjKill) {
@@ -641,7 +641,7 @@ namespace TShockAPI
                 }
                 server.Log.Debug(GetString("GetDataHandlers / HandleProjectileKill rejected banned projectile {0}", tsPlayer.Name));
                 tsPlayer.RemoveProjectile(ident, owner);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             tsPlayer.LastKilledProjectile = type;
@@ -659,18 +659,18 @@ namespace TShockAPI
 
             var id = args.Packet.PlayerSlot;
             //if (OnPvpToggled(tsPlayer, args.Data, id, pvp))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (id != tsPlayer.Index) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleTogglePvp rejected index mismatch {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             string pvpMode = setting.PvPMode.ToLowerInvariant();
             if (pvpMode == "disabled" || pvpMode == "always" || pvpMode == "pvpwithnoteam" || (DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleTogglePvp rejected fastswitch {0}", tsPlayer.Name));
                 tsPlayer.SendData(PacketTypes.TogglePvp, "", id);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             tsPlayer.LastPvPTeamChange = DateTime.UtcNow;
@@ -684,13 +684,13 @@ namespace TShockAPI
             var type = args.Packet.ItemType;
 
             //if (OnChestItemChange(tsPlayer, args.Data, id, slot, stacks, prefix, type))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             Item item = new Item();
             item.netDefaults(server, type);
             if (args.Packet.Stack > item.maxStack) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleChestItem rejected max stacks {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -711,7 +711,7 @@ namespace TShockAPI
             if (!tsPlayer.HasBuildPermission(x, y) && setting.RegionProtectChests) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleChestActive rejected build permission and region check {0}", tsPlayer.Name));
                 tsPlayer.SendData(PacketTypes.ChestOpen, "", -1);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -720,7 +720,7 @@ namespace TShockAPI
             if (tsPlayer == null || tsPlayer.TPlayer == null) {
                 var server = args.LocalReciever.Server;
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerZone rejected null check"));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -732,7 +732,7 @@ namespace TShockAPI
 
             if (!tsPlayer.RequiresPassword) { 
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -740,7 +740,7 @@ namespace TShockAPI
 
             if (Hooks.PlayerHooks.OnPlayerPreLogin(tsPlayer, tsPlayer.Name, password)) { 
                 args.HandleMode = PacketHandleMode.Cancel; 
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return; 
             }
 
@@ -759,7 +759,7 @@ namespace TShockAPI
 
                     if (!TShock.Groups.AssertGroupValid(tsPlayer, group, true)) { 
                         args.HandleMode = PacketHandleMode.Cancel; 
-                        args.StopMovementUp = true; 
+                        args.StopPropagation = true; 
                         return;
                     }
 
@@ -791,13 +791,13 @@ namespace TShockAPI
                     Hooks.PlayerHooks.OnPlayerPostLogin(tsPlayer);
 
                     args.HandleMode = PacketHandleMode.Cancel;
-                    args.StopMovementUp = true;
+                    args.StopPropagation = true;
                     return;
                 }
                 tsPlayer.Kick(GetString("Your password did not match this character's password."), true, true);
 
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
@@ -810,18 +810,18 @@ namespace TShockAPI
 
                     server.NetMessage.SendData((int)PacketTypes.WorldInfo, tsPlayer.Index);
                     args.HandleMode = PacketHandleMode.Cancel;
-                    args.StopMovementUp = true;
+                    args.StopPropagation = true;
                     return;
                 }
                 tsPlayer.Kick(GetString("Invalid server password."), true, true);
                 args.HandleMode = PacketHandleMode.Cancel;
-                args.StopMovementUp = true;
+                args.StopPropagation = true;
                 return;
             }
 
             tsPlayer.Kick(GetParticularString("Likely non-vanilla client send zero-length password", "You have been Bounced for invalid password."), true, true);
             args.HandleMode = PacketHandleMode.Cancel;
-            args.StopMovementUp = true;
+            args.StopPropagation = true;
             return;
         }
 
@@ -832,24 +832,24 @@ namespace TShockAPI
             var npc = args.Packet.NPCSlot;
 
             //if (OnNpcTalk(tsPlayer, args.Data, plr, npc))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             //Rejecting player who trying to talk to a npc if player were disabled, server.Mainly for unregistered and logged out players. Preventing smuggling or duplicating their items if player put it in a npc's item slot
             if (tsPlayer.IsBeingDisabled()) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleNpcTalk rejected npc talk {0}", tsPlayer.Name));
                 tsPlayer.SendData(PacketTypes.NpcTalk, "", tsPlayer.Index, -1);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (tsPlayer.IsBouncerThrottled()) {
                 server.Log.Debug(GetString("Bouncer / HandleNpcTalk rejected from bouncer throttle from {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             // -1 is a magic value, represents not talking to an NPC
             if (npc < -1 || npc >= Main.maxNPCs) {
                 server.Log.Debug(GetString("Bouncer / HandleNpcTalk rejected from bouncer out of bounds from {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -863,12 +863,12 @@ namespace TShockAPI
             var max = args.Packet.StatManaMax;
 
             if (/*OnPlayerMana(tsPlayer, args.Data, plr, cur, max) || */cur < 0 || max < 0 || tsPlayer.IgnoreSSCPackets)
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (max > setting.MaxMP && !tsPlayer.HasPermission(Permissions.ignoremp)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerMana rejected max mana {0} {1}/{2}", tsPlayer.Name, max, setting.MaxMP));
                 tsPlayer.Disable("Maximum MP beyond limit", DisableFlags.WriteToLogAndConsole);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (tsPlayer.IsLoggedIn) {
@@ -886,16 +886,16 @@ namespace TShockAPI
             byte id = args.Packet.PlayerSlot;
             byte team = args.Packet.Team;
             //if (OnPlayerTeam(tsPlayer, args.Data, id, team))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (id != tsPlayer.Index)
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             string pvpMode = setting.PvPMode.ToLowerInvariant();
             if (pvpMode == "pvpwithnoteam" || (DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
                 tsPlayer.SendData(PacketTypes.PlayerTeam, "", id);
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerTeam rejected team fastswitch {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             tsPlayer.LastPvPTeamChange = DateTime.UtcNow;
@@ -910,11 +910,11 @@ namespace TShockAPI
             var y = args.Packet.Position.Y;
 
             //if (OnSignRead(tsPlayer, args.Data, x, y))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (x < 0 || y < 0 || x >= server.Main.maxTilesX || y >= server.Main.maxTilesY) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSignRead rejected out of bounds {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -927,18 +927,18 @@ namespace TShockAPI
             var y = args.Packet.Position.Y;
 
             //if (OnSignEvent(tsPlayer, args.Data, id, x, y))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (!tsPlayer.HasBuildPermission(x, y)) {
                 tsPlayer.SendData(PacketTypes.SignNew, "", id);
                 server.Log.Debug(GetString("GetDataHandlers / HandleSign rejected sign on build permission {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (!tsPlayer.IsInRange(x, y)) {
                 tsPlayer.SendData(PacketTypes.SignNew, "", id);
                 server.Log.Debug(GetString("GetDataHandlers / HandleSign rejected sign range check {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -950,7 +950,7 @@ namespace TShockAPI
             var id = args.Packet.PlayerSlot;
 
             //if (OnPlayerBuffUpdate(tsPlayer, args.Data, id))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             for (int i = 0; i < Terraria.Player.maxBuffs; i++) {
                 var buff = args.Packet.BuffTypes[i];
@@ -974,7 +974,7 @@ namespace TShockAPI
 
             server.Log.Debug(GetString("GetDataHandlers / HandlePlayerBuffList handled event and sent data {0}", tsPlayer.Name));
             server.NetMessage.SendData((int)PacketTypes.PlayerBuff, -1, tsPlayer.Index, NetworkText.Empty, tsPlayer.Index);
-            { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
         }
 
         private static void HandleSpecial(ref RecievePacketEvent<Assorted1> args) {
@@ -986,13 +986,13 @@ namespace TShockAPI
             var type = args.Packet.Unknown;
 
             //if (OnNPCSpecial(tsPlayer, args.Data, id, type))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (type == 1) {
                 if (!tsPlayer.HasPermission(Permissions.summonboss)) {
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to summon the Skeletron."));
                     server.Log.Debug(GetString($"GetDataHandlers / HandleNpcStrike rejected Skeletron summon from {tsPlayer.Name}"));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
             else if (type == 2) {
@@ -1002,7 +1002,7 @@ namespace TShockAPI
                 if (!tsPlayer.HasPermission(Permissions.usesundial)) {
                     server.Log.Debug(GetString($"GetDataHandlers / HandleSpecial rejected enchanted sundial permission {tsPlayer.Name}"));
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to use the Enchanted Sundial."));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
                 else if (setting.ForceTime != "normal") {
                     server.Log.Debug(GetString($"GetDataHandlers / HandleSpecial rejected enchanted sundial permission (ForceTime) {tsPlayer.Name}"));
@@ -1011,7 +1011,7 @@ namespace TShockAPI
                     }
                     else
                         tsPlayer.SendErrorMessage(GetString("You must set ForceTime to normal via config to use the Enchanted Sundial."));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
             else if (type == 4) {
@@ -1024,7 +1024,7 @@ namespace TShockAPI
                 if (!tsPlayer.HasPermission(Permissions.usemoondial)) {
                     server.Log.Debug(GetString($"GetDataHandlers / HandleSpecial rejected enchanted moondial permission {tsPlayer.Name}"));
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to use the Enchanted Moondial."));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
                 else if (setting.ForceTime != "normal") {
                     server.Log.Debug(GetString($"GetDataHandlers / HandleSpecial rejected enchanted moondial permission (ForceTime) {tsPlayer.Name}"));
@@ -1033,13 +1033,13 @@ namespace TShockAPI
                     }
                     else
                         tsPlayer.SendErrorMessage(GetString("You must set ForceTime to normal via config to use the Enchanted Moondial."));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
             else if (!tsPlayer.HasPermission($"tshock.specialeffects.{type}")) {
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to use this effect."));
                 server.Log.Error(GetString("Unrecognized special effect (Packet 51). Please report this to the TShock developers."));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -1053,14 +1053,14 @@ namespace TShockAPI
             var householdStatus = args.Packet.Homeless;
 
             //if (OnUpdateNPCHome(tsPlayer, args.Data, id, x, y, householdStatus))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             if (!tsPlayer.HasPermission(Permissions.movenpc)) {
                 server.Log.Debug(GetString("GetDataHandlers / UpdateNPCHome rejected no permission {0}", tsPlayer.Name));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to relocate Town NPCs."));
                 tsPlayer.SendData(PacketTypes.UpdateNPCHome, "", id, server.Main.npc[id].homeTileX, server.Main.npc[id].homeTileY,
                     Convert.ToByte(server.Main.npc[id].homeless));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -1074,7 +1074,7 @@ namespace TShockAPI
 
             if (tsPlayer.IsBouncerThrottled()) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawnBoss rejected bouner throttled {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             var plr = args.Packet.OtherPlayerSlot;
@@ -1084,29 +1084,29 @@ namespace TShockAPI
             if (isKnownBoss && !tsPlayer.HasPermission(Permissions.summonboss)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawnBoss rejected boss {0} {1}", tsPlayer.Name, thingType));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to summon bosses."));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (invasions.Contains(thingType) && !tsPlayer.HasPermission(Permissions.startinvasion)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawnBoss rejected invasion {0} {1}", tsPlayer.Name, thingType));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to start invasions."));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (pets.Contains(thingType) && !tsPlayer.HasPermission(Permissions.spawnpets)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawnBoss rejected pet {0} {1}", tsPlayer.Name, thingType));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to spawn pets."));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (upgrades.Contains(thingType) && !tsPlayer.HasPermission(Permissions.worldupgrades)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawnBoss rejected upgrade {0} {1}", tsPlayer.Name, thingType));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to use permanent boosters."));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (plr != tsPlayer.Index)
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             string thing;
             switch (thingType) {
@@ -1196,10 +1196,10 @@ namespace TShockAPI
 
             if (x < 0 || y < 0 || x >= server.Main.maxTilesX || y >= server.Main.maxTilesY || t > Main.numTileColors) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePaintTile rejected range check {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
             //if (OnPaintTile(tsPlayer, args.Data, x, y, t, ct)) {
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             //}
 
             // Not selecting paintbrush or paint scraper or the spectre versions? Hacking.
@@ -1213,7 +1213,7 @@ namespace TShockAPI
                 !tsPlayer.Inventory.Any(HasPaintSprayerAbilities)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePaintTile rejected select consistency {0}", tsPlayer.Name));
                 tsPlayer.SendData(PacketTypes.PaintTile, "", x, y, server.Main.tile[x, y].color());
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (tsPlayer.IsBouncerThrottled() ||
@@ -1221,7 +1221,7 @@ namespace TShockAPI
                 !tsPlayer.IsInRange(x, y)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePaintTile rejected throttle/permission/range check {0}", tsPlayer.Name));
                 tsPlayer.SendData(PacketTypes.PaintTile, "", x, y, server.Main.tile[x, y].color());
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (!tsPlayer.HasPermission(Permissions.ignorepaintdetection)) {
@@ -1241,10 +1241,10 @@ namespace TShockAPI
 
             if (x < 0 || y < 0 || x >= server.Main.maxTilesX || y >= server.Main.maxTilesY || w > Main.numTileColors) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePaintWall rejected range check {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
             //if (OnPaintWall(tsPlayer, args.Data, x, y, w, cw)) {
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             //}
 
             // Not selecting paint roller or paint scraper or the spectre versions? Hacking.
@@ -1258,7 +1258,7 @@ namespace TShockAPI
                 !tsPlayer.Inventory.Any(HasPaintSprayerAbilities)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePaintWall rejected selector consistency {0}", tsPlayer.Name));
                 tsPlayer.SendData(PacketTypes.PaintWall, "", x, y, server.Main.tile[x, y].wallColor());
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (tsPlayer.IsBouncerThrottled() ||
@@ -1266,7 +1266,7 @@ namespace TShockAPI
                 !tsPlayer.IsInRange(x, y)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandlePaintWall rejected throttle/permission/range {0}", tsPlayer.Name));
                 tsPlayer.SendData(PacketTypes.PaintWall, "", x, y, server.Main.tile[x, y].wallColor());
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (!tsPlayer.HasPermission(Permissions.ignorepaintdetection)) {
@@ -1304,34 +1304,34 @@ namespace TShockAPI
             }
 
             //if (OnTeleport(tsPlayer, args.Data, id, flag, x, y, style, extraInfo))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             //Rod of Discord teleport (usually (may be used by modded clients to teleport))
             if (type == 0 && !tsPlayer.HasPermission(Permissions.rod)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleTeleport rejected rod type {0} {1}", tsPlayer.Name, type));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to teleport using items.")); // Was going to write using RoD but Hook of Disonnance and Potion of Return both use the same teleport packet as RoD. 
                 tsPlayer.Teleport(tsPlayer.TPlayer.position.X, tsPlayer.TPlayer.position.Y); // Suggest renaming rod permission unless someone plans to add separate perms for the other 2 tp items.
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             //NPC teleport
             if (type == 1 && id >= Main.maxNPCs) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleTeleport rejected npc teleport {0} {1}", tsPlayer.Name, type));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             //Player to player teleport (wormhole potion, usually (may be used by modded clients to teleport))
             if (type == 2) {
                 if (id >= Main.maxPlayers || server.Main.player[id] == null || TShock.Players[id] == null) {
                     server.Log.Debug(GetString("GetDataHandlers / HandleTeleport rejected p2p extents {0} {1}", tsPlayer.Name, type));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
 
                 if (!tsPlayer.HasPermission(Permissions.wormhole)) {
                     server.Log.Debug(GetString("GetDataHandlers / HandleTeleport rejected p2p wormhole permission {0} {1}", tsPlayer.Name, type));
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to teleport using Wormhole Potions."));
                     tsPlayer.Teleport(tsPlayer.TPlayer.position.X, tsPlayer.TPlayer.position.Y);
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
         }
@@ -1347,12 +1347,12 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / HandleCatchNpc catch zero {0}", tsPlayer.Name));
                 server.Main.npc[npcID].active = true;
                 server.NetMessage.SendData((int)PacketTypes.NpcUpdate, -1, -1, NetworkText.Empty, npcID);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (tsPlayer.IsBeingDisabled()) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleCatchNpc rejected catch npc {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -1373,12 +1373,12 @@ namespace TShockAPI
                     if (tsPlayer.ItemInHand.type != ItemID.TeleportationPotion &&
                         tsPlayer.SelectedItem.type != ItemID.TeleportationPotion) {
                         server.Log.Debug(GetString("GetDataHandlers / HandleTeleportationPotion rejected not holding the correct item {0} {1}", tsPlayer.Name, type));
-                        { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                        { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
 
                     if (!tsPlayer.HasPermission(Permissions.tppotion)) {
                         Fail(server, tsPlayer, "Teleportation Potions");
-                        { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                        { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
                     break;
                 case 1: // Magic Conch or Shellphone (Ocean)
@@ -1387,7 +1387,7 @@ namespace TShockAPI
                         tsPlayer.ItemInHand.type != ItemID.ShellphoneOcean &&
                         tsPlayer.SelectedItem.type != ItemID.ShellphoneOcean) {
                         server.Log.Debug(GetString("GetDataHandlers / HandleTeleportationPotion rejected not holding the correct item {0} {1}", tsPlayer.Name, type));
-                        { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                        { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
 
                     if (!tsPlayer.HasPermission(Permissions.magicconch)) {
@@ -1397,7 +1397,7 @@ namespace TShockAPI
                         else {
                             Fail(server, tsPlayer, "the Magic Conch");
                         }
-                        { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                        { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
                     break;
                 case 2: // Demon Conch or Shellphone (Underworld)
@@ -1406,7 +1406,7 @@ namespace TShockAPI
                         tsPlayer.ItemInHand.type != ItemID.ShellphoneHell &&
                         tsPlayer.SelectedItem.type != ItemID.ShellphoneHell) {
                         server.Log.Debug(GetString("GetDataHandlers / HandleTeleportationPotion rejected not holding the correct item {0} {1}", tsPlayer.Name, type));
-                        { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                        { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
 
                     if (!tsPlayer.HasPermission(Permissions.demonconch)) {
@@ -1416,13 +1416,13 @@ namespace TShockAPI
                         else {
                             Fail(server, tsPlayer, "the Demon Conch");
                         }
-                        { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                        { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
                     break;
                 case 3: // Shellphone (Spawn)
                     if (tsPlayer.ItemInHand.type != ItemID.ShellphoneSpawn && tsPlayer.SelectedItem.type != ItemID.ShellphoneSpawn) {
                         server.Log.Debug(GetString("GetDataHandlers / HandleTeleportationPotion rejected not holding the correct item {0} {1}", tsPlayer.Name, type));
-                        { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                        { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
                     break;
             }
@@ -1439,7 +1439,7 @@ namespace TShockAPI
             var server = args.LocalReciever.Server;
             // Never sent by vanilla client, ignore this
             server.Log.Debug(GetString("GetDataHandlers / HandleNumberOfAnglerQuestsCompleted surprise packet! Someone tell the TShock team! {0}", tsPlayer.Name));
-            { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
         }
 
         private static void HandlePlaceTileEntity(ref RecievePacketEvent<TileEntityPlacement> args) {
@@ -1450,7 +1450,7 @@ namespace TShockAPI
             var type = args.Packet.TileEntityType;
 
             //if (OnPlaceTileEntity(tsPlayer, args.Data, x, y, type)) {
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             //}
 
             // ItemBan subsystem
@@ -1458,7 +1458,7 @@ namespace TShockAPI
             if (type is (byte)TileEntityType.TELogicSensor && TShock.TileBans.TileIsBanned((short)TileID.LogicSensor, tsPlayer)) {
                 tsPlayer.SendTileSquareCentered(x, y, 1);
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to place Logic Sensors."));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -1472,30 +1472,30 @@ namespace TShockAPI
 
             if (position.X < 0 || position.X >= (server.Main.maxTilesX * 16.0f) || position.Y < 0 || position.Y >= (server.Main.maxTilesY * 16.0f)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSyncExtraValue rejected extents check {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (!server.Main.expertMode && !server.Main.masterMode) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSyncExtraValue rejected expert/master mode check {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (npcIndex < 0 || npcIndex >= server.Main.npc.Length) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSyncExtraValue rejected npc id out of bounds check - NPC ID: {0}", npcIndex));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             var npc = server.Main.npc[npcIndex];
             if (npc == null) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSyncExtraValue rejected npc is null - NPC ID: {0}", npcIndex));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             var distanceFromCoinPacketToNpc = Utils.Distance(position, npc.position);
             if (distanceFromCoinPacketToNpc >= (5 * 16f)) //5 tile range
             {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSyncExtraValue rejected range check {0},{1} vs {2},{3} which is {4}", npc.position.X, npc.position.Y, position.X, position.Y, distanceFromCoinPacketToNpc));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -1510,7 +1510,7 @@ namespace TShockAPI
             if (projectile != null && projectile.active) {
                 if (projectile.owner != tsPlayer.TPlayer.whoAmI) {
                     server.Log.Debug(GetString("GetDataHandlers / HandleKillPortal rejected owner mismatch check {0}", tsPlayer.Name));
-                    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
         }
@@ -1529,13 +1529,13 @@ namespace TShockAPI
             if (projectile == null || !projectile.active) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleNpcTeleportPortal rejected null check {0}", tsPlayer.Name));
                 server.NetMessage.SendData((int)PacketTypes.NpcUpdate, -1, -1, NetworkText.Empty, npcIndex);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (projectile.type != ProjectileID.PortalGunGate) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleNpcTeleportPortal rejected not thinking with portals {0}", tsPlayer.Name));
                 server.NetMessage.SendData((int)PacketTypes.NpcUpdate, -1, -1, NetworkText.Empty, npcIndex);
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -1546,7 +1546,7 @@ namespace TShockAPI
             if (tsPlayer != null && !tsPlayer.HasPermission(Permissions.toggleparty)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleToggleParty rejected no party {0}", tsPlayer.Name));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to start a party."));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
@@ -1557,13 +1557,13 @@ namespace TShockAPI
 
             if (tsPlayer.IsBouncerThrottled()) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleOldOnesArmy rejected throttled {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (!tsPlayer.HasPermission(Permissions.startdd2)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleOldOnesArmy rejected permissions {0}", tsPlayer.Name));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to start the Old One's Army."));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (setting.AnonymousBossInvasions)
@@ -1585,7 +1585,7 @@ namespace TShockAPI
             bool pvp = bits[0];
 
             //if (OnKillMe(tsPlayer, args.Data, id, direction, dmg, pvp, playerDeathReason))
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
             tsPlayer.Dead = true;
             tsPlayer.RespawnTimer = setting.RespawnSeconds;
@@ -1634,7 +1634,7 @@ namespace TShockAPI
 
             tsPlayer.Kick(GetString("Exploit attempt detected!"));
             server.Log.Debug(GetString($"HandleSyncCavernMonsterType: Player is trying to modify NPC cavernMonsterType; this is a crafted packet! - From {tsPlayer.Name}"));
-            { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+            { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
         }
 
         private static void HandleSyncLoadout(ref RecievePacketEvent<SyncLoadout> args) {
@@ -1653,14 +1653,14 @@ namespace TShockAPI
                     tsPlayer.Name));
                 server.NetMessage.SendData((int)PacketTypes.SyncLoadout, number: tsPlayer.Index, number2: tsPlayer.TPlayer.CurrentLoadoutIndex);
 
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             if (tsPlayer.IsBeingDisabled()) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSyncLoadout rejected loadout index sync {0}", tsPlayer.Name));
                 server.NetMessage.SendData((int)PacketTypes.SyncLoadout, number: tsPlayer.Index, number2: tsPlayer.TPlayer.CurrentLoadoutIndex);
 
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopMovementUp = true; return; }
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             // Don't modify the player data if it isn't there.

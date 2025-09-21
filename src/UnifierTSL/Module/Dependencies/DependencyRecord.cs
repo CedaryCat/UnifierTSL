@@ -29,7 +29,7 @@ namespace UnifierTSL.Module.Dependencies
     public sealed class NuGetVersionJsonConverter : JsonConverter<NuGetVersion>
     {
         public override NuGetVersion? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-            var versionString = reader.GetString();
+            string? versionString = reader.GetString();
             return versionString != null ? NuGetVersion.Parse(versionString) : null;
         }
 

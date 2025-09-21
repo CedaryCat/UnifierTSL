@@ -1,13 +1,13 @@
-﻿using Terraria;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using System.Runtime.InteropServices;
+using Terraria;
 
 namespace UnifierTSL
 {
     public static class Utilities
     {
-        public static class CLI {
+        public static class CLI
+        {
             /// <summary>
             /// --key1 value1 --key2 value2
             /// </summary>
@@ -16,7 +16,7 @@ namespace UnifierTSL
             public static Dictionary<string, List<string>> ParseArguements(string[] args) {
                 string? key = null;
                 string value = "";
-                Dictionary<string, List<string>> dictionary = new Dictionary<string, List<string>>();
+                Dictionary<string, List<string>> dictionary = [];
                 for (int i = 0; i < args.Length; i++) {
                     if (args[i].Length == 0) {
                         continue;
@@ -24,7 +24,7 @@ namespace UnifierTSL
 
                     if (args[i][0] == '-' || args[i][0] == '+') {
                         if (key is not null) {
-                            if (!dictionary.TryGetValue(key.ToLower(), out var values)) {
+                            if (!dictionary.TryGetValue(key.ToLower(), out List<string>? values)) {
                                 dictionary.Add(key.ToLower(), values = []);
                             }
                             values.Add(value);
@@ -43,7 +43,7 @@ namespace UnifierTSL
                 }
 
                 if (key is not null) {
-                    if (!dictionary.TryGetValue(key.ToLower(), out var values)) {
+                    if (!dictionary.TryGetValue(key.ToLower(), out List<string>? values)) {
                         dictionary.Add(key.ToLower(), values = []);
                     }
                     values.Add(value);
@@ -59,7 +59,7 @@ namespace UnifierTSL
             /// <returns></returns>
             public static bool TryParseSubArguements(string input, [NotNullWhen(true)] out Dictionary<string, string>? result) {
                 result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                var sb = new StringBuilder();
+                StringBuilder sb = new();
                 string? currentKey = null;
                 bool inQuotes = false;
                 bool readingValue = false;
@@ -82,7 +82,7 @@ namespace UnifierTSL
                             continue;
                         }
                         else if (currentKey is not null) {
-                            var keySb = new StringBuilder();
+                            StringBuilder keySb = new();
                             for (int j = sb.Length - 1; j >= 0; j--) {
                                 if (char.IsWhiteSpace(sb[j])) {
                                     break;
@@ -102,7 +102,7 @@ namespace UnifierTSL
                     if (!inQuotes && char.IsWhiteSpace(c)) {
                         if (sb.Length == 0 && !readingValue) continue;
                     }
-                    
+
                     sb.Append(c);
                 }
 
@@ -118,13 +118,14 @@ namespace UnifierTSL
                 return true;
             }
         }
-        public static class IO {
+        public static class IO
+        {
             public static async Task<bool> SafeCopyAsync(string src, string dest) {
-                var destDir = Path.GetDirectoryName(dest)!;
+                string destDir = Path.GetDirectoryName(dest)!;
                 Directory.CreateDirectory(destDir);
-                using var srcStr = File.OpenRead(src);
+                using FileStream srcStr = File.OpenRead(src);
                 try {
-                    using var destStr = File.Create(dest);
+                    using FileStream destStr = File.Create(dest);
                     await srcStr.CopyToAsync(destStr);
                 }
                 catch {
@@ -133,11 +134,11 @@ namespace UnifierTSL
                 return true;
             }
             public static bool SafeCopy(string src, string dest) {
-                var destDir = Path.GetDirectoryName(dest)!;
+                string destDir = Path.GetDirectoryName(dest)!;
                 Directory.CreateDirectory(destDir);
-                using var srcStr = File.OpenRead(src);
+                using FileStream srcStr = File.OpenRead(src);
                 try {
-                    using var destStr = File.Create(dest);
+                    using FileStream destStr = File.Create(dest);
                     srcStr.CopyTo(destStr);
                 }
                 catch {
@@ -146,7 +147,7 @@ namespace UnifierTSL
                 return true;
             }
             public static FileStream? SafeFileCreate(string path, out Exception? exception) {
-                var directory = Path.GetDirectoryName(path);
+                string? directory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
                     Directory.CreateDirectory(directory);
                 }
@@ -166,7 +167,7 @@ namespace UnifierTSL
                     return 0;
                 }
                 int removedCount = 0;
-                foreach (var dir in Directory.GetDirectories(path)) {
+                foreach (string dir in Directory.GetDirectories(path)) {
                     removedCount += RemoveEmptyDirectories(dir);
                 }
                 if (includeRoot && Directory.GetFiles(path).Length == 0 && Directory.GetDirectories(path).Length == 0) {
@@ -182,8 +183,8 @@ namespace UnifierTSL
             }
             public static string GetWorldPathFromName(string worldName, bool allowDuplicate = false) {
                 static string SanitizeFileName(string name) {
-                    var invalidChars = Path.GetInvalidFileNameChars();
-                    var sb = new StringBuilder(name.Length);
+                    char[] invalidChars = Path.GetInvalidFileNameChars();
+                    StringBuilder sb = new(name.Length);
                     foreach (char c in name) {
                         if (invalidChars.Contains(c))
                             sb.Append('-');

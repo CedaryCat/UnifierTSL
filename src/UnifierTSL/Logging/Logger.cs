@@ -50,10 +50,10 @@ namespace UnifierTSL.Logging
         }
 
         public void Log(ref LogEntry entry) {
-            var injectors = _injectors.AsSpan();
-            var injectorCount = injectors.Length;
+            ReadOnlySpan<ILogMetadataInjector> injectors = _injectors.AsSpan();
+            int injectorCount = injectors.Length;
             if (injectorCount > 0) {
-                ref var element0 = ref MemoryMarshal.GetReference(injectors);
+                ref ILogMetadataInjector element0 = ref MemoryMarshal.GetReference(injectors);
                 for (int i = 0; i < injectorCount; i++) {
                     Unsafe.Add(ref element0, i).InjectMetadata(ref entry);
                 }
@@ -65,31 +65,31 @@ namespace UnifierTSL.Logging
         }
 
         internal static MetadataAllocHandle CreateMetadataAllocHandle() {
-            var handle = new InnerMetadataAllocHandle();
+            InnerMetadataAllocHandle handle = new();
             return Unsafe.As<InnerMetadataAllocHandle, MetadataAllocHandle>(ref handle);
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        unsafe struct InnerMetadataAllocHandle()
+        private unsafe struct InnerMetadataAllocHandle()
         {
             public KeyValueMetadata[]? buffer;
             public nint unmanagedData;
             public readonly delegate*<ref InnerMetadataAllocHandle, int, Span<KeyValueMetadata>> allocFunc = cachedAllocFunc;
             public readonly delegate*<ref InnerMetadataAllocHandle, void> freeFunc = cachedFreeFunc;
 
-            public readonly static delegate*<ref InnerMetadataAllocHandle, int, Span<KeyValueMetadata>> cachedAllocFunc = &Allocate;
-            public readonly static delegate*<ref InnerMetadataAllocHandle, void> cachedFreeFunc = &Free;
+            public static readonly delegate*<ref InnerMetadataAllocHandle, int, Span<KeyValueMetadata>> cachedAllocFunc = &Allocate;
+            public static readonly delegate*<ref InnerMetadataAllocHandle, void> cachedFreeFunc = &Free;
 
 
-            static Span<KeyValueMetadata> Allocate(ref InnerMetadataAllocHandle handle, int capacity) {
-                var buffer = handle.buffer;
+            private static Span<KeyValueMetadata> Allocate(ref InnerMetadataAllocHandle handle, int capacity) {
+                KeyValueMetadata[]? buffer = handle.buffer;
                 if (buffer is not null) {
                     ArrayPool<KeyValueMetadata>.Shared.Return(buffer);
                 }
                 buffer = handle.buffer = ArrayPool<KeyValueMetadata>.Shared.Rent(capacity);
                 return buffer.AsSpan(0, capacity);
             }
-            static void Free(ref InnerMetadataAllocHandle handle) {
+            private static void Free(ref InnerMetadataAllocHandle handle) {
                 if (handle.buffer is null) {
                     return;
                 }

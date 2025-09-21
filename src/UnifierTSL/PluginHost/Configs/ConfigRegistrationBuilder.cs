@@ -4,12 +4,12 @@ namespace UnifierTSL.PluginHost.Configs
 {
     internal class ConfigRegistrationBuilder<TConfig> : IConfigRegistrationBuilder<TConfig> where TConfig : class, new()
     {
-        bool AutoReloadOnExternalChange;
-        DeserializationFailureHandling DeseriFailureHandling = DeserializationFailureHandling.ThrowException;
-        bool DeseriAutoPersistFallback;
-        SerializationFailureHandling SeriFailureHandling = SerializationFailureHandling.ThrowException;
-        Func<TConfig>? DefaultFactory;
-        Func<TConfig, bool>? Validator;
+        private bool AutoReloadOnExternalChange;
+        private DeserializationFailureHandling DeseriFailureHandling = DeserializationFailureHandling.ThrowException;
+        private bool DeseriAutoPersistFallback;
+        private SerializationFailureHandling SeriFailureHandling = SerializationFailureHandling.ThrowException;
+        private Func<TConfig>? DefaultFactory;
+        private Func<TConfig, bool>? Validator;
         private IConfigFormatProvider formatProvider;
         private readonly IPluginContainer plugin;
         private readonly string configsPath;
@@ -56,11 +56,11 @@ namespace UnifierTSL.PluginHost.Configs
                 plugin,
                 formatProvider,
                 new(
-                    relativePath, 
-                    AutoReloadOnExternalChange, 
+                    relativePath,
+                    AutoReloadOnExternalChange,
                     DeseriFailureHandling,
                     DeseriAutoPersistFallback,
-                    SeriFailureHandling, 
+                    SeriFailureHandling,
                     DefaultFactory ?? (static () => new TConfig()),
                     Validator));
         }

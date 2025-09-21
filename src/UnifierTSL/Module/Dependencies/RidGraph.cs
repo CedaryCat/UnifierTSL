@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
 namespace UnifierTSL.Module.Dependencies
 {
@@ -13,18 +8,18 @@ namespace UnifierTSL.Module.Dependencies
         public Dictionary<string, string[]> RIDParents { get; } = [];
 
         public RidGraph() {
-            using var stream = typeof(RidGraph).Assembly.GetManifestResourceStream(
+            using Stream stream = typeof(RidGraph).Assembly.GetManifestResourceStream(
                 $"{typeof(RidGraph).Namespace}.RuntimeIdentifierGraph.json")!;
-            using var reader = new StreamReader(stream);
-            var json = reader.ReadToEnd();
+            using StreamReader reader = new(stream);
+            string json = reader.ReadToEnd();
             LoadRidGraph(json);
         }
 
         private void LoadRidGraph(string json) {
-            using var doc = JsonDocument.Parse(json);
-            foreach (var ridNode in doc.RootElement.GetProperty("runtimes").EnumerateObject()) {
-                var rid = ridNode.Name;
-                var imports = ridNode.Value.GetProperty("#import").EnumerateArray()
+            using JsonDocument doc = JsonDocument.Parse(json);
+            foreach (JsonProperty ridNode in doc.RootElement.GetProperty("runtimes").EnumerateObject()) {
+                string rid = ridNode.Name;
+                string[] imports = ridNode.Value.GetProperty("#import").EnumerateArray()
                     .Select(e => e.GetString()!)
                     .ToArray();
                 RIDParents[rid] = imports;
@@ -32,18 +27,18 @@ namespace UnifierTSL.Module.Dependencies
         }
 
         public IEnumerable<string> ExpandRuntimeIdentifier(string rid) {
-            var visited = new HashSet<string>();
-            var queue = new Queue<string>();
+            HashSet<string> visited = [];
+            Queue<string> queue = new();
             queue.Enqueue(rid);
 
             while (queue.Count > 0) {
-                var current = queue.Dequeue();
+                string current = queue.Dequeue();
                 if (!visited.Add(current)) continue;
 
                 yield return current;
 
-                if (RIDParents.TryGetValue(current, out var parents)) {
-                    foreach (var parent in parents) {
+                if (RIDParents.TryGetValue(current, out string[]? parents)) {
+                    foreach (string parent in parents) {
                         if (!visited.Contains(parent)) {
                             queue.Enqueue(parent);
                         }

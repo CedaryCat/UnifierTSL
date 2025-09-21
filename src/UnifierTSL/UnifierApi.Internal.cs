@@ -18,7 +18,7 @@ namespace UnifierTSL
         public static readonly UnifiedRandom rand = new();
 
         #region Events
-        public static readonly EventHub EventHub = new();
+        public static EventHub EventHub { get; private set; } = null!;
         #endregion
 
         #region Plugins
@@ -37,16 +37,16 @@ namespace UnifierTSL
         #endregion
 
         #region Logging
-        class LoggerHost : ILoggerHost
+        private class LoggerHost : ILoggerHost
         {
             public string Name => "UnifierApi";
             public string? CurrentLogCategory { get; set; }
         }
-        private readonly static ILoggerHost LogHost = new LoggerHost();
-        private readonly static RoleLogger logger;
+        private static readonly ILoggerHost LogHost = new LoggerHost();
+        private static readonly RoleLogger logger;
         public static RoleLogger Logger => logger;
 
-        static Logger logCore;
+        private static Logger logCore;
         public static Logger LogCore {
             get => logCore ??= new Logger();
         }
@@ -58,6 +58,8 @@ namespace UnifierTSL
         }
 
         internal static void Initialize(string[] launcherArgs) {
+            EventHub = new();
+
             pluginHosts = new();
             PluginHosts.InitializeAllAsync()
                 .GetAwaiter()
@@ -65,17 +67,18 @@ namespace UnifierTSL
 
             HandleCommandLine(launcherArgs);
             ReadLauncherArgs();
+            EventHub.Lanucher.InitializedEvent.Invoke(new());
         }
 
         internal static void HandleCommandLinePreRun(string[] launcherArgs) {
             Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);
-            foreach (var arg in args) {
-                var firstValue = arg.Value[0];
+            foreach (KeyValuePair<string, List<string>> arg in args) {
+                string firstValue = arg.Value[0];
                 switch (arg.Key) {
                     case "-culture":
                     case "-lang":
                     case "-language": {
-                            if (int.TryParse(firstValue, out var langId) && GameCulture._legacyCultures.TryGetValue(langId, out var culture)) {
+                            if (int.TryParse(firstValue, out int langId) && GameCulture._legacyCultures.TryGetValue(langId, out GameCulture? culture)) {
                                 GameCulture.DefaultCulture = culture;
                             }
                         }
@@ -83,12 +86,12 @@ namespace UnifierTSL
                 }
             }
         }
-        static void HandleCommandLine(string[] launcherArgs) {
+        private static void HandleCommandLine(string[] launcherArgs) {
             Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);
             bool settedJoinServer = false;
-            foreach (var arg in args) {
-                var firstValue = arg.Value[0];
-                switch (arg.Key) { 
+            foreach (KeyValuePair<string, List<string>> arg in args) {
+                string firstValue = arg.Value[0];
+                switch (arg.Key) {
                     case "-listen":
                     case "-port":
                         if (int.TryParse(firstValue, out int port)) {
@@ -133,8 +136,8 @@ namespace UnifierTSL
             }
         }
 
-        static void AutoStartServer(KeyValuePair<string, List<string>> arg) {
-            foreach (var serverArgs in arg.Value) {
+        private static void AutoStartServer(KeyValuePair<string, List<string>> arg) {
+            foreach (string serverArgs in arg.Value) {
                 string? serverName = null;
                 string? worldName = null;
                 string seed = "";
@@ -142,13 +145,13 @@ namespace UnifierTSL
                 int size = 3;
                 int evil = 0;
 
-                if (!Utilities.CLI.TryParseSubArguements(serverArgs, out var result)) {
+                if (!Utilities.CLI.TryParseSubArguements(serverArgs, out Dictionary<string, string>? result)) {
                     Console.WriteLine("Invalid server argument: {0}", arg.Value);
                     Console.WriteLine("Expected format: -server name:<name> worldname:<worldname> gamemode:<value> size:<value> evil:<value> seed:<value>");
                     goto failToAddServer;
                 }
 
-                foreach (var serverArg in result) {
+                foreach (KeyValuePair<string, string> serverArg in result) {
                     switch (serverArg.Key) {
                         case "name": {
                                 serverName = serverArg.Value.Trim();
@@ -160,7 +163,7 @@ namespace UnifierTSL
                             }
                         case "worldname": {
                                 worldName = serverArg.Value.Trim();
-                                var nameConflict = UnifiedServerCoordinator.Servers.FirstOrDefault(s => s.Main.worldName == worldName);
+                                ServerContext? nameConflict = UnifiedServerCoordinator.Servers.FirstOrDefault(s => s.Main.worldName == worldName);
                                 if (nameConflict is not null) {
                                     Console.WriteLine("World name '{0}' is already in used by server '{1}'", worldName, nameConflict.Name);
                                     goto failToAddServer;
@@ -173,7 +176,7 @@ namespace UnifierTSL
                             }
                         case "gamemode":
                         case "difficulty": {
-                                var serverArgVal = serverArg.Value.Trim();
+                                string serverArgVal = serverArg.Value.Trim();
                                 if (!int.TryParse(serverArgVal, out difficulty) || difficulty < 0 || difficulty > 3) {
                                     if (serverArgVal.Equals(nameof(WorldDifficultyId.Normal), StringComparison.OrdinalIgnoreCase) || serverArgVal == "n") {
                                         difficulty = 0;
@@ -196,7 +199,7 @@ namespace UnifierTSL
                                 break;
                             }
                         case "size": {
-                                var serverArgVal = serverArg.Value.Trim();
+                                string serverArgVal = serverArg.Value.Trim();
                                 if (!int.TryParse(serverArgVal, out size) || size < 1 || size > 3) {
                                     if (serverArgVal.Equals(nameof(WorldSizeId.Small), StringComparison.OrdinalIgnoreCase) || serverArgVal == "s") {
                                         size = 1;
@@ -216,7 +219,7 @@ namespace UnifierTSL
                                 break;
                             }
                         case "evil": {
-                                var serverArgVal = serverArg.Value.Trim().ToLower();
+                                string serverArgVal = serverArg.Value.Trim().ToLower();
                                 if (!int.TryParse(serverArg.Value, out evil) || (evil < 0 && evil > 2)) {
                                     if (serverArgVal.Equals(nameof(WorldEvilId.Random), StringComparison.OrdinalIgnoreCase)) {
                                         evil = 0;
@@ -248,7 +251,7 @@ namespace UnifierTSL
                     goto failToAddServer;
                 }
 
-                var server = new ServerContext(serverName, IWorldDataProvider.GenerateOrLoadExisting(worldName, size, difficulty, evil, seed));
+                ServerContext server = new(serverName, IWorldDataProvider.GenerateOrLoadExisting(worldName, size, difficulty, evil, seed));
                 Task.Run(() => server.Program.LaunchGame([]));
                 UnifiedServerCoordinator.AddServer(server);
 
@@ -258,7 +261,7 @@ namespace UnifierTSL
             }
         }
 
-        static void ReadLauncherArgs() {
+        private static void ReadLauncherArgs() {
             while (ListenPort < 0 || ListenPort >= ushort.MaxValue) {
                 Console.Write("Enter the port to listen on: ");
                 if (int.TryParse(Console.ReadLine(), out int port)) {
