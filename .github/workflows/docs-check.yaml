@@ -30,7 +30,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Check for build-affecting changes
+    - name: Check for build-affecting changes in documentation branch
+      if: |
+        (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'documentation') ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/documentation')
       run: |
         echo "🔍 Checking for build-affecting changes in documentation branch..."
         echo ""
