@@ -1204,12 +1204,12 @@ namespace TShockAPI
 				}
 
 				var above = server.Main.tile[tileX, tileY - 1];
-				if (above.type < server.TileObjectData._data.Count && server.TileObjectData._data[above.type] != null)
+				if (above.type < TileObjectData._data.Count && TileObjectData._data[above.type] != null)
 				{
-					var data = server.TileObjectData._data[above.type];
-                    objWidth = (byte)data.GetWidth(server);
-					objLength = (byte)data.GetHeight(server);
-					yOffset = -data.GetHeight(server); //y offset is the negative of the height of the tile object
+					var data = TileObjectData._data[above.type];
+                    objWidth = (byte)data.Width;
+					objLength = (byte)data.Height;
+					yOffset = -data.Height; //y offset is the negative of the height of the tile object
 				}
 			}
 
@@ -1225,11 +1225,11 @@ namespace TShockAPI
 				}
 
 				var below = server.Main.tile[tileX, tileY + 1];
-				if (below.type < server.TileObjectData._data.Count && server.TileObjectData._data[below.type] != null)
+				if (below.type < TileObjectData._data.Count && TileObjectData._data[below.type] != null)
 				{
-					TileObjectData data = server.TileObjectData._data[below.type];
-					objWidth = (byte)data.GetWidth(server);
-					objLength = (byte)data.GetHeight(server);
+					TileObjectData data = TileObjectData._data[below.type];
+					objWidth = (byte)data.Width;
+					objLength = (byte)data.Height;
 				}
 			}
         }
@@ -2611,7 +2611,7 @@ namespace TShockAPI
 				}
 			}
 
-			TileObjectData tileData = server.TileObjectData.GetTileData(type, style, 0);
+			TileObjectData tileData = TileObjectData.GetTileData(type, style, 0);
 			if (tileData == null)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected null tile data from {0}", tsPlayer.Name));
@@ -2619,11 +2619,11 @@ namespace TShockAPI
 				return;
 			}
 
-			x -= tileData.GetOrigin(server).X;
-			y -= tileData.GetOrigin(server).Y;
+			x -= tileData.Origin.X;
+			y -= tileData.Origin.Y;
 
-			var w = tileData.GetWidth(server);
-			var h = tileData.GetHeight(server);
+			var w = tileData.Width;
+			var h = tileData.Height;
 
 
             for (int i = x; i < x + w; i++)
