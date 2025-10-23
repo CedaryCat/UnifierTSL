@@ -1,4 +1,6 @@
 ---
+next-version: 0.1.0
+
 # GitVersion Configuration
 # This file controls semantic versioning behavior across different branches
 # See https://gitversion.net/docs/ for full documentation
