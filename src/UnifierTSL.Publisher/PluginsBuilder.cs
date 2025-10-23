@@ -7,13 +7,7 @@ namespace UnifierTSL.Publisher
     public class PluginsBuilder(string RelativePluginProjectDir)
     {
         public ImmutableArray<string> BuildPlugins(string rid) {
-            var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
-                // target framework folder
-                .Parent! // configuration (Debug or Release) folder
-                .Parent! // bin folder
-                .Parent! // solution folder
-                .Parent! // target framework folder
-                .FullName;
+            var solutionDir = SolutionDirectoryHelper.SolutionRoot;
 
             var pluginDir = Path.Combine(solutionDir, RelativePluginProjectDir);
             var pluginDirInfo = new DirectoryInfo(pluginDir);
@@ -26,19 +20,13 @@ namespace UnifierTSL.Publisher
             return Build(rid, solutionDir, projects);
         }
         public ImmutableArray<string> BuildPlugins(string rid, params IReadOnlyList<string> excludedProjectNames) {
-            var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
-                // target framework folder
-                .Parent! // configuration (Debug or Release) folder
-                .Parent! // bin folder
-                .Parent! // solution folder
-                .Parent! // target framework folder
-                .FullName;
+            var solutionDir = SolutionDirectoryHelper.SolutionRoot;
 
             var excluded = new HashSet<string>(excludedProjectNames, StringComparer.OrdinalIgnoreCase);
             var pluginDir = Path.Combine(solutionDir, RelativePluginProjectDir);
             var pluginDirInfo = new DirectoryInfo(pluginDir);
 
-            List<FileInfo> projects = new List<FileInfo>();
+            List<FileInfo> projects = [];
 
             foreach (var project in pluginDirInfo.GetDirectories().SelectMany(d => d.GetFiles("*.csproj"))) {
                 var name = Path.GetFileNameWithoutExtension(project.Name);
@@ -58,7 +46,7 @@ namespace UnifierTSL.Publisher
                 var project = projects[i];
                 var relativePath = Path.GetRelativePath(solutionDir, project.FullName);
                 var projectName = Path.GetFileNameWithoutExtension(project.Name);
-                var outputDir = Path.Combine("plugins-publish", projectName);
+                var outputDir = Path.Combine(SolutionDirectoryHelper.DefaultOutputPath, "plugins-publish", projectName);
 
                 if (Directory.Exists(outputDir)) {
                     Directory.Delete(outputDir, recursive: true);

@@ -11,24 +11,29 @@ namespace UnifierTSL.Publisher
         public readonly string RuntimesPath;
         public readonly string AppPath;
         public readonly string PluginsPath;
-        public PackageLayoutManager(string rid) {
+
+        public PackageLayoutManager(string rid, string outputPath = ".", bool useRidFolder = true, bool cleanOutputDir = true) {
             RID = rid;
-            PublishPath = "utsl-" + RID;
+
+            PublishPath = useRidFolder ? Path.Combine(outputPath, "utsl-" + RID) : outputPath;
+
             LibraryPath = Path.Combine(PublishPath, "lib");
             RuntimesPath = Path.Combine(PublishPath, "runtimes");
             AppPath = Path.Combine(PublishPath, "app");
             PluginsPath = Path.Combine(PublishPath, "plugins");
-            
-            if (Directory.Exists(PublishPath)) {
-                foreach (var file in Directory.GetFiles(PublishPath)) { 
-                    File.Delete(file);
-                }
-                foreach (var dir in Directory.GetDirectories(PublishPath)) { 
-                    Directory.Delete(dir, recursive: true);
-                }
-            }
-            Directory.CreateDirectory(PublishPath);
 
+            // Handle directory cleanup based on cleanOutputDir flag
+            if (Directory.Exists(PublishPath)) {
+                if (cleanOutputDir) {
+                    // Delete entire directory contents recursively with proper error handling
+                    // First delete all files, then delete empty directories to handle file locking gracefully
+                    DeleteDirectoryContents(PublishPath);
+                }
+                // If cleanOutputDir is false, do nothing - preserve existing files
+                // FileHelpers.SafeCopy will create or overwrite files as needed
+            }
+
+            Directory.CreateDirectory(PublishPath);
             Directory.CreateDirectory(LibraryPath);
             Directory.CreateDirectory(RuntimesPath);
             Directory.CreateDirectory(AppPath);
@@ -58,7 +63,7 @@ namespace UnifierTSL.Publisher
             await Task.WhenAll(copyTasks);
         }
 
-        public async Task InputCoreProgram(CoreAppBuilderResult result) { 
+        public async Task InputCoreProgram(CoreAppBuilderResult result) {
             var fileName = Path.GetFileName(result.OutputExecutable);
             var pdbName = Path.GetFileName(result.PdbFile);
 
@@ -88,6 +93,36 @@ namespace UnifierTSL.Publisher
                         var destPath = Path.Combine(LibraryPath, fileName);
                         await FileHelpers.SafeCopy(file.FullName, destPath);
                     }));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Recursively deletes all contents of a directory, handling file locking gracefully.
+        /// Deletes files first, then attempts to delete empty directories.
+        /// </summary>
+        private void DeleteDirectoryContents(string dirPath) {
+            var dirInfo = new DirectoryInfo(dirPath);
+            if (!dirInfo.Exists) return;
+
+            // Delete all files in the directory
+            foreach (var file in dirInfo.GetFiles()) {
+                try {
+                    file.Delete();
+                } catch {
+                    // Ignore errors when deleting individual files
+                    // This allows the operation to continue even if some files are locked
+                }
+            }
+
+            // Recursively delete subdirectories
+            foreach (var subDir in dirInfo.GetDirectories()) {
+                DeleteDirectoryContents(subDir.FullName);
+                try {
+                    subDir.Delete();
+                } catch {
+                    // Ignore errors when deleting individual directories
+                    // This allows the operation to continue even if some directories can't be deleted
                 }
             }
         }

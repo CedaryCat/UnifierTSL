@@ -23,18 +23,12 @@ namespace UnifierTSL.Publisher
         /// <returns>An ImmutableArray containing the output files of the published applications.</returns>
         public ImmutableArray<string> PublishApps(string rid) {
 
-            var solutionDir = new DirectoryInfo(Directory.GetCurrentDirectory())
-                         // target framework folder
-                .Parent! // configuration (Debug or Release) folder
-                .Parent! // bin folder
-                .Parent! // solution folder
-                .Parent! // target framework folder
-                .FullName;
+            var solutionDir = SolutionDirectoryHelper.SolutionRoot;
 
             var publishPaths = new ConcurrentBag<string>();
             foreach(var relativePath in appProjectPaths) {
                 var projectPath = Path.Combine(solutionDir, relativePath);
-                var outputDir = Path.Combine("apps-publish", Path.GetFileNameWithoutExtension(relativePath));
+                var outputDir = Path.Combine(SolutionDirectoryHelper.DefaultOutputPath, "apps-publish", Path.GetFileNameWithoutExtension(relativePath));
 
                 if (Directory.Exists(outputDir)) {
                     Directory.Delete(outputDir, recursive: true);

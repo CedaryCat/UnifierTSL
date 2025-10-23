@@ -17,20 +17,12 @@ namespace UnifierTSL.Publisher
         /// </summary>
         /// <returns>Result containing paths to the packaged executable and dependencies.</returns>
         public CoreAppBuilderResult Build(string rid) {
-            var targetFrameworkDir = new DirectoryInfo(Directory.GetCurrentDirectory());
-            var solutionDir = targetFrameworkDir
-                .Parent! // configuration (Debug/Release)
-                .Parent! // bin
-                .Parent! // project root
-                .Parent! // solution root
-                .FullName;
-
+            var solutionDir = SolutionDirectoryHelper.SolutionRoot;
             var projectPath = Path.Combine(solutionDir, relativeProjectPath);
             var projectName = Path.GetFileNameWithoutExtension(relativeProjectPath);
-
             var projectDir = Path.GetDirectoryName(projectPath)!;
-            var buildDir = Path.Combine(projectDir, "bin", "Release", targetFrameworkDir.Name);
-            var publishDir = Path.Combine("core-publish", projectName);
+
+            var publishDir = Path.Combine(SolutionDirectoryHelper.DefaultOutputPath, "core-publish", projectName);
 
             Directory.CreateDirectory(publishDir);
 
@@ -44,7 +36,7 @@ namespace UnifierTSL.Publisher
                 CreateNoWindow = true,
                 StandardErrorEncoding = Encoding.Default,
                 StandardOutputEncoding = Encoding.Default,
-            }) ?? 
+            }) ??
             throw new Exception("Failed to start dotnet build process.");
 
             Task<string> outputTask = buildProcess.StandardOutput.ReadToEndAsync();
@@ -56,13 +48,16 @@ namespace UnifierTSL.Publisher
                 throw new Exception($"Build failed: {error}");
             }
 
-            // Step 2: Find main outputs
+            // Step 2: Determine the target framework folder name from the built output
+            var buildDir = Path.Combine(projectDir, "bin", "Release", DotnetSdkHelper.GetTFMString());
+
+            // Step 3: Find main outputs
             var dllPath = Path.Combine(buildDir, $"{projectName}.dll");
             var runtimeConfigPath = Path.Combine(buildDir, $"{projectName}.runtimeconfig.json");
             var depsJsonPath = Path.Combine(buildDir, $"{projectName}.deps.json");
             var pdbPath = Path.Combine(buildDir, $"{projectName}.pdb");
 
-            // Step 3: Copy dependencies
+            // Step 4: Copy dependencies
             var dependencies = Directory.GetFiles(buildDir, "*.dll")
                 .Select(f => Path.Combine(buildDir, f))
                 .ToArray();
@@ -70,9 +65,9 @@ namespace UnifierTSL.Publisher
                 .Select(f => Path.Combine(buildDir, f))
                 .ToArray();
 
-            // Step 4: Generate executable using AppHost
+            // Step 5: Generate executable using AppHost
             var appHostTemplate = DotnetSdkHelper.GetBestMatchedAppHostPath(rid);
-            
+
             var executable = Path.Combine(publishDir, projectName + FileHelpers.ExecutableExtension(rid));
 
             HostWriter.CreateAppHost(
