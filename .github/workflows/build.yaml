@@ -135,10 +135,11 @@ jobs:
 
     - name: Create version file
       run: |
-        echo "${{ steps.gitversion.outputs.fullSemVer }}" > ${{ github.workspace }}/utsl-${{ matrix.arch }}/VERSION.txt
-        echo "Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> ${{ github.workspace }}/utsl-${{ matrix.arch }}/VERSION.txt
-        echo "Commit SHA: ${{ github.sha }}" >> ${{ github.workspace }}/utsl-${{ matrix.arch }}/VERSION.txt
-        echo "Branch: ${{ github.ref_name }}" >> ${{ github.workspace }}/utsl-${{ matrix.arch }}/VERSION.txt
+        VERSION_FILE="${{ github.workspace }}/utsl-${{ matrix.arch }}/VERSION.txt"
+        echo "${{ steps.gitversion.outputs.fullSemVer }}" > "$VERSION_FILE"
+        echo "Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> "$VERSION_FILE"
+        echo "Commit SHA: ${{ github.sha }}" >> "$VERSION_FILE"
+        echo "Branch: ${{ github.ref_name }}" >> "$VERSION_FILE"
       shell: bash
 
     - name: Upload build artifacts
