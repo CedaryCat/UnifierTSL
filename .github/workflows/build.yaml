@@ -21,6 +21,7 @@ env:
   PROJECT_PATH: 'src/'
   PUBLISHER_PATH: 'src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj'
   EXCLUDED_PLUGINS: 'ExamplePlugin,ExamplePlugin.Features'
+  ACTIONS_STEP_DEBUG: true
 
 jobs:
   # Documentation check job - lightweight validation for documentation changes
