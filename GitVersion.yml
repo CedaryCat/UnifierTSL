@@ -1,0 +1,120 @@
+---
+# GitVersion Configuration
+# This file controls semantic versioning behavior across different branches
+# See https://gitversion.net/docs/ for full documentation
+
+# Assembly versioning strategy
+assembly-versioning-scheme: MajorMinorPatch
+assembly-file-versioning-scheme: MajorMinorPatch
+assembly-informational-format: '{InformationalVersion}'
+
+# Versioning mode: ContinuousDeployment generates unique versions for every commit
+mode: ContinuousDeployment
+
+# Major/Minor version increment rules
+# Set to manual to control version bumps via tags or commit messages
+major-version-bump-message: '\+semver:\s?(breaking|major)'
+minor-version-bump-message: '\+semver:\s?(feature|minor)'
+patch-version-bump-message: '\+semver:\s?(fix|patch)'
+
+# Commit date format for metadata
+commit-date-format: 'yyyy-MM-dd'
+
+# Branch-specific configuration
+branches:
+  # Main branch: Production releases
+  main:
+    # Prevent version jumping when merging from develop
+    # Version increments based on main's own version, not the merged branch
+    prevent-increment-of-merged-branch-version: true
+    increment: Patch
+    is-mainline: true
+    # No pre-release tag for production releases
+    tag: ''
+    regex: ^master$|^main$
+    source-branches: ['develop', 'hotfix']
+
+  # Develop branch: Integration branch for ongoing development
+  develop:
+    # Allow normal version increment from merged branches
+    prevent-increment-of-merged-branch-version: false
+    increment: Minor
+    # Beta tag for development releases
+    tag: 'beta'
+    # Continuous deployment mode for every commit
+    mode: ContinuousDeployment
+    regex: ^dev(elop)?(ment)?$
+    source-branches: ['feature', 'bugfix', 'hotfix']
+    track-merge-target: false
+
+  # Documentation branch: Documentation maintenance
+  documentation:
+    # Don't affect main version when merging documentation
+    prevent-increment-of-merged-branch-version: true
+    increment: Patch
+    # Docs tag for documentation releases
+    tag: 'docs'
+    regex: ^docs?$|^documentation$
+    source-branches: []
+
+  # Feature branches: New features under development
+  feature:
+    increment: Minor
+    # Alpha tag for feature development
+    tag: 'alpha.{BranchName}'
+    regex: ^features?[/-]
+    source-branches: ['develop']
+    # Use branch name in version (e.g., 1.1.0-alpha.my-feature.1)
+    tag-number-pattern: '[/-](?<number>\d+)'
+
+  # Bugfix branches: Bug fixes under development
+  bugfix:
+    increment: Patch
+    tag: 'bugfix.{BranchName}'
+    regex: ^bug(fix)?[/-]
+    source-branches: ['develop']
+
+  # Hotfix branches: Emergency fixes from production
+  hotfix:
+    increment: Patch
+    tag: 'hotfix'
+    regex: ^hotfix(es)?[/-]
+    source-branches: ['main']
+    is-mainline: false
+
+  # Pull request branches: CI validation
+  pull-request:
+    increment: Inherit
+    tag: 'pr'
+    # Use PR number in version (e.g., 1.1.0-pr.123)
+    tag-number-pattern: '[/-](?<number>\d+)'
+    regex: ^(pull|pull\-requests|pr)[/-]
+
+  # Release branches: Release preparation
+  release:
+    increment: None
+    tag: 'rc'
+    regex: ^releases?[/-]
+    source-branches: ['develop']
+    is-mainline: false
+    prevent-increment-of-merged-branch-version: true
+
+# Ignore commits with these patterns (won't trigger version increment)
+ignore:
+  # Ignore merge commits (except those that should trigger releases)
+  merge-commit-message-regex: '^Merge (branch|tag|pull request)'
+  # Ignore commits with specific messages
+  commits-before: 2025-01-01T00:00:00  # Only consider commits after this date
+  sha: []
+
+# Workflow configuration for CI/CD
+# Ensure GitVersion runs before build to inject version into assemblies
+continuous-delivery-fallback-tag: ci
+
+# Tag prefix (e.g., v1.0.0)
+tag-prefix: 'v'
+legacy-semver-padding: 4
+
+# Commit message increment rules
+# Use commit messages like "feat: new feature +semver: minor" to control versioning
+commit-message-incrementing: Enabled
