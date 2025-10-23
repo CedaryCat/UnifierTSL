@@ -2,18 +2,24 @@ name: Build and Release
 
 # Trigger conditions for the workflow
 on:
-  # Push events to main, develop, and documentation branches
+  # Push events to main and develop branches, ignoring documentation branches and markdown files
   push:
     branches:
       - main
       - develop
-      - documentation
-  # Pull requests targeting main, develop, or documentation branches
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/docs*.yaml'
+  # Pull requests targeting main or develop branches
   pull_request:
     branches:
       - main
       - develop
-      - documentation
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/docs*.yaml'
 
 # Global environment variables
 env:
@@ -24,40 +30,6 @@ env:
   ACTIONS_STEP_DEBUG: true
 
 jobs:
-  # Documentation check job - lightweight validation for documentation changes
-  docs-check:
-    name: Documentation Check
-    # Only run for documentation branch or PRs targeting it
-    if: |
-      github.ref == 'refs/heads/documentation' ||
-      github.base_ref == 'documentation'
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Fetch full history for GitVersion
-
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v3.0.0
-      with:
-        versionSpec: '6.0.x'
-
-    - name: Determine Version
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v3.0.0
-      with:
-        useConfigFile: true
-        configFilePath: GitVersion.yml
-
-    - name: Documentation validation
-      run: |
-        echo "Documentation branch - no build required"
-        echo "Branch: ${{ github.ref }}"
-        echo "GitVersion: ${{ steps.gitversion.outputs.semVer }}"
-        echo "Full SemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
-
   # Main build job - builds code for main, develop, and PRs targeting develop
   build:
     name: Build (${{ matrix.arch }})
