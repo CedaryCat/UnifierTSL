@@ -43,7 +43,7 @@ jobs:
       with:
         versionSpec: '6.0.x'
 
-    - name: Debug GitVersion Setup
+    - name: Debug GitVersion
       run: |
         echo "=== Checking GitVersion.yml ==="
         ls -la GitVersion.yml
