@@ -105,8 +105,6 @@ branches:
 ignore:
   # Ignore merge commits (except those that should trigger releases)
   merge-commit-message-regex: '^Merge (branch|tag|pull request)'
-  # Ignore commits with specific messages
-  commits-before: 2025-01-01T00:00:00  # Only consider commits after this date
   sha: []
 
 # Workflow configuration for CI/CD
