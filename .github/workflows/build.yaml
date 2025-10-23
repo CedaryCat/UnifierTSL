@@ -44,19 +44,6 @@ jobs:
       with:
         versionSpec: '6.0.x'
 
-    - name: Debug GitVersion
-      run: |
-        echo "=== Checking GitVersion.yml ==="
-        ls -la GitVersion.yml
-        cat GitVersion.yml
-        echo "=== Checking Git Repository ==="
-        git status
-        git log --oneline -5
-        git branch -a
-        echo "=== GitVersion Tool Path ==="
-        echo ${{ env.GITVERSION_PATH }}
-      shell: bash
-
     - name: Determine Version
       id: gitversion
       uses: gittools/actions/gitversion/execute@v3.0.0
