@@ -35,8 +35,12 @@ namespace UnifierTSL.Publisher
             return apphostPath;
         }
 
-        private static Version GetCurrentRuntimeVersion() {
+        public static Version GetCurrentRuntimeVersion() {
             return Environment.Version; 
+        }
+        public static string GetTFMString() {
+            var v = GetCurrentRuntimeVersion();
+            return $"net{v.Major}.{v.Minor}";
         }
 
         private static string GetDotnetSdkBasePath() {
