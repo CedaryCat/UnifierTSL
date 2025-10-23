@@ -137,7 +137,12 @@ jobs:
       run: |
         # Convert Windows path to Unix-style for Git Bash compatibility
         WORKSPACE_PATH=$(echo "${{ github.workspace }}" | sed 's/\\/\//g')
-        VERSION_FILE="${WORKSPACE_PATH}/utsl-${{ matrix.arch }}/VERSION.txt"
+        OUTPUT_DIR="${WORKSPACE_PATH}/utsl-${{ matrix.arch }}"
+        
+        # Ensure the directory exists
+        mkdir -p "$OUTPUT_DIR"
+        
+        VERSION_FILE="${OUTPUT_DIR}/VERSION.txt"
         echo "${{ steps.gitversion.outputs.fullSemVer }}" > "$VERSION_FILE"
         echo "Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> "$VERSION_FILE"
         echo "Commit SHA: ${{ github.sha }}" >> "$VERSION_FILE"
