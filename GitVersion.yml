@@ -87,9 +87,9 @@ branches:
   pull-request:
     increment: Inherit
     tag: 'pr'
-    # Use PR number in version (e.g., 1.1.0-pr.123)
     tag-number-pattern: '[/-](?<number>\d+)'
-    regex: ^(pull|pull\-requests|pr)[/-]
+    regex: ^(pull|pull\-requests|pr)[/-].*$
+    mode: ContinuousDeployment
 
   # Release branches: Release preparation
   release:
