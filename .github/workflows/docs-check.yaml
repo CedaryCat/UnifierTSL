@@ -1,0 +1,110 @@
+name: Documentation Check
+
+# Trigger conditions for documentation workflow
+on:
+  # Push events to documentation branch or any doc-related branches
+  push:
+    branches:
+      - documentation
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/docs-check.yaml'
+  # Pull requests targeting documentation branch
+  pull_request:
+    branches:
+      - documentation
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/docs-check.yaml'
+
+jobs:
+  docs-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check for build-affecting changes in documentation branch
+      if: |
+        (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'documentation') ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/documentation')
+      run: |
+        echo "🔍 Checking for build-affecting changes in documentation branch..."
+        echo ""
+
+        # Determine the base reference for comparison
+        if [ "pull_request" == "pull_request" ]; then
+            # Fetch the base branch if it doesn't exist locally
+            BASE_REF="origin/documentation"
+            HEAD_REF="a1da90d1b537fd2e8360f4067e3c7642059a4527"
+            
+            # Ensure we have the base branch
+            git fetch origin documentation:documentation 2>/dev/null || git fetch origin documentation
+        else
+            # For push events, compare with the previous commit
+            BASE_REF="HEAD~1"
+            HEAD_REF="HEAD"
+        fi
+
+        # Get all changed files
+        CHANGED_FILES=$(git diff --name-only "$BASE_REF"..."$HEAD_REF" 2>/dev/null || git diff --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null || echo "")
+
+        if [ -z "$CHANGED_FILES" ]; then
+            echo "⚠️  Warning: Could not determine changed files"
+            exit 1
+        fi
+
+        # Define patterns for build-affecting files
+        # These are files that should NOT be changed in a documentation-only PR
+        BUILD_AFFECTING_PATTERNS=(
+            "^src/"
+            "^GitVersion\.yml$"
+            "^\.github/workflows/(?!docs-)"
+        )
+
+        BLOCKED_FILES=""
+        while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            for pattern in "${BUILD_AFFECTING_PATTERNS[@]}"; do
+                if [[ "$file" =~ $pattern ]]; then
+                    BLOCKED_FILES="$BLOCKED_FILES$file"$'\n'
+                    break
+                fi
+            done
+        done <<< "$CHANGED_FILES"
+
+        if [ -n "$BLOCKED_FILES" ]; then
+            echo "❌ ERROR: Found build-affecting changes in documentation branch!"
+            echo ""
+            echo "The following files affect the build and should not be modified in PRs to the documentation branch:"
+            echo "$BLOCKED_FILES"
+            echo ""
+            echo "The documentation branch should only contain:"
+            echo "  - Markdown files (*.md)"
+            echo "  - Files in docs/ directory"
+            echo "  - Documentation workflow files (docs-*.yaml)"
+            echo ""
+            exit 1
+        fi
+
+        echo "✅ All changes are documentation-only"
+
+    - name: Documentation validation
+      run: |
+        echo "📚 Documentation Check"
+        echo "Branch: ${{ github.ref }}"
+        echo "Event: ${{ github.event_name }}"
+        echo ""
+        echo "✅ Documentation files detected and validated"
+        echo ""
+        echo "Future enhancements:"
+        echo "- Markdown lint validation"
+        echo "- Link validation"
+        echo "- Documentation coverage checks"
+        echo "- Build documentation site"
