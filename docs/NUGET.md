@@ -21,24 +21,65 @@ dotnet add package UnifierTSL
 ### 1. Create Your Plugin
 
 ```csharp
-using UnifierTSL.PluginHost.Attributes;
+using System;
+using System.Collections.Immutable;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
 using UnifierTSL;
+using UnifierTSL.Events.Core;
+using UnifierTSL.Events.Handlers;
+using UnifierTSL.Logging;
+using UnifierTSL.Plugins;
 
-[CoreModule]
-[ModuleDependencies(
-    nugetPackages: ["Newtonsoft.Json:13.0.3"]
-)]
-public class MyPlugin
+[assembly: CoreModule]
+
+namespace MyPlugin
 {
-    public void Initialize()
+    [PluginMetadata("MyPlugin", "1.0.0", "Author", "My awesome plugin")]
+    public sealed class Plugin : BasePlugin, ILoggerHost
     {
-        // Hook into UnifierApi.EventHub
-        UnifierApi.EventHub.ServerStarted += OnServerStarted;
-    }
+        readonly RoleLogger logger;
 
-    private void OnServerStarted(object? sender, ServerEventArgs args)
-    {
-        Console.WriteLine($"Server {args.ServerName} started!");
+        public Plugin()
+        {
+            logger = UnifierApi.CreateLogger(this);
+        }
+
+        public string Name => "MyPlugin";
+        public string? CurrentLogCategory => null;
+
+        public override Task InitializeAsync(
+            IPluginConfigRegistrar registrar,
+            ImmutableArray<PluginInitInfo> prior,
+            CancellationToken cancellationToken = default)
+        {
+            // Hook into UnifierApi.EventHub
+            UnifierApi.EventHub.Chat.MessageEvent.Register(OnChatMessage, HandlerPriority.Normal);
+            logger.Info("MyPlugin initialized!");
+            return Task.CompletedTask;
+        }
+
+        public override ValueTask DisposeAsync(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                UnifierApi.EventHub.Chat.MessageEvent.UnRegister(OnChatMessage);
+            }
+            return ValueTask.CompletedTask;
+        }
+
+        static void OnChatMessage(ref ReadonlyEventArgs<MessageEvent> args)
+        {
+            if (!args.Content.Sender.IsClient)
+                return;
+
+            if (args.Content.Text.Trim().Equals("!hello", StringComparison.OrdinalIgnoreCase))
+            {
+                args.Content.Sender.Chat("Hello from MyPlugin!", Color.LightGreen);
+                args.Handled = true;
+            }
+        }
     }
 }
 ```
@@ -52,21 +93,31 @@ public class MyPlugin
 
 **Configuration Management**
 ```csharp
-var config = UnifierApi.GetPluginConfig<MyConfig>("MyPlugin");
-config.TriggerReloadOnExternalChange(true); // Enable hot reload
+var configHandle = registrar
+    .CreateConfigRegistration<MyConfig>("config.json")
+    .WithDefault(() => new MyConfig { Enabled = true })
+    .TriggerReloadOnExternalChange(true)
+    .Complete();
+
+MyConfig config = await configHandle.RequestAsync(cancellationToken);
 ```
 
 **Logging**
 ```csharp
-var logger = UnifierApi.CreateLogger("MyPlugin");
+// Plugin should implement ILoggerHost
+var logger = UnifierApi.CreateLogger(this);
 logger.Info("Plugin initialized");
+logger.Warning("This is a warning");
+logger.Error("An error occurred", exception: ex);
 ```
 
 **Event Hub**
-Access global events through `UnifierApi.EventHub`:
-- `ServerStarted`, `ServerStopped`
-- `PlayerJoining`, `PlayerLeft`
-- Custom event registration
+Access event providers through `UnifierApi.EventHub` domains:
+- `Game`: `PreUpdate`, `PostUpdate`, `GameHardmodeTileUpdate`
+- `Chat`: `ChatEvent`, `MessageEvent`
+- `Netplay`: `ConnectEvent`, `ReceiveFullClientInfoEvent`, `LeaveEvent`
+- `Coordinator`: `SwitchJoinServerEvent`, `PreServerTransfer`, `PostServerTransfer`
+- `Server`: `CreateConsoleService`, `AddServer`, `RemoveServer`
 
 ### 3. Build and Deploy
 
@@ -76,6 +127,8 @@ Build your plugin as a class library targeting `net9.0`:
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -89,8 +142,12 @@ Drop the compiled DLL into the server's `plugins/` directory.
 ## Package Contents
 
 This NuGet package includes:
-- `UnifierTSL.dll` - Core launcher and plugin framework
-- `UnifierTSL.ConsoleClient.dll` - Console isolation client
+- **Core Runtime**: `UnifierTSL.dll` - Launcher, orchestration services, module loader, event hub, and plugin host
+- **TrProtocol**: Network packet definitions (IL-merged from USP) for type-safe packet handling
+- **Event System**: Zero-allocation, priority-ordered event providers with handler management
+- **Module System**: Collectible assembly loading with hot-reload support and automatic dependency extraction
+- **Logging Infrastructure**: Structured logging with metadata injection and per-server console routing
+- **Configuration Service**: Hot-reloadable config management with file watching and error policies
 
 ## Documentation
 
