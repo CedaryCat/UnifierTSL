@@ -6,11 +6,25 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	</PropertyGroup>
 
-	<ItemGroup>
-	  <None Remove="PluginHost\NewFile1.txt" />
-	</ItemGroup>
+		<!-- NuGet Package Properties -->
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<PackageId>UnifierTSL</PackageId>
+		<Title>UnifierTSL</Title>
+		<Authors>CedaryCat</Authors>
+		<Description>An experiment-friendly Terraria server launcher based on OTAPI USP, hosting multiple worlds in a single process with per-instance consoles, a release assistant, and plugin scaffolding</Description>
+		<PackageProjectUrl>https://github.com/CedaryCat/UnifierTSL</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/CedaryCat/UnifierTSL</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>terraria;tshock;plugin;framework;otapi;otapi.usp</PackageTags>
+		<PackageReadmeFile>NUGET.md</PackageReadmeFile>
+
+		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+
+		<!-- Include referenced project outputs in the package -->
+		<IncludeBuildOutput>true</IncludeBuildOutput>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Include="Module\Dependencies\RuntimeIdentifierGraph.json" />
@@ -33,6 +47,19 @@
 	<ItemGroup>
 		<ProjectReference Include="..\UnifierTSL.ConsoleClient\UnifierTSL.ConsoleClient.csproj" />
 	</ItemGroup>
+
+	<!-- Include README in the package -->
+	<ItemGroup>
+		<None Include="..\..\docs\NUGET.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<!-- Include ConsoleClient DLL in the package -->
+	<Target Name="IncludeConsoleClientInPackage" AfterTargets="Build" BeforeTargets="_GetPackageFiles">
+		<ItemGroup>
+			<None Include="$(OutputPath)UnifierTSL.ConsoleClient.dll" Pack="true" PackagePath="lib\$(TargetFramework)\" />
+			<None Include="$(OutputPath)UnifierTSL.ConsoleClient.pdb" Pack="true" PackagePath="lib\$(TargetFramework)\" />
+		</ItemGroup>
+	</Target>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<ItemGroup>
