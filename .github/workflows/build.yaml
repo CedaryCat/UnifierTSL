@@ -100,9 +100,7 @@ jobs:
 
     - name: Run Publisher
       run: |
-        cd src/UnifierTSL.Publisher/bin/Release/net9.0
-        dotnet UnifierTSL.Publisher.dll --rid ${{ matrix.arch }} --excluded-plugins ${{ env.EXCLUDED_PLUGINS }} --output-path utsl-${{ matrix.arch }} --use-rid-folder false --clean-output-dir true
-        cp -r utsl-${{ matrix.arch }} ${{ github.workspace }}/
+        dotnet src/UnifierTSL.Publisher/bin/Release/net9.0/UnifierTSL.Publisher.dll --rid ${{ matrix.arch }} --excluded-plugins ${{ env.EXCLUDED_PLUGINS }} --output-path "${{ github.workspace }}/utsl-${{ matrix.arch }}" --use-rid-folder false --clean-output-dir true
       shell: bash
 
     - name: Create version file
