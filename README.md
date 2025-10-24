@@ -1,6 +1,6 @@
 # UnifierTSL
 
-> Languages: [English](./README.md) | [简体中文](./doc/README.zh-cn.md)
+> Languages: [English](./README.md) | [简体中文](./docs/README.zh-cn.md)
 
 <p align="center">
   <em>An experiment-friendly Terraria server launcher built on OTAPI USP, bundling per-instance consoles, early publishing helpers, and plugin scaffolding.</em>
