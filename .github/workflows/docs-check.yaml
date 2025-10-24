@@ -39,26 +39,40 @@ jobs:
         echo ""
 
         # Determine the base reference for comparison
-        if [ "pull_request" == "pull_request" ]; then
-            # Fetch the base branch if it doesn't exist locally
-            BASE_REF="origin/documentation"
-            HEAD_REF="a1da90d1b537fd2e8360f4067e3c7642059a4527"
-            
-            # Ensure we have the base branch
-            git fetch origin documentation:documentation 2>/dev/null || git fetch origin documentation
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For pull requests, compare PR head with base
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
+            HEAD_REF="${{ github.event.pull_request.head.sha }}"
+            echo "📋 Comparing PR changes:"
+            echo "   Base: $BASE_REF"
+            echo "   Head: $HEAD_REF"
         else
             # For push events, compare with the previous commit
-            BASE_REF="HEAD~1"
+            BASE_REF="HEAD^"
             HEAD_REF="HEAD"
+            echo "📋 Comparing push changes:"
+            echo "   Base: $BASE_REF"
+            echo "   Head: $HEAD_REF"
         fi
+        echo ""
 
         # Get all changed files
-        CHANGED_FILES=$(git diff --name-only "$BASE_REF"..."$HEAD_REF" 2>/dev/null || git diff --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null || echo "")
-
-        if [ -z "$CHANGED_FILES" ]; then
-            echo "⚠️  Warning: Could not determine changed files"
+        CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" 2>&1)
+        
+        if [ $? -ne 0 ]; then
+            echo "⚠️  Warning: git diff command failed"
+            echo "$CHANGED_FILES"
             exit 1
         fi
+
+        if [ -z "$CHANGED_FILES" ]; then
+            echo "ℹ️  No files changed"
+            exit 0
+        fi
+
+        echo "📝 Changed files:"
+        echo "$CHANGED_FILES"
+        echo ""
 
         # Define patterns for build-affecting files
         # These are files that should NOT be changed in a documentation-only PR
@@ -72,7 +86,7 @@ jobs:
         while IFS= read -r file; do
             [ -z "$file" ] && continue
             for pattern in "${BUILD_AFFECTING_PATTERNS[@]}"; do
-                if [[ "$file" =~ $pattern ]]; then
+                if echo "$file" | grep -qE "$pattern"; then
                     BLOCKED_FILES="$BLOCKED_FILES$file"$'\n'
                     break
                 fi
