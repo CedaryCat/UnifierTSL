@@ -23,7 +23,7 @@ UnifierTSL 致力于把 OTAPI 的 Unified Server Process 打包成顺手的工�
 - 支持在同一进程中运行多个泰拉瑞亚世界，并为每个实例提供独立的控制台窗口。
 - 附带轻量级发布器，可打包示例插件与配置，实现可复用的分发产物。
 - 提供正在演进的插件开发工具链，涵盖热重载、依赖分发与元数据辅助。
-- 借助 .NET 9.0 工具链同时瞄准 Windows、Linux（x64/ARM）与 macOS。
+- 借助 .NET 9.0 工具链同时瞄准 Windows、Linux（x64 与 ARM）与 macOS。
 
 > 小提示：想在五分钟内启动一个世界，直接跳到[快速开始](#快速开始)章节。
 
@@ -58,12 +58,13 @@ UnifierTSL 致力于把 OTAPI 的 Unified Server Process 打包成顺手的工�
 - **独立控制台**：为每个服务器上下文通过命名管道启动一个控制台客户端，保持输出着色与输入通道清晰。
 - **发布流程**：帮助生成含 RID 资产、插件和默认配置的可复现包，方便稳定部署。
 - **跨平台目标**：借助 .NET SDK 发布 `win-x64`、`linux-x64`、`linux-arm64`、`linux-arm` 与 `osx-x64`。
+- **高性能基础**：继承 USP 的结构优化，包括 IL 转换后的 Tile 类型（接口到结构体的转换）、Collision 中的 ref/in 参数传播，以及高效多世界协调的值类型包协议。
 
 ## 技术栈概览
 想知道启动器背后用了什么？下面是关键组件，帮助你判断安装内容及其价值。
 
 - **运行时**：基于 .NET 9.0，产出依赖框架的可执行文件，并由发布器生成特定 RID 的资源。
-- **USP 核心**：构建于 OTAPI.UnifiedServerProcess 1.0.10，将原版服务器转化为统一的多世界宿主。
+- **USP 核心**：构建于 OTAPI.UnifiedServerProcess 1.0.13，将原版服务器转化为统一的多世界宿主。
 - **关键包**：
 
   | 包 | 版本 | 作用 |
@@ -99,7 +100,7 @@ UnifierTSL 致力于把 OTAPI 的 Unified Server Process 打包成顺手的工�
 
 ## 快速开始
 
-> 前置条件：确认已安装 .NET 9.0 SDK（执行 `dotnet --list-sdks`），如未安装或版本过旧，可前往 <https://dotnet.microsoft.com/> 获取。
+> 前置条件：确认已安装 .NET 9.0 SDK（执行 `dotnet --list-sdks`），如未安装或版本过旧，可前往 https://dotnet.microsoft.com/ 获取。
 
 ### 选择你的方式
 - 想要带 TShock、示例插件和启动脚本的预制包，请选择[使用发布包](#使用发布包)。
@@ -108,7 +109,7 @@ UnifierTSL 致力于把 OTAPI 的 Unified Server Process 打包成顺手的工�
 > 命令执行目录说明：使用发布包时在解压后的目录运行命令，源码流程则默认在仓库根目录执行。
 
 ### 使用发布包
-1. 下载与你平台匹配的 `utsl-<rid>.zip` 压缩包。
+1. 下载与你平台匹配的归档文件：`utsl-<rid>-v<version>.zip`（Windows）或 `.tar.gz`（Linux/macOS）。
 2. 在目标主机解压，目录中会出现 `lib/`、`plugins/`、`config/`、`app/` 等文件夹，以及对应平台的可执行文件（Windows 为 `UnifierTSL.exe`，其他平台为 `UnifierTSL`）。
 3. 带参数启动服务器：
    - Windows（PowerShell）
@@ -186,7 +187,7 @@ UnifierTSL 致力于把 OTAPI 的 Unified Server Process 打包成顺手的工�
 | `evil` | 邪恶类型 | `0`-`2`、`random`、`corruption`、`crimson` | 默认为 `0`（随机） |
 
 ## 发布包结构
-发布器会在 `bin/<Config>/net9.0/utsl-<rid>`目录构建发布包，展开后大致结构如下，可用于快速检查：
+发布器会在 `bin/<Config>/net9.0/utsl-<rid>` 目录构建发布包，其一般结构如下，可用于快速检查：
 
 ```
 UnifierTSL.exe / UnifierTSL   # 针对平台的启动入口
@@ -276,9 +277,9 @@ UnifierTSL 随仓库一同提供以下配套项目，帮助你避免拆装各类
 
 ## 延伸阅读
 进一步了解可参考：
-- [开发者概览](dev-overview.md)，深入了解架构、子系统与实现模式的技术细节。
-- [插件开发指南](dev-plugin.md)，全面掌握插件开发、配置管理与热重载机制。
-- [OTAPI Unified Server Process 文档](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess)，了解多服务器运行模型。
+- [开发者概览](dev-overview.zh-cn.md)，深入了解架构、子系统与实现模式的技术细节。
+- [插件开发指南](dev-plugin.zh-cn.md)，全面掌握插件开发、配置管理与热重载机制。
+- [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess)，了解多服务器运行模型。
 - [TShock 上游仓库](https://github.com/Pryaxis/TShock)，掌握权限、REST 管理、SSC 与运营最佳实践。
 - [DeepWiki AI 分析](https://deepwiki.com/CedaryCat/UnifierTSL)，AI 生成的项目探索（仅供参考，大体上准确）。
 
