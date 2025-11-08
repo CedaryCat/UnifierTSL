@@ -68,8 +68,8 @@ jobs:
           echo "$(brew --prefix gettext)/bin" >> $GITHUB_PATH
         elif [ "$RUNNER_OS" = "Windows" ]; then
           choco install msys2 -y
-          C:\msys64\usr\bin\bash -lc "pacman -Sy --noconfirm gettext"
-          echo "C:/msys64/usr/bin" >> $GITHUB_PATH
+          "C:/tools/msys64/usr/bin/bash.exe" -lc "pacman -Sy --noconfirm gettext"
+          echo "C:/tools/msys64/usr/bin" >> $GITHUB_PATH
         fi
 
         msgfmt --version
