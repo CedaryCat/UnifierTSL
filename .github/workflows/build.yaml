@@ -69,8 +69,13 @@ jobs:
         elif [ "$RUNNER_OS" = "Windows" ]; then
           choco install msys2 -y
           /c/tools/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm gettext"
-          echo "/c/tools/msys64/usr/bin" >> $GITHUB_PATH
         fi
+        
+    - name: Add msgfmt to PATH (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        echo "C:\tools\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Verify msgfmt installation
       shell: bash
