@@ -42,6 +42,7 @@
 		<PackageReference Include="Tomlyn" Version="0.19.0" />
 		<PackageReference Include="linq2db" Version="5.4.1" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+		<PackageReference Include="GetText.NET" Version="8.0.5" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -61,12 +62,35 @@
 		</ItemGroup>
 	</Target>
 
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	<Target Name="MoveConsoleClient" AfterTargets="PostBuildEvent">
 		<ItemGroup>
 			<AppFiles Include="$(OutputPath)UnifierTSL.ConsoleClient.*" />
 		</ItemGroup>
 		<MakeDir Directories="$(OutputPath)app" />
 		<Copy SourceFiles="@(AppFiles)" DestinationFolder="$(OutputPath)app\" />
+	</Target>
+
+	<Target Name="CheckMsgfmtCallable">
+		<Exec Command="msgfmt --help > NUL" IgnoreExitCode="True" Condition=" '$(OS)' == 'Windows_NT' ">
+			<Output TaskParameter="ExitCode" PropertyName="MsgfmtExitCode" />
+		</Exec>
+		<Exec Command="msgfmt --help 2>/dev/null >/dev/null" IgnoreExitCode="True" Condition=" '$(OS)' != 'Windows_NT' ">
+			<Output TaskParameter="ExitCode" PropertyName="MsgfmtExitCode" />
+		</Exec>
+	</Target>
+	<Target
+		Name="GenerateMOFiles"
+		DependsOnTargets="CheckMsgfmtCallable"
+		AfterTargets="PostBuildEvent"
+		Inputs="..\..\i18n\**\*.po"
+		Outputs="$(OutDir)i18n\**\*.mo">
+		<ItemGroup Condition="'$(MsgfmtExitCode)' == '0'">
+			<POFiles Include="..\..\i18n\**\*.po" />
+		</ItemGroup>
+		<MakeDir Directories="$(OutDir)i18n/%(POFiles.RecursiveDir)" Condition="'$(MsgfmtExitCode)' == '0'" />
+		<Exec Command="msgfmt -o $(OutDir)i18n/%(RecursiveDir)%(Filename).mo @(POFiles)" Outputs="$(OutDir)i18n\**\*.mo" Condition="'$(MsgfmtExitCode)' == '0'">
+			<Output ItemName="Generated" TaskParameter="Outputs"/>
+		</Exec>
 	</Target>
 
 </Project>

@@ -40,9 +40,7 @@ namespace UnifierTSL.Servers
 
         private static void OnCreateInstance(On.UnifiedServerProcess.RootContext.orig_ctor orig, RootContext self, string name) {
             if (self is not ServerContext) {
-                throw new InvalidOperationException(
-                    "Under the UnifierTSL API, only the instance of ServerContext (or its derivatives) can be created. \r\n" +
-                    $"If you just want to create a sample context, use '{typeof(SampleServer).FullName}' instead.");
+                throw new InvalidOperationException(GetParticularString("{0} is class name (SampleServer)", $"Under the UnifierTSL API, only instances of ServerContext (or its derivatives) can be created. To create a sample context, use '{typeof(SampleServer).FullName}' instead."));
             }
             orig(self, name);
         }
