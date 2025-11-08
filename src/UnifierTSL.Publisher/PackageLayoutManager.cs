@@ -104,7 +104,8 @@ namespace UnifierTSL.Publisher
 
         async Task MoveMOFiles(string sourceI18nPath) {
             if (!Directory.Exists(sourceI18nPath)) {
-                return;
+                // return;
+                throw new Exception("i18n folder not found");
             }
 
             var moFiles = Directory.GetFiles(sourceI18nPath, "*.mo", SearchOption.AllDirectories);
