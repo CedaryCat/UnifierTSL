@@ -61,12 +61,19 @@ jobs:
     - name: Install msgfmt
       shell: bash
       run: |
-        choco install msys2 -y
-        refreshenv
-        C:/tools/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm gettext"
-        echo "C:/tools/msys64/usr/bin" >> $GITHUB_PATH
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update && sudo apt-get install -y gettext
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew install gettext
+          echo "$(brew --prefix gettext)/bin" >> $GITHUB_PATH
+        elif [ "$RUNNER_OS" = "Windows" ]; then
+          choco install msys2 -y
+          C:\tools\msys64\usr\bin\bash -lc "pacman -Sy --noconfirm gettext"
+          echo "C:/tools/msys64/usr/bin" >> $GITHUB_PATH
+        fi
 
-    - name: Test msgfmt
+    - name: Verify msgfmt installation
+      shell: bash
       run: msgfmt --version
 
     - name: Checkout repository
