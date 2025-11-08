@@ -67,8 +67,9 @@ jobs:
           brew install gettext
           echo "$(brew --prefix gettext)/bin" >> $GITHUB_PATH
         elif [ "$RUNNER_OS" = "Windows" ]; then
-          choco install gettext -y
-          echo "\"C:/Program Files (x86)/GnuWin32/bin\"" >> $GITHUB_PATH
+          choco install msys2 -y
+          C:\msys64\usr\bin\bash -lc "pacman -Sy --noconfirm gettext"
+          echo "C:/msys64/usr/bin" >> $GITHUB_PATH
         fi
 
         msgfmt --version
