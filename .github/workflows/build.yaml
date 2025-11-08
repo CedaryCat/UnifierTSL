@@ -56,7 +56,7 @@ jobs:
             arch: linux-arm
 
     runs-on: ${{ matrix.os }}
-
+    
     steps:
     - name: Install msgfmt
       shell: bash
@@ -68,8 +68,8 @@ jobs:
           echo "$(brew --prefix gettext)/bin" >> $GITHUB_PATH
         elif [ "$RUNNER_OS" = "Windows" ]; then
           choco install msys2 -y
-          C:\tools\msys64\usr\bin\bash -lc "pacman -Sy --noconfirm gettext"
-          echo "C:/tools/msys64/usr/bin" >> $GITHUB_PATH
+          /c/tools/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm gettext"
+          echo "/c/tools/msys64/usr/bin" >> $GITHUB_PATH
         fi
 
     - name: Verify msgfmt installation
