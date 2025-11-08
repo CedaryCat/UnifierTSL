@@ -7,7 +7,6 @@ namespace UnifierTSL
     internal class Program
     {
         private static void Main(string[] args) {
-            Thread.Sleep(5000);
             Initializer.InitializeResolver();
             UnifierApi.HandleCommandLinePreRun(args);
             Run(args);
@@ -30,7 +29,7 @@ namespace UnifierTSL
 
             Console.WriteLine();
 
-            UnifierApi.Logger.Info(GetParticularString("{0} is Terraria version, {1} is OTAPI version, {2} is USP version, {3} is UnifierApi version, {4} is PluginApi version, {5} is process ID",
+            UnifierApi.Logger.Info(GetString(
 @$"Unifier Terraria-Server-Launcher Running
 Version Info:
   Terraria v{version.TerrariaVersion} & OTAPI v{version.OTAPIVersion}

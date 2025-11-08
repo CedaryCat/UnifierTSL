@@ -65,7 +65,7 @@ msgstr "玩家'{0}'从 {1} 加入,当前玩家数: {2}"
 
 #: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:629
 msgid "No more slots available, stopping listener"
-msgstr "没有更多可用的插槽,停止监听"
+msgstr "没有更多可用的玩家槽,停止监听"
 
 #: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:50
 msgid "Dependency file missing, removing from configuration for update."
@@ -200,22 +200,19 @@ msgstr "全局初始化开始..."
 
 #: ..\..\..\src\UnifierTSL\Program.cs:34
 #, csharp-format
-msgctxt ""
-"{0} is Terraria version, {1} is OTAPI version, {2} is USP version, {3} is "
-"UnifierApi version, {4} is PluginApi version, {5} is process ID"
 msgid ""
-"Unifier Terraria-Server-Launcher Running\n"
-"Version Info:\n"
-"  Terraria v{0} & OTAPI v{1}\n"
-"  Unified-Server-Process v{2}\n"
-"  UnifierApi v{3} & PluginApi v{4}\n"
+"Unifier Terraria-Server-Launcher Running\r\n"
+"Version Info:\r\n"
+"  Terraria v{0} & OTAPI v{1}\r\n"
+"  Unified-Server-Process v{2}\r\n"
+"  UnifierApi v{3} & PluginApi v{4}\r\n"
 "Current Process ID: {5}"
 msgstr ""
-"Unifier Terraria服务器启动器 正在运行\n"
-"版本信息: \n"
-"  Terraria v{0} & OTAPI v{1}\n"
-"  Unified-Server-Process v{2}\n"
-"  UnifierApi v{3} & PluginApi v{4}\n"
+"Unifier Terraria服务器启动器 正在运行\r\n"
+"版本信息: \r\n"
+"  Terraria v{0} & OTAPI v{1}\r\n"
+"  Unified-Server-Process v{2}\r\n"
+"  UnifierApi v{3} & PluginApi v{4}\r\n"
 "当前进程ID: {5}"
 
 #: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:402
