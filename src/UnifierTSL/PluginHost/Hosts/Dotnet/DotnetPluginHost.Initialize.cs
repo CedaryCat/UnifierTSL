@@ -61,11 +61,11 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 
             if (initTasks.Count > 0) {
                 logger.Info(
-                    message: $"All plugins ({initTasks.Count}) have been initialized.");
+                    message: GetParticularString("{0} is number of plugins initialized", $"All plugins ({initTasks.Count}) have been initialized."));
             }
             else {
                 logger.Info(
-                    message: "No plugins have been initialized.");
+                    message: GetString("No plugins have been initialized."));
             }
         }
 
@@ -73,7 +73,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             if (container.Status is PluginStatus.Disabled) {
                 logger.InfoWithMetadata(
                     category: "Init",
-                    message: $"Plugins {container.Name} is disabled, Skipped.",
+                    message: GetParticularString("{0} is plugin name", $"Plugin '{container.Name}' is disabled, skipped."),
                     metadata: [new("PluginFile", container.Module.Signature.FilePath)]);
                 return;
             }
@@ -81,7 +81,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             if (container.LoadStatus is not PluginLoadStatus.NotLoaded) {
                 logger.InfoWithMetadata(
                     category: "Init",
-                    message: $"Plugins {container.Name} in Status {container.LoadStatus}, Skipped.",
+                    message: GetParticularString("{0} is plugin name, {1} is plugin load status", $"Plugin '{container.Name}' in status '{container.LoadStatus}', skipped."),
                     metadata: [new("PluginFile", container.Module.Signature.FilePath)]);
                 return;
             }
@@ -90,7 +90,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                 ConfigRegistrar config = new(container, Path.Combine("config", Path.GetFileNameWithoutExtension(container.Location.FilePath)));
                 await container.Plugin.InitializeAsync(config, prior, token);
                 container.LoadStatus = PluginLoadStatus.Loaded;
-                logger.Success($"Plugins {container.Name} v{container.Version} (by {container.Author}) initiated.");
+                logger.Success(GetParticularString("{0} is plugin name, {1} is plugin version, {2} is plugin author name", $"Plugin '{container.Name}' v{container.Version} (by {container.Author}) initialized."));
             }
             catch (Exception ex) {
                 container.LoadStatus = PluginLoadStatus.Failed;
@@ -98,7 +98,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 
                 logger.LogHandledExceptionWithMetadata(
                     category: "Init",
-                    message: $"Plugins {container.Name} failed to initialize: {ex.Message}",
+                    message: GetParticularString("{0} is plugin name, {1} is error message", $"Plugin '{container.Name}' failed to initialize: {ex.Message}"),
                     metadata: [new("PluginFile", container.Module.Signature.FilePath)],
                     ex: ex);
             }

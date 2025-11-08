@@ -11,6 +11,7 @@ namespace UnifierTSL.Publisher
         public readonly string RuntimesPath;
         public readonly string AppPath;
         public readonly string PluginsPath;
+        public readonly string I18nPath;
 
         public PackageLayoutManager(string rid, string outputPath = ".", bool useRidFolder = true, bool cleanOutputDir = true) {
             RID = rid;
@@ -21,6 +22,7 @@ namespace UnifierTSL.Publisher
             RuntimesPath = Path.Combine(PublishPath, "runtimes");
             AppPath = Path.Combine(PublishPath, "app");
             PluginsPath = Path.Combine(PublishPath, "plugins");
+            I18nPath = Path.Combine(PublishPath, "i18n");
 
             // Handle directory cleanup based on cleanOutputDir flag
             if (Directory.Exists(PublishPath)) {
@@ -38,6 +40,7 @@ namespace UnifierTSL.Publisher
             Directory.CreateDirectory(RuntimesPath);
             Directory.CreateDirectory(AppPath);
             Directory.CreateDirectory(PluginsPath);
+            Directory.CreateDirectory(I18nPath);
         }
 
         public async Task InputAppTools(ImmutableArray<string> appPaths) {
@@ -76,6 +79,8 @@ namespace UnifierTSL.Publisher
                 await FileHelpers.SafeCopy(dep, destPath);
             }));
 
+            await MoveMOFiles(result.I18nPath);
+
             var sourceRidDir = new DirectoryInfo(Path.Combine(result.RuntimesPath, RID));
             if (sourceRidDir.Exists) {
                 var nativeDir = new DirectoryInfo(Path.Combine(sourceRidDir.FullName, "native"));
@@ -97,11 +102,27 @@ namespace UnifierTSL.Publisher
             }
         }
 
+        async Task MoveMOFiles(string sourceI18nPath) {
+            if (!Directory.Exists(sourceI18nPath)) {
+                return;
+            }
+
+            var moFiles = Directory.GetFiles(sourceI18nPath, "*.mo", SearchOption.AllDirectories);
+            var copyTasks = moFiles.Select(async moFile => {
+                // Get the relative path from the source i18n directory
+                var relativePath = Path.GetRelativePath(sourceI18nPath, moFile);
+                var destPath = Path.Combine(I18nPath, relativePath);
+                await FileHelpers.SafeCopy(moFile, destPath);
+            });
+
+            await Task.WhenAll(copyTasks);
+        }
+
         /// <summary>
         /// Recursively deletes all contents of a directory, handling file locking gracefully.
         /// Deletes files first, then attempts to delete empty directories.
         /// </summary>
-        private void DeleteDirectoryContents(string dirPath) {
+        static void DeleteDirectoryContents(string dirPath) {
             var dirInfo = new DirectoryInfo(dirPath);
             if (!dirInfo.Exists) return;
 

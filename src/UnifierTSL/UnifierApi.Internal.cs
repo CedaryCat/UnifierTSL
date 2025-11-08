@@ -1,7 +1,10 @@
-﻿using Terraria.Localization;
+﻿using System.Collections.ObjectModel;
+using System.Globalization;
+using Terraria.Localization;
 using Terraria.Utilities;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
+using UnifierTSL.Extensions;
 using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
 using UnifierTSL.PluginHost;
@@ -69,8 +72,14 @@ namespace UnifierTSL
             ReadLauncherArgs();
             EventHub.Lanucher.InitializedEvent.Invoke(new());
         }
-
         internal static void HandleCommandLinePreRun(string[] launcherArgs) {
+
+            bool langSetted = false;
+
+            if (Environment.GetEnvironmentVariable("UTSL_LANGUAGE") is string overrideLang) {
+                langSetted = TrySetLang(overrideLang);
+            }
+
             Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);
             foreach (KeyValuePair<string, List<string>> arg in args) {
                 string firstValue = arg.Value[0];
@@ -78,11 +87,33 @@ namespace UnifierTSL
                     case "-culture":
                     case "-lang":
                     case "-language": {
-                            if (int.TryParse(firstValue, out int langId) && GameCulture._legacyCultures.TryGetValue(langId, out GameCulture? culture)) {
-                                GameCulture.DefaultCulture = culture;
+                            if (langSetted) {
+                                break;
+                            }
+                            if (TrySetLang(firstValue)) {
+                                langSetted = true;
                             }
                         }
                         break;
+                }
+            }
+
+            static bool TrySetLang(string langArg) {
+                if (int.TryParse(langArg, out int langId) && GameCulture._legacyCultures.TryGetValue(langId, out var culture)) {
+                    SetLang(culture);
+                    return true;
+                }
+                culture = GameCulture._legacyCultures.Values.SingleOrDefault(c => c.Name == langArg);
+                if (culture is not null) {
+                    SetLang(culture);
+                    return true;
+                }
+                return false;
+
+                static void SetLang(GameCulture culture) {
+                    GameCulture.DefaultCulture = culture;
+                    LanguageManager.Instance.SetLanguage(culture);
+                    CultureInfo.CurrentCulture = culture.RedirectedCultureInfo();
                 }
             }
         }
@@ -98,7 +129,7 @@ namespace UnifierTSL
                             ListenPort = port;
                         }
                         else {
-                            Console.WriteLine("Invalid port number specified: {0}", arg.Value);
+                            Console.WriteLine(GetParticularString("{0} is user input value for port number", $"Invalid port number specified: {firstValue}"));
                         }
                         break;
                     case "-password":
@@ -146,8 +177,8 @@ namespace UnifierTSL
                 int evil = 0;
 
                 if (!Utilities.CLI.TryParseSubArguements(serverArgs, out Dictionary<string, string>? result)) {
-                    Console.WriteLine("Invalid server argument: {0}", arg.Value);
-                    Console.WriteLine("Expected format: -server name:<name> worldname:<worldname> gamemode:<value> size:<value> evil:<value> seed:<value>");
+                    Console.WriteLine(GetParticularString("{0} is server argument string", $"Invalid server argument: {serverArgs}"));
+                    Console.WriteLine(GetString($"Expected format: -server name:<name> worldname:<worldname> gamemode:<value> size:<value> evil:<value> seed:<value>"));
                     goto failToAddServer;
                 }
 
@@ -156,7 +187,7 @@ namespace UnifierTSL
                         case "name": {
                                 serverName = serverArg.Value.Trim();
                                 if (UnifiedServerCoordinator.Servers.Any(s => s.Name == serverName)) {
-                                    Console.WriteLine("Server name '{0}' is already in used", serverName);
+                                    Console.WriteLine(GetParticularString("{0} is server name", $"Server name '{serverName}' is already in use"));
                                     goto failToAddServer;
                                 }
                                 break;
@@ -165,7 +196,7 @@ namespace UnifierTSL
                                 worldName = serverArg.Value.Trim();
                                 ServerContext? nameConflict = UnifiedServerCoordinator.Servers.FirstOrDefault(s => s.Main.worldName == worldName);
                                 if (nameConflict is not null) {
-                                    Console.WriteLine("World name '{0}' is already in used by server '{1}'", worldName, nameConflict.Name);
+                                    Console.WriteLine(GetParticularString("{0} is world name, {1} is server name", $"World name '{worldName}' is already in use by server '{nameConflict.Name}'"));
                                     goto failToAddServer;
                                 }
                                 break;
@@ -191,8 +222,8 @@ namespace UnifierTSL
                                         difficulty = 3;
                                     }
                                     else {
-                                        Console.WriteLine("Invalid server difficulty: {0}", serverArgVal);
-                                        Console.WriteLine("Expected value: an integer between 0 and 3 (inclusive), or one of the strings: normal, expert, master, creative");
+                                        Console.WriteLine(GetParticularString("{0} is user input value for server difficulty", $"Invalid server difficulty: {serverArgVal}"));
+                                        Console.WriteLine(GetString($"Expected value: an integer between 0 and 3 (inclusive), or one of the strings: normal, expert, master, creative"));
                                         goto failToAddServer;
                                     }
                                 }
@@ -211,8 +242,8 @@ namespace UnifierTSL
                                         size = 3;
                                     }
                                     else {
-                                        Console.WriteLine("Invalid server size: {0}", serverArgVal);
-                                        Console.WriteLine("Expected value: an integer between 0 and 2 (inclusive), or one of the strings: small, medium, large");
+                                        Console.WriteLine(GetParticularString("{0} is user input value for server size", $"Invalid server size: {serverArgVal}"));
+                                        Console.WriteLine(GetString($"Expected value: an integer between 0 and 2 (inclusive), or one of the strings: small, medium, large"));
                                         goto failToAddServer;
                                     }
                                 }
@@ -231,8 +262,8 @@ namespace UnifierTSL
                                         evil = 2;
                                     }
                                     else {
-                                        Console.WriteLine("Invalid server evil: {0}", serverArg.Value);
-                                        Console.WriteLine("Expected value: an integer between 0 and 2 (inclusive), or one of the strings: random, corruption, crimson");
+                                        Console.WriteLine(GetParticularString("{0} is user input value for server evil (world corruption/crimson type)", $"Invalid server evil: {serverArg.Value}"));
+                                        Console.WriteLine(GetString($"Expected value: an integer between 0 and 2 (inclusive), or one of the strings: random, corruption, crimson"));
                                         goto failToAddServer;
                                     }
                                 }
@@ -242,12 +273,12 @@ namespace UnifierTSL
                 }
 
                 if (string.IsNullOrWhiteSpace(worldName)) {
-                    Console.WriteLine("Parameter 'worldname' is required.");
+                    Console.WriteLine(GetString("Parameter 'worldname' is required."));
                     goto failToAddServer;
                 }
 
                 if (string.IsNullOrWhiteSpace(serverName)) {
-                    Console.WriteLine("Parameter 'name' is required.");
+                    Console.WriteLine(GetString("Parameter 'name' is required."));
                     goto failToAddServer;
                 }
 
@@ -263,13 +294,13 @@ namespace UnifierTSL
 
         private static void ReadLauncherArgs() {
             while (ListenPort < 0 || ListenPort >= ushort.MaxValue) {
-                Console.Write("Enter the port to listen on: ");
+                Console.Write(GetString($"Enter the port to listen on: "));
                 if (int.TryParse(Console.ReadLine(), out int port)) {
                     ListenPort = port;
                 }
             }
             if (serverPassword is null) {
-                Console.WriteLine("Enter the server password: ");
+                Console.Write(GetString($"Enter the server password: "));
                 serverPassword = Console.ReadLine()?.Trim() ?? "";
             }
         }

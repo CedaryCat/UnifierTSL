@@ -80,6 +80,7 @@ namespace UnifierTSL.Publisher
                 OutputExecutable: executable,
                 PdbFile: pdbPath,
                 RuntimesPath: Path.Combine(buildDir, "runtimes"),
+                I18nPath: Path.Combine(buildDir, "i18n"),
                 OtherDependencyDlls: [..dependencies, ..dependenciesPdb, runtimeConfigPath, depsJsonPath]
             );
         }
@@ -88,7 +89,8 @@ namespace UnifierTSL.Publisher
     public record CoreAppBuilderResult(
         string OutputExecutable,
         string PdbFile,
-        string RuntimesPath,
+        string RuntimesPath, 
+        string I18nPath,
         string[] OtherDependencyDlls
     );
 }

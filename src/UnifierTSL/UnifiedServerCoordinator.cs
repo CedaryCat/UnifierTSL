@@ -197,7 +197,7 @@ namespace UnifierTSL
                                 UnifierApi.EventHub.Netplay.ReceiveFullClientInfoEvent.Invoke(new(client, player, sender), out bool h);
                                 if (h) {
                                     if (!client.PendingTermination || !client.PendingTerminationApproved) {
-                                        sender.Kick(NetworkText.FromLiteral("You are not allowed to join this server."));
+                                        sender.Kick(NetworkText.FromLiteral(GetString("You are not allowed to join this server.")));
                                     }
                                     return;
                                 }
@@ -207,11 +207,11 @@ namespace UnifierTSL
                                 ServerContext? joinServer = e.JoinServer;
 
                                 if (joinServer is null) {
-                                    sender.Kick(NetworkText.FromLiteral("Unable to locate an available server to join."));
+                                    sender.Kick(NetworkText.FromLiteral(GetParticularString("{0} is player name, {1} is player UUID", $"No available server found for player '{player.name}' ({client.ClientUUID}); connection aborted.")));
 
                                     Logger.Warning(
                                         category: "PendingConnection",
-                                        message: $"No available server found for player '{player.name}' ({client.ClientUUID}); connection aborted.");
+                                        message: GetParticularString("{0} is player name, {1} is player UUID", $"No available server found for player '{player.name}' ({client.ClientUUID}); connection aborted."));
                                 }
                                 else {
                                     SetClientCurrentlyServer(Index, joinServer);
@@ -228,7 +228,7 @@ namespace UnifierTSL
 
                                     Logger.Info(
                                         category: "PendingConnection",
-                                        message: $"Player '{player.name}' ({client.ClientUUID}) routed to server '{joinServer.Name}'.");
+                                        message: GetParticularString("{0} is player name, {1} is player UUID, {2} is server name", $"Player '{player.name}' ({client.ClientUUID}) routed to server '{joinServer.Name}'."));
                                 }
 
                                 break;
@@ -238,7 +238,7 @@ namespace UnifierTSL
 
                                 Logger.Warning(
                                     category: "PendingConnection",
-                                    message: $"'{client.Name}' ({client.Socket.GetRemoteAddress()}) sent invalid packet {type} before name-uuid anthentication. Kicked.");
+                                    message: GetParticularString("{0} is player name, {1} is player IP address, {2} is packet type number", $"'{client.Name}' ({client.Socket.GetRemoteAddress()}) sent invalid packet {type} before name/UUID authentication. Kicked."));
                                 break;
                             }
                     }
@@ -565,7 +565,7 @@ namespace UnifierTSL
                         int value = 1010;
                         bw.Write(value);
                         bw.Write(ListenPort);
-                        bw.Write("Unified-Server-UpdateDependencies");
+                        bw.Write("UnifierTSL-Servers");
                         string text = Dns.GetHostName();
                         if (text == "localhost") {
                             text = Environment.MachineName;
@@ -610,7 +610,7 @@ namespace UnifierTSL
 
                 Logger.Info(
                     category: "ConnectionAccept",
-                    message: $"Accepted connection: {client.GetRemoteAddress()}");
+                    message: GetParticularString("{0} is client IP address", $"Accepted connection: {client.GetRemoteAddress()}"));
             }
             else {
                 TmpSocketSender sender = new(client);
@@ -618,7 +618,7 @@ namespace UnifierTSL
 
                 Logger.Info(
                     category: "ConnectionAccept",
-                    message: "Server is full");
+                    message: GetString("Server is full"));
             }
             if (FindNextEmptyClientSlot() == -1) {
                 listener.Stop();
@@ -626,7 +626,7 @@ namespace UnifierTSL
 
                 Logger.Info(
                     category: "ConnectionAccept",
-                    message: "No more slots available, stopping listener");
+                    message: GetString("No more slots available, stopping listener"));
             }
         }
         private static int FindNextEmptyClientSlot() {
@@ -667,7 +667,10 @@ namespace UnifierTSL
                 // Leave data sync
                 from.SyncPlayerLeaveToOthers(plr);
                 from.SyncServerOfflineToPlayer(plr);
-                from.Console.WriteLine($"[USP] Player '{from.Main.player[plr].name}' transferred to {to.Name}, current players: {to.NPC.GetActivePlayerCount()}");
+
+                from.Log.Success(
+                    category: "PlayerTransfer",
+                    message: GetParticularString("{0} is player name, {1} is destination server name, {2} is number of players in destination server", $"Player '{from.Main.player[plr].name}' transferred to {to.Name}, current players: {to.NPC.GetActivePlayerCount()}"));
 
                 // Player state swap
                 Player inactivePlayer = to.Main.player[plr];
@@ -687,12 +690,14 @@ namespace UnifierTSL
 
                 UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
 
-                to.Console.WriteLine($"[USP] Player '{to.Main.player[plr].name}' joined from {from.Name}, current players: {to.NPC.GetActivePlayerCount()}");
+                to.Log.Success(
+                    category: "PlayerTransfer",
+                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is number of players in current server", $"Player '{to.Main.player[plr].name}' joined from {from.Name}, current players: {to.NPC.GetActivePlayerCount()}"));
 
                 // Log
                 Logger.Info(
-                    category: "TransferPlayerToServer",
-                    message: $"Player '{to.Main.player[plr].name}' {from.Name} → {to.Name} transferred.");
+                    category: "PlayerTransfer",
+                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Player '{to.Main.player[plr].name}' {from.Name} → {to.Name} transferred."));
             }
         }
     }

@@ -47,7 +47,7 @@ namespace UnifierTSL.Module.Dependencies
                         Setting.Dependencies.Remove(depEntry.Name);
                         Logger.Debug(
                             category: "ConfNormalize",
-                            message: "The dependencies file missing, removing from the recorded configuration for update.");
+                            message: GetString("Dependency file missing, removing from configuration for update."));
                         break;
                     }
                 }
@@ -90,13 +90,12 @@ namespace UnifierTSL.Module.Dependencies
                     File.Delete(file.FullName);
                     Logger.Debug(
                         category: "DepsCleanUp",
-                        message: $"Deleted unused dependencies file '{deletePath}'");
+                        message: GetParticularString("{0} is dependency file path (relative path)", $"Deleted unused dependencies file '{deletePath}'"));
                 }
                 catch (IOException ex) when (FileSystemHelper.FileIsInUse(ex)) {
                     Logger.Warning(
                         category: "DepsCleanUp",
-                        message: $"Failed to delete unused dependencies file '{deletePath}'.\r\n" +
-                        $"It is likely that the file is in use by another process. you can try to delete it manually.");
+                        message: GetParticularString("{0} is dependency file path (relative path)", $"Failed to delete unused dependencies file '{deletePath}'.\r\nIt is likely that the file is in use by another process. You can try to delete it manually."));
                 }
                 catch {
                     throw;
@@ -113,13 +112,12 @@ namespace UnifierTSL.Module.Dependencies
                         File.Delete(Path.Combine(moduleDirInfo.FullName, oldDependenicyPair.Key));
                         Logger.Debug(
                             category: "DepsCleanUp",
-                            message: $"Deleted unused dependencies file '{Path.Combine("bin", oldDependenicyPair.Key)}'");
+                            message: GetParticularString("{0} is dependency file path (relative path)", $"Deleted unused dependencies file '{Path.Combine("bin", oldDependenicyPair.Key)}'"));
                     }
                     catch (IOException ex) when (FileSystemHelper.FileIsInUse(ex)) {
                         Logger.Warning(
                             category: "DepsCleanUp",
-                            message: $"Failed to delete unused dependencies file '{Path.Combine("runtimes", oldDependenicyPair.Key)}'.\r\n" +
-                            $"It is likely that the file is in use by another process. you can try to delete it manually.");
+                            message: GetParticularString("{0} is dependency file path (relative path)", $"Failed to delete unused dependencies file '{Path.Combine("runtimes", oldDependenicyPair.Key)}'.\r\nIt is likely that the file is in use by another process. You can try to delete it manually."));
                     }
                     catch {
                         throw;

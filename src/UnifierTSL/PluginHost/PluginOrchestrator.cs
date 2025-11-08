@@ -56,8 +56,8 @@ namespace UnifierTSL.PluginHost
                         ) {
                         Logger.WarningWithMetadata(
                             category: "Loading",
-                            message: $"Plugin host {type.FullName} is not compatible with current plugin host version {ApiVersion}\r\n" +
-                            $"Major version must be equal, Minor version of plugin host must be less or equal.",
+                            message: GetParticularString("{0} is plugin host class name, {1} is current plugin host version (e.g. 1.0.0)", 
+                                $"Plugin host '{type.FullName}' is not compatible with current plugin host version '{ApiVersion}'. Major version must be equal, minor version of plugin host must be less or equal."),
                             metadata: [new("PluginHostFile", module.Assembly.Location)]);
                         continue;
                     }
@@ -69,7 +69,8 @@ namespace UnifierTSL.PluginHost
                     catch (Exception ex) {
                         Logger.LogHandledExceptionWithMetadata(
                             category: "Loading",
-                            message: $"Failed to create instance of plugin host {type.FullName}.",
+                            message: GetParticularString("{0} is plugin host class name",
+                                $"Failed to create instance of plugin host '{type.FullName}'."),
                             metadata: [new("PluginHostFile", module.Assembly.Location)],
                             ex: ex);
                         continue;

@@ -22,7 +22,8 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             if (pluginContainer is not PluginContainer container) {
                 Logger.Warning(
                     category: "Unloading",
-                    message: $"Plugins {pluginContainer.Name} is not a .Net Plugin, skipping.");
+                    message: GetParticularString("{0} is plugin name", 
+                        $"Plugin '{pluginContainer.Name}' is not a .NET Plugin, skipping."));
                 return;
             }
             ModuleAssemblyLoader loader = new("plugins");
@@ -33,7 +34,8 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             if (pluginContainer is not PluginContainer container) {
                 Logger.Warning(
                     category: "Unloading",
-                    message: $"Plugins {pluginContainer.Name} is not a .Net Plugin, skipping.");
+                    message: GetParticularString("{0} is plugin name",
+                        $"Plugin '{pluginContainer.Name}' is not a .NET Plugin, skipping."));
                 return false;
             }
 
@@ -54,7 +56,8 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             if (pluginInfo is not DotnetPluginInfo info) {
                 Logger.Warning(
                     category: "Loading",
-                    message: $"Plugins {pluginInfo.Name} is not a DotnetPluginInfo, skipping.");
+                    message: GetParticularString("{0} is plugin name",
+                        $"Plugin '{pluginInfo.Name}' is not a DotnetPluginInfo, skipping."));
                 loadDetails = default;
                 return null;
             }
@@ -86,7 +89,8 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                 if (boxed is not IPlugin) {
                     Logger.WarningWithMetadata(
                         category: "Loading",
-                        message: $"Plugin {info.Name} is not an IPlugin, skipping.",
+                        message: GetParticularString("{0} is plugin name (or type name)", 
+                            $"Type '{info.Name}' does not implement IPlugin. Skipped."),
                     metadata: [new("PluginFile", info.Location.FilePath)]);
                     loadDetails = LoadDetails.Failed;
                     return null;
@@ -96,7 +100,8 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             catch (Exception ex) {
                 Logger.LogHandledExceptionWithMetadata(
                     category: "Loading",
-                    message: $"Failed to create instance of plugin {info.Name}, type: {type.FullName}",
+                    message: GetParticularString("{0} is plugin name, {1} is type full name", 
+                        $"Failed to create instance of plugin '{info.Name}', type: '{type.FullName}'."),
                     metadata: [new("PluginFile", info.Location.FilePath)],
                     ex: ex);
                 loadDetails = LoadDetails.Failed;
