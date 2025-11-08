@@ -70,6 +70,10 @@ namespace UnifierTSL.Publisher
 
             var executable = Path.Combine(publishDir, projectName + FileHelpers.ExecutableExtension(rid));
 
+            var i18nPath = Path.Combine(buildDir, "i18n");
+
+            EnsureI18nPathAsync(i18nPath).GetAwaiter().GetResult();
+
             HostWriter.CreateAppHost(
                 appHostSourceFilePath: appHostTemplate,
                 appHostDestinationFilePath: executable,
@@ -80,9 +84,73 @@ namespace UnifierTSL.Publisher
                 OutputExecutable: executable,
                 PdbFile: pdbPath,
                 RuntimesPath: Path.Combine(buildDir, "runtimes"),
-                I18nPath: Path.Combine(buildDir, "i18n"),
+                I18nPath: i18nPath,
                 OtherDependencyDlls: [..dependencies, ..dependenciesPdb, runtimeConfigPath, depsJsonPath]
             );
+        }
+
+        private async Task EnsureI18nPathAsync(string i18nOutputDir) {
+            if (Directory.Exists(i18nOutputDir)) {
+                return;
+            }
+
+            var solutionDir = SolutionDirectoryHelper.SolutionRoot;
+            var i18nSourceDir = Path.Combine(solutionDir, "..", "i18n");
+
+            var poFiles = Directory.GetFiles(i18nSourceDir, "*.po", SearchOption.AllDirectories);
+            // Generate MO files
+            Directory.CreateDirectory(i18nOutputDir);
+
+            foreach (var poFile in poFiles) {
+                var relativePath = Path.GetRelativePath(i18nSourceDir, poFile);
+                var outputMoFile = Path.Combine(i18nOutputDir, Path.ChangeExtension(relativePath, ".mo"));
+
+                // Ensure output directory exists
+                var outputDir = Path.GetDirectoryName(outputMoFile);
+                if (outputDir != null) {
+                    Directory.CreateDirectory(outputDir);
+                }
+                await GenerateMOFileAsync(poFile, outputMoFile);
+            }
+        }
+
+        static async Task<bool> GenerateMOFileAsync(string poFilePath, string moFilePath) {
+            try {
+                var psi = new ProcessStartInfo {
+                    FileName = "msgfmt",
+                    Arguments = $"-o \"{moFilePath}\" \"{poFilePath}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardErrorEncoding = Encoding.UTF8,
+                    StandardOutputEncoding = Encoding.UTF8,
+                };
+
+                using var process = Process.Start(psi);
+
+                if (process == null) {
+                    Console.Error.WriteLine($"Failed to start msgfmt process for {Path.GetFileName(poFilePath)}");
+                    Environment.Exit(1);
+                }
+
+                var output = await process.StandardOutput.ReadToEndAsync();
+                var error = await process.StandardError.ReadToEndAsync();
+
+                process.WaitForExit();
+
+                if (process.ExitCode != 0) {
+                    Console.Error.WriteLine($"ERROR: msgfmt failed for {Path.GetFileName(poFilePath)} Error: {error}");
+                    Environment.Exit(1);
+                }
+
+                return true;
+            }
+            catch (Exception ex) {
+                Console.Error.WriteLine($"Failed to generate MO file for {Path.GetFileName(poFilePath)}: {ex.Message}");
+                Environment.Exit(1);
+            }
+            return false;
         }
     }
 
