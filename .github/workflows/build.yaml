@@ -58,6 +58,21 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+    - name: Install msgfmt
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update && sudo apt-get install -y gettext
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew install gettext
+          echo "$(brew --prefix gettext)/bin" >> $GITHUB_PATH
+        elif [ "$RUNNER_OS" = "Windows" ]; then
+          choco install gettext -y
+          echo "\"C:/Program Files (x86)/GnuWin32/bin\"" >> $GITHUB_PATH
+        fi
+
+        msgfmt --version
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
