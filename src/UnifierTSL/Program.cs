@@ -1,4 +1,5 @@
-﻿using Terraria.Localization;
+﻿using System.Text.RegularExpressions;
+using Terraria.Localization;
 using UnifierTSL.PluginHost;
 
 namespace UnifierTSL
@@ -28,14 +29,15 @@ namespace UnifierTSL
 
             Console.WriteLine();
 
-            UnifierApi.Logger.Info($"Unifier Terraria-Server-Launcher Running\r\n" +
-                $"Version Info: \r\n" +
-                $"  Terraria v{version.TerrariaVersion} & OTAPI v{version.OTAPIVersion}\r\n" +
-                $"  Unified-Server-Process v{version.USPVersion}\r\n" +
-                $"  UnifierApi v{version.UnifierApiVersion} & PluginApi v{PluginOrchestrator.ApiVersion}\r\n" +
-                $"Current Process ID: {Environment.ProcessId}");
+            UnifierApi.Logger.Info(GetString(
+@$"Unifier Terraria-Server-Launcher Running
+Version Info:
+  Terraria v{version.TerrariaVersion} & OTAPI v{version.OTAPIVersion}
+  Unified-Server-Process v{version.USPVersion}
+  UnifierApi v{version.UnifierApiVersion} & PluginApi v{PluginOrchestrator.ApiVersion}
+Current Process ID: {Environment.ProcessId}"));
 
-            WorkRunner.RunTimedWork("Init", "Global initialization started...", () => {
+            WorkRunner.RunTimedWork("Init", GetString("Global initialization started..."), () => {
                 Initializer.Initialize();
                 UnifierApi.Initialize(args);
             });
@@ -46,20 +48,20 @@ namespace UnifierTSL
 
             string currentServers = "";
             if (UnifiedServerCoordinator.Servers.Length > 0) {
-                currentServers = "Current Servers: \r\n";
+                currentServers = GetString("Current Servers: ") + "\r\n";
                 foreach (Servers.ServerContext server in UnifiedServerCoordinator.Servers) {
-                    currentServers += $"  {server.Name} Running on world: {server.worldDataProvider.WorldFileName}\r\n";
+                    currentServers += GetParticularString("{0} is server name, {1} is world file name", $"  {server.Name} Running on world: {server.worldDataProvider.WorldFileName}") + "\r\n";
                 }
             }
 
             UnifiedServerCoordinator.Logger.Info(
                 category: "Startup",
-                message: "UnifierTSL started successfully! \r\n" +
+                message: GetString($"UnifierTSL started successfully!") + "\r\n" +
                          currentServers +
                          Language.GetTextValue("CLI.ListeningOnPort", UnifiedServerCoordinator.ListenPort) + "\r\n" +
                          (string.IsNullOrEmpty(UnifiedServerCoordinator.ServerPassword)
-                         ? "Server is running without a password. -anyone can join."
-                         : $"Server is running with password: '{UnifiedServerCoordinator.ServerPassword}'"));
+                         ? GetString($"Server is running without a password. Anyone can join.")
+                         : GetParticularString("{0} is server password", $"Server is running with password: '{UnifiedServerCoordinator.ServerPassword}'")));
 
             UnifierApi.EventHub.Coordinator.Started.Invoke(default);
             UnifierApi.EventHub.Chat.KeepReadingInput();

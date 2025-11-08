@@ -21,7 +21,7 @@ namespace UnifierTSL
 
             UnifierApi.Logger.Info(
                 category: $"TimedWork:{category}",
-                message: $"- Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
+                message: GetParticularString("{0} is elapsed milliseconds (number format with 2 decimal places)", $"Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)"));
         }
         public static TOut RunTimedWork<TOut>(string category, string message, WorkDelegate<TOut> work) {
             UnifierApi.Logger.Info(
@@ -39,7 +39,7 @@ namespace UnifierTSL
 
             UnifierApi.Logger.Info(
                 category: $"TimedWork:{category}",
-                message: $"- Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
+                message: GetParticularString("{0} is elapsed milliseconds (number format with 2 decimal places)", $"Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)"));
 
             return output;
         }
@@ -59,7 +59,7 @@ namespace UnifierTSL
 
             UnifierApi.Logger.Info(
                 category: $"TimedWork:{category}",
-                message: $"- Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)");
+                message: GetParticularString("{0} is elapsed milliseconds (number format with 2 decimal places)", $"Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)"));
 
             endAction?.Invoke();
         }

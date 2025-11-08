@@ -117,19 +117,19 @@ namespace UnifierTSL.Module
             if (isRequiresCoreModule && isCoreModule) {
                 Logger.Warning(
                     category: null,
-                    message: $"The module '{dll}' is a core module but has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute. Skipping it.");
+                    message: GetParticularString("{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)", $"The module '{dll}' is a core module but has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute. Skipping it."));
             }
 
             if (isRequiresCoreModule && hasDependencies) {
                 Logger.Warning(
                     category: null,
-                    message: $"The module '{dll}' has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute should not specify dependencies. Skipping it.");
+                    message: GetParticularString("{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)", $"The module '{dll}' with a '{typeof(RequiresCoreModuleAttribute).Name}' attribute should not specify dependencies. Skipping it."));
             }
 
             if (isRequiresCoreModule && requiresCoreModule is null) {
                 Logger.Warning(
                     category: null,
-                    message: $"The module '{dll}' has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute but no module name specified. Skipping it.");
+                    message: GetParticularString("{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)", $"The module '{dll}' has a '{typeof(RequiresCoreModuleAttribute).Name}' attribute but no module name specified. Skipping it."));
             }
 
             string fileName = Path.GetFileName(dll);
@@ -383,8 +383,7 @@ namespace UnifierTSL.Module
             if (moduleDirInfo.Name != name) {
                 Logger.Warning(
                     category: "UpdateDeps",
-                    message: "Module with dependencies must be in the same moduleDirInfo as the module to store dependencies.\r\n" +
-                            $"Module File: {dll}");
+                    message: GetParticularString("{0} is module file path (absolute or relative)", $"Module with dependencies must be in the same moduleDirInfo as the module to store dependencies.\r\nModule File: {dll}"));
 
                 return false;
             }
@@ -400,7 +399,7 @@ namespace UnifierTSL.Module
             catch (Exception ex) {
                 Logger.LogHandledExceptionWithMetadata(
                     category: "ExtractDeps",
-                    message: $"Failed to extract dependencies tmp of module '{dll}'.",
+                    message: GetParticularString("{0} is module file path (relative path)", $"Failed to extract temporary dependencies of module '{dll}'."),
                     ex: ex,
                     metadata: [new("ModuleFile", dll)]);
 
@@ -544,7 +543,7 @@ namespace UnifierTSL.Module
             catch (Exception ex) {
                 Logger.LogHandledExceptionWithMetadata(
                     category: "ExtractDeps",
-                    message: $"Failed to extract dependencies files of module '{dll}'.",
+                    message: GetParticularString("{0} is module file path (relative path)", $"Failed to extract dependencies files of module '{dll}'."),
                     ex: ex,
                     metadata: [new("ModuleFile", dll)]);
 

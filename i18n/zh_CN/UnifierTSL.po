@@ -1,0 +1,393 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: UnifierTSL\n"
+"POT-Creation-Date: 2025-11-08 19:04:30+0800\n"
+"PO-Revision-Date: 2025-11-08 19:04:30+0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: GetText.NET Extractor\n"
+
+#: ..\..\..\src\UnifierTSL\Servers\ServerContext.EventHandlers.cs:14
+#, csharp-format
+msgctxt "{0} is server name, {1} is player name, {2} is chat message"
+msgid "[Realm·{0}] <{1}>: {2}"
+msgstr "[域·{0}] <{1}>: {2}"
+
+#: ..\..\..\src\UnifierTSL\Program.cs:52
+msgid "Current Servers: "
+msgstr "当前服务器: "
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:613
+#, csharp-format
+msgctxt "{0} is client IP address"
+msgid "Accepted connection: {0}"
+msgstr "已接受连接: {0}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:93
+#, csharp-format
+msgctxt "{0} is plugin name (or type name)"
+msgid "Type '{0}' does not implement IPlugin. Skipped."
+msgstr "类型'{0}'未实现IPlugin接口。已跳过。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:281
+msgid "Parameter 'name' is required."
+msgstr "参数'name'是必需的。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:673
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is destination server name, {2} is number of players "
+"in destination server"
+msgid "Player '{0}' transferred to {1}, current players: {2}"
+msgstr "玩家'{0}'已转移到 {1},当前玩家数: {2}"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:303
+msgid "Enter the server password: "
+msgstr "输入服务器密码: "
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:84
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is plugin load status"
+msgid "Plugin '{0}' in status '{1}', skipped."
+msgstr "插件'{0}'状态为'{1}',已跳过。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:695
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is source server name, {2} is number of players in "
+"current server"
+msgid "Player '{0}' joined from {1}, current players: {2}"
+msgstr "玩家'{0}'从 {1} 加入,当前玩家数: {2}"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:629
+msgid "No more slots available, stopping listener"
+msgstr "没有更多可用的玩家槽,停止监听"
+
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:50
+msgid "Dependency file missing, removing from configuration for update."
+msgstr "依赖文件缺失,从配置中移除以便更新。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:73
+#, csharp-format
+msgctxt "{0} is plugin host class name"
+msgid "Failed to create instance of plugin host '{0}'."
+msgstr "无法创建插件宿主'{0}'的实例。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:68
+msgid "No plugins have been initialized."
+msgstr "没有初始化任何插件。"
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:546
+#, csharp-format
+msgctxt "{0} is module file path (relative path)"
+msgid "Failed to extract dependencies files of module '{0}'."
+msgstr "无法提取模块'{0}'的依赖文件。"
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:120
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' is a core module but has a '{1}' attribute. Skipping it."
+msgstr "模块'{0}'是核心模块但具有'{1}'属性。跳过它。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:297
+msgid "Enter the port to listen on: "
+msgstr "输入要监听的端口: "
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:126
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' with a '{1}' attribute should not specify dependencies. "
+"Skipping it."
+msgstr "带有'{1}'属性的模块'{0}'不应指定依赖关系。跳过它。"
+
+#: ..\..\..\src\UnifierTSL\Program.cs:54
+#, csharp-format
+msgctxt "{0} is server name, {1} is world file name"
+msgid "  {0} Running on world: {1}"
+msgstr "  {0} 运行在世界: {1}"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:225
+#, csharp-format
+msgctxt "{0} is user input value for server difficulty"
+msgid "Invalid server difficulty: {0}"
+msgstr "无效的服务器难度: {0}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Configs\ConfigHandle.cs:61
+#, csharp-format
+msgctxt "{0} is config file path (relative path)"
+msgid "Failed to read modified config '{0}', skipping reload."
+msgstr "无法读取修改的配置'{0}',跳过重新加载。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:245
+#, csharp-format
+msgctxt "{0} is user input value for server size"
+msgid "Invalid server size: {0}"
+msgstr "无效的服务器大小: {0}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:64
+#, csharp-format
+msgctxt "{0} is number of plugins initialized"
+msgid "All plugins ({0}) have been initialized."
+msgstr "所有插件({0})都已初始化。"
+
+#: ..\..\..\src\UnifierTSL\Program.cs:65
+#, csharp-format
+msgctxt "{0} is server password"
+msgid "Server is running with password: '{0}'"
+msgstr "服务器运行密码为: '{0}'"
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:386
+#, csharp-format
+msgctxt "{0} is module file path (absolute or relative)"
+msgid ""
+"Module with dependencies must be in the same moduleDirInfo as the module to "
+"store dependencies.\r\n"
+"Module File: {0}"
+msgstr ""
+"带有依赖的模块必须与存储依赖的模块在同一moduleDirInfo中。\r\n"
+"模块文件: {0}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:26
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:38
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is not a .NET Plugin, skipping."
+msgstr "插件'{0}'不是.NET插件,跳过。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:60
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is not a DotnetPluginInfo, skipping."
+msgstr "插件'{0}'不是DotnetPluginInfo,跳过。"
+
+#: ..\..\..\src\UnifierTSL\Servers\ServerContext.cs:43
+#, csharp-format
+msgctxt "{0} is class name (SampleServer)"
+msgid ""
+"Under the UnifierTSL API, only instances of ServerContext (or its "
+"derivatives) can be created. To create a sample context, use '{0}' instead."
+msgstr ""
+"在UnifierTSL API下,只能创建ServerContext(或其派生类)的实例。要创建示例上下文,请改用'{0}'。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:241
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is player IP address, {2} is packet type number"
+msgid ""
+"'{0}' ({1}) sent invalid packet {2} before name/UUID authentication. Kicked."
+msgstr ""
+"'{0}' ({1}) 在名称/UUID身份验证前发送了无效数据包 {2}。已踢出。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:181
+msgid ""
+"Expected format: -server name:<name> worldname:<worldname> gamemode:<value> "
+"size:<value> evil:<value> seed:<value>"
+msgstr ""
+"预期格式: -server name:<name> worldname:<worldname> gamemode:<value> "
+"size:<value> evil:<value> seed:<value>"
+
+#: ..\..\..\src\UnifierTSL\Program.cs:41
+msgid "Global initialization started..."
+msgstr "全局初始化开始..."
+
+#: ..\..\..\src\UnifierTSL\Program.cs:34
+#, csharp-format
+msgid ""
+"Unifier Terraria-Server-Launcher Running\r\n"
+"Version Info:\r\n"
+"  Terraria v{0} & OTAPI v{1}\r\n"
+"  Unified-Server-Process v{2}\r\n"
+"  UnifierApi v{3} & PluginApi v{4}\r\n"
+"Current Process ID: {5}"
+msgstr ""
+"Unifier Terraria服务器启动器 正在运行\r\n"
+"版本信息: \r\n"
+"  Terraria v{0} & OTAPI v{1}\r\n"
+"  Unified-Server-Process v{2}\r\n"
+"  UnifierApi v{3} & PluginApi v{4}\r\n"
+"当前进程ID: {5}"
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:402
+#, csharp-format
+msgctxt "{0} is module file path (relative path)"
+msgid "Failed to extract temporary dependencies of module '{0}'."
+msgstr "无法提取模块'{0}'的临时依赖。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:265
+#, csharp-format
+msgctxt ""
+"{0} is user input value for server evil (world corruption/crimson type)"
+msgid "Invalid server evil: {0}"
+msgstr "无效的服务器邪恶类型: {0}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Configs\ConfigHandle.cs:49
+#, csharp-format
+msgctxt "{0} is config file path (relative path)"
+msgid "FileWatcher error occurred for config '{0}'."
+msgstr "配置'{0}'发生FileWatcher错误。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:93
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is plugin version, {2} is plugin author name"
+msgid "Plugin '{0}' v{1} (by {2}) initialized."
+msgstr "插件'{0}' v{1} (作者 {2}) 已初始化。"
+
+#: ..\..\..\src\UnifierTSL\WorkRunner.cs:24
+#: ..\..\..\src\UnifierTSL\WorkRunner.cs:42
+#: ..\..\..\src\UnifierTSL\WorkRunner.cs:62
+#, csharp-format
+msgctxt "{0} is elapsed milliseconds (number format with 2 decimal places)"
+msgid "Done. (used {0:.00}ms)"
+msgstr "完成。(耗时 {0:.00}ms)"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:60
+#, csharp-format
+msgctxt ""
+"{0} is plugin host class name, {1} is current plugin host version (e.g. "
+"1.0.0)"
+msgid ""
+"Plugin host '{0}' is not compatible with current plugin host version '{1}'. "
+"Major version must be equal, minor version of plugin host must be less or "
+"equal."
+msgstr ""
+"插件宿主'{0}'与当前插件宿主版本'{1}'不兼容。主版本号必须相等,插件宿主的次版本号必须小于或等于当前版本。"
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:132
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' has a '{1}' attribute but no module name specified. Skipping "
+"it."
+msgstr ""
+"模块'{0}'具有'{1}'属性但未指定模块名称。跳过它。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:76
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is disabled, skipped."
+msgstr "插件'{0}'已禁用,已跳过。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:132
+#, csharp-format
+msgctxt "{0} is user input value for port number"
+msgid "Invalid port number specified: {0}"
+msgstr "指定的端口号无效: {0}"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:700
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Player '{0}' {1} → {2} transferred."
+msgstr "玩家'{0}' {1} → {2} 已转移。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:104
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is type full name"
+msgid "Failed to create instance of plugin '{0}', type: '{1}'."
+msgstr "无法创建插件'{0}'的实例,类型: '{1}'。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:199
+#, csharp-format
+msgctxt "{0} is world name, {1} is server name"
+msgid "World name '{0}' is already in use by server '{1}'"
+msgstr "世界名称'{0}'已被服务器'{1}'使用"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:276
+msgid "Parameter 'worldname' is required."
+msgstr "参数'worldname'是必需的。"
+
+#: ..\..\..\src\UnifierTSL\Program.cs:60
+msgid "UnifierTSL started successfully!"
+msgstr "UnifierTSL 启动成功!"
+
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:98
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:120
+#, csharp-format
+msgctxt "{0} is dependency file path (relative path)"
+msgid ""
+"Failed to delete unused dependencies file '{0}'.\r\n"
+"It is likely that the file is in use by another process. You can try to "
+"delete it manually."
+msgstr ""
+"无法删除未使用的依赖文件'{0}'。\r\n"
+"该文件可能被另一个进程占用。您可以尝试手动删除。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:226
+msgid ""
+"Expected value: an integer between 0 and 3 (inclusive), or one of the "
+"strings: normal, expert, master, creative"
+msgstr ""
+"预期值: 0到3之间的整数(包括0和3),或者以下字符串之一: normal, expert, master, creative"
+
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:93
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:115
+#, csharp-format
+msgctxt "{0} is dependency file path (relative path)"
+msgid "Deleted unused dependencies file '{0}'"
+msgstr "已删除未使用的依赖文件'{0}'"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:180
+#, csharp-format
+msgctxt "{0} is server argument string"
+msgid "Invalid server argument: {0}"
+msgstr "无效的服务器参数: {0}"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:621
+msgid "Server is full"
+msgstr "服务器已满"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:101
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to initialize: {1}"
+msgstr "插件'{0}'初始化失败: {1}"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:190
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server name '{0}' is already in use"
+msgstr "服务器名称'{0}'已被使用"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:210
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:214
+#, csharp-format
+msgctxt "{0} is player name, {1} is player UUID"
+msgid "No available server found for player '{0}' ({1}); connection aborted."
+msgstr "找不到玩家'{0}' ({1})的可用服务器;连接已中止。"
+
+#: ..\..\..\src\UnifierTSL\Program.cs:64
+msgid "Server is running without a password. Anyone can join."
+msgstr "服务器运行无密码。任何人都可以加入。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:200
+msgid "You are not allowed to join this server."
+msgstr "您不被允许加入此服务器。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:266
+msgid ""
+"Expected value: an integer between 0 and 2 (inclusive), or one of the "
+"strings: random, corruption, crimson"
+msgstr ""
+"预期值: 0到2之间的整数(包括0和2),或者以下字符串之一: random, corruption, crimson"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:231
+#, csharp-format
+msgctxt "{0} is player name, {1} is player UUID, {2} is server name"
+msgid "Player '{0}' ({1}) routed to server '{2}'."
+msgstr "玩家'{0}' ({1}) 已路由到服务器'{2}'。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:246
+msgid ""
+"Expected value: an integer between 0 and 2 (inclusive), or one of the "
+"strings: small, medium, large"
+msgstr ""
+"预期值: 0到2之间的整数(包括0和2),或者以下字符串之一: small, medium, large"
