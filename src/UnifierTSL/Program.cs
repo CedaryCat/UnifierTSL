@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Terraria.Localization;
+﻿using Terraria.Localization;
 using UnifierTSL.PluginHost;
 
 namespace UnifierTSL
@@ -39,8 +38,10 @@ Current Process ID: {Environment.ProcessId}"));
 
             WorkRunner.RunTimedWork("Init", GetString("Global initialization started..."), () => {
                 Initializer.Initialize();
-                UnifierApi.Initialize(args);
+                UnifierApi.InitializeCore(args);
             });
+
+            UnifierApi.CompleteLauncherInitialization();
 
             UnifiedServerCoordinator.Launch(UnifierApi.ListenPort, UnifierApi.ServerPassword);
 

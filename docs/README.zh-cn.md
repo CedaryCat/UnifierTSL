@@ -69,7 +69,7 @@ UnifierTSL 致力于把 OTAPI 的 Unified Server Process 打包成顺手的工�
 
   | 包 | 版本 | 作用 |
   | --- | --- | --- |
-  | OTAPI.USP | 1.0.13 | Unified Server Process 核心 |
+  | OTAPI.USP | 1.0.15-pre-release | Unified Server Process 核心 |
   | ModFramework | 1.1.15 | 补丁阶段使用的 IL 修改框架 |
   | MonoMod.RuntimeDetour | 25.2.3 | 运行期方法钩子与跳转 |
   | Tomlyn | 0.19.0 | 启动器与插件使用的 TOML 配置解析 |

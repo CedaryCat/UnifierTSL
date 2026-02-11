@@ -2,6 +2,7 @@
 using System.Globalization;
 using Terraria.Localization;
 using Terraria.Utilities;
+using UnifierTSL.CLI;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
 using UnifierTSL.Extensions;
@@ -61,6 +62,10 @@ namespace UnifierTSL
         }
 
         internal static void Initialize(string[] launcherArgs) {
+            InitializeCore(launcherArgs);
+            CompleteLauncherInitialization();
+        }
+        internal static void InitializeCore(string[] launcherArgs) {
             EventHub = new();
 
             pluginHosts = new();
@@ -69,6 +74,8 @@ namespace UnifierTSL
                 .GetResult();
 
             HandleCommandLine(launcherArgs);
+        }
+        internal static void CompleteLauncherInitialization() {
             ReadLauncherArgs();
             EventHub.Lanucher.InitializedEvent.Invoke(new());
         }
@@ -294,14 +301,12 @@ namespace UnifierTSL
 
         private static void ReadLauncherArgs() {
             while (ListenPort < 0 || ListenPort >= ushort.MaxValue) {
-                Console.Write(GetString($"Enter the port to listen on: "));
-                if (int.TryParse(Console.ReadLine(), out int port)) {
+                if (int.TryParse(ConsoleInput.ReadLine(GetString($"Enter the port to listen on: ")), out int port)) {
                     ListenPort = port;
                 }
             }
             if (serverPassword is null) {
-                Console.Write(GetString($"Enter the server password: "));
-                serverPassword = Console.ReadLine()?.Trim() ?? "";
+                serverPassword = ConsoleInput.ReadLine(GetString($"Enter the server password: "))?.Trim() ?? "";
             }
         }
     }

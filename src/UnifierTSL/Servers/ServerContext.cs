@@ -75,6 +75,7 @@ namespace UnifierTSL.Servers
         public virtual void RunBlocking(string[] args) {
             RunningThread = Thread.CurrentThread;
             RunningThread.Name = $"Server Instance: {Name}";
+            ThreadLocalInitializer.Initialize();
             Program.LaunchGame(args);
         }
 

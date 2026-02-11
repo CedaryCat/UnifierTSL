@@ -23,6 +23,8 @@ commit-date-format: 'yyyy-MM-dd'
 # Ignore merge commits (except those that should trigger releases)
 merge-message-formats: '^Merge (branch|tag|pull request)'
 
+next-version: 'v0.2.0'
+
 # Branch-specific configuration
 branches:
   # Main branch: Production releases
@@ -96,7 +98,7 @@ branches:
     increment: None
     label: rc
     regex: ^releases?[/-]
-    source-branches: ['develop']
+    source-branches: ['develop', 'main']
     is-main-branch: false
     prevent-increment:
       when-branch-merged: true

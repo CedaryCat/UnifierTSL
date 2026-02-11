@@ -1,27 +1,29 @@
 name: Build and Release
 
-# Trigger conditions for the workflow
 on:
-  # Push events to main and develop branches, ignoring documentation branches and markdown files
   push:
     branches:
       - main
       - develop
+      - 'release/**'
+      - 'releases/**'
+    tags:
+      - 'v*'
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - '.github/workflows/docs*.yaml'
-  # Pull requests targeting main or develop branches
   pull_request:
     branches:
       - main
       - develop
+      - 'release/**'
+      - 'releases/**'
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - '.github/workflows/docs*.yaml'
 
-# Global environment variables
 env:
   DOTNET_VERSION: '9.0.x'
   PROJECT_PATH: 'src/'
@@ -30,17 +32,8 @@ env:
   ACTIONS_STEP_DEBUG: true
 
 jobs:
-  # Main build job - builds code for main, develop, and PRs targeting develop
   build:
     name: Build (${{ matrix.arch }})
-    # Only run for:
-    # 1. Push to main or develop
-    # 2. PRs targeting main or develop
-    # 3. Exclude documentation branch
-    if: |
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')) ||
-      (github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop'))
-
     strategy:
       matrix:
         include:
@@ -56,202 +49,280 @@ jobs:
             arch: linux-arm
 
     runs-on: ${{ matrix.os }}
-    
+
     steps:
-    - name: Install msgfmt
-      shell: bash
-      run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sudo apt-get update && sudo apt-get install -y gettext
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          brew install gettext
-          echo "$(brew --prefix gettext)/bin" >> $GITHUB_PATH
-        elif [ "$RUNNER_OS" = "Windows" ]; then
-          choco install msys2 -y
-          /c/tools/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm gettext"
-        fi
-        
-    - name: Add msgfmt to PATH (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        echo "C:\tools\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Install msgfmt
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update && sudo apt-get install -y gettext
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            brew install gettext
+            echo "$(brew --prefix gettext)/bin" >> $GITHUB_PATH
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            choco install msys2 -y
+            /c/tools/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm gettext"
+          fi
 
-    - name: Verify msgfmt installation
-      shell: bash
-      run: msgfmt --version
+      - name: Add msgfmt to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "C:\tools\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify msgfmt installation
+        shell: bash
+        run: msgfmt --version
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v3.0.0
-      with:
-        versionSpec: '6.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Determine Version
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v3.0.0
-      with:
-        useConfigFile: true
-        configFilePath: GitVersion.yml
-      env:
-        GITVERSION_OVERRIDE_BRANCHNAME: ${{ github.head_ref || github.ref_name }}
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.0.0
+        with:
+          versionSpec: '6.0.x'
 
-    - name: Display Version Information
-      run: |
-        echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
-        echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
-        echo "Major: ${{ steps.gitversion.outputs.major }}"
-        echo "Minor: ${{ steps.gitversion.outputs.minor }}"
-        echo "Patch: ${{ steps.gitversion.outputs.patch }}"
-        echo "InformationalVersion: ${{ steps.gitversion.outputs.informationalVersion }}"
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3.0.0
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yml
+        env:
+          GITVERSION_OVERRIDE_BRANCHNAME: ${{ github.event_name == 'pull_request' && github.head_ref || (startsWith(github.ref, 'refs/heads/') && github.ref_name) || '' }}
 
-    - name: Restore dependencies
-      run: dotnet restore ${{ env.PROJECT_PATH }}
+      - name: Display Version Information
+        run: |
+          echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
+          echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
+          echo "Major: ${{ steps.gitversion.outputs.major }}"
+          echo "Minor: ${{ steps.gitversion.outputs.minor }}"
+          echo "Patch: ${{ steps.gitversion.outputs.patch }}"
+          echo "InformationalVersion: ${{ steps.gitversion.outputs.informationalVersion }}"
 
-    - name: Build Publisher
-      run: dotnet build --no-restore ${{ env.PUBLISHER_PATH }} -c Release
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
 
-    - name: Run Publisher
-      run: |
-        dotnet src/UnifierTSL.Publisher/bin/Release/net9.0/UnifierTSL.Publisher.dll --rid ${{ matrix.arch }} --excluded-plugins ${{ env.EXCLUDED_PLUGINS }} --output-path "${{ github.workspace }}/utsl-${{ matrix.arch }}" --use-rid-folder false --clean-output-dir true
-      shell: bash
+      - name: Build Publisher
+        run: dotnet build --no-restore ${{ env.PUBLISHER_PATH }} -c Release
 
-    - name: Create version file
-      run: |
-        # Convert Windows path to Unix-style for Git Bash compatibility
-        WORKSPACE_PATH=$(echo "${{ github.workspace }}" | sed 's/\\/\//g')
-        OUTPUT_DIR="${WORKSPACE_PATH}/utsl-${{ matrix.arch }}"
-        
-        # Ensure the directory exists
-        mkdir -p "$OUTPUT_DIR"
-        
-        VERSION_FILE="${OUTPUT_DIR}/VERSION.txt"
-        echo "${{ steps.gitversion.outputs.fullSemVer }}" > "$VERSION_FILE"
-        echo "Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> "$VERSION_FILE"
-        echo "Commit SHA: ${{ github.sha }}" >> "$VERSION_FILE"
-        echo "Branch: ${{ github.ref_name }}" >> "$VERSION_FILE"
-      shell: bash
+      - name: Run Publisher
+        run: |
+          dotnet src/UnifierTSL.Publisher/bin/Release/net9.0/UnifierTSL.Publisher.dll --rid ${{ matrix.arch }} --excluded-plugins ${{ env.EXCLUDED_PLUGINS }} --output-path "${{ github.workspace }}/utsl-${{ matrix.arch }}" --use-rid-folder false --clean-output-dir true
+        shell: bash
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: utsl-${{ matrix.arch }}-${{ steps.gitversion.outputs.semVer }}
-        path: utsl-${{ matrix.arch }}
-        compression-level: 9
-        retention-days: 30
+      - name: Create version file
+        run: |
+          WORKSPACE_PATH=$(echo "${{ github.workspace }}" | sed 's/\\/\//g')
+          OUTPUT_DIR="${WORKSPACE_PATH}/utsl-${{ matrix.arch }}"
+          mkdir -p "$OUTPUT_DIR"
 
-  # Release job - only triggers when develop is merged into main
-  release:
-    name: Create Release
+          VERSION_FILE="${OUTPUT_DIR}/VERSION.txt"
+          echo "${{ steps.gitversion.outputs.fullSemVer }}" > "$VERSION_FILE"
+          echo "Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> "$VERSION_FILE"
+          echo "Commit SHA: ${{ github.sha }}" >> "$VERSION_FILE"
+          echo "Branch: ${{ github.ref_name }}" >> "$VERSION_FILE"
+        shell: bash
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: utsl-${{ matrix.arch }}-${{ steps.gitversion.outputs.semVer }}
+          path: utsl-${{ matrix.arch }}
+          compression-level: 9
+          retention-days: 30
+
+  rc_release:
+    name: Create RC Release
     needs: build
-    # Only run when:
-    # 1. Push event to main branch
-    # 2. Commit message contains 'Merge' and branch name contains 'develop'
-    # This ensures releases only happen for develop -> main merges
     if: |
       github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      contains(github.event.head_commit.message, 'Merge') &&
-      (contains(github.event.head_commit.message, 'develop') || contains(github.event.head_commit.message, 'hotfix'))
-
+      (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/releases/'))
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required for creating releases
+      contents: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v3.0.0
-      with:
-        versionSpec: '6.0.x'
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.0.0
+        with:
+          versionSpec: '6.0.x'
 
-    - name: Determine Version
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v3.0.0
-      with:
-        useConfigFile: true
-        configFilePath: GitVersion.yml
-        additionalArguments: '/verbosity Diagnostic'
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3.0.0
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yml
 
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-    - name: Create release archives
-      run: |
-        cd artifacts
-        for dir in utsl-*-${{ steps.gitversion.outputs.semVer }}; do
-          arch=$(echo $dir | sed 's/utsl-\(.*\)-${{ steps.gitversion.outputs.semVer }}/\1/')
-          cd "$dir"
-          if [[ "$arch" == win-* ]]; then
-            zip -r "../utsl-${arch}-v${{ steps.gitversion.outputs.semVer }}.zip" .
+      - name: Create release archives
+        run: |
+          cd artifacts
+          for dir in utsl-*-${{ steps.gitversion.outputs.semVer }}; do
+            if [ ! -d "$dir" ]; then
+              continue
+            fi
+
+            arch=$(echo "$dir" | sed 's/utsl-\(.*\)-${{ steps.gitversion.outputs.semVer }}/\1/')
+            cd "$dir"
+            if [[ "$arch" == win-* ]]; then
+              zip -r "../utsl-${arch}-v${{ steps.gitversion.outputs.semVer }}.zip" .
+            else
+              tar -czf "../utsl-${arch}-v${{ steps.gitversion.outputs.semVer }}.tar.gz" .
+            fi
+            cd ..
+          done
+        shell: bash
+
+      - name: Generate changelog
+        run: |
+          CURRENT_TAG="v${{ steps.gitversion.outputs.semVer }}"
+          LAST_TAG=$(git tag --sort=-creatordate | grep -v "^${CURRENT_TAG}$" | head -n 1 || true)
+
+          if [ -z "$LAST_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
           else
-            tar -czf "../utsl-${arch}-v${{ steps.gitversion.outputs.semVer }}.tar.gz" .
+            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
           fi
-          cd ..
-        done
-      shell: bash
 
-    - name: Generate changelog
-      id: changelog
-      run: |
-        # Get commits since last tag
-        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-        if [ -z "$LAST_TAG" ]; then
-          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
-        else
-          CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
-        fi
+          echo "## What's Changed" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "$CHANGELOG" >> CHANGELOG.md
 
-        # Save to file for use in release
-        echo "## What's Changed" > CHANGELOG.md
-        echo "" >> CHANGELOG.md
-        echo "$CHANGELOG" >> CHANGELOG.md
-        echo "" >> CHANGELOG.md
-        echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${{ steps.gitversion.outputs.semVer }}" >> CHANGELOG.md
-      shell: bash
+          if [ -n "$LAST_TAG" ]; then
+            echo "" >> CHANGELOG.md
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${CURRENT_TAG}" >> CHANGELOG.md
+          fi
+        shell: bash
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: v${{ steps.gitversion.outputs.semVer }}
-        name: Release v${{ steps.gitversion.outputs.semVer }}
-        body_path: CHANGELOG.md
-        draft: false
-        prerelease: false
-        files: |
-          artifacts/*.zip
-          artifacts/*.tar.gz
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub RC Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.gitversion.outputs.semVer }}
+          name: Release v${{ steps.gitversion.outputs.semVer }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: true
+          files: |
+            artifacts/*.zip
+            artifacts/*.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Release summary
-      run: |
-        echo "# Release Created Successfully! 🚀" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## Version Information" >> $GITHUB_STEP_SUMMARY
-        echo "- **Version**: v${{ steps.gitversion.outputs.semVer }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Full SemVer**: ${{ steps.gitversion.outputs.fullSemVer }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## Release Assets" >> $GITHUB_STEP_SUMMARY
-        echo "The following platform builds have been published:" >> $GITHUB_STEP_SUMMARY
-        echo "- Windows x64" >> $GITHUB_STEP_SUMMARY
-        echo "- macOS x64" >> $GITHUB_STEP_SUMMARY
-        echo "- Linux x64" >> $GITHUB_STEP_SUMMARY
-        echo "- Linux ARM64" >> $GITHUB_STEP_SUMMARY
-        echo "- Linux ARM" >> $GITHUB_STEP_SUMMARY
+      - name: Release summary
+        run: |
+          echo "# RC release created successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: v${{ steps.gitversion.outputs.semVer }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  stable_release:
+    name: Create Stable Release
+    needs: build
+    if: |
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/v') &&
+      !contains(github.ref_name, '-')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.0.0
+        with:
+          versionSpec: '6.0.x'
+
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3.0.0
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yml
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create release archives
+        run: |
+          cd artifacts
+          for dir in utsl-*-${{ steps.gitversion.outputs.semVer }}; do
+            if [ ! -d "$dir" ]; then
+              continue
+            fi
+
+            arch=$(echo "$dir" | sed 's/utsl-\(.*\)-${{ steps.gitversion.outputs.semVer }}/\1/')
+            cd "$dir"
+            if [[ "$arch" == win-* ]]; then
+              zip -r "../utsl-${arch}-v${{ steps.gitversion.outputs.semVer }}.zip" .
+            else
+              tar -czf "../utsl-${arch}-v${{ steps.gitversion.outputs.semVer }}.tar.gz" .
+            fi
+            cd ..
+          done
+        shell: bash
+
+      - name: Generate changelog
+        run: |
+          CURRENT_TAG="${{ github.ref_name }}"
+          LAST_TAG=$(git tag --sort=-creatordate | grep -v "^${CURRENT_TAG}$" | head -n 1 || true)
+
+          if [ -z "$LAST_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          else
+            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          echo "## What's Changed" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "$CHANGELOG" >> CHANGELOG.md
+
+          if [ -n "$LAST_TAG" ]; then
+            echo "" >> CHANGELOG.md
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${CURRENT_TAG}" >> CHANGELOG.md
+          fi
+        shell: bash
+
+      - name: Create GitHub Stable Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/*.zip
+            artifacts/*.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release summary
+        run: |
+          echo "# Stable release created successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

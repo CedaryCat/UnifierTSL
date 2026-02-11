@@ -338,6 +338,10 @@ namespace TShockAPI
         /// <param name="tileType">Tile id</param>
         /// <returns>True if allowed, otherwise false</returns>
         static bool OnCreep(ServerContext server, int tileType) {
+            if (server.WorldGen.generatingWorld) {
+                return true;
+            }
+
             var setting = Config.GetServerSettings(server.Name);
             if (!setting.AllowCrimsonCreep && (tileType == TileID.Dirt || tileType == TileID.CrimsonGrass
                 || TileID.Sets.Crimson[tileType])) {
@@ -515,7 +519,7 @@ namespace TShockAPI
                 }
 
                 if (!tsplr.FinishedHandshake) {
-                    tsplr.Kick(GetString("Your client didn't send the right connection information."), true);
+                    tsplr.Kick(GetString("Your client didn't send the right connection information."), true, true);
                     args.Handled = true;
                     return;
                 }
@@ -702,8 +706,8 @@ namespace TShockAPI
             }
         }
 
-        private static double OnStrikeNpc(On.Terraria.NPC.orig_StrikeNPC orig, NPC self, RootContext root, int Damage, float knockBack, int hitDirection, bool crit, bool noEffect, bool fromNet, Entity entity) {
-            var dmg = orig(self, root, Damage, knockBack, hitDirection, crit, noEffect, fromNet, entity);
+        private static double OnStrikeNpc(On.Terraria.NPC.orig_StrikeNPC orig, NPC self, RootContext root, int Damage, float knockBack, int hitDirection, bool crit, bool noEffect, bool fromNet, int owner, Entity entity) {
+            var dmg = orig(self, root, Damage, knockBack, hitDirection, crit, noEffect, fromNet, owner, entity);
             if (root is ServerContext server && TShock.Config.GetServerSettings(server.Name).InfiniteInvasion) {
                 if (server.Main.invasionSize < 10) {
                     server.Main.invasionSize = 20000000;
@@ -761,11 +765,11 @@ namespace TShockAPI
             }
             orig(self, msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7);
         }
-        private static void OnStartHardMode(On.Terraria.WorldGenSystemContext.orig_StartHardmode orig, WorldGenSystemContext self) {
+        private static void OnStartHardMode(On.Terraria.WorldGenSystemContext.orig_StartHardmode orig, WorldGenSystemContext self, bool force) {
             if (self.root is ServerContext server && Config.GetServerSettings(server.Name).DisableHardmode) {
                 return;
             }
-            orig(self);
+            orig(self, force);
         }
     }
 }

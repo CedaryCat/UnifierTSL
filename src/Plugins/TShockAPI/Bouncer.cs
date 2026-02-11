@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 using Microsoft.Xna.Framework;
+using OTAPI;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.GameContent.Tile_Entities;
@@ -30,6 +31,7 @@ using TShockAPI.Localization;
 using UnifierTSL;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
+using UnifierTSL.Extensions;
 using UnifierTSL.Servers;
 
 namespace TShockAPI
@@ -241,7 +243,7 @@ namespace TShockAPI
             CreativePowerHandler = new();
             NetPacketHandler.Register<NetCreativePowersModule>(CreativePowerHandler.OnReceive, HandlerPriority.High);
             CreativeUnlocksHandler = new();
-            NetPacketHandler.Register<NetCreativeUnlocksModule>(CreativeUnlocksHandler.OnReceive, HandlerPriority.High);
+            NetPacketHandler.Register<NetCreativeUnlocksPlayerReportModule>(CreativeUnlocksHandler.OnReceive, HandlerPriority.High);
             LiquidHandler = new();
             NetPacketHandler.Register<NetLiquidModule>(LiquidHandler.OnReceive, HandlerPriority.High);
             PylonHandler = new();
@@ -269,8 +271,9 @@ namespace TShockAPI
             NetPacketHandler.Register<RequestChestOpen>(OnChestOpen, HandlerPriority.High);
             NetPacketHandler.Register<ChestUpdates>(OnPlaceChest, HandlerPriority.High);
             NetPacketHandler.Register<PlayerZone>(OnPlayerZone, HandlerPriority.High);
-            NetPacketHandler.Register<ItemAnimation>(OnPlayerAnimation, HandlerPriority.High);
+			NetPacketHandler.Register<ItemAnimation>(OnPlayerAnimation, HandlerPriority.High);
             NetPacketHandler.Register<LiquidUpdate>(OnLiquidSet, HandlerPriority.High);
+            NetPacketHandler.Register<QuickStackChests>(OnQuickStackPacket, HandlerPriority.High);
             NetPacketHandler.Register<AddPlayerBuff>(OnPlayerBuff, HandlerPriority.High);
             NetPacketHandler.Register<AddNPCBuff>(OnNPCAddBuff, HandlerPriority.High);
             NetPacketHandler.Register<NPCHome>(OnUpdateNPCHome, HandlerPriority.High);
@@ -287,6 +290,8 @@ namespace TShockAPI
             NetPacketHandler.Register<PlayerDeathV2>(OnKillMe, HandlerPriority.High);
             NetPacketHandler.Register<FishOutNPC>(OnFishOutNPC, HandlerPriority.High);
             NetPacketHandler.Register<FoodPlatterTryPlacing>(OnFoodPlatterTryPlacing, HandlerPriority.High);
+
+            On.OTAPI.HooksSystemContext.ChestSystemContext.InvokeQuickStack += OnQuickStack;
 
 			// The following section is based off Player.PlaceThing_Tiles_PlaceIt and Player.PlaceThing_Tiles_PlaceIt_GetLegacyTileStyle.
 			// Multi-block tiles are intentionally ignored because they don't pass through OnTileEdit.
@@ -312,8 +317,12 @@ namespace TShockAPI
 						// sure if the player has biome torches on
 						var usingBiomeTorches = player.UsingBiomeTorches;
 						player.UsingBiomeTorches = true;
-						// BiomeTorchPlaceStyle returns the place style of the player's current biome's biome torch
-						var biomeTorchPlaceStyle = player.BiomeTorchPlaceStyle(UnifiedServerCoordinator.GetClientCurrentlyServer(player.whoAmI), actualItemPlaceStyle);
+						// BiomeTorchPlaceStyle mutates the style argument by ref.
+						int biomeTorchPlaceStyle = actualItemPlaceStyle;
+						{
+							int typeCopy = TileID.Torches;
+							player.BiomeTorchPlaceStyle(UnifiedServerCoordinator.GetClientCurrentlyServer(player.whoAmI), ref typeCopy, ref biomeTorchPlaceStyle);
+						}
 						// Reset UsingBiomeTorches value
 						player.UsingBiomeTorches = usingBiomeTorches;
 
@@ -593,6 +602,31 @@ namespace TShockAPI
 
 			#endregion Whitelist
 		}
+
+        private bool OnQuickStack(On.OTAPI.HooksSystemContext.ChestSystemContext.orig_InvokeQuickStack orig, OTAPI.HooksSystemContext.ChestSystemContext self, int playerId, Item item, int chestIndex) {
+			var server = self.root.ToServer();
+			var Main = server.Main;
+			var settings = TShock.Config.GetServerSettings(server.Name);
+
+            var id = chestIndex;
+            var plr = TShock.Players[playerId];
+
+            if (plr is not { Active: true }) {
+                return false;
+            }
+
+            if (plr.IsBeingDisabled()) {
+                server.Log.Debug(GetString("Bouncer / OnQuickStack rejected from disable from {0}", plr.Name));
+                return false;
+            }
+
+            if (!plr.HasBuildPermission(Main.chest[id].x, Main.chest[id].y) && settings.RegionProtectChests) {
+                server.Log.Debug(GetString("Bouncer / OnQuickStack rejected from region protection? from {0}", plr.Name));
+                return false;
+            }
+
+			return orig(self, playerId, item, chestIndex);
+        }
 
         private void OnGetSection(ref RecievePacketEvent<TileSection> args) {
 			var tsPlayer = args.GetTSPlayer();
@@ -881,7 +915,7 @@ namespace TShockAPI
 				if (action == TileEditAction.KillTile && !Main.tileCut[tile.type] && !breakableTiles.Contains(tile.type) && tsPlayer.RecentFuse == 0)
 				{
 					// If the tile is an axe tile and they aren't selecting an axe, they're hacking.
-					if (Main.tileAxe[tile.type] && ((tsPlayer.TPlayer.mount.Type != MountID.Drill && selectedItem.axe == 0) && !ItemID.Sets.Explosives[selectedItem.netID]))
+					if (Main.tileAxe[tile.type] && ((tsPlayer.TPlayer.mount.Type != MountID.Drill && selectedItem.axe == 0) && !ItemID.Sets.Explosives[selectedItem.type]))
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (axe) {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
@@ -889,7 +923,7 @@ namespace TShockAPI
 						return;
 					}
 					// If the tile is a hammer tile and they aren't selecting a hammer, they're hacking.
-					else if (Main.tileHammer[tile.type] && ((tsPlayer.TPlayer.mount.Type != MountID.Drill && selectedItem.hammer == 0) && !ItemID.Sets.Explosives[selectedItem.netID]))
+					else if (Main.tileHammer[tile.type] && ((tsPlayer.TPlayer.mount.Type != MountID.Drill && selectedItem.hammer == 0) && !ItemID.Sets.Explosives[selectedItem.type]))
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (hammer) {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
@@ -901,7 +935,7 @@ namespace TShockAPI
 					// also add an exception for snake coils, they can be removed when the player places a new one or after x amount of time
 					// If the tile is part of the breakable when placing set, it might be getting broken by a placement.
 					else if (tile.type != TileID.ItemFrame && tile.type != TileID.MysticSnakeRope
-														   && !ItemID.Sets.Explosives[selectedItem.netID]
+														   && !ItemID.Sets.Explosives[selectedItem.type]
 														   && !TileID.Sets.BreakableWhenPlacing[tile.type]
 														   && !Main.tileAxe[tile.type] && !Main.tileHammer[tile.type] && tile.wall == 0
 														   && selectedItem.pick == 0 && selectedItem.type != ItemID.GravediggerShovel
@@ -918,7 +952,7 @@ namespace TShockAPI
 				else if (action == TileEditAction.KillWall)
 				{
 					// If they aren't selecting a hammer, they could be hacking.
-					if (selectedItem.hammer == 0 && !ItemID.Sets.Explosives[selectedItem.netID] && tsPlayer.RecentFuse == 0 && selectedItem.createWall == 0)
+					if (selectedItem.hammer == 0 && !ItemID.Sets.Explosives[selectedItem.type] && tsPlayer.RecentFuse == 0 && selectedItem.createWall == 0)
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (hammer2) {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
@@ -935,11 +969,11 @@ namespace TShockAPI
 					// Handle placement if the user is placing rope that comes from a ropecoil,
 					// but have not created the ropecoil projectile recently or the projectile was not at the correct coordinate, or the tile that the projectile places does not match the rope it is suposed to place
 					// projectile should be the same X coordinate as all tile places (Note by @Olink)
-					if (ropeCoilPlacements.ContainsKey(selectedItem.netID) &&
+					if (ropeCoilPlacements.ContainsKey(selectedItem.type) &&
 						!tsPlayer.RecentlyCreatedProjectiles.Any(p => projectileCreatesTile.ContainsKey(p.Type) && projectileCreatesTile[p.Type] == editData &&
 						!p.Killed && Math.Abs((int)(server.Main.projectile[p.Index].position.X / 16f) - tileX) <= Math.Abs(server.Main.projectile[p.Index].velocity.X)))
 					{
-						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (inconceivable rope coil) {0} {1} {2} selectedItem:{3} itemCreateTile:{4}", tsPlayer.Name, action, editData, selectedItem.netID, selectedItem.createTile));
+						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (inconceivable rope coil) {0} {1} {2} selectedItem:{3} itemCreateTile:{4}", tsPlayer.Name, action, editData, selectedItem.type, selectedItem.createTile));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 1);
 						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
@@ -957,7 +991,7 @@ namespace TShockAPI
 					}
 
 					/// Handle placement action if the player is using an Ice Rod but not placing the iceblock.
-					if (selectedItem.netID == ItemID.IceRod && editData != TileID.MagicalIceBlock)
+					if (selectedItem.type == ItemID.IceRod && editData != TileID.MagicalIceBlock)
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from using ice rod but not placing ice block {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
@@ -967,9 +1001,9 @@ namespace TShockAPI
 					if ((action == TileEditAction.PlaceTile || action == TileEditAction.ReplaceTile) && editData != selectedItem.createTile)
 					{
 						/// These would get caught up in the below check because Terraria does not set their createTile field.
-						if (selectedItem.netID != ItemID.IceRod && selectedItem.netID != ItemID.DirtBomb && selectedItem.netID != ItemID.StickyBomb && (tsPlayer.TPlayer.mount.Type != MountID.DiggingMoleMinecart || editData != TileID.MinecartTrack))
+						if (selectedItem.type != ItemID.IceRod && selectedItem.type != ItemID.DirtBomb && selectedItem.type != ItemID.StickyBomb && (tsPlayer.TPlayer.mount.Type != MountID.DiggingMoleMinecart || editData != TileID.MinecartTrack))
 						{
-							server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from tile placement not matching selected item createTile {0} {1} {2} selectedItemID:{3} createTile:{4}", tsPlayer.Name, action, editData, selectedItem.netID, selectedItem.createTile));
+							server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from tile placement not matching selected item createTile {0} {1} {2} selectedItemID:{3} createTile:{4}", tsPlayer.Name, action, editData, selectedItem.type, selectedItem.createTile));
 							tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
 							args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 							return;
@@ -978,7 +1012,7 @@ namespace TShockAPI
 					/// If they aren't selecting the item which creates the wall, they're hacking.
 					if ((action == TileEditAction.PlaceWall || action == TileEditAction.ReplaceWall) && editData != selectedItem.createWall)
 					{
-						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from wall placement not matching selected item createWall {0} {1} {2} selectedItemID:{3} createWall:{4}", tsPlayer.Name, action, editData, selectedItem.netID, selectedItem.createWall));
+						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from wall placement not matching selected item createWall {0} {1} {2} selectedItemID:{3} createWall:{4}", tsPlayer.Name, action, editData, selectedItem.type, selectedItem.createWall));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
 						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
@@ -1076,7 +1110,7 @@ namespace TShockAPI
 						return;
 					}
 
-					if (action == TileEditAction.KillTile || action == TileEditAction.KillWall && ItemID.Sets.Explosives[selectedItem.netID] && tsPlayer.RecentFuse == 0)
+					if (action == TileEditAction.KillTile || action == TileEditAction.KillWall && ItemID.Sets.Explosives[selectedItem.type] && tsPlayer.RecentFuse == 0)
 					{
 						return;
 					}
@@ -1327,7 +1361,7 @@ namespace TShockAPI
 
 			// stop the client from changing the item type of a drop but
 			// only if the client isn't picking up the item
-			if (server.Main.item[id].active && server.Main.item[id].netID != type)
+			if (server.Main.item[id].active && server.Main.item[id].type != type)
 			{
 				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from item drop/pickup check from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.ItemDrop, "", id);
@@ -1434,6 +1468,37 @@ namespace TShockAPI
 				tsPlayer.RemoveProjectile(ident, owner);
 				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 				return;
+			}
+
+			if (type == ProjectileID.PortalGunGate)
+			{
+				var wrappedAngle = MathHelper.WrapAngle(ai[0]);
+				var discreteDirection = (int)Math.Round(wrappedAngle / (MathF.PI / 4f));
+				if (discreteDirection is < -3 or > 4)
+				{
+					server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected portal gate from {0} (invalid angle: {1})", tsPlayer.Name, discreteDirection));
+					tsPlayer.RemoveProjectile(ident, owner);
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+					return;
+				}
+
+				var boltIndex = tsPlayer.RecentlyCreatedProjectiles.FindIndex(p =>
+					p.Type == ProjectileID.PortalGunBolt &&
+					!p.Killed &&
+					p.Index >= 0 &&
+					p.Index < Main.maxProjectiles &&
+					server.Main.projectile[p.Index].active);
+				if (boltIndex < 0)
+				{
+					server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected portal gate from {0} (missing active bolt)", tsPlayer.Name));
+					tsPlayer.RemoveProjectile(ident, owner);
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+					return;
+				}
+
+				var bolt = tsPlayer.RecentlyCreatedProjectiles[boltIndex];
+				bolt.Killed = true;
+				tsPlayer.RecentlyCreatedProjectiles[boltIndex] = bolt;
 			}
 
 			/// If the projectile is a directional projectile, check if the player is holding their respected item to validate the projectile creation.
@@ -2599,8 +2664,18 @@ namespace TShockAPI
 
 				if (tsPlayer.SelectedItem.placeStyle != style)
 				{
-					var validTorch = tsPlayer.SelectedItem.createTile == TileID.Torches && tsPlayer.TPlayer.BiomeTorchPlaceStyle(server, tsPlayer.SelectedItem.placeStyle) == style;
-					var validCampfire = tsPlayer.SelectedItem.createTile == TileID.Campfire && tsPlayer.TPlayer.BiomeCampfirePlaceStyle(server, tsPlayer.SelectedItem.placeStyle) == style;
+					int biomeTorchPlaceStyle = tsPlayer.SelectedItem.placeStyle;
+					{
+						int typeCopy = tsPlayer.SelectedItem.createTile;
+						tsPlayer.TPlayer.BiomeTorchPlaceStyle(server, ref typeCopy, ref biomeTorchPlaceStyle);
+					}
+					int biomeCampfirePlaceStyle = tsPlayer.SelectedItem.placeStyle;
+					{
+						int typeCopy = tsPlayer.SelectedItem.createTile;
+						tsPlayer.TPlayer.BiomeCampfirePlaceStyle(server, ref typeCopy, ref biomeCampfirePlaceStyle);
+					}
+					var validTorch = tsPlayer.SelectedItem.createTile == TileID.Torches && biomeTorchPlaceStyle == style;
+					var validCampfire = tsPlayer.SelectedItem.createTile == TileID.Campfire && biomeCampfirePlaceStyle == style;
 					if (!tsPlayer.TPlayer.unlockedBiomeTorches || (!validTorch && !validCampfire))
 					{
 						server.Log.Error(GetString("Bouncer / OnPlaceObject rejected object placement with invalid style {1} (expected {2}) from {0}", tsPlayer.Name, style, tsPlayer.SelectedItem.placeStyle));
@@ -2778,8 +2853,8 @@ namespace TShockAPI
 			}
 
 			//Generic bounds checking, though I'm not sure if anyone would willingly hack themselves outside the map?
-			if (pos.X > server.Main.maxTilesX || pos.X < 0
-				|| pos.Y > server.Main.maxTilesY || pos.Y < 0)
+			if (pos.X > server.Main.maxTilesX * 16 || pos.X < 0
+				|| pos.Y > server.Main.maxTilesY * 16 || pos.Y < 0)
 			{
 				server.Log.Debug(GetString("Bouncer / OnPlayerPortalTeleport rejected teleport out of bounds from {0}", tsPlayer.Name));
 				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
@@ -2794,6 +2869,39 @@ namespace TShockAPI
 				return;
 			}
 		}
+
+		internal void OnQuickStackPacket(ref RecievePacketEvent<QuickStackChests> args) {
+            var server = args.LocalReciever.Server;
+            var tsPlayer = args.GetTSPlayer();
+
+			// TODO: Fine-grained chest-level quick stack validation is skipped in current package.
+			// See: Plugins/TShockAPI/docs/trprotocol-mismatch-log.md
+
+            if (tsPlayer.IsBeingDisabled() || tsPlayer.IsBouncerThrottled()) {
+				server.Log.Debug(GetString("Bouncer / OnQuickStackPacket rejected from disable/throttle from {0}", tsPlayer.Name));
+				args.HandleMode = PacketHandleMode.Cancel;
+				args.StopPropagation = true;
+				return;
+			}
+
+            var request = args.Packet.QuickStackRequest;
+            var slots = request.ReferenceInventorySlots ?? Array.Empty<short>();
+            if (request.SlotsCount < 0 || request.SlotsCount > NetItem.MaxInventory || request.SlotsCount != slots.Length) {
+				server.Log.Debug(GetString("Bouncer / OnQuickStackPacket rejected malformed slot list from {0}", tsPlayer.Name));
+				args.HandleMode = PacketHandleMode.Cancel;
+				args.StopPropagation = true;
+				return;
+			}
+
+            for (int i = 0; i < slots.Length; i++) {
+				if (slots[i] < 0 || slots[i] >= NetItem.MaxInventory) {
+					server.Log.Debug(GetString("Bouncer / OnQuickStackPacket rejected out of range slot from {0}", tsPlayer.Name));
+					args.HandleMode = PacketHandleMode.Cancel;
+					args.StopPropagation = true;
+					return;
+				}
+			}
+        }
 
 		/// <summary>Handles the anti-cheat components of gem lock toggles.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
@@ -3198,19 +3306,11 @@ namespace TShockAPI
 			{ BuffID.Daybreak, 300 },               // BuffID: 189 Solar Eruption Item ID: 3473, Daybreak Item ID: 3543
 			{ BuffID.BetsysCurse, 600 },            // BuffID: 203
 			{ BuffID.Oiled, 540 },                  // BuffID: 204
-			{ BuffID.BlandWhipEnemyDebuff, 240  },  // BuffID: 307
-			{ BuffID.SwordWhipNPCDebuff, 240  },    // BuffID: 309
 			{ BuffID.ScytheWhipEnemyDebuff, 240  }, // BuffID: 310
-			{ BuffID.FlameWhipEnemyDebuff, 240  },  // BuffID: 313
-			{ BuffID.ThornWhipNPCDebuff, 240  },    // BuffID: 315
-			{ BuffID.RainbowWhipNPCDebuff, 240  },  // BuffID: 316
-			{ BuffID.MaceWhipNPCDebuff, 240  },     // BuffID: 319
 			{ BuffID.GelBalloonBuff, 1800  },       // BuffID: 320
 			{ BuffID.OnFire3, 1200 },               // BuffID: 323
 			{ BuffID.Frostburn2, 1200 },            // BuffID: 324
-			{ BuffID.BoneWhipNPCDebuff, 240 },      // BuffID: 326
 			{ BuffID.TentacleSpike, 540 },          // BuffID: 337
-			{ BuffID.CoolWhipNPCDebuff, 240 },      // BuffID: 340
 			{ BuffID.BloodButcherer, 540 },         // BuffID: 344
 			{ BuffID.Shimmer, 100 },		        // BuffID: 353
 		};

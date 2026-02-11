@@ -13,11 +13,22 @@ namespace TShockAPI.Handlers
     {
         public void OnReceive(ref RecievePacketEvent<SyncTilePicking> args) {
             var server = args.LocalReciever.Server;
+            var tsPlayer = args.GetTSPlayer();
+            var setting = TShock.Config.GetServerSettings(server.Name);
             var pos = args.Packet.Position;
             if (pos.X > server.Main.maxTilesX || pos.X < 0
                || pos.Y > server.Main.maxTilesY || pos.Y < 0) {
-                server.Log.Debug(GetString($"SyncTilePickingHandler: X and Y position is out of world bounds! - From {args.GetTSPlayer().Name}"));
+                server.Log.Debug(GetString($"SyncTilePickingHandler: X and Y position is out of world bounds! - From {tsPlayer.Name}"));
                 args.HandleMode = PacketHandleMode.Cancel;
+                args.StopPropagation = true;
+                return;
+            }
+
+            if (setting.DisableBuild || tsPlayer.IsBeingDisabled() || tsPlayer.IsBouncerThrottled() ||
+                !tsPlayer.HasBuildPermission(pos.X, pos.Y) || !tsPlayer.IsInRange(pos.X, pos.Y)) {
+                // Reject silently; TileEdit handling already reports actionable diagnostics.
+                args.HandleMode = PacketHandleMode.Cancel;
+                args.StopPropagation = true;
                 return;
             }
         }

@@ -52,6 +52,8 @@ namespace TShockAPI.DB
             [Column] public int usedAmbrosia { get; set; }
             [Column] public int unlockedSuperCart { get; set; }
             [Column] public int enabledSuperCart { get; set; }
+            [Column] public int deathsPVE { get; set; }
+            [Column] public int deathsPVP { get; set; }
         }
         public DataConnection database;
         ITable<Character> characterTable;
@@ -59,7 +61,29 @@ namespace TShockAPI.DB
         public CharacterManager(DataConnection db) {
             database = db;
             characterTable = db.CreateTable<Character>(tableOptions: TableOptions.CreateIfNotExists);
+            EnsureSchemaColumns();
         }
+
+        private void EnsureSchemaColumns() {
+            EnsureColumn("deathsPVE");
+            EnsureColumn("deathsPVP");
+        }
+
+        private void EnsureColumn(string columnName) {
+            try {
+                database.Execute($"ALTER TABLE tsCharacter ADD COLUMN {columnName} INTEGER NOT NULL DEFAULT 0");
+            }
+            catch (Exception ex) {
+                var error = ex.ToString();
+                if (error.IndexOf("duplicate column", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    error.IndexOf("already exists", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    return;
+                }
+
+                throw;
+            }
+        }
+
         public PlayerData GetPlayerData(TSPlayer player, int acctid) {
             var playerData = new PlayerData(true);
 
@@ -112,6 +136,8 @@ namespace TShockAPI.DB
                     playerData.usedAmbrosia = character.usedAmbrosia;
                     playerData.unlockedSuperCart = character.unlockedSuperCart;
                     playerData.enabledSuperCart = character.enabledSuperCart;
+                    playerData.deathsPVE = character.deathsPVE;
+                    playerData.deathsPVP = character.deathsPVP;
                 }
             }
             catch (Exception ex) {
@@ -137,7 +163,9 @@ namespace TShockAPI.DB
                     Inventory = initialItems,
                     spawnX = -1,
                     spawnY = -1,
-                    questsCompleted = 0
+                    questsCompleted = 0,
+                    deathsPVE = 0,
+                    deathsPVP = 0
                 });
                 return true;
             }
@@ -191,7 +219,9 @@ namespace TShockAPI.DB
                 usedGummyWorm = player.TPlayer.usedGummyWorm ? 1 : 0,
                 usedAmbrosia = player.TPlayer.usedAmbrosia ? 1 : 0,
                 unlockedSuperCart = player.TPlayer.unlockedSuperCart ? 1 : 0,
-                enabledSuperCart = player.TPlayer.enabledSuperCart ? 1 : 0
+                enabledSuperCart = player.TPlayer.enabledSuperCart ? 1 : 0,
+                deathsPVE = playerData.deathsPVE,
+                deathsPVP = playerData.deathsPVP
             };
 
             try {
@@ -266,7 +296,9 @@ namespace TShockAPI.DB
                 usedGummyWorm = data.usedGummyWorm,
                 usedAmbrosia = data.usedAmbrosia,
                 unlockedSuperCart = data.unlockedSuperCart,
-                enabledSuperCart = data.enabledSuperCart
+                enabledSuperCart = data.enabledSuperCart,
+                deathsPVE = data.deathsPVE,
+                deathsPVP = data.deathsPVP
             };
 
             try {
