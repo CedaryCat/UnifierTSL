@@ -11,7 +11,7 @@ namespace TShockAPI.Handlers.NetModules
 	public class PylonHandler : IPacketHandler<NetTeleportPylonModule>
 	{
         public void OnReceive(ref RecievePacketEvent<NetTeleportPylonModule> args) {
-			if (args.Packet.PylonPacketType == NetTeleportPylonModule_SubPacketType.PlayerRequestsTeleport) {
+			if (args.Packet.PylonPacketType == Terraria.GameContent.NetModules.NetTeleportPylonModule.SubPacketType.PlayerRequestsTeleport) {
 				var player = args.GetTSPlayer();
 
                 if (!player.HasPermission(Permissions.pylon)) {

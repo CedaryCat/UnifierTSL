@@ -44,6 +44,8 @@ namespace UnifierTSL.Extensions
             return new SyncPlayer(
                 (byte)(whoAmI == -1 ? player.whoAmI : whoAmI),
                 (byte)player.skinVariant,
+                (byte)player.voiceVariant,
+                player.voicePitchOffset,
                 (byte)player.hair,
                 player.name.Trim(),
                 player.hairDye,

@@ -66,21 +66,20 @@ namespace UnifierTSL.Events.Handlers
         public ChatHandler() {
             On.Terraria.Chat.Commands.SayChatCommand.ProcessIncomingMessage += ProcessIncomingMessage;
             On.Terraria.Chat.ChatCommandProcessor.ProcessIncomingMessage += ProcessIncomingMessage;
-            On.OTAPI.HooksSystemContext.MainSystemContext.InvokeCommandProcess += ProcessConsoleMessage;
+            On.OTAPI.HooksSystemContext.MainSystemContext.InvokeCommandProcess_string += ProcessConsoleMessage;
         }
 
         public readonly ValueEventProvider<ChatEvent> ChatEvent = new();
         public readonly ReadonlyEventProvider<MessageEvent> MessageEvent = new();
 
-        private bool ProcessConsoleMessage(On.OTAPI.HooksSystemContext.MainSystemContext.orig_InvokeCommandProcess orig, HooksSystemContext.MainSystemContext self,
-            string lowered, string raw) {
+        private bool ProcessConsoleMessage(On.OTAPI.HooksSystemContext.MainSystemContext.orig_InvokeCommandProcess_string orig, HooksSystemContext.MainSystemContext self,string raw) {
 
-            MessageEvent.Invoke(new MessageEvent(new(self.root.ToServer(), byte.MaxValue), raw, raw), out bool handled);
+            MessageEvent.Invoke(new MessageEvent(new(self.root.ToServer(), byte.MaxValue), raw, raw.ToLower()), out bool handled);
             if (handled) {
                 return false;
             }
 
-            return orig(self, lowered, raw);
+            return orig(self, raw);
         }
 
         private void ProcessIncomingMessage(On.Terraria.Chat.ChatCommandProcessor.orig_ProcessIncomingMessage orig, Terraria.Chat.ChatCommandProcessor self, RootContext root, Terraria.Chat.ChatMessage message, int clientId) {

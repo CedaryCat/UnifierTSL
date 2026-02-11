@@ -43,7 +43,7 @@ namespace TShockAPI.Handlers.NetModules
 		}
 
         public void OnReceive(ref RecievePacketEvent<NetCreativePowersModule> args) {
-			if (!HasPermission(args.LocalReciever.Server, args.Packet.PowerType, args.GetTSPlayer())) {
+			if (!HasPermission(args.LocalReciever.Server, args.Packet.CreativePower.PowerType, args.GetTSPlayer())) {
 				args.HandleMode = PacketHandleMode.Cancel;
 			}
         }

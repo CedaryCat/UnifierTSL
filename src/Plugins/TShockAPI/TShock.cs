@@ -10,7 +10,6 @@ using TShockAPI.Configuration;
 using TShockAPI.DB;
 using TShockAPI.Modules;
 using TShockAPI.Sockets;
-using UnifiedServerProcess;
 using UnifierTSL;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
@@ -20,7 +19,8 @@ using UnifierTSL.Servers;
 
 namespace TShockAPI
 {
-    [PluginMetadata("TShock", "5.2.2", "The TShock Team", "The administration modification of the future.")]
+    // PluginMetadata version is intentionally maintained separately from AssemblyVersion/FileVersion.
+    [PluginMetadata("TShock", "5.9.9", "The TShock Team", "The administration modification of the future.")]
     public class TShock : BasePlugin
     {
         class LogHost : ILoggerHost {

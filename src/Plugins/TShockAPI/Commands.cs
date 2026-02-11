@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.Localization;
 using TShockAPI.DB;
@@ -379,6 +380,23 @@ namespace TShockAPI
             });
             add(new Command(Rules, "rules") {
                 HelpText = GetString("Shows the server's rules.")
+            });
+            add(new Command(ShowDeath, "death") {
+                AllowServer = false,
+                HelpText = GetString("Shows your number of deaths.")
+            });
+            add(new Command(ShowPVPDeath, "pvpdeath") {
+                AllowServer = false,
+                HelpText = GetString("Shows your number of PVP deaths.")
+            });
+            add(new Command(ShowAllDeath, "alldeath") {
+                HelpText = GetString("Shows the number of deaths for all online players.")
+            });
+            add(new Command(ShowAllPVPDeath, "allpvpdeath") {
+                HelpText = GetString("Shows the number of PVP deaths for all online players.")
+            });
+            add(new Command(BossDamage, "bossdamage") {
+                HelpText = GetString("Shows recent boss kill contribution.")
             });
 
             TShockCommands = new ReadOnlyCollection<Command>(tshockCommands);
@@ -926,7 +944,7 @@ namespace TShockAPI
             args.Executor.SendInfoMessage(GetString($"Name: {server.Name}"));
             args.Executor.SendInfoMessage(GetString("Size: {0}x{1}", server.Main.maxTilesX, server.Main.maxTilesY));
             args.Executor.SendInfoMessage(GetString($"ID: {server.Main.worldID}"));
-            args.Executor.SendInfoMessage(GetString($"Seed: {server.WorldGen.currentWorldSeed}"));
+			args.Executor.SendInfoMessage(GetString($"Seed: {server.Main.ActiveWorldFileData.Seed}"));
             args.Executor.SendInfoMessage(GetString($"Mode: {server.Main.GameMode}"));
             args.Executor.SendInfoMessage(GetString($"Path: {server.Main.worldPathName}"));
         }
@@ -1753,7 +1771,8 @@ namespace TShockAPI
             "invasion",
             "sandstorm",
             "rain",
-            "lanternsnight"
+            "lanternsnight",
+            "meteorshower"
         };
         static readonly List<string> _validInvasions = new List<string>()
         {
@@ -1848,6 +1867,14 @@ namespace TShockAPI
                         return;
                     }
                     LanternsNight(args);
+                    return;
+
+                case "meteorshower":
+                    if (!args.Executor.HasPermission(Permissions.managemeteorshowerevent)) {
+                        FailedPermissionCheck();
+                        return;
+                    }
+                    MeteorShower(args);
                     return;
 
                 default:
@@ -2031,50 +2058,70 @@ namespace TShockAPI
             var server = args.Server!;
             var serverPlr = server.GetExtension<TSServerPlayer>();
 
-            bool slime = false;
-            if (args.Parameters.Count > 1 && args.Parameters[1].ToLowerInvariant() == "slime") {
-                slime = true;
-            }
+            var type = args.Parameters.Count > 1 ? args.Parameters[1].ToLowerInvariant() : "normal";
+            switch (type) {
+                case "slime":
+                    if (server.Main.raining) {
+                        args.Executor.SendErrorMessage(GetString("Slime rain cannot be activated during normal rain. Stop the normal rainstorm and try again."));
+                        return;
+                    }
 
-            if (!slime) {
-                args.Executor.SendInfoMessage(GetString("Use \"{0}worldevent rain slime\" to start slime rain!", Specifier));
-            }
+                    if (server.Main.slimeRain) {
+                        server.Main.StopSlimeRain(false);
+                        server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
+                        serverPlr.BCInfoMessage(GetString("{0} ended the slime rain.", args.Executor.Name));
+                    }
+                    else {
+                        server.Main.StartSlimeRain(false);
+                        server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
+                        serverPlr.BCInfoMessage(GetString("{0} caused it to rain slime.", args.Executor.Name));
+                    }
 
-            if (slime && server.Main.raining) //Slime rain cannot be activated during normal rain
-            {
-                args.Executor.SendErrorMessage(GetString("Slime rain cannot be activated during normal rain. Stop the normal rainstorm and try again."));
-                return;
-            }
+                    break;
 
-            if (slime && server.Main.slimeRain) //Toggle slime rain off
-            {
-                server.Main.StopSlimeRain(false);
-                server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
-                serverPlr.BCInfoMessage(GetString("{0} ended the slime rain.", args.Executor.Name));
-                return;
-            }
+                case "coin":
+                    if (server.Main.coinRain != 0) {
+                        server.Main.StopRain();
+                        server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
+                        serverPlr.BCInfoMessage(GetString("{0} ended the coin rain.", args.Executor.Name));
+                    }
+                    else {
+                        server.Main.StartRain(garenteeCoinRain: true);
+                        server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
+                        serverPlr.BCInfoMessage(GetString("{0} caused it to coin rain.", args.Executor.Name));
+                    }
 
-            if (slime && !server.Main.slimeRain) //Toggle slime rain on
-            {
-                server.Main.StartSlimeRain(false);
-                server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
-                serverPlr.BCInfoMessage(GetString("{0} caused it to rain slime.", args.Executor.Name));
-            }
+                    break;
 
-            if (server.Main.raining && !slime) //Toggle rain off
-            {
-                server.Main.StopRain();
-                server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
-                serverPlr.BCInfoMessage(GetString("{0} ended the rain.", args.Executor.Name));
-                return;
-            }
+                default:
+                    if (server.Main.raining) {
+                        server.Main.StopRain();
+                        server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
+                        serverPlr.BCInfoMessage(GetString("{0} ended the rain.", args.Executor.Name));
+                    }
+                    else {
+                        server.Main.StartRain();
+                        server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
+                        serverPlr.BCInfoMessage(GetString("{0} caused it to rain.", args.Executor.Name));
+                    }
 
-            if (!server.Main.raining && !slime) //Toggle rain on
-            {
-                server.Main.StartRain();
-                server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
-                serverPlr.BCInfoMessage(GetString("{0} caused it to rain.", args.Executor.Name));
-                return;
+                    args.Executor.SendInfoMessage(GetString("Use \"{0}worldevent rain slime\" to start slime rain!", Specifier));
+                    args.Executor.SendInfoMessage(GetString("Use \"{0}worldevent rain coin\" to start coin rain!", Specifier));
+                    break;
+            }
+        }
+
+        private static void MeteorShower(CommandArgs args) {
+            var server = args.Server!;
+            var serverPlr = server.GetExtension<TSServerPlayer>();
+
+            if (server.WorldGen.meteorShowerCount > 0) {
+                server.WorldGen.meteorShowerCount = 0;
+                serverPlr.BCInfoMessage(GetString("{0} stopped the meteor shower.", args.Executor.Name));
+            }
+            else {
+                server.WorldGen.StartMeteorShower();
+                serverPlr.BCInfoMessage(GetString("{0} started a meteor shower.", args.Executor.Name));
             }
         }
 
@@ -3255,7 +3302,7 @@ namespace TShockAPI
                             args.Executor.SendErrorMessage(GetString("Invalid item."));
                         }
                         else if (items.Count > 1) {
-                            args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.netID})"));
+                            args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.type})"));
                         }
                         else {
                             // Yes this is required because of localization
@@ -3300,7 +3347,7 @@ namespace TShockAPI
                             args.Executor.SendErrorMessage(GetString("Invalid item."));
                         }
                         else if (items.Count > 1) {
-                            args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.netID})"));
+                            args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.type})"));
                         }
                         else {
                             if (!TShock.Groups.GroupExists(args.Parameters[2])) {
@@ -3337,7 +3384,7 @@ namespace TShockAPI
                             args.Executor.SendErrorMessage(GetString("Invalid item."));
                         }
                         else if (items.Count > 1) {
-                            args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.netID})"));
+                            args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.type})"));
                         }
                         else {
                             TShock.ItemBans.DataModel.RemoveBan(EnglishLanguage.GetItemNameById(items[0].type));
@@ -3359,7 +3406,7 @@ namespace TShockAPI
                             args.Executor.SendErrorMessage(GetString("Invalid item."));
                         }
                         else if (items.Count > 1) {
-                            args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.netID})"));
+                            args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.type})"));
                         }
                         else {
                             if (!TShock.Groups.GroupExists(args.Parameters[2])) {
@@ -5120,7 +5167,7 @@ namespace TShockAPI
                             float dY = server.Main.item[i].position.Y - tsPlayer.Y;
 
                             if (server.Main.item[i].active && dX * dX + dY * dY <= radius * radius * 256f) {
-                                server.Main.item[i].active = false;
+                                server.Main.item[i].TurnToAir(server);
                                 server.NetMessage.SendData((int)PacketTypes.ItemDrop, -1, -1, null, i);
                                 cleared++;
                             }
@@ -5337,7 +5384,7 @@ namespace TShockAPI
                 return;
             }
             else if (matchedItems.Count > 1) {
-                args.Executor.SendMultipleMatchError(matchedItems.Select(i => $"{i.Name}({i.netID})"));
+                args.Executor.SendMultipleMatchError(matchedItems.Select(i => $"{i.Name}({i.type})"));
                 return;
             }
             else {
@@ -5462,7 +5509,7 @@ namespace TShockAPI
                 args.Executor.SendErrorMessage(GetString("Invalid item type!"));
             }
             else if (items.Count > 1) {
-                args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.netID})"));
+                args.Executor.SendMultipleMatchError(items.Select(i => $"{i.Name}({i.type})"));
             }
             else {
                 var item = items[0];
@@ -5927,6 +5974,58 @@ namespace TShockAPI
                 playerToGod.SendSuccessMessage(playerToGod.GodMode
                     ? GetString("You are now in god mode.", playerToGod.Name)
                     : GetString("You are no longer in god mode.", playerToGod.Name));
+            }
+        }
+
+        private static void ShowDeath(CommandArgs args) {
+            args.Player!.SendInfoMessage(GetString("*You were slain {0} times.", args.Player.DeathsPVE));
+        }
+
+        private static void ShowPVPDeath(CommandArgs args) {
+            args.Player!.SendInfoMessage(GetString("*You were slain by other players {0} times.", args.Player.DeathsPVP));
+        }
+
+        private static void ShowAllDeath(CommandArgs args) {
+            var players = TShock.Players.Where(p => p is { Active: true }).OrderByDescending(p => p!.DeathsPVE).ToList();
+            if (players.Count == 0) {
+                args.Executor.SendErrorMessage(GetString("There are currently no players online."));
+                return;
+            }
+
+            var deathsRank = players.Select(p => GetString("*{0} was slain {1} times.", p!.Name, p.DeathsPVE));
+            args.Executor.SendInfoMessage(string.Join('\n', deathsRank));
+        }
+
+        private static void ShowAllPVPDeath(CommandArgs args) {
+            var players = TShock.Players.Where(p => p is { Active: true }).OrderByDescending(p => p!.DeathsPVP).ToList();
+            if (players.Count == 0) {
+                args.Executor.SendErrorMessage(GetString("There are currently no players online."));
+                return;
+            }
+
+            var deathsRank = players.Select(p => GetString("*{0} was slain by other players {1} times.", p!.Name, p.DeathsPVP));
+            args.Executor.SendInfoMessage(string.Join('\n', deathsRank));
+        }
+
+        private static void BossDamage(CommandArgs args) {
+            var server = args.Server;
+            if (server is null) {
+                args.Executor.SendErrorMessage(GetString("This command can only run in a server context."));
+                return;
+            }
+
+            var attempts = server.NPCDamageTracker.RecentAttempts().ToList();
+            if (attempts.Count == 0) {
+                args.Executor.SendWarningMessage(GetString("No recent boss kill data found."));
+                return;
+            }
+
+            foreach (var recentAttempt in attempts) {
+                for (var playerId = 0; playerId < byte.MaxValue; playerId++) {
+                    if (server.Main.player[playerId].active) {
+                        args.Executor.SendSuccessMessage(recentAttempt.GetReport(server.Main.player[playerId]).ToString());
+                    }
+                }
             }
         }
 

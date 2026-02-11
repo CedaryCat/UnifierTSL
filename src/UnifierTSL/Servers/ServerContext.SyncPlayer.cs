@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
-using Terraria.Localization;
 using TrProtocol.NetPackets;
 using MessageID = Terraria.ID.MessageID;
 
@@ -57,6 +56,9 @@ namespace UnifierTSL.Servers
             }
             for (int i = 0; i < Terraria.Main.maxNPCs; i++) {
                 NetMessage.TrySendData(MessageID.SyncNPC, whoAmI, -1, null, i);
+                if (Main.npc[i].active) {
+                    NetMessage.TrySendData(MessageID.NPCBuffs, whoAmI, -1, null, i);
+                }
             }
             for (int i = 0; i < Terraria.Main.maxProjectiles; i++) {
                 if (Main.projectile[i].active) {
@@ -65,9 +67,7 @@ namespace UnifierTSL.Servers
             }
         }
         protected virtual void SendWorldInfo(int whoAmI) {
-            for (int i = 0; i < 290; i++) {
-                NetMessage.TrySendData(MessageID.NPCKillCountDeathTally, whoAmI, -1, null, i);
-            }
+            NetManager.SendToClient(Terraria.GameContent.BannerSystem.NetBannersModule.WriteFullState(this), whoAmI);
             NetMessage.TrySendData(57, whoAmI);
             NetMessage.TrySendData(MessageID.MoonlordHorror);
             NetMessage.TrySendData(MessageID.UpdateTowerShieldStrengths, whoAmI);
@@ -75,7 +75,6 @@ namespace UnifierTSL.Servers
             Main.BestiaryTracker.OnPlayerJoining(this, whoAmI);
             CreativePowerManager.SyncThingsToJoiningPlayer(whoAmI);
             Main.PylonSystem.OnPlayerJoining(this, whoAmI);
-            NetMessage.TrySendData(MessageID.AnglerQuest, whoAmI, -1, NetworkText.FromLiteral(this.Main.player[whoAmI].name), this.Main.anglerQuest);
         }
         #endregion
 
@@ -84,11 +83,11 @@ namespace UnifierTSL.Servers
             Network.LocalClientSender sender = UnifiedServerCoordinator.clientSenders[plr];
 
             for (int i = 0; i < Terraria.Main.maxItems; i++) {
-                Item item = Main.item[i];
+                WorldItem item = Main.item[i];
                 if (!item.active || item.playerIndexTheItemIsReservedFor != plr) {
                     continue;
                 }
-                sender.SendFixedPacket(new ItemOwner((short)i, 255));
+                sender.SendFixedPacket(new ItemOwner((short)i, 255, item.position));
             }
             for (int i = 0; i < Terraria.Main.maxProjectiles; i++) {
                 Projectile proj = Main.projectile[i];

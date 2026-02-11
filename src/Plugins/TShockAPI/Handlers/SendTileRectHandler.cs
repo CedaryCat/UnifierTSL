@@ -417,8 +417,8 @@ namespace TShockAPI.Handlers
             if (MatchesConversionSpread(server, player, rect)) {
                 server.Log.Debug(GetString($"Bouncer / SendTileRect reimplemented from {player.Name}"));
 
-                // send correcting rect
-                player.SendTileRect(rect.TilePosX, rect.TilePosY, rect.Width, rect.Height);
+                // apply vanilla-style framing and broadcast
+                FrameAndSyncRect(server, rect);
                 return;
             }
 
@@ -435,8 +435,8 @@ namespace TShockAPI.Handlers
             if (MatchesFlowerBoots(server, player, rect)) {
                 server.Log.Debug(GetString($"Bouncer / SendTileRect reimplemented from {player.Name}"));
 
-                // send correcting rect
-                player.SendTileRect(rect.TilePosX, rect.TilePosY, rect.Width, rect.Height);
+                // apply vanilla-style framing and broadcast
+                FrameAndSyncRect(server, rect);
                 return;
             }
 
@@ -450,7 +450,7 @@ namespace TShockAPI.Handlers
                     if (result == TileRectMatch.MatchResult.RejectChanges)
                         player.SendTileRect(rect.TilePosX, rect.TilePosY, rect.Width, rect.Height);
                     if (result == TileRectMatch.MatchResult.BroadcastChanges)
-                        server.NetMessage.SendTileSquare(rect.TilePosX, rect.TilePosY, rect.Width, rect.Height);
+                        FrameAndSyncRect(server, rect);
                     return;
                 }
             }
@@ -459,8 +459,8 @@ namespace TShockAPI.Handlers
             if (MatchesGrassMow(server, player, rect) || MatchesChristmasTree(server, player, rect)) {
                 server.Log.Debug(GetString($"Bouncer / SendTileRect reimplemented from {player.Name}"));
 
-                // send correcting rect
-                player.SendTileRect(rect.TilePosX, rect.TilePosY, rect.Width, rect.Height);
+                // apply vanilla-style framing and broadcast
+                FrameAndSyncRect(server, rect);
                 return;
             }
 
@@ -470,6 +470,15 @@ namespace TShockAPI.Handlers
             player.SendTileRect(rect.TilePosX, rect.TilePosY, rect.Width, rect.Height);
             return;
         }
+
+		/// <summary>
+		/// Calls tile framing and then syncs the rectangle to all clients.
+		/// </summary>
+		private static void FrameAndSyncRect(ServerContext server, SquareData rect)
+		{
+			server.WorldGen.RangeFrame(rect.TilePosX, rect.TilePosY, rect.TilePosX + rect.Width, rect.TilePosY + rect.Height);
+			server.NetMessage.SendTileSquare(rect.TilePosX, rect.TilePosY, rect.Width, rect.Height);
+		}
 
 		/// <summary>
 		/// Checks whether the tile rect is at a valid position for the given player.

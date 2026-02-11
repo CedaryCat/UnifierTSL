@@ -272,6 +272,7 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.TileSquare: PrecessPacket_D<TileSquare>(in info); return;
                 case MessageID.SyncItem: PrecessPacket_F<SyncItem>(in info); return;
                 case MessageID.SyncNPC: PrecessPacket_DL<SyncNPC>(in info); return;
+                case MessageID.UnusedStrikeNPC: PrecessPacket_F<UnusedStrikeNPC>(in info); return;
                 case MessageID.SyncProjectile: PrecessPacket_F<SyncProjectile>(in info); return;
                 case MessageID.StrikeNPC: PrecessPacket_F<StrikeNPC>(in info); return;
                 case MessageID.KillProjectile: PrecessPacket_F<KillProjectile>(in info); return;
@@ -320,17 +321,21 @@ namespace UnifierTSL.Events.Handlers
                             case NetModuleType.NetPingModule: PrecessPacket_F<NetPingModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetAmbienceModule: PrecessPacket_F<NetAmbienceModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetBestiaryModule: PrecessPacket_F<NetBestiaryModule>(in info, contentOffset: 3); return;
-                            case NetModuleType.NetCreativeUnlocksModule: PrecessPacket_F<NetCreativeUnlocksModule>(in info, contentOffset: 3); return;
-                            case NetModuleType.NetCreativePowersModule: PrecessPacket_DL<NetCreativePowersModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetCreativePowersModule: PrecessPacket_D<NetCreativePowersModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetCreativeUnlocksPlayerReportModule: PrecessPacket_F<NetCreativeUnlocksPlayerReportModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetTeleportPylonModule: PrecessPacket_F<NetTeleportPylonModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetParticlesModule: PrecessPacket_F<NetParticlesModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetCreativePowerPermissionsModule: PrecessPacket_F<NetCreativePowerPermissionsModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetBannersModule: PrecessPacket_D<NetBannersModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetCraftingRequestsModule: PrecessPacket_DS<NetCraftingRequestsModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetTagEffectStateModule: PrecessPacket_DS<NetTagEffectStateModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetLeashedEntityModule: PrecessPacket_D<NetLeashedEntityModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetUnbreakableWallScanModule: PrecessPacket_F<NetUnbreakableWallScanModule>(in info, contentOffset: 3); return;
                             default: return;
                         }
                     }
                 case MessageID.NPCKillCountDeathTally: PrecessPacket_F<NPCKillCountDeathTally>(in info); return;
-                case MessageID.QuickStackChests: PrecessPacket_F<QuickStackChests>(in info); return;
+                case MessageID.QuickStackChests: PrecessPacket_DS<QuickStackChests>(in info); return;
                 case MessageID.TileEntitySharing: PrecessPacket_D<TileEntitySharing>(in info); return;
                 case MessageID.TileEntityPlacement: PrecessPacket_F<TileEntityPlacement>(in info); return;
                 case MessageID.ItemTweaker: PrecessPacket_F<ItemTweaker>(in info); return;
@@ -408,8 +413,21 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.ShimmerActions: PrecessPacket_F<ShimmerActions>(in info); return;
                 case MessageID.SyncLoadout: PrecessPacket_F<SyncLoadout>(in info); return;
                 case MessageID.SyncItemCannotBeTakenByEnemies: PrecessPacket_F<SyncItemCannotBeTakenByEnemies>(in info); return;
+                case MessageID.DeadCellsDisplayJarTryPlacing: PrecessPacket_F<DeadCellsDisplayJarTryPlacing>(in info); return;
+                case MessageID.SpectatePlayer: PrecessPacket_F<SpectatePlayer>(in info); return;
+                case MessageID.SyncItemDespawn: PrecessPacket_F<SyncItemDespawn>(in info); return;
+                case MessageID.ItemUseSound: PrecessPacket_F<ItemUseSound>(in info); return;
+                case MessageID.NPCDebuffDamage: PrecessPacket_F<NPCDebuffDamage>(in info); return;
+                case MessageID.Ping: PrecessPacket_F<Ping>(in info); return;
+                case MessageID.SyncChestSize: PrecessPacket_F<SyncChestSize>(in info); return;
+                case MessageID.TELeashedEntityAnchorPlaceItem: PrecessPacket_F<TELeashedEntityAnchorPlaceItem>(in info); return;
+                case MessageID.TeamChangeFromUI: PrecessPacket_F<TeamChangeFromUI>(in info); return;
+                case MessageID.ExtraSpawnSectionLoaded: PrecessPacket_F<ExtraSpawnSectionLoaded>(in info); return;
+                case MessageID.RequestSection: PrecessPacket_F<RequestSection>(in info); return;
+                case MessageID.ItemPosition: PrecessPacket_F<ItemPosition>(in info); return;
+                case MessageID.HostToken: PrecessPacket_D<HostToken>(in info); return;
                 case MessageID.ServerInfo: PrecessPacket_D<ServerInfo>(in info); return;
-                case MessageID.PlayerPlatformInfo: PrecessPacket_D<PlayerPlatformInfo>(in info); return;
+                case MessageID.PlayerPlatformInfo: PrecessPacket_F<PlayerPlatformInfo>(in info); return;
                 default: return;
             }
         }

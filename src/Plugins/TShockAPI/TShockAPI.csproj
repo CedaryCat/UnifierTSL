@@ -1,19 +1,48 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+
+		<!-- Parallel mainline sync baseline tracking -->
+		<MainlineSyncRepo>https://github.com/Pryaxis/TShock.git</MainlineSyncRepo>
+		<MainlineSyncBranch>general-devel</MainlineSyncBranch>
+		<MainlineSyncCommit>6e71f3a02f9c5c26ec5df478eb23a45a77b162d7</MainlineSyncCommit>
+		<MainlineVersion>5.9.9</MainlineVersion>
+
+		<!-- Packaging and identity: this is the UnifierTSL migration package, not upstream's official package -->
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<PackageId>UTSL.TShock</PackageId>
+		<Version>$(MainlineVersion)</Version>
+		<AssemblyVersion>$(MainlineVersion).0</AssemblyVersion>
+		<FileVersion>$(MainlineVersion).0</FileVersion>
+		<Title>TShock for Terraria (UnifierTSL Migration)</Title>
+		<AssemblyTitle>TShock for Terraria</AssemblyTitle>
+		<Company>Pryaxis &amp; TShock Contributors</Company>
+		<Product>TShockAPI</Product>
+		<Copyright>Copyright © Pryaxis &amp; TShock Contributors 2011-2025</Copyright>
+		<Authors>Pryaxis &amp; TShock Contributors; CedaryCat</Authors>
+		<Description>TShock adapted for the UnifierTSL/UnifiedServerProcess runtime. This package is a migration distribution and is not an official Pryaxis TShock release.</Description>
+		<PackageProjectUrl>https://github.com/CedaryCat/UnifierTSL</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/CedaryCat/UnifierTSL</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+		<PackageTags>terraria;tshock;unifiertsl;usp;migration</PackageTags>
+		<PackageReadmeFile>NUGET.md</PackageReadmeFile>
+
+		<!-- Fallback when GitVersion is unavailable (for example, non-dotnet msbuild contexts) -->
+		<PackageVersion Condition="'$(PackageVersion)' == ''">$(MainlineVersion)-utsl.local</PackageVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="HttpServer.dll" />
+		<None Remove="HttpServer.dll" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Include="HttpServer.dll">
-	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-	  </EmbeddedResource>
+		<EmbeddedResource Include="HttpServer.dll">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -21,7 +50,23 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<AssemblyMetadata Include="MainlineSyncRepo" Value="$(MainlineSyncRepo)" />
+		<AssemblyMetadata Include="MainlineSyncBranch" Value="$(MainlineSyncBranch)" />
+		<AssemblyMetadata Include="MainlineSyncCommit" Value="$(MainlineSyncCommit)" />
+		<AssemblyMetadata Include="MainlineVersion" Value="$(MainlineVersion)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="NUGET.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="GitVersion.MsBuild" Version="6.0.5">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" Aliases="BCrypt" />
+		<PackageReference Include="GetText.NET" Version="8.0.5" />
 		<PackageReference Include="linq2db" Version="5.4.1" />
 		<PackageReference Include="MySql.Data" Version="9.2.0" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
@@ -29,9 +74,29 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="HttpServer">
-	    <HintPath>HttpServer.dll</HintPath>
-	  </Reference>
+		<Reference Include="HttpServer">
+			<HintPath>HttpServer.dll</HintPath>
+		</Reference>
 	</ItemGroup>
+
+	<Target Name="SetTShockPackageVersion"
+			DependsOnTargets="GetVersion"
+			BeforeTargets="GenerateNuspec;_GetOutputItemsFromPack">
+		<PropertyGroup>
+			<!-- Branch-aware package versioning:
+			     - mainline/stable branches -> MainlineVersion
+			     - develop/feature branches -> MainlineVersion-utsl.<preReleaseTag>
+			     - no GitVersion context -> MainlineVersion-utsl.local -->
+			<_TShockComputedPackageVersion Condition="'$(GitVersion_PreReleaseTag)' != ''">$(MainlineVersion)-utsl.$(GitVersion_PreReleaseTag)</_TShockComputedPackageVersion>
+			<_TShockComputedPackageVersion Condition="'$(_TShockComputedPackageVersion)' == '' and '$(GitVersion_SemVer)' != ''">$(MainlineVersion)</_TShockComputedPackageVersion>
+			<_TShockComputedPackageVersion Condition="'$(_TShockComputedPackageVersion)' == ''">$(MainlineVersion)-utsl.local</_TShockComputedPackageVersion>
+			<PackageVersion>$(_TShockComputedPackageVersion)</PackageVersion>
+		</PropertyGroup>
+
+		<!-- Stable package + pre-release dependency should fail loudly -->
+		<PropertyGroup Condition="$([System.String]::Copy('$(PackageVersion)').Contains('-')) != 'True'">
+			<WarningsAsErrors>$(WarningsAsErrors);NU5104</WarningsAsErrors>
+		</PropertyGroup>
+	</Target>
 
 </Project>

@@ -124,6 +124,8 @@ namespace TShockAPI
 		private byte _prefixId;
 		[JsonProperty("stack")]
 		private int _stack;
+		[JsonProperty("favorited")]
+		private bool _favorited;
 
 		/// <summary>
 		/// Gets the net ID.
@@ -150,16 +152,26 @@ namespace TShockAPI
 		}
 
 		/// <summary>
+		/// Gets whether this item is favorited.
+		/// </summary>
+		public bool Favorited
+		{
+			get { return _favorited; }
+		}
+
+		/// <summary>
 		/// Creates a new <see cref="NetItem"/>.
 		/// </summary>
 		/// <param name="netId">The net ID.</param>
 		/// <param name="stack">The stack.</param>
 		/// <param name="prefixId">The prefix ID.</param>
-		public NetItem(int netId, int stack = 1, byte prefixId = 0)
+		/// <param name="favorited">Whether the item is favorited.</param>
+		public NetItem(int netId, int stack = 1, byte prefixId = 0, bool favorited = false)
 		{
 			_netId = netId;
 			_stack = stack;
 			_prefixId = prefixId;
+			_favorited = favorited;
 		}
 
 		/// <summary>
@@ -168,9 +180,10 @@ namespace TShockAPI
 		/// <param name="item">Item in the game.</param>
 		public NetItem(Item item)
 		{
-			_netId = item.netID;
+			_netId = item.type;
 			_stack = item.stack;
 			_prefixId = item.prefix;
+			_favorited = item.favorited;
 		}
 
 		/// <summary>
@@ -179,7 +192,7 @@ namespace TShockAPI
 		/// <returns></returns>
 		public override string ToString()
 		{
-			return String.Format("{0},{1},{2}", _netId, _stack, _prefixId);
+			return String.Format("{0},{1},{2},{3}", _netId, _stack, _prefixId, _favorited ? 1 : 0);
 		}
 
 		/// <summary>
@@ -195,14 +208,17 @@ namespace TShockAPI
 				throw new ArgumentNullException("str");
 
 			string[] comp = str.Split(',');
-			if (comp.Length != 3)
-				throw new FormatException("String does not contain three sections.");
+			if (comp.Length < 3)
+				throw new FormatException("String should contain at least three sections.");
 
 			int netId = Int32.Parse(comp[0]);
 			int stack = Int32.Parse(comp[1]);
 			byte prefixId = Byte.Parse(comp[2]);
+			bool favorited = false;
+			if (comp.Length >= 4)
+				favorited = Int32.Parse(comp[3]) == 1;
 
-			return new NetItem(netId, stack, prefixId);
+			return new NetItem(netId, stack, prefixId, favorited);
 		}
 
 		/// <summary>
@@ -214,7 +230,7 @@ namespace TShockAPI
 		{
 			return item == null
 				? new NetItem()
-				: new NetItem(item.netID, item.stack, item.prefix);
+				: new NetItem(item.type, item.stack, item.prefix, item.favorited);
 		}
 	}
 }

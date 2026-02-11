@@ -1,4 +1,5 @@
-﻿using BCrypt.Net;
+﻿extern alias BCrypt;
+using BCrypt::BCrypt.Net;
 using LinqToDB;
 using LinqToDB.Data;
 using LinqToDB.Mapping;
@@ -419,7 +420,7 @@ namespace TShockAPI.DB
         /// <returns>bool true, if the password matched, or false, if it didn't.</returns>
         public bool VerifyPassword(string password) {
             try {
-                if (BCrypt.Net.BCrypt.Verify(password, Password)) {
+                if (BCrypt::BCrypt.Net.BCrypt.Verify(password, Password)) {
                     // If necessary, perform an upgrade to the highest work factor.
                     UpgradePasswordWorkFactor(password);
                     return true;
@@ -463,11 +464,11 @@ namespace TShockAPI.DB
                 throw new ArgumentOutOfRangeException("password", GetString($"Password must be at least {minLength} characters."));
             }
             try {
-                Password = BCrypt.Net.BCrypt.HashPassword(password.Trim(), TShock.Config.GlobalSettings.BCryptWorkFactor);
+                Password = BCrypt::BCrypt.Net.BCrypt.HashPassword(password.Trim(), TShock.Config.GlobalSettings.BCryptWorkFactor);
             }
             catch (ArgumentOutOfRangeException) {
                 TShock.Log.Error(GetString("Invalid BCrypt work factor in config file! Creating new hash using default work factor."));
-                Password = BCrypt.Net.BCrypt.HashPassword(password.Trim());
+                Password = BCrypt::BCrypt.Net.BCrypt.HashPassword(password.Trim());
             }
         }
 
@@ -479,7 +480,7 @@ namespace TShockAPI.DB
                 int minLength = TShock.Config.GlobalSettings.MinimumPasswordLength;
                 throw new ArgumentOutOfRangeException("password", GetString($"Password must be at least {minLength} characters."));
             }
-            Password = BCrypt.Net.BCrypt.HashPassword(password.Trim(), workFactor);
+            Password = BCrypt::BCrypt.Net.BCrypt.HashPassword(password.Trim(), workFactor);
         }
 
         #region IEquatable
