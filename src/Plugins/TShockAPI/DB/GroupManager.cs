@@ -474,7 +474,7 @@ namespace TShockAPI.DB
                 .Update();
 
             if (updated == 1)
-                return "Group " + name + " has been modified successfully.";
+                return GetString($"Group {name} has been modified successfully.");
 
             // Restore old permissions so DB and internal object are in a consistent state
             group.Permissions = oldperms;
@@ -495,7 +495,7 @@ namespace TShockAPI.DB
                 .Update();
 
             if (updated == 1)
-                return "Group " + name + " has been modified successfully.";
+                return GetString($"Group {name} has been modified successfully.");
 
             // Restore old permissions so DB and internal object are in a consistent state
             group.Permissions = oldperms;

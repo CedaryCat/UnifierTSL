@@ -16,7 +16,7 @@ using UnifierTSL.Servers;
 
 namespace UnifierTSL
 {
-    public static class UnifiedServerCoordinator
+    public class UnifiedServerCoordinator
     {
         private unsafe class PendingConnection(int index)
         {
@@ -160,7 +160,7 @@ namespace UnifierTSL
                                 if (handled) {
                                     return;
                                 }
-                                if (msg.Version != "Terraria" + 279) {
+                                if (msg.Version != "Terraria" + Main.curRelease) {
                                     sender.Kick(Lang.mp[4].ToNetworkText());
                                     break;
                                 }
@@ -197,7 +197,7 @@ namespace UnifierTSL
                                 UnifierApi.EventHub.Netplay.ReceiveFullClientInfoEvent.Invoke(new(client, player, sender), out bool h);
                                 if (h) {
                                     if (!client.PendingTermination || !client.PendingTerminationApproved) {
-                                        sender.Kick(NetworkText.FromLiteral(GetString("You are not allowed to join this server.")));
+                                        sender.Kick(NetworkText.FromLiteral("You are not allowed to join this server."));
                                     }
                                     return;
                                 }
@@ -218,7 +218,7 @@ namespace UnifierTSL
                                     SyncPlayer playerData = player.CreateSyncPacket(Index);
                                     Player serverPlayer = players[Index] = joinServer.Main.player[Index];
                                     serverPlayer.ApplySyncPlayerPacket(in playerData, false);
-                                    globalClients[Index].ResetSections(joinServer);
+                                    globalClients[Index].mfwh_ResetSections(joinServer);
 
                                     if (joinServer.IsRunning) {
                                         UnifierApi.EventHub.Coordinator.JoinServer.Invoke(new(joinServer, player.whoAmI));
@@ -421,10 +421,15 @@ namespace UnifierTSL
             int sleepStep = 0;
             Started?.Invoke();
             while (true) {
-                StartListeningIfNeeded();
-                UpdateConnectedClients();
-                sleepStep = (sleepStep + 1) % 10;
-                Thread.Sleep(sleepStep == 0 ? 1 : 0);
+                try {
+                    StartListeningIfNeeded();
+                    UpdateConnectedClients();
+                    sleepStep = (sleepStep + 1) % 10;
+                    Thread.Sleep(sleepStep == 0 ? 1 : 0);
+                }
+                finally {
+
+                }
             }
         }
         public static bool AnyClientsConnected => ActiveConnections > 0;
@@ -469,6 +474,11 @@ namespace UnifierTSL
                         }
                     }
                     else {
+                        if (client.PendingTermination) {
+                            if (client.PendingTerminationApproved) {
+                                ClearClientData(client);
+                            }
+                        }
                         if (client.IsConnected()) {
                             activeConnections += 1;
                             lock (client) {
@@ -502,6 +512,26 @@ namespace UnifierTSL
             catch (Exception ex) {
                 Console.WriteLine(ex);
             }
+        }
+        static void ClearClientData(RemoteClient client) {
+            client.Data.Clear();
+
+            client.TimeOutTimer = 0;
+            client.StatusCount = 0;
+            client.StatusMax = 0;
+            client.StatusText2 = "";
+            client.StatusText = "";
+            client.State = 0;
+            client._isReading = false;
+            client.PendingTermination = false;
+            client.PendingTerminationApproved = false;
+            client.SpamClear();
+            client.IsActive = false;
+
+            players[client.Id] = new();
+
+            globalMsgBuffers[client.Id].Reset();
+            client.Socket?.Close();
         }
 
         public static int GetClientSpace() {
@@ -541,12 +571,10 @@ namespace UnifierTSL
         private static void ListenLoop() {
             while (servers.Any(s => s.IsRunning) && GetClientSpace() > 0) {
                 try {
-                    if (listener.Pending()) {
-                        TcpClient client = listener.AcceptTcpClient();
-                        CreateSocketEvent e = new(client);
-                        UnifierApi.EventHub.Coordinator.CreateSocket.Invoke(ref e);
-                        OnConnectionAccepted(e.Socket ?? new TcpSocket(client));
-                    }
+                    TcpClient client = listener.AcceptTcpClient(); 
+                    CreateSocketEvent e = new(client);
+                    UnifierApi.EventHub.Coordinator.CreateSocket.Invoke(ref e);
+                    OnConnectionAccepted(e.Socket ?? new TcpSocket(client));
                 }
                 catch {
                 }
@@ -643,7 +671,7 @@ namespace UnifierTSL
             return -1;
         }
 
-        public static void TransferPlayerToServer(byte plr, ServerContext to) {
+        public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false) {
             ServerContext? from = GetClientCurrentlyServer(plr);
 
             if (from is null) {
@@ -652,7 +680,7 @@ namespace UnifierTSL
             if (from == to) {
                 return;
             }
-            if (!to.IsRunning) {
+            if (!to.IsRunning && !ignoreChecks) {
                 return;
             }
 
@@ -661,9 +689,10 @@ namespace UnifierTSL
                 return;
             }
 
-            RemoteClient client = globalClients[plr];
-            lock (client) {
+            var msgBuffer = globalMsgBuffers[plr];
+            lock (msgBuffer) {
 
+                var client = globalClients[plr];
                 // Leave data sync
                 from.SyncPlayerLeaveToOthers(plr);
                 from.SyncServerOfflineToPlayer(plr);
@@ -682,7 +711,7 @@ namespace UnifierTSL
 
                 // Update current server
                 SetClientCurrentlyServer(plr, to);
-                client.ResetSections(to);
+                client.mfwh_ResetSections(to);
 
                 // Join data sync
                 to.SyncServerOnlineToPlayer(plr);

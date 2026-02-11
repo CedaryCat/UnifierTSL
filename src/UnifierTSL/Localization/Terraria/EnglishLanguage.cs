@@ -12,6 +12,7 @@ namespace UnifierTSL.Localization.Terraria
         private static readonly LanguageManager Language;
         private static readonly Dictionary<string, string> CommandID2EnglishText = [];
         static EnglishLanguage() {
+            LanguageManager.Instance._localizedTexts[""] = LocalizedText.Empty;
             Language = new();
             Language.LoadFilesForCulture(GameCulture.FromCultureName(GameCulture.CultureName.English));
             Language.ProcessCopyCommandsInTexts();

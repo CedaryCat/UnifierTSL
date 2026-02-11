@@ -80,7 +80,7 @@ namespace TShockAPI
                 UnTaint(player);
 
 				// No matter the player type, we do a check when a player is holding an item that's banned.
-				if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[player.TPlayer.selectedItem].netID), player))
+				if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[player.TPlayer.selectedItem].type), player))
 				{
 					string itemName = player.TPlayer.inventory[player.TPlayer.selectedItem].Name;
 					player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
@@ -149,7 +149,7 @@ namespace TShockAPI
 
 			string itemName = player.TPlayer.inventory[args.Packet.SelectedItem].Name;
 
-            if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[args.Packet.SelectedItem].netID), player)) {
+            if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[args.Packet.SelectedItem].type), player)) {
                 player.TPlayer.controlUseItem = false;
 				args.Packet.PlayerControlData.IsUsingItem = false;
                 player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
@@ -192,7 +192,7 @@ namespace TShockAPI
                     return;
                 }
 
-                if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.SelectedItem.netID), player)) {
+                if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.SelectedItem.type), player)) {
                     player.SendTileSquareCentered(args.Packet.Position.X, args.Packet.Position.Y, 4);
                     args.HandleMode = PacketHandleMode.Cancel;
                     return;

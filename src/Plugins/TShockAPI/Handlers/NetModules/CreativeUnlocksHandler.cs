@@ -1,23 +1,24 @@
 ﻿using Terraria;
 using Terraria.GameContent.NetModules;
+using Terraria.ID;
 using Terraria.Net;
 using TrProtocol.NetPackets.Modules;
 using TShockAPI.Extension;
 using UnifierTSL.Events.Handlers;
-using NetCreativeUnlocksModule = TrProtocol.NetPackets.Modules.NetCreativeUnlocksModule;
+using NetCreativeUnlocksPlayerReportModule = TrProtocol.NetPackets.Modules.NetCreativeUnlocksPlayerReportModule;
 
 namespace TShockAPI.Handlers.NetModules
 {
 	/// <summary>
 	/// Handles creative unlock requests
 	/// </summary>
-	public class CreativeUnlocksHandler : IPacketHandler<NetCreativeUnlocksModule>
+public class CreativeUnlocksHandler : IPacketHandler<NetCreativeUnlocksPlayerReportModule>
 	{
-        public void OnReceive(ref RecievePacketEvent<NetCreativeUnlocksModule> args) {
+        public void OnReceive(ref RecievePacketEvent<NetCreativeUnlocksPlayerReportModule> args) {
 			var server = args.LocalReciever.Server;
 			var player = args.GetTSPlayer();
 
-            if (!server.Main.GameModeInfo.IsJourneyMode) {
+            if (server.Main.GameMode != GameModeID.Creative) {
                 server.Log.Debug(
                     GetString($"NetModuleHandler received attempt to unlock sacrifice while not in journey mode from {player.Name}")
                 );
@@ -26,14 +27,14 @@ namespace TShockAPI.Handlers.NetModules
                 return;
             }
 
-            //if ( != 0) {
-            //    server.Log.Debug(
-            //        GetString($"CreativeUnlocksHandler received non-vanilla unlock request. Random field value: {UnknownField} but should be 0 from {player.Name}")
-            //    );
+            if (args.Packet.PlayerSlot != player.Index) {
+                server.Log.Debug(
+                    GetString($"CreativeUnlocksHandler received spoofed player slot request. PlayerSlot: {args.Packet.PlayerSlot}, Sender: {player.Index} ({player.Name})")
+                );
 
-            //    args.HandleMode = PacketHandleMode.Cancel;
-            //    return;
-            //}
+                args.HandleMode = PacketHandleMode.Cancel;
+                return;
+            }
 
             if (!player.HasPermission(Permissions.journey_contributeresearch)) {
                 player.SendErrorMessage(GetString("You do not have permission to contribute research."));
@@ -43,7 +44,7 @@ namespace TShockAPI.Handlers.NetModules
 
             var totalSacrificed = TShock.ResearchDatastore.SacrificeItem(server.Main.worldID, args.Packet.ItemId, args.Packet.Count, player);
 
-            var response = Terraria.GameContent.NetModules.NetCreativeUnlocksModule.SerializeItemSacrifice(server, args.Packet.ItemId, totalSacrificed);
+            var response = Terraria.GameContent.NetModules.NetCreativeUnlocksPlayerReportModule.SerializeSacrificeRequest(server, player.Index, args.Packet.ItemId, totalSacrificed);
             server.NetManager.Broadcast(response);
         }
     }

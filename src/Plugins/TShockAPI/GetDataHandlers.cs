@@ -212,6 +212,9 @@ namespace TShockAPI
             short stack = args.Packet.Stack;
             byte prefix = args.Packet.Prefix;
             short type = args.Packet.ItemType;
+            bool favorited = args.Packet.Details.Favorited;
+            bool blockedSlot = args.Packet.Details.IndicateBlockedSlot;
+            _ = blockedSlot;
 
             // Players send a slot update packet for each inventory slot right after they've joined.
             bool bypassTrashCanCheck = false;
@@ -220,7 +223,7 @@ namespace TShockAPI
                 bypassTrashCanCheck = true;
             }
 
-            if (/*OnPlayerSlot(tsPlayer, args.Data, plr, slot, stack, prefix, type) ||*/ plr != tsPlayer.Index || slot < 0 ||
+            if (/*OnPlayerSlot(tsPlayer, args.Data, plr, slot, stack, prefix, type, favorited, blockedSlot) ||*/ plr != tsPlayer.Index || slot < 0 ||
                 slot > NetItem.MaxInventory) {
                 args.HandleMode = PacketHandleMode.Cancel;
                 args.StopPropagation = true;
@@ -241,7 +244,7 @@ namespace TShockAPI
             item.Prefix(server, prefix);
 
             if (tsPlayer.IsLoggedIn) {
-                tsPlayer.PlayerData.StoreSlot(slot, type, prefix, stack);
+                tsPlayer.PlayerData.StoreSlot(slot, type, prefix, stack, favorited);
             }
             else if (server.Main.ServerSideCharacter && setting.DisableLoginBeforeJoin && !bypassTrashCanCheck &&
                      tsPlayer.HasSentInventory && !tsPlayer.HasPermission(Permissions.bypassssc)) {
@@ -368,6 +371,7 @@ namespace TShockAPI
             int respawnTimer = args.Packet.Timer;
             short numberOfDeathsPVE = args.Packet.DeathsPVE;
             short numberOfDeathsPVP = args.Packet.DeathsPVP;
+            byte team = args.Packet.Team;
             PlayerSpawnContext context = args.Packet.Context;
 
             if (tsPlayer.State >= (int)ConnectionState.RequestingWorldData && !tsPlayer.FinishedHandshake)
@@ -376,7 +380,23 @@ namespace TShockAPI
             //if (OnPlayerSpawn(tsPlayer, args.Data, player, spawnX, spawnY, respawnTimer, numberOfDeathsPVE, numberOfDeathsPVP, context))
             //    args.HandleMode = PacketHandleMode.Cancel;
 
-            tsPlayer.Dead = respawnTimer > 0;
+            if (team < Main.teamColor.Length) {
+                tsPlayer.TPlayer.team = team;
+            }
+
+            if (!server.Main.ServerSideCharacter || context != PlayerSpawnContext.SpawningIntoWorld) {
+                tsPlayer.Dead = respawnTimer > 0;
+            }
+
+            short syncedDeathsPVE = numberOfDeathsPVE;
+            short syncedDeathsPVP = numberOfDeathsPVP;
+            if (server.Main.ServerSideCharacter && tsPlayer.IsLoggedIn && !tsPlayer.HasPermission(Permissions.bypassssc)) {
+                syncedDeathsPVE = (short)Math.Clamp(tsPlayer.sscDeathsPVE, short.MinValue, short.MaxValue);
+                syncedDeathsPVP = (short)Math.Clamp(tsPlayer.sscDeathsPVP, short.MinValue, short.MaxValue);
+            }
+            tsPlayer.TPlayer.respawnTimer = respawnTimer;
+            tsPlayer.TPlayer.numberOfDeathsPVE = syncedDeathsPVE;
+            tsPlayer.TPlayer.numberOfDeathsPVP = syncedDeathsPVP;
 
             if (server.Main.ServerSideCharacter) {
                 // As long as the player has not changed his spawnpoint since initial connection,
@@ -424,9 +444,6 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawn force ssc teleport for {0} at ({1},{2})", tsPlayer.Name, tsPlayer.TPlayer.SpawnX, tsPlayer.TPlayer.SpawnY));
                 tsPlayer.TeleportSpawnpoint();
 
-                tsPlayer.TPlayer.respawnTimer = respawnTimer;
-                tsPlayer.TPlayer.numberOfDeathsPVE = numberOfDeathsPVE;
-                tsPlayer.TPlayer.numberOfDeathsPVP = numberOfDeathsPVP;
                 args.HandleMode = PacketHandleMode.Cancel;
                 args.StopPropagation = true;
             }
@@ -952,8 +969,12 @@ namespace TShockAPI
             //if (OnPlayerBuffUpdate(tsPlayer, args.Data, id))
             //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
-            for (int i = 0; i < Terraria.Player.maxBuffs; i++) {
-                var buff = args.Packet.BuffTypes[i];
+            int buffIndex = 0;
+            var incomingBuffs = args.Packet.BuffTypes ?? Array.Empty<ushort>();
+            for (; buffIndex < incomingBuffs.Length && buffIndex < Terraria.Player.maxBuffs; buffIndex++) {
+                ushort buff = incomingBuffs[buffIndex];
+                if (buff == 0)
+                    break;
 
                 if (buff == 10 && setting.DisableInvisPvP && tsPlayer.TPlayer.hostile)
                     buff = 0;
@@ -963,13 +984,13 @@ namespace TShockAPI
                     buff = 0;
                 }
 
-                tsPlayer.TPlayer.buffType[i] = buff;
-                if (tsPlayer.TPlayer.buffType[i] > 0) {
-                    tsPlayer.TPlayer.buffTime[i] = 60;
-                }
-                else {
-                    tsPlayer.TPlayer.buffTime[i] = 0;
-                }
+                tsPlayer.TPlayer.buffType[buffIndex] = buff;
+                tsPlayer.TPlayer.buffTime[buffIndex] = buff > 0 ? 60 : 0;
+            }
+
+            for (int i = buffIndex; i < Terraria.Player.maxBuffs; i++) {
+                tsPlayer.TPlayer.buffType[i] = 0;
+                tsPlayer.TPlayer.buffTime[i] = 0;
             }
 
             server.Log.Debug(GetString("GetDataHandlers / HandlePlayerBuffList handled event and sent data {0}", tsPlayer.Name));
@@ -1589,6 +1610,13 @@ namespace TShockAPI
 
             tsPlayer.Dead = true;
             tsPlayer.RespawnTimer = setting.RespawnSeconds;
+
+            if (server.Main.ServerSideCharacter && !tsPlayer.HasPermission(Permissions.bypassssc)) {
+                if (pvp) {
+                    tsPlayer.sscDeathsPVP++;
+                }
+                tsPlayer.sscDeathsPVE++;
+            }
 
             foreach (NPC npc in server.Main.npc) {
                 if (npc.active && (npc.boss || npc.type == 13 || npc.type == 14 || npc.type == 15) &&

@@ -56,7 +56,7 @@ jobs:
             arch: linux-arm
 
     runs-on: ${{ matrix.os }}
-    
+
     steps:
     - name: Install msgfmt
       shell: bash

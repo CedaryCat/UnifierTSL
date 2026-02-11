@@ -534,9 +534,17 @@ namespace TShockAPI.Configuration
         [Description("The type of database to use when storing data (either \"sqlite\", \"mysql\" or \"postgres\").")]
         public string StorageType = "sqlite";
 
+        /// <summary>The SQLite connection string. Overrides SqliteDBPath when provided.</summary>
+        [Description("The SQLite connection string. Overrides SqliteDBPath when provided.")]
+        public string SqliteConnectionString = "";
+
         /// <summary>The path of sqlite db.</summary>
         [Description("The path of sqlite db.")]
         public string SqliteDBPath = "tshock.sqlite";
+
+        /// <summary>The MySQL connection string. Overrides host/db/user/password when provided.</summary>
+        [Description("The MySQL connection string. Overrides MySqlHost, MySqlDbName, MySqlUsername and MySqlPassword when provided.")]
+        public string MySqlConnectionString = "";
 
         /// <summary>The MySQL hostname and port to Direct connections to.</summary>
         [Description("The MySQL hostname and port to Direct connections to.")]
@@ -569,6 +577,10 @@ namespace TShockAPI.Configuration
         /// <summary>The password used when connecting to a Postgres database.</summary>
         [Description("The password used when connecting to a Postgres database.")]
         public string PostgresPassword = "";
+
+        /// <summary>The Postgres connection string. Overrides host/db/user/password when provided.</summary>
+        [Description("The Postgres connection string. Overrides PostgresHost, PostgresDbName, PostgresUsername and PostgresPassword when provided.")]
+        public string PostgresConnectionString = "";
 
         /// <summary>Whether or not to save logs to the SQL database instead of a text file.</summary>
         [Description("Whether or not to save logs to the SQL database instead of a text file.\nDefault = false.")]
