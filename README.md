@@ -68,7 +68,7 @@ Curious what powers the launcher? Here is the stack at a glance so you know what
 
   | Package | Version | Purpose |
   | --- | --- | --- |
-  | OTAPI.USP | 1.0.13 | Unified Server Process core |
+  | OTAPI.USP | 1.0.15-pre-release | Unified Server Process core |
   | ModFramework | 1.1.15 | IL modification framework used during patching |
   | MonoMod.RuntimeDetour | 25.2.3 | Runtime method hooking and detouring |
   | Tomlyn | 0.19.0 | TOML configuration parsing for launcher and plugins |
