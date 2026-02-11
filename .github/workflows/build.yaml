@@ -58,6 +58,29 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+    - name: Install msgfmt
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt-get update && sudo apt-get install -y gettext
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew install gettext
+          echo "$(brew --prefix gettext)/bin" >> $GITHUB_PATH
+        elif [ "$RUNNER_OS" = "Windows" ]; then
+          choco install msys2 -y
+          /c/tools/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm gettext"
+        fi
+        
+    - name: Add msgfmt to PATH (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        echo "C:\tools\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Verify msgfmt installation
+      shell: bash
+      run: msgfmt --version
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
