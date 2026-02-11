@@ -64,12 +64,12 @@ UnifierTSL 致力于把 OTAPI 的 Unified Server Process 打包成顺手的工�
 想知道启动器背后用了什么？下面是关键组件，帮助你判断安装内容及其价值。
 
 - **运行时**：基于 .NET 9.0，产出依赖框架的可执行文件，并由发布器生成特定 RID 的资源。
-- **USP 核心**：构建于 OTAPI.UnifiedServerProcess 1.0.13，将原版服务器转化为统一的多世界宿主。
+- **USP 核心**：构建于 OTAPI.UnifiedServerProcess 1.1.0，将原版服务器转化为统一的多世界宿主。
 - **关键包**：
 
   | 包 | 版本 | 作用 |
   | --- | --- | --- |
-  | OTAPI.USP | 1.0.15-pre-release | Unified Server Process 核心 |
+  | OTAPI.USP | 1.1.0-pre-release | Unified Server Process 核心 |
   | ModFramework | 1.1.15 | 补丁阶段使用的 IL 修改框架 |
   | MonoMod.RuntimeDetour | 25.2.3 | 运行期方法钩子与跳转 |
   | Tomlyn | 0.19.0 | 启动器与插件使用的 TOML 配置解析 |
