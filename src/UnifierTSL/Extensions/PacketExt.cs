@@ -68,6 +68,8 @@ namespace UnifierTSL.Extensions
                 player.whoAmI = sync.PlayerSlot;
             }
             player.skinVariant = sync.SkinVariant;
+            player.voiceVariant = sync.VoiceVariant;
+            player.voicePitchOffset = sync.VoicePitchOffset;
             player.hair = sync.Hair;
             player.name = sync.Name.Trim();
             player.hairDye = sync.HairDye;

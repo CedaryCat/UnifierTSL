@@ -160,7 +160,9 @@ namespace UnifierTSL
                                 if (handled) {
                                     return;
                                 }
-                                if (msg.Version != "Terraria" + Main.curRelease) {
+                                var checkCanJoin = new CheckVersion(client, msg.Version, msg.Version == "Terraria" + Main.curRelease);
+                                UnifierApi.EventHub.Coordinator.CheckVersion.Invoke(ref checkCanJoin);
+                                if (!checkCanJoin.CanJoin) {
                                     sender.Kick(Lang.mp[4].ToNetworkText());
                                     break;
                                 }
@@ -202,12 +204,12 @@ namespace UnifierTSL
                                     return;
                                 }
 
-                                SwitchJoinServerEvent e = new(player, client, [.. Servers.Where(s => s.IsRunning)]);
+                                SwitchJoinServerEvent e = new(player, client, [.. Servers.Where(s => s.IsRunning && s.CheckPlayerCanJoinIn(player, client, out _))]);
                                 UnifierApi.EventHub.Coordinator.SwitchJoinServer.Invoke(ref e);
                                 ServerContext? joinServer = e.JoinServer;
 
                                 if (joinServer is null) {
-                                    sender.Kick(NetworkText.FromLiteral(GetParticularString("{0} is player name, {1} is player UUID", $"No available server found for player '{player.name}' ({client.ClientUUID}); connection aborted.")));
+                                    sender.Kick(NetworkText.FromLiteral(GetParticularString("{0} is player name, {1} is player UUID", $"No available server found for you.")));
 
                                     Logger.Warning(
                                         category: "PendingConnection",

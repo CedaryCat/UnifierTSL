@@ -31,6 +31,8 @@ namespace TShockAPI
             TShock.Config.OnConfigRead += Config_OnConfigRead;
             UnifierApi.EventHub.Server.AddServer.Register(OnServerListAdded, HandlerPriority.Normal);
             UnifierApi.EventHub.Coordinator.Started.Register(OnPostInit, HandlerPriority.Normal);
+            UnifierApi.EventHub.Coordinator.ServerCheckPlayerCanJoinIn.Register(OnCheckJoinIn, HandlerPriority.Higher + 1);
+            UnifierApi.EventHub.Coordinator.JoinServer.Register(OnJoinServer, HandlerPriority.Higher + 1);
             On.Terraria.Main.Update += OnUpdate;
             On.OTAPI.HooksSystemContext.WorldGenSystemContext.InvokeHardmodeTileUpdate += OnHardUpdate;
             On.Terraria.WorldGenSystemContext.StartHardmode += OnStartHardMode;
@@ -172,6 +174,33 @@ namespace TShockAPI
             foreach (var server in UnifiedServerCoordinator.Servers.Where(s => s.IsRunning)) {
                 Utils.FixChestStacks(server);
             }
+        }
+
+        private static void OnCheckJoinIn(ref ValueEventNoCancelArgs<ServerCheckPlayerCanJoinIn> args) {
+            var player = args.Content.Player;
+            var server = args.Content.Server;
+            var settings = Config.GetServerSettings(server.Name);
+            var difficulty = player.difficulty;
+
+            if (settings.SoftcoreOnly && difficulty != 0) {
+                args.Content.FailReason = NetworkText.FromLiteral(GetString("You need to join with a softcore player."));
+                args.Content.CanJoin = false;
+                return;
+            }
+            if (settings.MediumcoreOnly && difficulty < 1) {
+                args.Content.FailReason = NetworkText.FromLiteral(GetString("You need to join with a mediumcore player or higher."));
+                args.Content.CanJoin = false;
+                return;
+            }
+            if (settings.HardcoreOnly && difficulty < 2) {
+                args.Content.FailReason = NetworkText.FromLiteral(GetString("You need to join with a hardcore player."));
+                args.Content.CanJoin = false;
+                return;
+            }
+        }
+
+        private static void OnJoinServer(ref ReadonlyNoCancelEventArgs<JoinServerEvent> args) {
+            TShock.Players[args.Content.Who].ReceivedInfo = true;
         }
 
         /// <summary>OnUpdate - Called when ever the server ticks.</summary>
