@@ -30,7 +30,7 @@ namespace TShockAPI
 {
     static class I18n
     {
-        static string TranslationsDirectory => Path.Combine(AppContext.BaseDirectory, "i18n");
+        static string TranslationsDirectory => Path.Combine(Directory.GetCurrentDirectory(), "i18n");
         static CultureInfo TranslationCultureInfo {
             get {
                 // cross-platform mapping of cultureinfos can be a bit screwy, so give our users

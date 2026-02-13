@@ -358,6 +358,9 @@ msgid "Server name '{0}' is already in use"
 msgstr "服务器名称'{0}'已被使用"
 
 #: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:210
+msgid "No available server found for you."
+msgstr "找不到你的可用服务器。"
+
 #: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:214
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID"

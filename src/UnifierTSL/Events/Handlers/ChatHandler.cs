@@ -74,7 +74,7 @@ namespace UnifierTSL.Events.Handlers
 
         private bool ProcessConsoleMessage(On.OTAPI.HooksSystemContext.MainSystemContext.orig_InvokeCommandProcess_string orig, HooksSystemContext.MainSystemContext self,string raw) {
 
-            MessageEvent.Invoke(new MessageEvent(new(self.root.ToServer(), byte.MaxValue), raw, raw.ToLower()), out bool handled);
+            MessageEvent.Invoke(new MessageEvent(new(self.root.ToServer(), byte.MaxValue), raw, raw), out bool handled);
             if (handled) {
                 return false;
             }
