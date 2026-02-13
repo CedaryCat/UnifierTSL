@@ -270,6 +270,9 @@ msgid ""
 msgstr ""
 
 #: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:210
+msgid "No available server found for you."
+msgstr ""
+
 #: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:214
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID"
