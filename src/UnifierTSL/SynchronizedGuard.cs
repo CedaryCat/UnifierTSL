@@ -33,7 +33,7 @@ namespace UnifierTSL
                     if (s.Main.worldName == "") {
                         s.Main.worldName = "World";
                     }
-                    while (WorldGen.TransformingWorld) {
+                    while (s.WorldGen.TransformingWorld) {
                         s.Main.statusText = Lang.gen[48].Value;
                     }
                     using (FileLockManager.Enter(self.root.Main.worldPathName)) {
