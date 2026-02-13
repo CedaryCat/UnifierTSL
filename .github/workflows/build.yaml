@@ -23,6 +23,7 @@ on:
       - '**.md'
       - 'docs/**'
       - '.github/workflows/docs*.yaml'
+  workflow_dispatch:
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -144,7 +145,7 @@ jobs:
     name: Create RC Release
     needs: build
     if: |
-      github.event_name == 'push' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/releases/'))
     runs-on: ubuntu-latest
     permissions:
