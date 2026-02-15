@@ -179,7 +179,7 @@ namespace UnifierTSL
                                 SendPassword msg = new(ref readPtr);
                                 if (msg.Password == ServerPassword) {
                                     client.State = 1;
-                                    sender.SendFixedPacket(new LoadPlayer((byte)Index, true));
+                                    sender.SendFixedPacket(new LoadPlayer((byte)Index, false));
                                 }
                                 else {
                                     sender.Kick(Lang.mp[1].ToNetworkText());
