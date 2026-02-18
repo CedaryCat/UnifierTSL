@@ -35,7 +35,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="OTAPI.USP" Version="1.1.0-pre-release-upstream.21" />
+		<PackageReference Include="OTAPI.USP" Version="1.1.0-pre-release-upstream.23" />
 		<PackageReference Include="ModFramework" Version="1.1.15" />
 		<PackageReference Include="MonoMod.RuntimeDetour" Version="25.2.3" />
 		<PackageReference Include="MonoMod.RuntimeDetour.HookGen" Version="22.7.31.1" />
