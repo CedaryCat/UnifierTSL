@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using Terraria;
 
@@ -221,6 +222,84 @@ namespace UnifierTSL
                 }
 
                 return fullPath;
+            }
+        }
+        public static class Culture {
+            private static List<CultureInfo> BuildChain(CultureInfo c) {
+                var list = new List<CultureInfo>();
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                while (c != null) {
+                    if (!seen.Add(c.Name)) break;
+
+                    list.Add(c);
+
+                    if (Equals(c, CultureInfo.InvariantCulture) || Equals(c.Parent, c))
+                        break;
+
+                    c = c.Parent;
+                }
+
+                return list;
+            }
+
+            public static T? FindBestMatch<T>(
+                IEnumerable<T> candidates,
+                CultureInfo target,
+                Func<T, CultureInfo?> getCulture,
+                bool allowInvariantIntersection = false)
+                where T : class {
+                var targetChain = BuildChain(target);
+
+                var byName = new Dictionary<string, T>(StringComparer.OrdinalIgnoreCase);
+                foreach (var item in candidates) {
+                    var ci = getCulture(item);
+                    if (ci == null) continue;
+                    if (!byName.ContainsKey(ci.Name))
+                        byName[ci.Name] = item;
+                }
+
+                foreach (var c in targetChain) {
+                    if (byName.TryGetValue(c.Name, out var hit))
+                        return hit;
+                }
+
+                var targetIndex = targetChain
+                    .Select((c, i) => new { c.Name, i })
+                    .ToDictionary(x => x.Name, x => x.i, StringComparer.OrdinalIgnoreCase);
+
+                T? best = null;
+                int bestScore = int.MaxValue;
+
+                foreach (var item in candidates) {
+                    var ci = getCulture(item);
+                    if (ci == null) continue;
+
+                    var candChain = BuildChain(ci);
+
+                    for (int j = 0; j < candChain.Count; j++) {
+                        var name = candChain[j].Name;
+
+                        if (!allowInvariantIntersection && name.Length == 0)
+                            continue;
+
+                        if (!targetIndex.TryGetValue(name, out int i))
+                            continue;
+
+                        int score = i * 100 + j;
+
+                        if (score < bestScore ||
+                            (score == bestScore &&
+                             getCulture(item)!.IsNeutralCulture == false &&
+                             (best == null || getCulture(best)!.IsNeutralCulture == true))) {
+                            bestScore = score;
+                            best = item;
+                        }
+                        break;
+                    }
+                }
+
+                return best;
             }
         }
     }
