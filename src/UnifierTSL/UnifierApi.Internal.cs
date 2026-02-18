@@ -81,6 +81,25 @@ namespace UnifierTSL
         }
         internal static void HandleCommandLinePreRun(string[] launcherArgs) {
 
+            static bool TrySetLang(string langArg) {
+                if (int.TryParse(langArg, out int langId) && GameCulture._legacyCultures.TryGetValue(langId, out var culture)) {
+                    SetLang(culture);
+                    return true;
+                }
+                culture = GameCulture._legacyCultures.Values.SingleOrDefault(c => c.Name == langArg);
+                if (culture is not null) {
+                    SetLang(culture);
+                    return true;
+                }
+                return false;
+            }
+
+            static void SetLang(GameCulture culture) {
+                GameCulture.DefaultCulture = culture;
+                LanguageManager.Instance.SetLanguage(culture);
+                CultureInfo.CurrentCulture = culture.RedirectedCultureInfo();
+            }
+
             bool langSetted = false;
 
             if (Environment.GetEnvironmentVariable("UTSL_LANGUAGE") is string overrideLang) {
@@ -105,23 +124,14 @@ namespace UnifierTSL
                 }
             }
 
-            static bool TrySetLang(string langArg) {
-                if (int.TryParse(langArg, out int langId) && GameCulture._legacyCultures.TryGetValue(langId, out var culture)) {
-                    SetLang(culture);
-                    return true;
-                }
-                culture = GameCulture._legacyCultures.Values.SingleOrDefault(c => c.Name == langArg);
-                if (culture is not null) {
-                    SetLang(culture);
-                    return true;
-                }
-                return false;
+            if (LanguageManager.Instance.ActiveCulture is null) {
+                var list = GameCulture._NamedCultures.Values;
+                var target = CultureInfo.CurrentUICulture;
+                var match =
+                    Utilities.Culture.FindBestMatch(list, target, gc => gc.CultureInfo)
+                    ?? Utilities.Culture.FindBestMatch(list, CultureInfo.CurrentCulture, gc => gc.CultureInfo);
 
-                static void SetLang(GameCulture culture) {
-                    GameCulture.DefaultCulture = culture;
-                    LanguageManager.Instance.SetLanguage(culture);
-                    CultureInfo.CurrentCulture = culture.RedirectedCultureInfo();
-                }
+                SetLang(match ?? GameCulture.DefaultCulture);
             }
         }
         private static void HandleCommandLine(string[] launcherArgs) {
