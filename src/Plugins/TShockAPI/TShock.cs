@@ -125,7 +125,7 @@ namespace TShockAPI
                 .OnDeserializationFailure(DeserializationFailureHandling.ThrowException);
 
             SavePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), configRegistrar.Directory);
-            Config = new TShockConfig(configRegistrar, "tshockconfig");
+            Config = new TShockConfig(configRegistrar, "config");
             ServerSideCharacterConfig = new ServerSideConfig(configRegistrar, "sscconfig", ServerSideConfig.Default);
             FileTools.SetupMiscFiles();
 
