@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using NuGet.Protocol.Plugins;
 using Terraria;
 using Terraria.ID;
 using Terraria.Localization;
@@ -218,13 +217,13 @@ namespace TShockAPI
 
             // Players send a slot update packet for each inventory slot right after they've joined.
             bool bypassTrashCanCheck = false;
-            if (plr == tsPlayer.Index && !tsPlayer.HasSentInventory && slot == NetItem.MaxInventory) {
+            if (plr == tsPlayer.Index && !tsPlayer.HasSentInventory && slot == PlayerItemSlotID.Count - 1) {
                 tsPlayer.HasSentInventory = true;
                 bypassTrashCanCheck = true;
             }
 
             if (/*OnPlayerSlot(tsPlayer, args.Data, plr, slot, stack, prefix, type, favorited, blockedSlot) ||*/ plr != tsPlayer.Index || slot < 0 ||
-                slot > NetItem.MaxInventory) {
+                slot >= PlayerItemSlotID.Count) {
                 args.HandleMode = PacketHandleMode.Cancel;
                 args.StopPropagation = true;
                 return;
@@ -244,7 +243,10 @@ namespace TShockAPI
             item.Prefix(server, prefix);
 
             if (tsPlayer.IsLoggedIn) {
-                tsPlayer.PlayerData.StoreSlot(slot, type, prefix, stack, favorited);
+                int internalSlot = NetworkSlotToInternalSlot(slot);
+                if (internalSlot >= 0) {
+                    tsPlayer.PlayerData.StoreSlot(internalSlot, type, prefix, stack, favorited);
+                }
             }
             else if (server.Main.ServerSideCharacter && setting.DisableLoginBeforeJoin && !bypassTrashCanCheck &&
                      tsPlayer.HasSentInventory && !tsPlayer.HasPermission(Permissions.bypassssc)) {
@@ -257,6 +259,81 @@ namespace TShockAPI
                 item.stack = stack;
                 tsPlayer.ItemInHand = item;
             }
+        }
+
+        // 1.4.5 expanded network bank slot ranges to include reserved entries.
+        // Map network slot IDs (0..PlayerItemSlotID.Count-1) to PlayerData internal slots (0..NetItem.MaxInventory-1).
+        // Return -1 for reserved network slots that have no PlayerData storage.
+        private static int NetworkSlotToInternalSlot(int networkSlot) {
+            if (networkSlot < PlayerItemSlotID.Bank1_0) {
+                return networkSlot;
+            }
+
+            if (networkSlot < PlayerItemSlotID.Bank1_0 + NetItem.PiggySlots) {
+                return NetItem.PiggyIndex.Item1 + (networkSlot - PlayerItemSlotID.Bank1_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.Bank2_0) {
+                return -1;
+            }
+
+            if (networkSlot < PlayerItemSlotID.Bank2_0 + NetItem.SafeSlots) {
+                return NetItem.SafeIndex.Item1 + (networkSlot - PlayerItemSlotID.Bank2_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.TrashItem) {
+                return -1;
+            }
+
+            if (networkSlot == PlayerItemSlotID.TrashItem) {
+                return NetItem.TrashIndex.Item1;
+            }
+
+            if (networkSlot < PlayerItemSlotID.Bank3_0) {
+                return -1;
+            }
+
+            if (networkSlot < PlayerItemSlotID.Bank3_0 + NetItem.ForgeSlots) {
+                return NetItem.ForgeIndex.Item1 + (networkSlot - PlayerItemSlotID.Bank3_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.Bank4_0) {
+                return -1;
+            }
+
+            if (networkSlot < PlayerItemSlotID.Bank4_0 + NetItem.VoidSlots) {
+                return NetItem.VoidIndex.Item1 + (networkSlot - PlayerItemSlotID.Bank4_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.Loadout1_Armor_0) {
+                return -1;
+            }
+
+            if (networkSlot < PlayerItemSlotID.Loadout1_Armor_0 + NetItem.LoadoutArmorSlots) {
+                return NetItem.Loadout1Armor.Item1 + (networkSlot - PlayerItemSlotID.Loadout1_Armor_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.Loadout1_Dye_0 + NetItem.LoadoutDyeSlots) {
+                return NetItem.Loadout1Dye.Item1 + (networkSlot - PlayerItemSlotID.Loadout1_Dye_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.Loadout2_Armor_0 + NetItem.LoadoutArmorSlots) {
+                return NetItem.Loadout2Armor.Item1 + (networkSlot - PlayerItemSlotID.Loadout2_Armor_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.Loadout2_Dye_0 + NetItem.LoadoutDyeSlots) {
+                return NetItem.Loadout2Dye.Item1 + (networkSlot - PlayerItemSlotID.Loadout2_Dye_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.Loadout3_Armor_0 + NetItem.LoadoutArmorSlots) {
+                return NetItem.Loadout3Armor.Item1 + (networkSlot - PlayerItemSlotID.Loadout3_Armor_0);
+            }
+
+            if (networkSlot < PlayerItemSlotID.Loadout3_Dye_0 + NetItem.LoadoutDyeSlots) {
+                return NetItem.Loadout3Dye.Item1 + (networkSlot - PlayerItemSlotID.Loadout3_Dye_0);
+            }
+
+            return -1;
         }
 
         private static void HandleConnecting(ref RecievePacketEvent<RequestWorldInfo> args) {
@@ -703,7 +780,7 @@ namespace TShockAPI
             //if (OnChestItemChange(tsPlayer, args.Data, id, slot, stacks, prefix, type))
             //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
-            Item item = new Item();
+            Item item = new();
             item.netDefaults(server, type);
             if (args.Packet.Stack > item.maxStack) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleChestItem rejected max stacks {0}", tsPlayer.Name));
@@ -1185,7 +1262,7 @@ namespace TShockAPI
                 default:
                     if (!isKnownBoss)
                         server.Log.Debug(GetString("GetDataHandlers / HandleSpawnBoss unknown boss {0} summoned by {1}", thingType, tsPlayer.Name));
-                    NPC npc = new NPC();
+                    NPC npc = new();
                     npc.SetDefaults(server, thingType);
                     thing = GetString("{0} summoned the {1}!", tsPlayer.Name, npc.FullName);
                     break;

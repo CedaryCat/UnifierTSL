@@ -1,10 +1,6 @@
 ﻿using Rests;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using UnifierTSL.Plugins;
 
 namespace TShockAPI.Configuration
@@ -621,7 +617,7 @@ namespace TShockAPI.Configuration
 
         /// <summary>A dictionary of REST tokens that external applications may use to make queries to your server.</summary>
         [Description("A dictionary of REST tokens that external applications may use to make queries to your server.")]
-        public Dictionary<string, SecureRest.TokenData> ApplicationRestTokens = new Dictionary<string, SecureRest.TokenData>();
+        public Dictionary<string, SecureRest.TokenData> ApplicationRestTokens = [];
 
         #endregion
     }
