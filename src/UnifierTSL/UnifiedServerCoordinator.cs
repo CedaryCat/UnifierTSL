@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using Terraria;
 using Terraria.Localization;
 using Terraria.Net.Sockets;
@@ -13,6 +14,7 @@ using UnifierTSL.Extensions;
 using UnifierTSL.Logging;
 using UnifierTSL.Network;
 using UnifierTSL.Servers;
+using static UnifierTSL.Utilities;
 
 namespace UnifierTSL
 {
@@ -96,6 +98,12 @@ namespace UnifierTSL
                 try {
                     while (unreadLength >= 2) {
                         int packetLength = BitConverter.ToUInt16(readBuffer, readPosition);
+
+                        if (packetLength < 3 || packetLength > 1000) {
+                            client.PendingTermination = true;
+                            return;
+                        }
+
                         if (unreadLength >= packetLength && packetLength != 0) {
 
                             ProcessPacket(readPosition + 2, packetLength - 2);
@@ -194,12 +202,22 @@ namespace UnifierTSL
                             }
                         case MessageID.ClientUUID: {
                                 ClientUUID msg = new(ref readPtr);
-                                client.ClientUUID = RecievedUUID = msg.UUID;
+                                var uuid = msg.UUID.Trim();
+
+                                if (!Guid.TryParse(uuid, out _)) {
+                                    sender.Kick(NetworkText.FromLiteral(GetString("Invalid client UUID.")));
+                                    Logger.Warning(
+                                        category: "PendingConnection",
+                                        message: GetParticularString("{0} is player name, {1} is player IP address, {2} is invalid raw UUID string", $"'{client.Name}' ({client.Socket.GetRemoteAddress()}) sent invalid UUID '{uuid}' before authentication. Kicked."));
+                                    return;
+                                }
+
+                                client.ClientUUID = RecievedUUID = Crypto.Sha512Hex(uuid, Encoding.ASCII);
 
                                 UnifierApi.EventHub.Netplay.ReceiveFullClientInfoEvent.Invoke(new(client, player, sender), out bool h);
                                 if (h) {
                                     if (!client.PendingTermination || !client.PendingTerminationApproved) {
-                                        sender.Kick(NetworkText.FromLiteral("You are not allowed to join this server."));
+                                        sender.Kick(NetworkText.FromLiteral(GetString("You are not allowed to join this server.")));
                                     }
                                     return;
                                 }
@@ -369,6 +387,12 @@ namespace UnifierTSL
                 try {
                     while (unreadLength >= 2) {
                         int packetLength = BitConverter.ToUInt16(buffer.readBuffer, readPosition);
+
+                        if (packetLength < 3 || packetLength > 1000) {
+                            server.Netplay.Clients[clientIndex].PendingTermination = true;
+                            return;
+                        }
+
                         if (unreadLength >= packetLength && packetLength != 0) {
 
                             // buffer.GetData(server, readPosition + 2, packetLength - 2, out var _);

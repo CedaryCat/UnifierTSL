@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using Terraria;
 
@@ -300,6 +301,21 @@ namespace UnifierTSL
                 }
 
                 return best;
+            }
+        }
+        public static class Crypto
+        {
+            public static string Sha512Hex(ReadOnlySpan<byte> data) {
+                Span<byte> hash = stackalloc byte[64];
+                SHA512.HashData(data, hash);
+                return Convert.ToHexString(hash);
+            }
+            public static string Sha512Hex(string text, Encoding encoding) {
+                ArgumentNullException.ThrowIfNull(text);
+                ArgumentNullException.ThrowIfNull(encoding);
+
+                var bytes = encoding.GetBytes(text);
+                return Sha512Hex(bytes);
             }
         }
     }

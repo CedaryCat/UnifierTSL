@@ -837,11 +837,11 @@ ProcessBytes(server, clientIndex, buffer, length)
 1. Parse MessageID from buffer
     ↓
 2. Dispatch to type-specific handler via switch(messageID):
-    - PrecessPacket_F<TPacket>()    // Fixed, non-length-aware
-    - PrecessPacket_FL<TPacket>()   // Fixed, length-aware
-    - PrecessPacket_D<TPacket>()    // Dynamic (managed)
-    - PrecessPacket_DS<TPacket>()   // Dynamic, side-specific
-    - PrecessPacket_DLS<TPacket>()  // Dynamic, length-aware, side-specific
+    - ProcessPacket_F<TPacket>()    // Fixed, non-length-aware
+    - ProcessPacket_FL<TPacket>()   // Fixed, length-aware
+    - ProcessPacket_D<TPacket>()    // Dynamic (managed)
+    - ProcessPacket_DS<TPacket>()   // Dynamic, side-specific
+    - ProcessPacket_DLS<TPacket>()  // Dynamic, length-aware, side-specific
     ↓
 3. Deserialize packet from buffer (unsafe pointers)
     ↓

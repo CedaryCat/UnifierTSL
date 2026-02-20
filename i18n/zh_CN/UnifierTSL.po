@@ -394,3 +394,13 @@ msgid ""
 "strings: small, medium, large"
 msgstr ""
 "预期值: 0到2之间的整数(包括0和2),或者以下字符串之一: small, medium, large"
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:208
+msgid "Invalid client UUID."
+msgstr "无效的客户端 UUID。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:211
+#, csharp-format
+msgctxt "{0} is player name, {1} is player IP address, {2} is invalid raw UUID string"
+msgid "'{0}' ({1}) sent invalid UUID '{2}' before authentication. Kicked."
+msgstr "'{0}' ({1}) 在身份验证前发送了无效 UUID '{2}'。已踢出。"
+

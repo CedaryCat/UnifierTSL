@@ -836,11 +836,11 @@ ProcessBytes(server, clientIndex, buffer, length)
 1. 从缓冲区解析 MessageID
     ↓
 2. 通过 switch(messageID) 分发到类型特定处理器：
-    - PrecessPacket_F<TPacket>()    // 固定，非长度感知
-    - PrecessPacket_FL<TPacket>()   // 固定，长度感知
-    - PrecessPacket_D<TPacket>()    // 动态（托管）
-    - PrecessPacket_DS<TPacket>()   // 动态，特定端
-    - PrecessPacket_DLS<TPacket>()  // 动态，长度感知，特定端
+    - ProcessPacket_F<TPacket>()    // 固定，非长度感知
+    - ProcessPacket_FL<TPacket>()   // 固定，长度感知
+    - ProcessPacket_D<TPacket>()    // 动态（托管）
+    - ProcessPacket_DS<TPacket>()   // 动态，特定端
+    - ProcessPacket_DLS<TPacket>()  // 动态，长度感知，特定端
     ↓
 3. 从缓冲区反序列化数据包（不安全指针）
     ↓
