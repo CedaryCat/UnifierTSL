@@ -1,8 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using OTAPI;
 using System.Diagnostics.CodeAnalysis;
+using Terraria.Chat;
 using Terraria.Chat.Commands;
 using Terraria.Localization;
+using Terraria.UI.Chat;
+using TrProtocol.NetPackets.Modules;
 using UnifiedServerProcess;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Extensions;
@@ -64,9 +67,18 @@ namespace UnifierTSL.Events.Handlers
             }
         }
         public ChatHandler() {
+            NetPacketHandler.Register<NetTextModule>(OnChat, HandlerPriority.VeryHigh + 1);
             On.Terraria.Chat.Commands.SayChatCommand.ProcessIncomingMessage += ProcessIncomingMessage;
             On.Terraria.Chat.ChatCommandProcessor.ProcessIncomingMessage += ProcessIncomingMessage;
             On.OTAPI.HooksSystemContext.MainSystemContext.InvokeCommandProcess_string += ProcessConsoleMessage;
+        }
+
+        private void OnChat(ref RecievePacketEvent<NetTextModule> args) {
+            var data = args.Packet.TextC2S!;
+            var msg = new ChatMessage(data.Text, new ChatCommandId(data.Command));
+            ChatManager.Commands.ProcessIncomingMessage(args.LocalReciever.Server, msg, args.Who);
+            args.StopPropagation = true;
+            args.HandleMode = PacketHandleMode.Cancel;
         }
 
         public readonly ValueEventProvider<ChatEvent> ChatEvent = new();
