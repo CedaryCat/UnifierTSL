@@ -46,35 +46,35 @@ namespace TShockAPI.DB
         /// </summary>
         public void Reload() {
             try {
-                foreach (var server in UnifiedServerCoordinator.Servers.Where(s => s.IsRunning)) {
-                    var worldId = server.Main.worldID.ToString();
-                    Regions.Clear();
+                Regions.Clear();
 
-                    var query = regionTable.Where(r => r.WorldID == worldId);
-                    foreach (var record in query) {
-                        string[] splitids = record.UserIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var record in regionTable)
+                {
+                    string[] splitids = record.UserIds.Split([','], StringSplitOptions.RemoveEmptyEntries);
 
-                        Region r = new Region(record.Id, new Rectangle(record.X1, record.Y1, record.Width, record.Height),
-                                            record.RegionName, record.Owner, record.Protected != 0, worldId, record.Z);
-                        r.SetAllowedGroups(record.Groups);
+                    Region r = new Region(record.Id, new Rectangle(record.X1, record.Y1, record.Width, record.Height),
+                                        record.RegionName, record.Owner, record.Protected != 0, record.WorldID, record.Z);
+                    r.SetAllowedGroups(record.Groups);
 
-                        try {
-                            foreach (string t in splitids) {
-                                if (int.TryParse(t, out int userid))
-                                    r.AllowedIDs.Add(userid);
-                                else
-                                    TShock.Log.Warning(GetString($"One of your UserIDs is not a usable integer: {t}"));
-                            }
+                    try
+                    {
+                        foreach (string t in splitids)
+                        {
+                            if (int.TryParse(t, out int userid))
+                                r.AllowedIDs.Add(userid);
+                            else
+                                TShock.Log.Warning(GetString($"One of your UserIDs is not a usable integer: {t}"));
                         }
-                        catch (Exception e) {
-                            TShock.Log.Error(GetString("Your database contains invalid UserIDs (they should be integers)."));
-                            TShock.Log.Error(GetString("A lot of things will fail because of this. You must manually delete and re-create the allowed field."));
-                            TShock.Log.Error(e.ToString());
-                            TShock.Log.Error(e.StackTrace);
-                        }
-
-                        Regions.Add(r);
                     }
+                    catch (Exception e)
+                    {
+                        TShock.Log.Error(GetString("Your database contains invalid UserIDs (they should be integers)."));
+                        TShock.Log.Error(GetString("A lot of things will fail because of this. You must manually delete and re-create the allowed field."));
+                        TShock.Log.Error(e.ToString());
+                        TShock.Log.Error(e.StackTrace);
+                    }
+
+                    Regions.Add(r);
                 }
             }
             catch (Exception ex) {
