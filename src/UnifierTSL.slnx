@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Plugins/">
+    <Project Path="Plugins/CommandTeleport/CommandTeleport.csproj" />
+    <Project Path="Plugins/ExamplePlugin.Features/ExamplePlugin.Features.csproj" />
+    <Project Path="Plugins/ExamplePlugin/ExamplePlugin.csproj" />
+    <Project Path="Plugins/TShockAPI/TShockAPI.csproj" />
+  </Folder>
+  <Project Path="UnifierTSL.ConsoleClient/UnifierTSL.ConsoleClient.csproj" />
+  <Project Path="UnifierTSL.Publisher/UnifierTSL.Publisher.csproj" />
+  <Project Path="UnifierTSL/UnifierTSL.csproj" />
+</Solution>
