@@ -7,10 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start"><img alt="Quick Start" src="https://img.shields.io/badge/Quick_Start-blue?style=flat-square"></a>
+  <a href="#quick-start"><img alt="Quick Start" src="https://img.shields.io/badge/Quick_Start-blue?style=flat-square"></a>
   <a href="https://github.com/CedaryCat/UnifierTSL/releases"><img alt="Releases" src="https://img.shields.io/badge/Releases-green?style=flat-square&logo=github"></a>
   <a href="./docs/dev-plugin.md"><img alt="Plugin Guide" src="https://img.shields.io/badge/Plugin_Guide-orange?style=flat-square"></a>
-  <a href="#-architecture"><img alt="Architecture" src="https://img.shields.io/badge/Architecture-purple?style=flat-square"></a>
+  <a href="#architecture"><img alt="Architecture" src="https://img.shields.io/badge/Architecture-purple?style=flat-square"></a>
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <em>Experiment-friendly Terraria server launcher based on OTAPI Unified Server Process,<br>with per-instance consoles, context-aware plugin hosting, and publisher tooling.</em>
+  <em>Host multiple Terraria worlds in one launcher process,<br>keep worlds isolated, and keep extending behavior with plugins and publisher tooling on OTAPI USP.</em>
 </p>
 
 ---
@@ -32,116 +32,114 @@
 
 ## 📑 Table of Contents
 
-- [Overview](#-overview)
-- [Core Capabilities](#-core-capabilities)
-- [Version Matrix](#-version-matrix)
-- [Architecture](#-architecture)
-- [Quick Start](#-quick-start)
-- [Launcher Reference](#-launcher-reference)
-- [Publisher Reference](#-publisher-reference)
-- [Project Layout](#-project-layout)
-- [Plugin System](#-plugin-system)
-- [Developer Guide](#-developer-guide)
-- [Resources](#-resources)
+- [Overview](#overview)
+- [Core Capabilities](#core-capabilities)
+- [Version Matrix](#version-matrix)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [Launcher Reference](#launcher-reference)
+- [Publisher Reference](#publisher-reference)
+- [Project Layout](#project-layout)
+- [Plugin System](#plugin-system)
+- [Developer Guide](#developer-guide)
+- [Resources](#resources)
 
 ---
 
+<a id="overview"></a>
 ## 📖 Overview
 
-UnifierTSL wraps [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) into a friendlier operational workflow for hosting **multiple Terraria worlds on a single host process**.
+UnifierTSL wraps [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) into a runtime you can run directly to host **multiple Terraria worlds in one launcher process**.
 
-The launcher coordinates world lifecycle, routes joining players, and spawns dedicated console clients per world context — so each world's I/O stays completely isolated.
+The launcher handles world lifecycle, player join routing, and spins up a dedicated console client per world context so each world's I/O stays separate.
+Compared with classic single-world servers or packet-routed multi-process world stacks, Unifier keeps join routing, world handoff, and extension hooks in one runtime surface instead of scattering that logic across process boundaries.
+`UnifiedServerCoordinator` handles coordination, `UnifierApi.EventHub` carries event traffic, and `PluginHost.PluginOrchestrator` runs plugin hosting.
+With shared connection and state surfaces, you can operate worlds together and build tighter cross-world interactions, while policy-based routing and transfer hooks still leave room for world-level fallback behavior.
 
-### What's in the repo
-
-The workspace bundles everything you need in one solution:
-
-| Component | Purpose |
-|:--|:--|
-| **Launcher** (`UnifierTSL`) | Runtime entry point — boots worlds, routes players, manages contexts |
-| **Console Client** (`UnifierTSL.ConsoleClient`) | Per-world console process, connected via named pipes |
-| **Publisher** (`UnifierTSL.Publisher`) | Produces RID-targeted output trees for deployment |
-| **Plugins** (`src/Plugins/`) | Maintained examples and bundled modules (TShockAPI, CommandTeleport, etc.) |
-
-Shared services are centered around `UnifiedServerCoordinator`, event traffic runs through `UnifierApi.EventHub`, and plugin loading is orchestrated by `PluginHost.PluginOrchestrator`.
+If you push this model further, you can build more gameplay-driven setups: fully connected multi-instance world clusters, elastic worlds that load or unload region-sized shards on demand, or private worlds tuned per player for logic and resource budgets.
+These are achievable directions, not out-of-the-box defaults.
+Some heavier implementations may stay outside launcher core, but you can expect practical sample plugins for these patterns to land over time in the `plugins/` ecosystem.
 
 ---
 
+<a id="core-capabilities"></a>
 ## ✨ Core Capabilities
 
 | Feature | Description |
 |:--|:--|
-| 🖥 **Multi-world coordination** | Launch and isolate multiple worlds in one runtime process |
-| 🔀 **Live routing control** | Register default join strategies and re-route players through coordinator events |
-| 🔌 **Plugin hosting** | Load .NET modules from `plugins/` with config registration and dependency extraction |
-| 📦 **Collectible module contexts** | `ModuleLoadContext` for unloadable plugin domains and staged dependency handling |
+| 🖥 **Multi-world coordination** | Run and isolate multiple worlds in a single runtime process |
+| 🧱 **Struct-based tile storage** | World tiles use `struct TileData` instead of `ITile` for lower memory use and faster reads/writes |
+| 🔀 **Live routing control** | Set default join strategies and re-route players through coordinator events at runtime |
+| 🔌 **Plugin hosting** | Load .NET modules from `plugins/` and handle config registration plus dependency extraction |
+| 📦 **Collectible module contexts** | `ModuleLoadContext` gives you unloadable plugin domains and staged dependency handling |
 | 📝 **Shared logging pipeline** | `UnifierApi.LogCore` supports custom filters, writers, and metadata injectors |
-| 🛡 **Bundled TShock port** | Includes USP-adapted TShock baseline for drop-in use |
+| 🛡 **Bundled TShock port** | Ships with a USP-adapted TShock baseline ready for use |
 | 💻 **Per-context console isolation** | Console client processes spawned via named pipe protocol |
-| 🚀 **RID-targeted publishing** | Publisher outputs reproducible, runtime-specific directory trees |
+| 🚀 **RID-targeted publishing** | Publisher produces reproducible, runtime-specific directory trees |
 
 ---
 
+<a id="version-matrix"></a>
 ## 📊 Version Matrix
 
-Current versions sourced from project files in this repository:
+The baseline values below come straight from project files and runtime version helpers in this repository:
 
 | Component | Version | Source |
 |:--|:--|:--|
 | Target framework | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
-| OTAPI USP | `1.1.0-pre-release-upstream.24` | `UnifierTSL.csproj` |
-| ModFramework | `1.1.15` | `UnifierTSL.csproj` |
-| MonoMod.RuntimeDetour | `25.2.3` | `UnifierTSL.csproj` |
-| Tomlyn | `0.19.0` | `UnifierTSL.csproj` |
-| linq2db | `5.4.1` | `UnifierTSL.csproj` |
-| Microsoft.Data.Sqlite | `9.0.0` | `UnifierTSL.csproj` |
+| Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs` (assembly file version from OTAPI/Terraria runtime) |
+| OTAPI USP | `1.1.0-pre-release-upstream.23` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
-<summary><strong>TShock sync metadata</strong></summary>
+<summary><strong>TShock and dependency details</strong></summary>
 
 | Item | Value |
 |:--|:--|
 | Bundled TShock version | `5.9.9` |
 | Sync branch | `general-devel` |
-| Sync commit | `cd68321fcc7b7b2a02d8ed6449910c4763b45350` |
+| Sync commit | `a41e1f2046c5cd2f0be9f590efbbf1cda58aea5f` |
 | Source | `src/Plugins/TShockAPI/TShockAPI.csproj` |
+
+Additional dependency baselines:
+
+| Package | Version | Source |
+|:--|:--|:--|
+| ModFramework | `1.1.15` | `src/UnifierTSL/UnifierTSL.csproj` |
+| MonoMod.RuntimeDetour | `25.2.3` | `src/UnifierTSL/UnifierTSL.csproj` |
+| Tomlyn | `0.19.0` | `src/UnifierTSL/UnifierTSL.csproj` |
+| linq2db | `5.4.1` | `src/UnifierTSL/UnifierTSL.csproj` |
+| Microsoft.Data.Sqlite | `9.0.0` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 </details>
 
 ---
 
+<a id="architecture"></a>
 ## 🏗 Architecture
 
 <p align="center">
   <img src="./docs/assets/readme/arch-flow.svg" alt="Architecture flow" width="100%">
 </p>
 
-The runtime coordination flow follows a linear pipeline:
+Actual runtime startup flow:
 
-```mermaid
-graph LR
-    A["Program.cs"] -->|init| B["UnifierApi"]
-    B -->|coordinate| C["UnifiedServerCoordinator"]
-    C -->|spawn| D["ServerContext"]
-    D -->|load| E["PluginHost"]
-
-    style A fill:#EFF6FF,stroke:#3B82F6,color:#1E293B
-    style B fill:#F0FDF4,stroke:#16A34A,color:#1E293B
-    style C fill:#FFF7ED,stroke:#EA580C,color:#1E293B
-    style D fill:#FAF5FF,stroke:#9333EA,color:#1E293B
-    style E fill:#EFF6FF,stroke:#3B82F6,color:#1E293B
-```
+1. `Program.Main` initializes assembly resolver, applies pre-run CLI language overrides, and prints runtime version details.
+2. `Initializer.Initialize()` prepares Terraria/USP runtime state and loads core hooks (`UnifiedNetworkPatcher`, `UnifiedServerCoordinator`, `ServerContext` setup).
+3. `UnifierApi.InitializeCore(args)` creates `EventHub`, builds `PluginOrchestrator`, runs `PluginHosts.InitializeAllAsync()`, and parses launcher arguments.
+4. During argument parsing, each `-server` definition is handled by `AutoStartServer`, which creates `ServerContext` instances and schedules world startup tasks.
+5. `UnifierApi.CompleteLauncherInitialization()` resolves interactive listen/password inputs and raises launcher initialized events.
+6. `UnifiedServerCoordinator.Launch(...)` opens the shared listener; then title updates, coordinator started event fires, and chat input loop begins.
 
 <details>
-<summary><strong>Key runtime responsibilities</strong></summary>
+<summary><strong>Runtime responsibilities at a glance</strong></summary>
 
 | Component | Responsibilities |
 |:--|:--|
-| `Program.cs` | Starts the launcher and runtime bootstrap |
+| `Program.cs` | Starts the launcher and bootstraps the runtime |
 | `UnifierApi` | Initializes event hub, plugin orchestration, and launcher argument handling |
-| `UnifiedServerCoordinator` | Owns listening socket, client coordination, and world routing |
-| `ServerContext` | Keeps each hosted world state isolated |
-| `PluginHost` + module loader | Plugin discovery, loading, and dependency staging |
+| `UnifiedServerCoordinator` | Manages listening socket, client coordination, and world routing |
+| `ServerContext` | Keeps each hosted world's runtime state isolated |
+| `PluginHost` + module loader | Handles plugin discovery, loading, and dependency staging |
 
 </details>
 
@@ -149,16 +147,17 @@ graph LR
 
 | Role | Start Here | Why |
 |:--|:--|:--|
-| 🖥 Server operator | [Quick Start ↓](#-quick-start) | Get a running multi-world host with minimum setup |
-| 🔌 Plugin developer | [Plugin Development Guide](./docs/dev-plugin.md) | Implement and migrate modules with config/events/deps workflow |
+| 🖥 Server operator | [Quick Start ↓](#quick-start) | Bring up a usable multi-world host with minimal setup |
+| 🔌 Plugin developer | [Plugin Development Guide](./docs/dev-plugin.md) | Build and migrate modules with the same config/events/deps flow the launcher uses |
 
 ---
 
+<a id="quick-start"></a>
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-Choose the requirement set matching your workflow:
+Choose the requirement set that matches how you plan to run UnifierTSL:
 
 | Workflow | Requirements |
 |:--|:--|
@@ -167,7 +166,7 @@ Choose the requirement set matching your workflow:
 
 ### Option A: Use a Release Bundle
 
-**1.** Download the asset matching your platform from [GitHub Releases](https://github.com/CedaryCat/UnifierTSL/releases):
+**1.** Download the release asset that matches your platform from [GitHub Releases](https://github.com/CedaryCat/UnifierTSL/releases):
 
 | Platform | File pattern |
 |:--|:--|
@@ -180,11 +179,16 @@ Choose the requirement set matching your workflow:
 <summary><strong>Windows (PowerShell)</strong></summary>
 
 ```powershell
-.\UnifierTSL.exe -lang 7 -port 7777 -password changeme `
+.\UnifierTSL.exe -port 7777 -password changeme `
   -server "name:S1 worldname:S1 gamemode:3 size:1 evil:0 seed:\"for the worthy\"" `
   -server "name:S2 worldname:S2 gamemode:2 size:2" `
   -joinserver first
 ```
+
+> **Windows note (SmartScreen/Defender reputation):**
+> On some machines, first launch of `app/UnifierTSL.ConsoleClient.exe` may be blocked as an unknown publisher or unrecognized app.
+> If this happens, the main launcher console can appear stuck in loading because it keeps retrying the per-world console startup.
+> Allow the executable (or trust the extracted folder), then relaunch `UnifierTSL.exe`.
 
 </details>
 
@@ -193,7 +197,7 @@ Choose the requirement set matching your workflow:
 
 ```bash
 chmod +x UnifierTSL
-./UnifierTSL -lang 7 -port 7777 -password changeme \
+./UnifierTSL -port 7777 -password changeme \
   -server "name:S1 worldname:S1 gamemode:3 size:1 evil:0 seed:\"for the worthy\"" \
   -joinserver first
 ```
@@ -226,7 +230,7 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
   --excluded-plugins ExamplePlugin,ExamplePlugin.Features
 ```
 
-**4.** Smoke test the launcher:
+**4.** Run a launcher smoke test:
 
 ```bash
 dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
@@ -235,11 +239,12 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
   -joinserver first
 ```
 
-> **Note**: Default Publisher output path is `src/UnifierTSL.Publisher/bin/<Configuration>/net9.0/utsl-<rid>/`.
-> `UnifierTSL.ConsoleClient` is not intended to be launched manually — the launcher injects pipe arguments automatically.
+> **Note**: Default Publisher output directory is `src/UnifierTSL.Publisher/bin/<Configuration>/net9.0/utsl-<rid>/`.
+> `UnifierTSL.ConsoleClient` should only be launched by the launcher; pipe arguments are injected automatically.
 
 ---
 
+<a id="launcher-reference"></a>
 ## 🎮 Launcher Reference
 
 ### Command-Line Flags
@@ -252,11 +257,11 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 | `-joinserver` | Default join strategy | `first` / `f` / `random` / `rnd` / `r` | — |
 | `-culture`, `-lang`, `-language` | Override Terraria language | Legacy culture ID or name | Host culture |
 
-> **Tip**: Use `-joinserver first` or `random` unless a plugin sets join behavior through `EventHub.Coordinator.SwitchJoinServer`.
+> **Tip**: If no plugin takes over join behavior through `EventHub.Coordinator.SwitchJoinServer`, use `-joinserver first` or `random`.
 
 ### Server Definition Keys
 
-Each `-server` value is a whitespace-separated set of `key:value` pairs parsed by `UnifierApi.AutoStartServer`:
+Each `-server` value is whitespace-separated `key:value` pairs parsed by `UnifierApi.AutoStartServer`:
 
 | Key | Purpose | Accepted Values | Default |
 |:--|:--|:--|:--|
@@ -269,6 +274,7 @@ Each `-server` value is a whitespace-separated set of `key:value` pairs parsed b
 
 ---
 
+<a id="publisher-reference"></a>
 ## 📦 Publisher Reference
 
 ### CLI Flags
@@ -288,7 +294,7 @@ Publisher builds framework-dependent outputs (`SelfContained=false`).
 <details>
 <summary><strong>Initial Publisher output (local)</strong></summary>
 
-Publisher creates a directory tree (not an archive):
+Publisher writes a directory tree (not an archive):
 
 ```
 utsl-<rid>/
@@ -312,7 +318,7 @@ utsl-<rid>/
 <details>
 <summary><strong>Runtime-reorganized plugin layout (after first boot)</strong></summary>
 
-On startup, the module loader may rearrange plugin files into module folders based on attributes (`[CoreModule]`, `[RequiresCoreModule]`, dependency declarations):
+On startup, the module loader may rearrange plugin files into module folders based on attributes (`[CoreModule]`, `[RequiresCoreModule]`, and dependency declarations):
 
 ```
 plugins/
@@ -327,7 +333,7 @@ config/
 └── CommandTeleport/
 ```
 
-`dependencies.json` is generated/updated by the dependency staging logic during module loading.
+`dependencies.json` is generated or updated by dependency staging logic during module loading.
 
 </details>
 
@@ -346,76 +352,69 @@ GitHub Actions uses two naming layers:
 
 ---
 
+<a id="project-layout"></a>
 ## 🗂 Project Layout
 
-```mermaid
-graph TD
-    SLN["📄 UnifierTSL.slnx"] --> MAIN["📁 UnifierTSL/"]
-    SLN --> CC["📁 ConsoleClient/"]
-    SLN --> PUB["📁 Publisher/"]
-    SLN --> PLUG["📁 Plugins/"]
-
-    MAIN --> MOD["Module/"]
-    MAIN --> PH["PluginHost/"]
-    MAIN --> SRV["Servers/"]
-    MAIN --> NET["Network/"]
-    MAIN --> LOG["Logging/"]
-
-    PLUG --> EX1["ExamplePlugin"]
-    PLUG --> EX2["ExamplePlugin.Features"]
-    PLUG --> CMD["CommandTeleport"]
-    PLUG --> TS["TShockAPI"]
-
-    style SLN fill:#EFF6FF,stroke:#3B82F6,color:#1E293B
-    style MAIN fill:#F0FDF4,stroke:#16A34A,color:#1E293B
-    style CC fill:#FFF7ED,stroke:#EA580C,color:#1E293B
-    style PUB fill:#FAF5FF,stroke:#9333EA,color:#1E293B
-    style PLUG fill:#FEF3C7,stroke:#D97706,color:#1E293B
-```
-
-| Directory | Description |
+| Component | Purpose |
 |:--|:--|
-| `src/UnifierTSL/` | Runtime entry points and systems (`Module/`, `PluginHost/`, `Servers/`, `Network/`, `Logging/`) |
-| `src/UnifierTSL.ConsoleClient/` | Per-context console client and named-pipe protocol |
-| `src/UnifierTSL.Publisher/` | Local packaging logic |
-| `src/Plugins/` | Maintained examples and bundled modules |
-| `docs/` | Project documentation |
+| **Launcher** (`UnifierTSL`) | Runtime entry point for world bootstrap, routing, and coordinator lifecycle |
+| **Console Client** (`UnifierTSL.ConsoleClient`) | One console process per world, connected by named pipes |
+| **Publisher** (`UnifierTSL.Publisher`) | Builds RID-targeted deployment directory outputs |
+| **Plugins** (`src/Plugins/`) | Modules maintained in-repo (TShockAPI, CommandTeleport, examples) |
+| **Docs** (`docs/`) | Runtime, plugin, and migration docs |
+
+```text
+.
+├── src/
+│   ├── UnifierTSL.slnx
+│   ├── UnifierTSL/
+│   │   ├── Module/
+│   │   ├── PluginHost/
+│   │   ├── Servers/
+│   │   ├── Network/
+│   │   └── Logging/
+│   ├── UnifierTSL.ConsoleClient/
+│   ├── UnifierTSL.Publisher/
+│   └── Plugins/
+│       ├── TShockAPI/
+│       ├── CommandTeleport/
+│       ├── ExamplePlugin/
+│       └── ExamplePlugin.Features/
+└── docs/
+```
 
 ---
 
+<a id="plugin-system"></a>
 ## 🔌 Plugin System
 
 ### Plugin Loading Flow
 
 ```mermaid
-graph TD
-    DROP["Drop .dll into plugins/"] --> DISC["Module loader discovers assemblies"]
-    DISC --> CORE{"Has [CoreModule]?"}
-    CORE -->|Yes| FOLDER["Create dedicated plugin folder"]
-    CORE -->|No| REQ{"Has [RequiresCoreModule]?"}
-    REQ -->|Yes| UNDER["Load under target core module context"]
-    REQ -->|No| FLAT["Load as standalone module"]
-    FOLDER --> DEP["Stage dependencies into lib/"]
-    DEP --> CONF["Register configs under config/PluginName/"]
-
-    style DROP fill:#EFF6FF,stroke:#3B82F6,color:#1E293B
-    style DISC fill:#F1F5F9,stroke:#94A3B8,color:#1E293B
-    style CORE fill:#FEF3C7,stroke:#D97706,color:#1E293B
-    style REQ fill:#FEF3C7,stroke:#D97706,color:#1E293B
-    style FOLDER fill:#F0FDF4,stroke:#16A34A,color:#1E293B
-    style UNDER fill:#FAF5FF,stroke:#9333EA,color:#1E293B
-    style FLAT fill:#F1F5F9,stroke:#94A3B8,color:#1E293B
-    style DEP fill:#FFF7ED,stroke:#EA580C,color:#1E293B
-    style CONF fill:#ECFDF5,stroke:#059669,color:#1E293B
+graph LR
+    A["Scan plugins/"] --> B["Preload module metadata"]
+    B --> C{"Module attributes"}
+    C -->|Core or deps declared| D["Stage to plugins/&lt;Module&gt;/"]
+    C -->|Requires core| E["Stage to plugins/&lt;CoreModule&gt;/"]
+    C -->|None| F["Keep in plugins/ root"]
+    D --> G["Load collectible module contexts"]
+    E --> G
+    F --> G
+    G --> H["Extract deps when declared (lib/ + dependencies.json)"]
+    H --> I["Discover IPlugin entry points"]
+    I --> J["Initialize plugins (BeforeGlobalInitialize -> InitializeAsync)"]
+    J --> K["Plugins may register config/&lt;PluginName&gt;/"]
 ```
 
 ### Key Concepts
 
 | Concept | Description |
 |:--|:--|
-| **`[CoreModule]`** | Marks a module for its own dedicated folder and load context |
-| **`[RequiresCoreModule("...")]`** | Loads this module under the specified core module's context |
-| **Dependency staging** | Dependencies are extracted into `lib/` and tracked via `dependencies.json` |
+| **Module preloading** | `ModuleAssemblyLoader` reads assembly metadata and stages file locations before plugin instantiation |
+| **`[CoreModule]`** | Marks a module for a dedicated folder and core module context anchor |
+| **`[RequiresCoreModule("...")]`** | Loads this module under the specified core module context |
+| **Dependency staging** | Modules with declared dependencies extract into `lib/` and track status in `dependencies.json` |
+| **Plugin initialization** | Dotnet host runs `BeforeGlobalInitialize` first, then `InitializeAsync` in sorted plugin order |
 | **Config registration** | Configs stored in `config/<PluginName>/`, supports auto-reload (`TriggerReloadOnExternalChange(true)`) |
 | **Collectible contexts** | `ModuleLoadContext` enables unloadable plugin domains |
 
@@ -423,6 +422,7 @@ graph TD
 
 ---
 
+<a id="developer-guide"></a>
 ## 🛠 Developer Guide
 
 ### Common Commands
@@ -446,7 +446,7 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 dotnet test src/UnifierTSL.slnx
 ```
 
-> **Note**: Automated tests are not yet included in the repository.
+> **Note**: Automated tests are not included in the repository yet.
 
 ### Supported Platforms
 
@@ -460,6 +460,7 @@ dotnet test src/UnifierTSL.slnx
 
 ---
 
+<a id="resources"></a>
 ## 📚 Resources
 
 | Resource | Link |

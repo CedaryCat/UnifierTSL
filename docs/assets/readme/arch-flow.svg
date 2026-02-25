@@ -1,83 +1,139 @@
-<svg width="1280" height="320" viewBox="0 0 1280 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="1560" height="580" viewBox="0 0 1560 580" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bgA" x1="0" y1="0" x2="1280" y2="320" gradientUnits="userSpaceOnUse">
+    <linearGradient id="bgA" x1="0" y1="0" x2="1560" y2="580" gradientUnits="userSpaceOnUse">
       <stop stop-color="#F8FAFC"/>
       <stop offset="1" stop-color="#F1F5F9"/>
     </linearGradient>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
-      <path d="M0 0L8 4L0 8" fill="none" stroke="#94A3B8" stroke-width="1.5"/>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M0 0L6 3L0 6" fill="none" stroke="#94A3B8" stroke-width="1.2"/>
     </marker>
   </defs>
 
-  <!-- Background -->
-  <rect width="1280" height="320" rx="16" fill="url(#bgA)"/>
+  <rect width="1560" height="580" rx="16" fill="url(#bgA)"/>
 
-  <!-- Header -->
-  <text x="52" y="48" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="26" font-weight="700">Runtime Coordination Flow</text>
-  <text x="52" y="76" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">Program → UnifierApi → UnifiedServerCoordinator → ServerContext → PluginHost</text>
+  <text x="52" y="50" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="30" font-weight="700">Runtime Startup and Coordination Map</text>
+  <text x="52" y="78" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">Actual call path in code: Program.Main -&gt; Initializer -&gt; UnifierApi -&gt; UnifiedServerCoordinator</text>
 
-  <!-- Box 1: Program.cs -->
+  <line x1="52" y1="114" x2="1508" y2="114" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="6 6"/>
+  <line x1="52" y1="296" x2="1508" y2="296" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="6 6"/>
+  <line x1="52" y1="456" x2="1508" y2="456" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="6 6"/>
+
+  <text x="52" y="108" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700">STARTUP SEQUENCE</text>
+  <text x="52" y="290" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700">INITIALIZATION BRANCHES</text>
+  <text x="52" y="450" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700">CROSS-CUTTING EVENTS</text>
+
   <g>
-    <rect x="52" y="108" width="198" height="136" rx="12" fill="white" stroke="#BFDBFE" stroke-width="1.2"/>
-    <rect x="52" y="108" width="198" height="4" rx="2" fill="#3B82F6"/>
-    <text x="76" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">Program.cs</text>
-    <text x="76" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Boot sequence</text>
-    <text x="76" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Entry point and</text>
-    <text x="76" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">runtime bootstrap</text>
+    <rect x="52" y="130" width="210" height="118" rx="12" fill="white" stroke="#BFDBFE" stroke-width="1.2"/>
+    <rect x="52" y="130" width="210" height="4" rx="2" fill="#3B82F6"/>
+    <text x="74" y="164" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="17" font-weight="700">Program.Main</text>
+    <text x="74" y="188" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Entry point</text>
+    <text x="74" y="206" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Initialize resolver and</text>
+    <text x="74" y="222" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">pre-run language args</text>
   </g>
 
-  <!-- Box 2: UnifierApi -->
   <g>
-    <rect x="294" y="108" width="210" height="136" rx="12" fill="white" stroke="#BBF7D0" stroke-width="1.2"/>
-    <rect x="294" y="108" width="210" height="4" rx="2" fill="#16A34A"/>
-    <text x="318" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">UnifierApi</text>
-    <text x="318" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Init + event hub</text>
-    <text x="318" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Plugin orchestration</text>
-    <text x="318" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">and argument handling</text>
+    <rect x="286" y="130" width="240" height="118" rx="12" fill="white" stroke="#C4B5FD" stroke-width="1.2"/>
+    <rect x="286" y="130" width="240" height="4" rx="2" fill="#7C3AED"/>
+    <text x="308" y="164" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="17" font-weight="700">Initializer.Initialize</text>
+    <text x="308" y="188" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Runtime preparation</text>
+    <text x="308" y="206" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Load USP hooks and</text>
+    <text x="308" y="222" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">server context wiring</text>
   </g>
 
-  <!-- Box 3: UnifiedServerCoordinator -->
   <g>
-    <rect x="548" y="108" width="290" height="136" rx="12" fill="white" stroke="#FED7AA" stroke-width="1.2"/>
-    <rect x="548" y="108" width="290" height="4" rx="2" fill="#EA580C"/>
-    <text x="572" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">UnifiedServerCoordinator</text>
-    <text x="572" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Socket ingress + routing</text>
-    <text x="572" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Listening socket, client</text>
-    <text x="572" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">coordination, world routing</text>
+    <rect x="558" y="130" width="278" height="118" rx="12" fill="white" stroke="#BBF7D0" stroke-width="1.2"/>
+    <rect x="558" y="130" width="278" height="4" rx="2" fill="#16A34A"/>
+    <text x="580" y="164" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="17" font-weight="700">UnifierApi.InitializeCore</text>
+    <text x="580" y="188" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Core initialization</text>
+    <text x="580" y="206" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Create EventHub, initialize</text>
+    <text x="580" y="222" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">plugins, parse launcher args</text>
   </g>
 
-  <!-- Box 4: ServerContext -->
   <g>
-    <rect x="882" y="108" width="168" height="136" rx="12" fill="white" stroke="#E9D5FF" stroke-width="1.2"/>
-    <rect x="882" y="108" width="168" height="4" rx="2" fill="#9333EA"/>
-    <text x="906" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">ServerContext</text>
-    <text x="906" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">World isolation</text>
-    <text x="906" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Per-world state</text>
-    <text x="906" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">management</text>
+    <rect x="868" y="130" width="300" height="118" rx="12" fill="white" stroke="#BFDBFE" stroke-width="1.2"/>
+    <rect x="868" y="130" width="300" height="4" rx="2" fill="#2563EB"/>
+    <text x="890" y="160" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="700">UnifierApi.CompleteLauncher</text>
+    <text x="890" y="178" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="700">Initialization</text>
+    <text x="890" y="198" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Finalize launcher inputs</text>
+    <text x="890" y="216" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Read listen port/password and</text>
+    <text x="890" y="232" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">raise launcher initialized event</text>
   </g>
 
-  <!-- Box 5: PluginHost -->
   <g>
-    <rect x="1094" y="108" width="144" height="136" rx="12" fill="white" stroke="#BFDBFE" stroke-width="1.2"/>
-    <rect x="1094" y="108" width="144" height="4" rx="2" fill="#3B82F6"/>
-    <text x="1118" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">PluginHost</text>
-    <text x="1118" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Module loading</text>
-    <text x="1118" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Discovery, loading</text>
-    <text x="1118" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">and staging</text>
+    <rect x="1200" y="130" width="308" height="118" rx="12" fill="white" stroke="#FED7AA" stroke-width="1.2"/>
+    <rect x="1200" y="130" width="308" height="4" rx="2" fill="#EA580C"/>
+    <text x="1222" y="160" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="700">UnifiedServerCoordinator</text>
+    <text x="1222" y="178" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="700">Launch</text>
+    <text x="1222" y="198" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Runtime ingress and routing</text>
+    <text x="1222" y="216" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Open listener, coordinate clients,</text>
+    <text x="1222" y="232" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">and handle cross-world transfer</text>
   </g>
 
-  <!-- Arrows -->
-  <path d="M252 176H286" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M506 176H540" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M840 176H874" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M1052 176H1086" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <g>
+    <rect x="52" y="312" width="290" height="110" rx="12" fill="white" stroke="#BBF7D0" stroke-width="1.2"/>
+    <rect x="52" y="312" width="290" height="4" rx="2" fill="#16A34A"/>
+    <text x="74" y="345" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="17" font-weight="700">PluginOrchestrator</text>
+    <text x="74" y="368" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">PluginHosts.InitializeAllAsync()</text>
+    <text x="74" y="386" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Discover and initialize plugin hosts</text>
+  </g>
 
-  <!-- Arrow labels -->
-  <text x="255" y="168" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">init</text>
-  <text x="507" y="168" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">coordinate</text>
-  <text x="843" y="168" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">spawn</text>
-  <text x="1053" y="168" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">load</text>
+  <g>
+    <rect x="378" y="312" width="320" height="110" rx="12" fill="white" stroke="#FDE68A" stroke-width="1.2"/>
+    <rect x="378" y="312" width="320" height="4" rx="2" fill="#D97706"/>
+    <text x="400" y="338" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">HandleCommandLine</text>
+    <text x="400" y="356" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">AutoStartServer</text>
+    <text x="400" y="376" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Parse each -server definition</text>
+    <text x="400" y="394" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Create startup world contexts</text>
+  </g>
 
-  <!-- Bottom note -->
-  <text x="52" y="282" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Event traffic flows through UnifierApi.EventHub · Plugin orchestration by PluginHost.PluginOrchestrator</text>
+  <g>
+    <rect x="734" y="312" width="286" height="110" rx="12" fill="white" stroke="#E9D5FF" stroke-width="1.2"/>
+    <rect x="734" y="312" width="286" height="4" rx="2" fill="#9333EA"/>
+    <text x="756" y="345" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">ServerContext (per world)</text>
+    <text x="756" y="368" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">RootContext-based state isolation</text>
+    <text x="756" y="386" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Launches world runtime task</text>
+  </g>
+
+  <g>
+    <rect x="1056" y="312" width="452" height="110" rx="12" fill="white" stroke="#FED7AA" stroke-width="1.2"/>
+    <rect x="1056" y="312" width="452" height="4" rx="2" fill="#EA580C"/>
+    <text x="1078" y="345" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="17" font-weight="700">UnifiedServerCoordinator.AddServer</text>
+    <text x="1078" y="368" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Register context in coordinator server list</text>
+    <text x="1078" y="386" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Emit Server.AddServer and ServerListChanged events</text>
+  </g>
+
+  <g>
+    <rect x="52" y="468" width="1456" height="70" rx="12" fill="white" stroke="#93C5FD" stroke-width="1.2"/>
+    <rect x="52" y="468" width="1456" height="4" rx="2" fill="#2563EB"/>
+    <text x="74" y="498" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="17" font-weight="700">UnifierApi.EventHub (cross-cutting bus)</text>
+    <text x="74" y="520" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Coordinator, Netplay, Server, Chat, Game, and Launcher event pipelines</text>
+  </g>
+
+  <path d="M262 189H278" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M526 189H550" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M836 189H860" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M1168 189H1192" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <path d="M697 248V272" stroke="#94A3B8" stroke-width="1.8"/>
+  <circle cx="697" cy="272" r="3" fill="#94A3B8"/>
+  <path d="M697 272H197V312" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M697 272H538V312" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M698 367H734" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M1020 367H1056" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M1282 312V278H1354V248" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <path d="M712 248V468" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <path d="M197 422V468" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <path d="M538 422V468" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <path d="M863 422V468" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <path d="M1282 422V468" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 6"/>
+
+  <text x="398" y="286" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">InitializeAllAsync()</text>
+  <text x="556" y="286" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">HandleCommandLine()</text>
+  <text x="660" y="355" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">new ServerContext(...)</text>
+  <text x="1008" y="355" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">AddServer()</text>
+  <text x="1260" y="272" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">feeds active servers</text>
+  <text x="720" y="286" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">EventHub = new()</text>
+  <text x="1180" y="455" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">event dispatch and interception</text>
 </svg>
