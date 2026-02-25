@@ -143,21 +143,7 @@ namespace UnifierTSL.Events.Handlers
             msgBuffer.GetData(info.LocalReciever.Server, begin, length, out _);
             return true;
         }
-        private static unsafe void ProcessPacket_F<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INonLengthAware, INonSideSpecific, INetPacket {
-            Array? boxedHandlers = handlers[TPacket.GlobalID];
-            if (boxedHandlers is null) {
-                OriginalProcess(in info);
-                return;
-            }
-            RecievePacketEvent<TPacket> args = new(in info);
-            void* ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
-            args.Packet.ReadContent(ref ptr);
-            if (ProcessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
-                args.LocalReciever.AsRecieveFromSender_FixedPkt(args.RecieveFrom, args.Packet);
-                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
-            }
-        }
-        private static unsafe void ProcessPacket_FL<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, ILengthAware, INonSideSpecific {
+        private static unsafe void ProcessPacket_F<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, INonSideSpecific {
             Array? boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -171,22 +157,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        private static unsafe void ProcessPacket_FS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, INonLengthAware, ISideSpecific {
-            Array? boxedHandlers = handlers[TPacket.GlobalID];
-            if (boxedHandlers is null) {
-                OriginalProcess(in info);
-                return;
-            }
-            RecievePacketEvent<TPacket> args = new(in info);
-            void* ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
-            args.Packet.IsServerSide = true;
-            args.Packet.ReadContent(ref ptr);
-            if (ProcessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
-                args.LocalReciever.AsRecieveFromSender_FixedPkt_S(args.RecieveFrom, args.Packet);
-                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
-            }
-        }
-        private static unsafe void ProcessPacket_FLS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, ILengthAware, ISideSpecific {
+        private static unsafe void ProcessPacket_FS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, ISideSpecific {
             Array? boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -201,21 +172,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        private static unsafe void ProcessPacket_D<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INonLengthAware, INonSideSpecific, INetPacket {
-            Array? boxedHandlers = handlers[TPacket.GlobalID];
-            if (boxedHandlers is null) {
-                OriginalProcess(in info);
-                return;
-            }
-            RecievePacketEvent<TPacket> args = new(in info);
-            void* ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
-            args.Packet.ReadContent(ref ptr);
-            if (ProcessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
-                args.LocalReciever.AsRecieveFromSender_DynamicPkt(args.RecieveFrom, args.Packet);
-                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
-            }
-        }
-        private static unsafe void ProcessPacket_DL<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, INonSideSpecific {
+        private static unsafe void ProcessPacket_D<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INonSideSpecific, INetPacket {
             Array? boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -229,22 +186,7 @@ namespace UnifierTSL.Events.Handlers
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        private static unsafe void ProcessPacket_DS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, INonLengthAware, ISideSpecific {
-            Array? boxedHandlers = handlers[TPacket.GlobalID];
-            if (boxedHandlers is null) {
-                OriginalProcess(in info);
-                return;
-            }
-            RecievePacketEvent<TPacket> args = new(in info);
-            void* ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
-            args.Packet.IsServerSide = true;
-            args.Packet.ReadContent(ref ptr);
-            if (ProcessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
-                args.LocalReciever.AsRecieveFromSender_DynamicPkt_S(args.RecieveFrom, args.Packet);
-                args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
-            }
-        }
-        private static unsafe void ProcessPacket_DLS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, ILengthAware, ISideSpecific {
+        private static unsafe void ProcessPacket_DS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, ISideSpecific {
             Array? boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
@@ -281,7 +223,6 @@ namespace UnifierTSL.Events.Handlers
             // D is Dynamic, means the packet has no max length
             // F is Fixed, means the packet has a max length
 
-            // L is LengthAware, means the packet requires knowledge of its total serialized length when deserializing.
             // S is SideSpecific, means the packet requires side-specific (client/server) handling during packet serialization/deserialization.
             switch (id) {
                 case MessageID.ClientHello: ProcessPacket_D<ClientHello>(in info); return;
@@ -293,7 +234,7 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.WorldData: ProcessPacket_D<WorldData>(in info); return;
                 case MessageID.RequestTileData: ProcessPacket_F<RequestTileData>(in info); return;
                 case MessageID.StatusText: ProcessPacket_D<StatusText>(in info); return;
-                case MessageID.TileSection: ProcessPacket_DL<TileSection>(in info); return;
+                case MessageID.TileSection: ProcessPacket_D<TileSection>(in info); return;
                 case MessageID.FrameSection: ProcessPacket_F<FrameSection>(in info); return;
                 case MessageID.SpawnPlayer: ProcessPacket_F<SpawnPlayer>(in info); return;
                 case MessageID.PlayerControls: ProcessPacket_F<PlayerControls>(in info); return;
@@ -303,7 +244,7 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.ChangeDoor: ProcessPacket_F<ChangeDoor>(in info); return;
                 case MessageID.TileSquare: ProcessPacket_D<TileSquare>(in info); return;
                 case MessageID.SyncItem: ProcessPacket_F<SyncItem>(in info); return;
-                case MessageID.SyncNPC: ProcessPacket_DL<SyncNPC>(in info); return;
+                case MessageID.SyncNPC: ProcessPacket_D<SyncNPC>(in info); return;
                 case MessageID.UnusedStrikeNPC: ProcessPacket_F<UnusedStrikeNPC>(in info); return;
                 case MessageID.SyncProjectile: ProcessPacket_F<SyncProjectile>(in info); return;
                 case MessageID.StrikeNPC: ProcessPacket_F<StrikeNPC>(in info); return;
@@ -373,7 +314,7 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.ItemTweaker: ProcessPacket_F<ItemTweaker>(in info); return;
                 case MessageID.ItemFrameTryPlacing: ProcessPacket_F<ItemFrameTryPlacing>(in info); return;
                 case MessageID.InstancedItem: ProcessPacket_F<InstancedItem>(in info); return;
-                case MessageID.SyncEmoteBubble: ProcessPacket_DL<SyncEmoteBubble>(in info); return;
+                case MessageID.SyncEmoteBubble: ProcessPacket_D<SyncEmoteBubble>(in info); return;
                 case MessageID.MurderSomeoneElsesProjectile: ProcessPacket_F<MurderSomeoneElsesProjectile>(in info); return;
                 case MessageID.TeleportPlayerThroughPortal: ProcessPacket_F<TeleportPlayerThroughPortal>(in info); return;
                 case MessageID.AchievementMessageNPCKilled: ProcessPacket_F<AchievementMessageNPCKilled>(in info); return;
@@ -405,7 +346,7 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.SyncPlayerChestIndex: ProcessPacket_F<SyncPlayerChestIndex>(in info); return;
                 case MessageID.PlayerStealth: ProcessPacket_F<PlayerStealth>(in info); return;
                 case MessageID.SyncExtraValue: ProcessPacket_F<SyncExtraValue>(in info); return;
-                case MessageID.SocialHandshake: ProcessPacket_DL<SocialHandshake>(in info); return;
+                case MessageID.SocialHandshake: ProcessPacket_D<SocialHandshake>(in info); return;
                 case MessageID.GemLockToggle: ProcessPacket_F<GemLockToggle>(in info); return;
                 case MessageID.PoofOfSmoke: ProcessPacket_F<PoofOfSmoke>(in info); return;
                 case MessageID.SmartTextMessage: ProcessPacket_D<SmartTextMessage>(in info); return;

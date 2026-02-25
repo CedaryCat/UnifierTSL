@@ -1312,8 +1312,15 @@ namespace TShockAPI
             int y = TPlayer.SpawnY;
             if ((x == -1 && y == -1) ||
                 !server.Main.tile[x, y - 1].active() || server.Main.tile[x, y - 1].type != TileID.Beds || !server.WorldGen.StartRoomCheck(x, y - 1)) {
-                x = server.Main.spawnTileX;
-                y = server.Main.spawnTileY;
+                if (server.Main.teamBasedSpawnsSeed &&
+                    server.ExtraSpawnPointManager.TryGetExtraSpawnPointForTeam(Team, out var spawnPoint)) {
+                    x = spawnPoint.X;
+                    y = spawnPoint.Y;
+                }
+                else {
+                    x = server.Main.spawnTileX;
+                    y = server.Main.spawnTileY;
+                }
             }
             return Teleport(x * 16, y * 16 - 48);
         }

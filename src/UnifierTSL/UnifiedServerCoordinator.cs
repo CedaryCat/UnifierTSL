@@ -161,14 +161,32 @@ namespace UnifierTSL
                 MessageID type = (MessageID)readBuffer[packetStart];
                 fixed (byte* buffer = readBuffer) {
                     void* readPtr = buffer + packetStart + 1;
+                    void* endPtr = buffer + contentLength;
                     switch (type) {
                         case MessageID.ClientHello: {
-                                ClientHello msg = new(ref readPtr);
+                                ClientHello msg = new(ref readPtr, endPtr);
                                 UnifierApi.EventHub.Netplay.ConnectEvent.Invoke(new Connect(client, msg.Version), out bool handled);
                                 if (handled) {
                                     return;
                                 }
-                                var checkCanJoin = new CheckVersion(client, msg.Version, msg.Version == "Terraria" + Main.curRelease);
+                                string expectedVersion = "Terraria" + Main.curRelease;
+                                var checkCanJoin = new CheckVersion(client, msg.Version, msg.Version == expectedVersion);
+                                UnifierApi.EventHub.Coordinator.CheckVersion.Invoke(ref checkCanJoin);
+                                if (msg.Version != expectedVersion) {
+                                    string remoteAddress = client.Socket?.GetRemoteAddress().ToString() ?? "<unknown>";
+                                    if (checkCanJoin.CanJoin) {
+                                        Logger.Info(
+                                            category: "PendingConnection",
+                                            message: GetParticularString("{0} is player IP address, {1} is client version string, {2} is server version string",
+                                                $"Version mismatch from {remoteAddress}: client='{msg.Version}', server='{expectedVersion}'. Cross-version join allowed by policy."));
+                                    }
+                                    else {
+                                        Logger.Warning(
+                                            category: "PendingConnection",
+                                            message: GetParticularString("{0} is player IP address, {1} is client version string, {2} is server version string",
+                                                $"Version mismatch from {remoteAddress}: client='{msg.Version}', server='{expectedVersion}'. Connection rejected."));
+                                    }
+                                }
                                 UnifierApi.EventHub.Coordinator.CheckVersion.Invoke(ref checkCanJoin);
                                 if (!checkCanJoin.CanJoin) {
                                     sender.Kick(Lang.mp[4].ToNetworkText());
@@ -184,7 +202,7 @@ namespace UnifierTSL
                                 break;
                             }
                         case MessageID.SendPassword: {
-                                SendPassword msg = new(ref readPtr);
+                                SendPassword msg = new(ref readPtr, endPtr);
                                 if (msg.Password == ServerPassword) {
                                     client.State = 1;
                                     sender.SendFixedPacket(new LoadPlayer((byte)Index, false));
@@ -195,13 +213,13 @@ namespace UnifierTSL
                                 break;
                             }
                         case MessageID.SyncPlayer: {
-                                SyncPlayer msg = new(ref readPtr);
+                                SyncPlayer msg = new(ref readPtr, endPtr);
                                 player.ApplySyncPlayerPacket(msg);
                                 client.Name = msg.Name;
                                 break;
                             }
                         case MessageID.ClientUUID: {
-                                ClientUUID msg = new(ref readPtr);
+                                ClientUUID msg = new(ref readPtr, endPtr);
                                 var uuid = msg.UUID.Trim();
 
                                 if (!Guid.TryParse(uuid, out _)) {
@@ -240,9 +258,7 @@ namespace UnifierTSL
                                     serverPlayer.ApplySyncPlayerPacket(in playerData, false);
                                     globalClients[Index].mfwh_ResetSections(joinServer);
 
-                                    if (joinServer.IsRunning) {
-                                        UnifierApi.EventHub.Coordinator.JoinServer.Invoke(new(joinServer, player.whoAmI));
-                                    }
+                                    UnifierApi.EventHub.Coordinator.JoinServer.Invoke(new(joinServer, player.whoAmI));
 
                                     UnifierApi.UpdateTitle();
 

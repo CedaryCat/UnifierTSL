@@ -76,6 +76,8 @@ namespace TShockAPI
 
             // 0-3 male; 4-7 female
             int skinVariant = args.Packet.SkinVariant;
+            var voiceVariant = args.Packet.VoiceVariant;
+            var voicePitchOffset = args.Packet.VoicePitchOffset;
             var hair = args.Packet.Hair;
             string name = args.Packet.Name;
             byte hairDye = args.Packet.HairDye;
@@ -147,6 +149,8 @@ namespace TShockAPI
                 tsPlayer.TPlayer.shirtColor = shirtColor;
                 tsPlayer.TPlayer.underShirtColor = underShirtColor;
                 tsPlayer.TPlayer.shoeColor = shoeColor;
+                tsPlayer.TPlayer.voiceVariant = voiceVariant;
+                tsPlayer.TPlayer.voicePitchOffset = voicePitchOffset;
                 //@Olink: If you need to change bool[10], please make sure you also update the for loops below to account for it.
                 //There are two arrays from terraria that we only have a single array for.  You will need to make sure that you are looking
                 //at the correct terraria array (hideVisual or hideVisual2).
@@ -237,11 +241,6 @@ namespace TShockAPI
                 return;
             }
 
-            // Garabage? Or will it cause some internal initialization or whatever?
-            var item = new Item();
-            item.netDefaults(server, type);
-            item.Prefix(server, prefix);
-
             if (tsPlayer.IsLoggedIn) {
                 int internalSlot = NetworkSlotToInternalSlot(slot);
                 if (internalSlot >= 0) {
@@ -256,7 +255,11 @@ namespace TShockAPI
 
             if (slot == 58) //this is the hand
             {
+                var item = new Item();
+                item.netDefaults(server, type);
+                item.Prefix(server, prefix);
                 item.stack = stack;
+                item.favorited = favorited;
                 tsPlayer.ItemInHand = item;
             }
         }
@@ -505,7 +508,7 @@ namespace TShockAPI
                     return;
                 }
 
-                // once we detect the client has changed his spawnpoint in the current session, 
+                // once we detect the client has changed his spawnpoint in the current session,
                 // the client spawnpoint value will be correct for the rest of the session
                 if (tsPlayer.spawnSynced || tsPlayer.initialClientSpawnX != spawnX || tsPlayer.initialClientSpawnY != spawnY) {
                     // Player has changed his spawnpoint, client and server TPlayer.Spawn{X,Y} is now synced
@@ -513,6 +516,8 @@ namespace TShockAPI
                     return;
                 }
 
+                tsPlayer.TPlayer.team = team;
+                tsPlayer.TPlayer.Spawn(server, context);
                 // spawn the player before teleporting
                 server.NetMessage.SendData((int)PacketTypes.PlayerSpawn, -1, tsPlayer.Index, null, tsPlayer.Index, (int)PlayerSpawnContext.ReviveFromDeath);
 
@@ -1379,20 +1384,18 @@ namespace TShockAPI
 
             BitsByte flag = args.Packet.Bit1;
             short id = args.Packet.PlayerSlot;
-            var x = args.Packet;
-            var y = args.Packet;
+            Vector2 position = args.Packet.Position;
             byte style = args.Packet.Style;
 
             int type = 0;
-            bool isNPC = type == 1;
             int extraInfo = -1;
             bool getPositionFromTarget = false;
 
             if (flag[0]) {
-                type = 1;
+                type += 1;
             }
             if (flag[1]) {
-                type = 2;
+                type += 2;
             }
             if (flag[2]) {
                 getPositionFromTarget = true;
@@ -1400,6 +1403,12 @@ namespace TShockAPI
             if (flag[3]) {
                 extraInfo = args.Packet.ExtraInfo;
             }
+            if (getPositionFromTarget && id >= 0 && id < Main.maxPlayers && server.Main.player[id] != null) {
+                position = server.Main.player[id].position;
+            }
+            _ = position;
+            _ = style;
+            _ = extraInfo;
 
             //if (OnTeleport(tsPlayer, args.Data, id, flag, x, y, style, extraInfo))
             //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
