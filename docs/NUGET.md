@@ -158,7 +158,7 @@ This NuGet package includes:
 ## Requirements
 
 - .NET 9.0 or later
-- OTAPI USP 1.0.13+
+- OTAPI USP 1.1.0+
 - Supported platforms: Windows, Linux (x64/ARM), macOS
 
 ## License
