@@ -1,0 +1,83 @@
+<svg width="1280" height="320" viewBox="0 0 1280 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgA" x1="0" y1="0" x2="1280" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#F1F5F9"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8" fill="none" stroke="#94A3B8" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="320" rx="16" fill="url(#bgA)"/>
+
+  <!-- Header -->
+  <text x="52" y="48" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="26" font-weight="700">Runtime Coordination Flow</text>
+  <text x="52" y="76" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15">Program → UnifierApi → UnifiedServerCoordinator → ServerContext → PluginHost</text>
+
+  <!-- Box 1: Program.cs -->
+  <g>
+    <rect x="52" y="108" width="198" height="136" rx="12" fill="white" stroke="#BFDBFE" stroke-width="1.2"/>
+    <rect x="52" y="108" width="198" height="4" rx="2" fill="#3B82F6"/>
+    <text x="76" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">Program.cs</text>
+    <text x="76" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Boot sequence</text>
+    <text x="76" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Entry point and</text>
+    <text x="76" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">runtime bootstrap</text>
+  </g>
+
+  <!-- Box 2: UnifierApi -->
+  <g>
+    <rect x="294" y="108" width="210" height="136" rx="12" fill="white" stroke="#BBF7D0" stroke-width="1.2"/>
+    <rect x="294" y="108" width="210" height="4" rx="2" fill="#16A34A"/>
+    <text x="318" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">UnifierApi</text>
+    <text x="318" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Init + event hub</text>
+    <text x="318" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Plugin orchestration</text>
+    <text x="318" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">and argument handling</text>
+  </g>
+
+  <!-- Box 3: UnifiedServerCoordinator -->
+  <g>
+    <rect x="548" y="108" width="290" height="136" rx="12" fill="white" stroke="#FED7AA" stroke-width="1.2"/>
+    <rect x="548" y="108" width="290" height="4" rx="2" fill="#EA580C"/>
+    <text x="572" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">UnifiedServerCoordinator</text>
+    <text x="572" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Socket ingress + routing</text>
+    <text x="572" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Listening socket, client</text>
+    <text x="572" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">coordination, world routing</text>
+  </g>
+
+  <!-- Box 4: ServerContext -->
+  <g>
+    <rect x="882" y="108" width="168" height="136" rx="12" fill="white" stroke="#E9D5FF" stroke-width="1.2"/>
+    <rect x="882" y="108" width="168" height="4" rx="2" fill="#9333EA"/>
+    <text x="906" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">ServerContext</text>
+    <text x="906" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">World isolation</text>
+    <text x="906" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Per-world state</text>
+    <text x="906" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">management</text>
+  </g>
+
+  <!-- Box 5: PluginHost -->
+  <g>
+    <rect x="1094" y="108" width="144" height="136" rx="12" fill="white" stroke="#BFDBFE" stroke-width="1.2"/>
+    <rect x="1094" y="108" width="144" height="4" rx="2" fill="#3B82F6"/>
+    <text x="1118" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">PluginHost</text>
+    <text x="1118" y="174" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Module loading</text>
+    <text x="1118" y="194" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">Discovery, loading</text>
+    <text x="1118" y="210" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">and staging</text>
+  </g>
+
+  <!-- Arrows -->
+  <path d="M252 176H286" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M506 176H540" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M840 176H874" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M1052 176H1086" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Arrow labels -->
+  <text x="255" y="168" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">init</text>
+  <text x="507" y="168" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">coordinate</text>
+  <text x="843" y="168" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">spawn</text>
+  <text x="1053" y="168" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">load</text>
+
+  <!-- Bottom note -->
+  <text x="52" y="282" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13">Event traffic flows through UnifierApi.EventHub · Plugin orchestration by PluginHost.PluginOrchestrator</text>
+</svg>
