@@ -404,3 +404,16 @@ msgctxt "{0} is player name, {1} is player IP address, {2} is invalid raw UUID s
 msgid "'{0}' ({1}) sent invalid UUID '{2}' before authentication. Kicked."
 msgstr "'{0}' ({1}) 在身份验证前发送了无效 UUID '{2}'。已踢出。"
 
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:181
+#, csharp-format
+msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
+msgid ""
+"Version mismatch from {0}: client='{1}', server='{2}'. Cross-version join "
+"allowed by policy."
+msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。已按策略允许跨版本加入。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:187
+#, csharp-format
+msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
+msgid "Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
+msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。连接已拒绝。"

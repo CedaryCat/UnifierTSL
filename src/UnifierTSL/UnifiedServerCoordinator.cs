@@ -169,7 +169,24 @@ namespace UnifierTSL
                                 if (handled) {
                                     return;
                                 }
-                                var checkCanJoin = new CheckVersion(client, msg.Version, msg.Version == "Terraria" + Main.curRelease);
+                                string expectedVersion = "Terraria" + Main.curRelease;
+                                var checkCanJoin = new CheckVersion(client, msg.Version, msg.Version == expectedVersion);
+                                UnifierApi.EventHub.Coordinator.CheckVersion.Invoke(ref checkCanJoin);
+                                if (msg.Version != expectedVersion) {
+                                    string remoteAddress = client.Socket?.GetRemoteAddress().ToString() ?? "<unknown>";
+                                    if (checkCanJoin.CanJoin) {
+                                        Logger.Info(
+                                            category: "PendingConnection",
+                                            message: GetParticularString("{0} is player IP address, {1} is client version string, {2} is server version string",
+                                                $"Version mismatch from {remoteAddress}: client='{msg.Version}', server='{expectedVersion}'. Cross-version join allowed by policy."));
+                                    }
+                                    else {
+                                        Logger.Warning(
+                                            category: "PendingConnection",
+                                            message: GetParticularString("{0} is player IP address, {1} is client version string, {2} is server version string",
+                                                $"Version mismatch from {remoteAddress}: client='{msg.Version}', server='{expectedVersion}'. Connection rejected."));
+                                    }
+                                }
                                 UnifierApi.EventHub.Coordinator.CheckVersion.Invoke(ref checkCanJoin);
                                 if (!checkCanJoin.CanJoin) {
                                     sender.Kick(Lang.mp[4].ToNetworkText());
