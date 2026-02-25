@@ -106,6 +106,7 @@ namespace TShockAPI
         internal static Dictionary<int, int> projectileCreatesTile = new Dictionary<int, int>
         {
             { ProjectileID.DirtBall, TileID.Dirt },
+            { ProjectileID.MudBallPlayer, TileID.Mud },
             { ProjectileID.SandBallGun, TileID.Sand },
             { ProjectileID.EbonsandBallGun, TileID.Ebonsand },
             { ProjectileID.PearlSandBallGun, TileID.Pearlsand },
@@ -410,6 +411,17 @@ namespace TShockAPI
 						// Not a booster track, return as-is.
 						return actualItemPlaceStyle;
 					}
+				});
+			PlaceStyleCorrectors.Add(TileID.Grass, // it's TileID.ImmatureHerbs actually...
+				(player, requestedPlaceStyle, actualItemPlaceStyle) =>
+				{
+					if (player.selectedItem is (ItemID.AcornAxe or ItemID.StaffofRegrowth) &&
+						actualItemPlaceStyle is <= 6 and >= 0)
+					{
+						return actualItemPlaceStyle;
+					}
+
+					return requestedPlaceStyle;
 				});
 
 			#region PlayerAddBuff Whitelist
@@ -764,8 +776,8 @@ namespace TShockAPI
 					return;
 				}
 
-				// Corpses don't move
-				if (tsPlayer.Dead)
+				// Corpses don't move, but ghosts can.
+				if (tsPlayer.Dead && !tsPlayer.TPlayer.ghost)
 				{
 					server.Log.Debug(GetString("Bouncer / OnPlayerUpdate rejected from (corpses don't move) {0}", tsPlayer.Name));
 					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
@@ -942,6 +954,18 @@ namespace TShockAPI
 														   && tsPlayer.TPlayer.mount.Type != MountID.Drill
 														   && tsPlayer.TPlayer.mount.Type != MountID.DiggingMoleMinecart)
 					{
+						if (tsPlayer.TPlayer.ownedProjectileCounts[ProjectileID.PalworldDigtoise] > 0)
+						{
+							var digtoiseProjectile = server.Main.projectile
+								.FirstOrDefault(p => p is { active: true, type: ProjectileID.PalworldDigtoise } && p.owner == tsPlayer.Index);
+
+							// Digtoise starts digging.
+							if (digtoiseProjectile?.ai[0] is 1f or 2f or 3f && digtoiseProjectile.ai[1] > 40f)
+							{
+								return;
+							}
+						}
+
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from (pick) {0} {1} {2}", tsPlayer.Name, action,
 							editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
@@ -990,26 +1014,68 @@ namespace TShockAPI
 						return;
 					}
 
-					/// Handle placement action if the player is using an Ice Rod but not placing the iceblock.
+					// Handle placement action for Regrowth tools to ensure they only replant herbs on valid containers.
+					if (selectedItem.type is ItemID.AcornAxe or ItemID.StaffofRegrowth)
+					{
+						if ((int)editData is not (TileID.Grass or TileID.HallowedGrass or TileID.CorruptGrass
+							or TileID.CrimsonGrass or TileID.JungleGrass or TileID.MushroomGrass
+							or TileID.CorruptJungleGrass or TileID.CrimsonJungleGrass or TileID.AshGrass)
+							&& !TileID.Sets.Conversion.Moss[editData])
+						{
+							if (editData != TileID.ImmatureHerbs)
+							{
+								server.Log.Debug(GetString(
+									"Bouncer / OnTileEdit rejected {0} from placing non-herb tile {1} using {2}",
+									tsPlayer.Name, editData, selectedItem.Name));
+								tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
+								args.HandleMode = PacketHandleMode.Cancel;
+								args.StopPropagation = true;
+							}
+
+							var containerTile = server.Main.tile[tileX, tileY + 1];
+							if (!containerTile.active() ||
+								containerTile.type is not (TileID.ClayPot or TileID.RockGolemHead or TileID.PlanterBox))
+							{
+								server.Log.Debug(GetString(
+									"Bouncer / OnTileEdit rejected {0} from planting herb on invalid tile {1} using {2}",
+									tsPlayer.Name, containerTile.type, selectedItem.Name));
+								tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
+								args.HandleMode = PacketHandleMode.Cancel;
+								args.StopPropagation = true;
+							}
+						}
+					}
+					// Handle placement action if the player is using an Ice Rod but not placing the iceblock.
 					if (selectedItem.type == ItemID.IceRod && editData != TileID.MagicalIceBlock)
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from using ice rod but not placing ice block {0} {1} {2}", tsPlayer.Name, action, editData));
 						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+						args.HandleMode = PacketHandleMode.Cancel;
+						args.StopPropagation = true;
 					}
-					/// If they aren't selecting the item which creates the tile, they're hacking.
+					// If they aren't selecting the item which creates the tile, they're hacking.
 					if ((action == TileEditAction.PlaceTile || action == TileEditAction.ReplaceTile) && editData != selectedItem.createTile)
 					{
-						/// These would get caught up in the below check because Terraria does not set their createTile field.
-						if (selectedItem.type != ItemID.IceRod && selectedItem.type != ItemID.DirtBomb && selectedItem.type != ItemID.StickyBomb && (tsPlayer.TPlayer.mount.Type != MountID.DiggingMoleMinecart || editData != TileID.MinecartTrack))
+						// These would get caught up in the below check because Terraria does not set their createTile field.
+						if (selectedItem.type != ItemID.IceRod &&
+							selectedItem.type != ItemID.DirtBomb &&
+							selectedItem.type != ItemID.StickyBomb &&
+							selectedItem.type != ItemID.MudBallPlayer &&
+							selectedItem.type != ItemID.AcornAxe &&
+							selectedItem.type != ItemID.StaffofRegrowth &&
+							!(tsPlayer.RecentlyCreatedProjectiles.Any(x => x.Type == ProjectileID.AcornSlingshotAcorn) && editData == TileID.Saplings) &&
+							!(tsPlayer.TPlayer.mount.Type == MountID.DiggingMoleMinecart && editData == TileID.MinecartTrack))
 						{
-							server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from tile placement not matching selected item createTile {0} {1} {2} selectedItemID:{3} createTile:{4}", tsPlayer.Name, action, editData, selectedItem.type, selectedItem.createTile));
+							server.Log.Debug(GetString(
+								"Bouncer / OnTileEdit rejected from tile placement not matching selected item createTile {0} {1} {2} selectedItemID:{3} createTile:{4}",
+								tsPlayer.Name, action, editData, selectedItem.type, selectedItem.createTile));
 							tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
-							args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+							args.HandleMode = PacketHandleMode.Cancel;
+							args.StopPropagation = true;
 							return;
 						}
 					}
-					/// If they aren't selecting the item which creates the wall, they're hacking.
+					// If they aren't selecting the item which creates the wall, they're hacking.
 					if ((action == TileEditAction.PlaceWall || action == TileEditAction.ReplaceWall) && editData != selectedItem.createWall)
 					{
 						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected from wall placement not matching selected item createWall {0} {1} {2} selectedItemID:{3} createWall:{4}", tsPlayer.Name, action, editData, selectedItem.type, selectedItem.createWall));
@@ -1316,27 +1382,21 @@ namespace TShockAPI
 			// player is attempting to crash clients
 			if (type < -48 || type >= Terraria.ID.ItemID.Count)
 			{
-				// Causes item duplications. Will be re added later if necessary
-				//tsPlayer.SendData(PacketTypes.ItemDrop, "", id);
 				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from attempt crash from {0}", tsPlayer.Name));
 				handleMode = PacketHandleMode.Cancel;
 				return;
 			}
 
 			// make sure the prefix is a legit value
-			// Note: Not checking if prefix is less than 1 because if it is, this check
-			// will break item pickups on the client.
 			if (prefix > PrefixID.Count)
 			{
 				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from prefix check from {0}", tsPlayer.Name));
 
-				tsPlayer.SendData(PacketTypes.ItemDrop, "", id);
+				tsPlayer.SendData(PacketTypes.SyncItemDespawn, "", id);
 				handleMode = PacketHandleMode.Cancel;
 				return;
 			}
 
-			//Item removed, let client do this to prevent item duplication
-			// client side (but only if it passed the range check) (i.e., return false)
 			if (type == 0)
 			{
 				if (!tsPlayer.IsInRange((int)(server.Main.item[id].position.X / 16f), (int)(server.Main.item[id].position.Y / 16f)))
@@ -1351,19 +1411,19 @@ namespace TShockAPI
 				return;
 			}
 
-			if (!tsPlayer.IsInRange((int)(pos.X / 16f), (int)(pos.Y / 16f)))
+			if (!tsPlayer.IsInRange((int)(pos.X / 16f), (int)(pos.Y / 16f), 128))
 			{
 				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from range check from {0}", tsPlayer.Name));
-				tsPlayer.SendData(PacketTypes.ItemDrop, "", id);
+				tsPlayer.SendData(PacketTypes.SyncItemDespawn, "", id);
 				handleMode = PacketHandleMode.Cancel;
 				return;
 			}
 
-			// stop the client from changing the item type of a drop but
-			// only if the client isn't picking up the item
-			if (server.Main.item[id].active && server.Main.item[id].type != type)
+			// stop the client from changing the item type of a drop
+			if (server.Main.item[id].active && server.Main.item[id].type != type &&
+				!(server.Main.item[id].type == ItemID.EmptyBucket && type == ItemID.WaterBucket)) // Empty bucket turns into Water Bucket on rainy days.
 			{
-				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from item drop/pickup check from {0}", tsPlayer.Name));
+				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from item drop check from {0}", tsPlayer.Name));
 				tsPlayer.SendData(PacketTypes.ItemDrop, "", id);
 				handleMode = PacketHandleMode.Cancel;
 				return;
@@ -1374,7 +1434,7 @@ namespace TShockAPI
 			if ((stacks > item.maxStack || stacks <= 0) || (TShock.ItemBans.DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), tsPlayer) && !tsPlayer.HasPermission(Permissions.allowdroppingbanneditems)))
 			{
 				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from drop item ban check / max stack check / min stack check from {0}", tsPlayer.Name));
-				tsPlayer.SendData(PacketTypes.ItemDrop, "", id);
+				tsPlayer.SendData(PacketTypes.SyncItemDespawn, "", id);
 				handleMode = PacketHandleMode.Cancel;
 				return;
 			}
@@ -1385,7 +1445,7 @@ namespace TShockAPI
 				//Player is probably trying to sneak items onto the server in their hands!!!
 				server.Log.Info(GetString("Player {0} tried to sneak {1} onto the server!", tsPlayer.Name, item.Name));
 				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from sneaky from {0}", tsPlayer.Name));
-				tsPlayer.SendData(PacketTypes.ItemDrop, "", id);
+				tsPlayer.SendData(PacketTypes.SyncItemDespawn, "", id);
 				handleMode = PacketHandleMode.Cancel;
 				return;
 
@@ -1394,7 +1454,7 @@ namespace TShockAPI
 			if (tsPlayer.IsBeingDisabled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from disabled from {0}", tsPlayer.Name));
-				tsPlayer.SendData(PacketTypes.ItemDrop, "", id);
+				tsPlayer.SendData(PacketTypes.SyncItemDespawn, "", id);
 				handleMode = PacketHandleMode.Cancel;
 				return;
 			}
@@ -2639,11 +2699,21 @@ namespace TShockAPI
 					return;
 				}
 			}
-			else if (tsPlayer.SelectedItem.type == ItemID.AcornAxe)
+			else if (type == TileID.KiteAnchor)
 			{
-				if (type != TileID.Saplings)
+				if (style != 0)
 				{
-					server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected Axe of Regrowth only places saplings {0}", tsPlayer.Name));
+					server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected {0} due to invalid kite anchor style {1}", tsPlayer.Name, style));
+					tsPlayer.SendTileSquareCentered(x, y, 4);
+					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+					return;
+				}
+			}
+			else if (type == TileID.CritterAnchor)
+			{
+				if (style is > 4 or < 0)
+				{
+					server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected {0} due to invalid critter anchor style {1}", tsPlayer.Name, style));
 					tsPlayer.SendTileSquareCentered(x, y, 4);
 					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
@@ -2651,18 +2721,36 @@ namespace TShockAPI
 			}
 			else
 			{
+				List<int> allowTypes = [tsPlayer.TPlayer.inventory[tsPlayer.TPlayer.selectedItem].createTile];
+				List<int> allowStyles = [tsPlayer.TPlayer.inventory[tsPlayer.TPlayer.selectedItem].placeStyle];
+				var flexibleTileWand = tsPlayer.SelectedItem.GetFlexibleTileWand(server);
+				if (flexibleTileWand != null)
+				{
+					var flexibleTypes = flexibleTileWand._options
+						.SelectMany(kvp => kvp.Value.Options)
+						.Select(option => option.TileIdToPlace);
+
+					allowTypes.AddRange(flexibleTypes);
+
+					var flexibleStyles = flexibleTileWand._options
+						.SelectMany(kvp => kvp.Value.Options)
+						.Select(option => option.TileStyleToPlace);
+
+					allowStyles.AddRange(flexibleStyles);
+				}
+
 				// This is necessary to check in order to prevent special tiles such as
 				// queen bee larva, paintings etc that use this packet from being placed
 				// without selecting the right item.
-				if (type != tsPlayer.TPlayer.inventory[tsPlayer.TPlayer.selectedItem].createTile)
+				if (!allowTypes.Contains(type))
 				{
-					server.Log.Debug(GetString("Bouncer / OnPlaceObject rejected awkward tile creation/selection from {0}", tsPlayer.Name));
+					server.Log.Error(GetString("Bouncer / OnPlaceObject rejected object placement with invalid tile type {1} (expected {2}) from {0}", tsPlayer.Name, type, string.Join(',', allowTypes)));
 					tsPlayer.SendTileSquareCentered(x, y, 4);
 					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
 				}
 
-				if (tsPlayer.SelectedItem.placeStyle != style)
+				if (!allowStyles.Contains(style))
 				{
 					int biomeTorchPlaceStyle = tsPlayer.SelectedItem.placeStyle;
 					{
@@ -2678,7 +2766,7 @@ namespace TShockAPI
 					var validCampfire = tsPlayer.SelectedItem.createTile == TileID.Campfire && biomeCampfirePlaceStyle == style;
 					if (!tsPlayer.TPlayer.unlockedBiomeTorches || (!validTorch && !validCampfire))
 					{
-						server.Log.Error(GetString("Bouncer / OnPlaceObject rejected object placement with invalid style {1} (expected {2}) from {0}", tsPlayer.Name, style, tsPlayer.SelectedItem.placeStyle));
+						server.Log.Error(GetString("Bouncer / OnPlaceObject rejected object placement with invalid style {1} (expected {2}) from {0}", tsPlayer.Name, style, string.Join(',', allowStyles)));
 						tsPlayer.SendTileSquareCentered(x, y, 4);
 						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 						return;
@@ -3126,17 +3214,25 @@ namespace TShockAPI
 			// This was formerly marked as a crash check; does not actually crash on this specific packet.
 			if (playerDeathReason != null)
 			{
-				if (playerDeathReason.GetDeathText(server, TShock.Players[id].Name).ToString().Length > 500)
-				{
-					server.Log.Debug(GetString("Bouncer / OnKillMe rejected bad length death text from {0}", tsPlayer.Name));
-					TShock.Players[id].Kick(GetString("Death reason outside of normal bounds."), true);
-					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
-					return;
-				}
 				if (setting.DisableCustomDeathMessages && playerDeathReason._sourceCustomReason != null)
 				{
 					server.Log.Debug(GetString("Bouncer / OnKillMe rejected custom death message from {0}", tsPlayer.Name));
-					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+					tsPlayer.KillPlayer(PlayerDeathReason.LegacyDefault());
+					tsPlayer.Dead = true;
+					tsPlayer.RespawnTimer = setting.RespawnSeconds;
+					args.HandleMode = PacketHandleMode.Cancel;
+					args.StopPropagation = true;
+					return;
+				}
+
+				if (playerDeathReason.GetDeathText(server, TShock.Players[id].Name).ToString().Length > Math.Clamp(setting.MaximumChatMessageLength, 250, 2000))
+				{
+					server.Log.Debug(GetString("Bouncer / OnKillMe rejected excessive length death text from {0}", tsPlayer.Name));
+					tsPlayer.KillPlayer(PlayerDeathReason.LegacyDefault());
+					tsPlayer.Dead = true;
+					tsPlayer.RespawnTimer = setting.RespawnSeconds;
+					args.HandleMode = PacketHandleMode.Cancel;
+					args.StopPropagation = true;
 					return;
 				}
 			}
@@ -3285,34 +3381,39 @@ namespace TShockAPI
 		// Moved to Projectile.StatusNPC(int i).
 		private static Dictionary<int, short> NPCAddBuffTimeMax = new Dictionary<int, short>()
 		{
-			{ BuffID.Poisoned, 3600 },              // BuffID: 20
-			{ BuffID.OnFire, 1200 },                // BuffID: 24
-			{ BuffID.Confused, short.MaxValue },    // BuffID: 31 Brain of Confusion Internal Item ID: 3223
-			{ BuffID.CursedInferno, 600 },          // BuffID: 39
-			{ BuffID.Frostburn, 900 },              // BuffID: 44
-			{ BuffID.Ichor, 1200 },                 // BuffID: 69
-			{ BuffID.Venom, 1800 },                 // BuffID: 70
-			{ BuffID.Midas, 120 },                  // BuffID: 72
-			{ BuffID.Wet, 1500 },                   // BuffID: 103
-			{ BuffID.Lovestruck, 1800 },            // BuffID: 119
-			{ BuffID.Stinky, 1800 },                // BuffID: 120
-			{ BuffID.Slimed, 1500 },                // BuffID: 137
-			{ BuffID.SoulDrain, 30 },               // BuffID: 151
-			{ BuffID.ShadowFlame, 660 },            // BuffID: 153
-			{ BuffID.DryadsWard, 120 },             // BuffID: 165
-			{ BuffID.BoneJavelin, 900 },            // BuffID: 169
-			{ BuffID.StardustMinionBleed, 900 },    // BuffID: 183
-			{ BuffID.DryadsWardDebuff, 120 },       // BuffID: 186
-			{ BuffID.Daybreak, 300 },               // BuffID: 189 Solar Eruption Item ID: 3473, Daybreak Item ID: 3543
-			{ BuffID.BetsysCurse, 600 },            // BuffID: 203
-			{ BuffID.Oiled, 540 },                  // BuffID: 204
-			{ BuffID.ScytheWhipEnemyDebuff, 240  }, // BuffID: 310
-			{ BuffID.GelBalloonBuff, 1800  },       // BuffID: 320
-			{ BuffID.OnFire3, 1200 },               // BuffID: 323
-			{ BuffID.Frostburn2, 1200 },            // BuffID: 324
-			{ BuffID.TentacleSpike, 540 },          // BuffID: 337
-			{ BuffID.BloodButcherer, 540 },         // BuffID: 344
-			{ BuffID.Shimmer, 100 },		        // BuffID: 353
+			{ BuffID.Shimmer, 100 },
+			{ BuffID.Venom, 1800 },
+			{ BuffID.CursedInferno, 600 },
+			{ BuffID.OnFire, 19392 }, // FTW world: 216000 overflows to ushort -> 19392 for torch slime.
+			{ BuffID.Ichor, 1140 },
+			{ BuffID.Confused, short.MaxValue },
+			{ BuffID.Poisoned, 3600 },
+			{ BuffID.Midas, 120 },
+			{ BuffID.Bleeding, 720 },
+			{ BuffID.Frostburn2, 1200 },
+			{ BuffID.OnFire3, 1200 },
+			{ BuffID.Stinky, 1800 },
+			{ BuffID.Slimed, 180 },
+			{ BuffID.Hemorrhage, 720 },
+			{ BuffID.BrokenArmor, 1200 },
+			{ BuffID.BoneJavelin, 900 },
+			{ BuffID.Daybreak, 300 },
+			{ BuffID.TentacleSpike, 540 },
+			{ BuffID.BloodButcherer, 540 },
+			{ BuffID.BetsysCurse, 600 },
+			{ BuffID.StardustMinionBleed, 900 },
+			{ BuffID.ShadowFlame, 600 },
+			{ BuffID.Frostburn, 239 },
+			{ BuffID.Oiled, 510 },
+			{ BuffID.SoulDrain, 30 },
+			{ BuffID.EelWhipNPCDebuff, 240 },
+			{ BuffID.ScytheWhipEnemyDebuff, 240 },
+			{ BuffID.Wet, 1500 },
+			{ BuffID.DryadsWard, 120 },
+			{ BuffID.DryadsWardDebuff, 120 },
+			{ BuffID.Tipsy, 3659 },
+			{ BuffID.Lovestruck, 1800 },
+			{ BuffID.GelBalloonBuff, 1800 },
 		};
 
 		/// <summary>

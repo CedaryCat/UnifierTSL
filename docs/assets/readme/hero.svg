@@ -1,0 +1,46 @@
+<svg width="1280" height="340" viewBox="0 0 1280 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#EFF6FF"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="400" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="340" rx="16" fill="url(#bg)"/>
+
+  <!-- Subtle decoration: top-right arc -->
+  <circle cx="1200" cy="40" r="180" fill="#DBEAFE" fill-opacity="0.5"/>
+  <circle cx="1240" cy="0" r="120" fill="#E0E7FF" fill-opacity="0.4"/>
+
+  <!-- Subtle decoration: bottom-left arc -->
+  <circle cx="80" cy="320" r="140" fill="#DBEAFE" fill-opacity="0.35"/>
+
+  <!-- Accent bar -->
+  <rect x="76" y="72" width="6" height="80" rx="3" fill="url(#accent)"/>
+
+  <!-- Title group -->
+  <text x="100" y="100" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" letter-spacing="2.4">UNIFIED TERRARIA SERVER LAUNCHER</text>
+  <text x="100" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="60" font-weight="700">UnifierTSL</text>
+  <text x="100" y="190" fill="#475569" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="22" font-weight="400">Multi-world orchestration on OTAPI Unified Server Process</text>
+
+  <!-- Feature pills -->
+  <rect x="100" y="220" width="200" height="36" rx="18" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="122" y="244" fill="#3B82F6" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="500">🖥  Per-instance consoles</text>
+
+  <rect x="316" y="220" width="220" height="36" rx="18" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1"/>
+  <text x="338" y="244" fill="#16A34A" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="500">🔌  Context-aware plugins</text>
+
+  <rect x="552" y="220" width="200" height="36" rx="18" fill="#FFF7ED" stroke="#FED7AA" stroke-width="1"/>
+  <text x="574" y="244" fill="#EA580C" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="500">📦  Publisher tooling</text>
+
+  <rect x="768" y="220" width="220" height="36" rx="18" fill="#FAF5FF" stroke="#E9D5FF" stroke-width="1"/>
+  <text x="790" y="244" fill="#9333EA" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="500">🛡  Bundled TShock port</text>
+
+  <!-- Bottom tagline -->
+  <text x="100" y="298" fill="#94A3B8" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="400">Design target: host many worlds through one entrypoint, with isolated contexts and modular extensibility.</text>
+</svg>

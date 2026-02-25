@@ -27,6 +27,23 @@ namespace TShockAPI
     }
     public static class MiscHandler
     {
+        private static readonly HashSet<PacketTypes> AllowedEarlyPackets =
+        [
+            PacketTypes.ConnectRequest,
+            PacketTypes.PlayerInfo,
+            PacketTypes.PlayerSlot,
+            PacketTypes.ContinueConnecting2,
+            PacketTypes.TileGetSection,
+            PacketTypes.PlayerSpawn,
+            PacketTypes.PlayerHp,
+            PacketTypes.PlayerMana,
+            PacketTypes.PlayerBuff,
+            PacketTypes.PasswordSend,
+            PacketTypes.ItemDrop,
+            PacketTypes.ItemOwner,
+            PacketTypes.SyncLoadout
+        ];
+
         public static void Attach() {
             TShock.Config.OnConfigRead += Config_OnConfigRead;
             UnifierApi.EventHub.Server.AddServer.Register(OnServerListAdded, HandlerPriority.Normal);
@@ -426,7 +443,7 @@ namespace TShockAPI
             }
 
             var ip = Utils.GetRealIP(client.Socket.GetRemoteAddress().ToString());
-            if (!FileTools.OnWhitelist(ip)) {
+            if (!TShock.Whitelist.IsWhitelisted(ip)) {
                 sender.Kick(NetworkText.FromLiteral(Config.GlobalSettings.WhitelistKickReason), false);
                 args.Handled = true;
                 return;
@@ -553,14 +570,33 @@ namespace TShockAPI
                     return;
                 }
 
-                if (args.Content.RawText.Length > 500) {
-                    tsplr.Kick(GetString("Crash attempt via long chat packet."), true);
-                    args.Handled = true;
-                    return;
-                }
             }
 
             string text = args.Content.Text.Trim();
+            if (args.Content.Sender.IsClient) {
+                var tsplr = Players[args.Content.Sender.UserId];
+                var server = tsplr.GetCurrentServer();
+                if (server is null) {
+                    args.Handled = true;
+                    return;
+                }
+
+                var settings = Config.GetServerSettings(server.Name);
+                var maxLength = Math.Clamp(settings.MaximumChatMessageLength, 250, 2000);
+                if (text.Length > maxLength) {
+                    if (!settings.TruncateExcessiveChatMessages) {
+                        Log.Debug(GetString("TShock / OnChat rejected due to length of {0}/{1} from {2}", text.Length, maxLength, tsplr.Name));
+                        tsplr.SendErrorMessage(GetString("Your chat message exceeds the maximum length of {1} characters. ({0}/{1}).", text.Length, maxLength));
+                        args.Handled = true;
+                        return;
+                    }
+
+                    Log.Debug(GetString("TShock / OnChat truncating excessive chat message length of {0}/{1} from {2}", text.Length, maxLength, tsplr.Name));
+                    text = text[..maxLength] + "...";
+                }
+            }
+
+            var chatText = text;
             bool isCmd = false;
             if (args.Content.Sender.IsServer) {
                 if (!text.StartsWith(Config.GlobalSettings.CommandSpecifier) && !text.StartsWith(Config.GlobalSettings.CommandSilentSpecifier)) {
@@ -606,10 +642,10 @@ namespace TShockAPI
                 }
                 else if (!settings.EnableChatAboveHeads) {
                     text = string.Format(settings.ChatFormat, tsplr.Group.Name, tsplr.Group.Prefix, tsplr.Name, tsplr.Group.Suffix,
-                                             args.Content.Text);
+                                             chatText);
 
                     //Invoke the PlayerChat hook. If this hook event is handled then we need to prevent sending the chat message
-                    bool cancelChat = PlayerHooks.OnPlayerChat(tsplr, args.Content.Text, ref text);
+                    bool cancelChat = PlayerHooks.OnPlayerChat(tsplr, chatText, ref text);
                     args.Handled = true;
 
                     if (cancelChat) {
@@ -629,7 +665,7 @@ namespace TShockAPI
                     //Give that poor player their name back :'c
                     ply.name = name;
 
-                    bool cancelChat = PlayerHooks.OnPlayerChat(tsplr, args.Content.Text, ref text);
+                    bool cancelChat = PlayerHooks.OnPlayerChat(tsplr, chatText, ref text);
                     if (cancelChat) {
                         args.Handled = true;
                         return;
@@ -672,8 +708,7 @@ namespace TShockAPI
                 return;
             }
 
-            if ((player.State < (int)ConnectionState.Complete || player.Dead) && (int)type > 12 && (int)type != 16 && (int)type != 42 && (int)type != 50 &&
-                (int)type != 38 && (int)type != 21 && (int)type != 22 && type != PacketTypes.SyncLoadout) {
+            if (player.State < (int)ConnectionState.Complete && !AllowedEarlyPackets.Contains(type)) {
                 args.Handled = true;
                 args.StopPropagation = true;
                 return;

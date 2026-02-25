@@ -606,6 +606,7 @@ namespace TShockAPI
 			TShock.ProjectileBans.UpdateBans();
 			TShock.TileBans.UpdateBans();
 			TShock.Bans.UpdateBans();
+			TShock.Whitelist.ReloadFromFile();
 		}
 
 		/// <summary>

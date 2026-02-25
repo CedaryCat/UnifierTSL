@@ -277,6 +277,20 @@ msgstr ""
 msgid "Invalid client UUID."
 msgstr ""
 
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:181
+#, csharp-format
+msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
+msgid ""
+"Version mismatch from {0}: client='{1}', server='{2}'. Cross-version join "
+"allowed by policy."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:187
+#, csharp-format
+msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
+msgid "Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
+msgstr ""
+
 #: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:214
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID"
