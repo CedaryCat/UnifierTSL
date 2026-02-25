@@ -79,6 +79,7 @@ namespace TShockAPI
         internal static Bouncer Bouncer;
         public static ItemBans ItemBans;
         internal static RegionHandler RegionSystem;
+        public static Whitelist Whitelist { get; set; } = null!;
         #endregion
 
         #region Misc
@@ -152,6 +153,7 @@ namespace TShockAPI
             Bouncer = new Bouncer();
             RegionSystem = new RegionHandler(Regions);
             ItemBans = new ItemBans(this, DB);
+            Whitelist = new(FileTools.WhitelistPath);
 
             var geoippath = "GeoIP.dat";
             if (Config.GlobalSettings.EnableGeoIP && File.Exists(geoippath))

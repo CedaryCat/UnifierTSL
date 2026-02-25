@@ -8,7 +8,7 @@
 		<!-- Parallel mainline sync baseline tracking -->
 		<MainlineSyncRepo>https://github.com/Pryaxis/TShock.git</MainlineSyncRepo>
 		<MainlineSyncBranch>general-devel</MainlineSyncBranch>
-		<MainlineSyncCommit>a41e1f2046c5cd2f0be9f590efbbf1cda58aea5f</MainlineSyncCommit>
+		<MainlineSyncCommit>cd68321fcc7b7b2a02d8ed6449910c4763b45350</MainlineSyncCommit>
 		<MainlineVersion>5.9.9</MainlineVersion>
 
 		<!-- Packaging and identity: this is the UnifierTSL migration package, not upstream's official package -->

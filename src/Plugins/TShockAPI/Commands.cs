@@ -1378,11 +1378,22 @@ namespace TShockAPI
         }
 
         private static void Whitelist(CommandArgs args) {
-            if (args.Parameters.Count == 1) {
-                using (var tw = new StreamWriter(FileTools.WhitelistPath, true)) {
-                    tw.WriteLine(args.Parameters[0]);
+            if (args.Parameters is [{ } ip]) {
+                if (ip.Contains(':')) {
+                    args.Executor.SendWarningMessage(GetString(
+                        "IPv6 addresses are not supported as of yet by TShock. This rule will have no effect for now. Adding anyways."
+                    ));
                 }
-                args.Executor.SendSuccessMessage(GetString($"Added {args.Parameters[0]} to the whitelist."));
+
+                if (TShock.Whitelist.AddToWhitelist(ip)) {
+                    args.Executor.SendSuccessMessage(GetString($"Added {ip} to the whitelist."));
+                }
+                else {
+                    args.Executor.SendErrorMessage(GetString($"Failed to add {ip} to the whitelist. Perhaps it is already whitelisted?"));
+                }
+            }
+            else {
+                args.Executor.SendErrorMessage(GetString($"Invalid Whitelist syntax. Usage: {Specifier}whitelist <ip[/range]>"));
             }
         }
 
@@ -5168,7 +5179,7 @@ namespace TShockAPI
 
                             if (server.Main.item[i].active && dX * dX + dY * dY <= radius * radius * 256f) {
                                 server.Main.item[i].TurnToAir(server);
-                                server.NetMessage.SendData((int)PacketTypes.ItemDrop, -1, -1, null, i);
+                                server.NetMessage.SendData((int)PacketTypes.SyncItemDespawn, -1, -1, null, i);
                                 cleared++;
                             }
                         }
