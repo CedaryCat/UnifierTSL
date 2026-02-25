@@ -43,7 +43,7 @@ namespace TShockAPI
             UnifierApi.EventHub.Netplay.ConnectEvent.Register(OnConnect, HandlerPriority.Higher + 1);
             UnifierApi.EventHub.Netplay.LeaveEvent.Register(OnLeave, HandlerPriority.Normal + 1);
             UnifierApi.EventHub.Chat.MessageEvent.Register(OnMessage, HandlerPriority.Higher + 1);
-            NetPacketHandler.RecievePacketEvent.Register(OnGetData, HandlerPriority.Higher + 1);
+            NetPacketHandler.ProcessPacketEvent.Register(OnGetData, HandlerPriority.Higher + 1);
             On.Terraria.NetMessageSystemContext.greetPlayer += OnGreetPlayer;
             On.Terraria.NPC.StrikeNPC += OnStrikeNpc;
             On.Terraria.Projectile.SetDefaults += OnProjectileSetDefaults;
@@ -659,8 +659,10 @@ namespace TShockAPI
             }
         }
 
-
-        private static void OnGetData(ref ReadonlyEventArgs<RecieveBytesInfo> args) {
+        private static void OnGetData(ref ReadonlyEventArgs<ProcessPacketEvent> args) {
+            if (args.Content.EventType is not ProcessPacketEventType.BeforeOriginalProcess) {
+                return;
+            }
             var type = (PacketTypes)args.Content.RawData[0];
 
             var player = TShock.Players[args.Content.RecieveFrom.ID];
@@ -677,6 +679,7 @@ namespace TShockAPI
                 return;
             }
         }
+
         private static void OnGreetPlayer(On.Terraria.NetMessageSystemContext.orig_greetPlayer orig, NetMessageSystemContext self, int plr) {
             var player = TShock.Players[plr];
             if (player == null) {

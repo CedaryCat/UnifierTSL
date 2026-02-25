@@ -273,10 +273,20 @@ msgstr ""
 msgid "No available server found for you."
 msgstr ""
 
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:208
+msgid "Invalid client UUID."
+msgstr ""
+
 #: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:214
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID"
 msgid "No available server found for player '{0}' ({1}); connection aborted."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:211
+#, csharp-format
+msgctxt "{0} is player name, {1} is player IP address, {2} is invalid raw UUID string"
+msgid "'{0}' ({1}) sent invalid UUID '{2}' before authentication. Kicked."
 msgstr ""
 
 #: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:386
