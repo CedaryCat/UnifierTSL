@@ -498,7 +498,7 @@ namespace UnifierTSL.Module
 
                                 DependencyItem prevItem = prevDependencyConf.Manifests.First(x => x.FilePath == item.FilePath);
                                 // Generate a new path including the version number to avoid file lock conflicts
-                                string newPath = Path.ChangeExtension(item.FilePath, $"{item.Version}.{Path.GetExtension(item.FilePath)}");
+                                string newPath = Path.ChangeExtension(item.FilePath, $"{item.Version}{Path.GetExtension(item.FilePath)}");
 
                                 DependencyItem? currentItem = prevDependencyConf.Manifests.FirstOrDefault(x => x.FilePath == newPath && x.Version == item.Version);
                                 if (currentItem is null) {

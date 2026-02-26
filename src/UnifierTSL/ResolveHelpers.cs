@@ -44,10 +44,28 @@ namespace UnifierTSL
                 RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib" :
                 throw new PlatformNotSupportedException("Unsupported OS platform");
 
+            HashSet<string> nativeNames = [];
+            if (!string.IsNullOrWhiteSpace(unmanagedDllName)) {
+                string original = unmanagedDllName.Trim();
+                nativeNames.Add(original);
+
+                if (!original.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) {
+                    nativeNames.Add(original + extension);
+                }
+                else {
+                    string withoutExt = Path.GetFileNameWithoutExtension(original);
+                    if (!string.IsNullOrWhiteSpace(withoutExt)) {
+                        nativeNames.Add(withoutExt + extension);
+                    }
+                }
+            }
+
             foreach (string rid in fallbackRids) {
-                string currentPath = Path.Combine(dir, "runtimes", rid, "native", unmanagedDllName + extension);
-                if (File.Exists(currentPath)) {
-                    return NativeLibrary.Load(currentPath);
+                foreach (string nativeName in nativeNames) {
+                    string currentPath = Path.Combine(dir, "runtimes", rid, "native", nativeName);
+                    if (File.Exists(currentPath)) {
+                        return NativeLibrary.Load(currentPath);
+                    }
                 }
             }
             return nint.Zero;
