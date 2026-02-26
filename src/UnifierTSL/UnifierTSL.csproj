@@ -16,7 +16,7 @@
 		<PackageProjectUrl>https://github.com/CedaryCat/UnifierTSL</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/CedaryCat/UnifierTSL</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
 		<PackageTags>terraria;tshock;plugin;framework;otapi;otapi.usp</PackageTags>
 		<PackageReadmeFile>NUGET.md</PackageReadmeFile>
 

@@ -82,13 +82,14 @@ Some heavier implementations may stay outside launcher core, but you can expect 
 <a id="version-matrix"></a>
 ## 📊 Version Matrix
 
+<!-- BEGIN:version-matrix -->
 The baseline values below come straight from project files and runtime version helpers in this repository:
 
 | Component | Version | Source |
 |:--|:--|:--|
 | Target framework | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
 | Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs` (assembly file version from OTAPI/Terraria runtime) |
-| OTAPI USP | `1.1.0-pre-release-upstream.23` | `src/UnifierTSL/UnifierTSL.csproj` |
+| OTAPI USP | `1.1.0-pre-release-upstream.24` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock and dependency details</strong></summary>
@@ -97,7 +98,7 @@ The baseline values below come straight from project files and runtime version h
 |:--|:--|
 | Bundled TShock version | `5.9.9` |
 | Sync branch | `general-devel` |
-| Sync commit | `a41e1f2046c5cd2f0be9f590efbbf1cda58aea5f` |
+| Sync commit | `cd68321fcc7b7b2a02d8ed6449910c4763b45350` |
 | Source | `src/Plugins/TShockAPI/TShockAPI.csproj` |
 
 Additional dependency baselines:
@@ -111,6 +112,7 @@ Additional dependency baselines:
 | Microsoft.Data.Sqlite | `9.0.0` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 </details>
+<!-- END:version-matrix -->
 
 ---
 

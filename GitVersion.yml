@@ -23,7 +23,7 @@ commit-date-format: 'yyyy-MM-dd'
 # Ignore merge commits (except those that should trigger releases)
 merge-message-formats: '^Merge (branch|tag|pull request)'
 
-next-version: 'v0.2.0'
+next-version: 'v0.2.1'
 
 # Branch-specific configuration
 branches:

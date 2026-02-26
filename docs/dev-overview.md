@@ -1,6 +1,6 @@
 # UnifierTSL Developer Overview
 
-This document explains how the UnifierTSL runtime is assembled on top of OTAPI Unified Server Process (USP), the responsibilities of key subsystems, and the public APIs exposed to integrators. It assumes you already read `PROJECT_OVERVIEW.md` and USP’s `Developer-Guide.md`.
+This document explains how the UnifierTSL runtime is assembled on top of OTAPI Unified Server Process (USP), the responsibilities of key subsystems, and the public APIs exposed to integrators. It assumes you already read [README](../README.md) and USP’s `Developer-Guide.md`.
 
 ## 1. Runtime Architecture
 

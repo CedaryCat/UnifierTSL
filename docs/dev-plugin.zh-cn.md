@@ -62,7 +62,7 @@
    }
    ```
 
-   `[assembly: CoreModule]` 将程序集标记为核心模块（详见 `doc/PROJECT_OVERVIEW.md:Plugin Feature Overview:Runtime Module Types`）。这个标识允许其他程序集使用 `[RequiresCoreModule("CoreModuleName")]` 声明自己为"卫星模块"，这些模块将在同一个 `AssemblyLoadContext` 中加载并共享依赖项。`[PluginMetadata]` 发布在加载顺序、日志条目和发布器（Publisher）输出中显示的插件身份。加载器基于这些属性而不是初始化行为来发现和组织模块。
+   `[assembly: CoreModule]` 将程序集标记为核心模块（可参考 [README 插件系统章节](../README.md#plugin-system) 了解运行时总览）。这个标识允许其他程序集使用 `[RequiresCoreModule("CoreModuleName")]` 声明自己为"卫星模块"，这些模块将在同一个 `AssemblyLoadContext` 中加载并共享依赖项。`[PluginMetadata]` 发布在加载顺序、日志条目和发布器（Publisher）输出中显示的插件身份。加载器基于这些属性而不是初始化行为来发现和组织模块。
 
    _在初始化期间订阅并记录就绪状态_
 
@@ -219,7 +219,7 @@
 
 ### 1.2 从源代码工作
 
-需要完整的调试体验或想要自己打包运行时？克隆仓库并遵循 [`从源代码运行`](project-overview.zh-cn.md#run-from-source) 检查清单，然后在 `src/Plugins/` 下创建或复制插件项目。
+需要完整的调试体验或想要自己打包运行时？克隆仓库并遵循 [`从源代码运行`](./README.zh-cn.md#quick-start) 检查清单，然后在 `src/Plugins/` 下创建或复制插件项目。
 
 - 通过复制 `src/Plugins/ExamplePlugin` 作为模板来创建插件，或创建新的类库：
   ```
@@ -237,7 +237,7 @@
 - 将项目添加到解决方案，以便与其他所有内容一起构建：
 
   ```
-  dotnet sln src/UnifierTSL.sln add src/Plugins/WelcomePlugin/WelcomePlugin.csproj
+  dotnet sln src/UnifierTSL.slnx add src/Plugins/WelcomePlugin/WelcomePlugin.csproj
   ```
 
 - 完全按照上面 NuGet 快速开始指南中显示的方式实现插件逻辑（示例的第 3-5 节），使用相同的事件注册、日志记录和生命周期模式。
@@ -256,7 +256,7 @@
 发布器有两种不同的输出模式，由 `--output-path` 参数控制：
 
 **默认行为（未指定 `--output-path`）：**
-- 输出目录：`src/UnifierTSL.Publisher/bin/Release/utsl-<rid>/`
+- 输出目录：`src/UnifierTSL.Publisher/bin/Release/net9.0/utsl-<rid>/`
 - 此默认值使用 Publisher 项目自己的 Release 构建文件夹，这与仓库结构保持兼容。
 - 发布器通过向上搜索最多 5 个目录来查找 `.sln` 或 `.slnx` 文件来自动定位解决方案根目录，因此无论你是通过 `dotnet run` 调用还是从编译的二进制文件调用，这都能正确工作。
 

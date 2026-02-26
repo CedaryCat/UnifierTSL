@@ -1,6 +1,6 @@
 # UnifierTSL 开发者概览
 
-本文档解释 UnifierTSL 运行时如何在 OTAPI Unified Server Process (USP) 之上构建，各关键子系统的职责，以及向集成者公开的公共 API。本文假设你已阅读过 `PROJECT_OVERVIEW.md` 和 USP 的 `Developer-Guide.md`。
+本文档解释 UnifierTSL 运行时如何在 OTAPI Unified Server Process (USP) 之上构建，各关键子系统的职责，以及向集成者公开的公共 API。本文假设你已阅读过 [README](./README.zh-cn.md) 和 USP 的 `Developer-Guide.md`。
 
 ## 1. 运行时架构
 

@@ -2,18 +2,26 @@ name: Documentation Check
 
 # Trigger conditions for documentation workflow
 on:
-  # Push events to documentation branch or any doc-related branches
+  # Push events to docs-related paths on active branches
   push:
     branches:
+      - main
+      - develop
       - documentation
+      - 'release/**'
+      - 'releases/**'
     paths:
       - '**.md'
       - 'docs/**'
       - '.github/workflows/docs-check.yaml'
-  # Pull requests targeting documentation branch
+  # Pull requests with docs-related changes
   pull_request:
     branches:
+      - main
+      - develop
       - documentation
+      - 'release/**'
+      - 'releases/**'
     paths:
       - '**.md'
       - 'docs/**'
@@ -79,18 +87,26 @@ jobs:
         BUILD_AFFECTING_PATTERNS=(
             "^src/"
             "^GitVersion\.yml$"
-            "^\.github/workflows/(?!docs-)"
         )
 
         BLOCKED_FILES=""
         while IFS= read -r file; do
             [ -z "$file" ] && continue
+            is_blocked=false
             for pattern in "${BUILD_AFFECTING_PATTERNS[@]}"; do
                 if echo "$file" | grep -qE "$pattern"; then
-                    BLOCKED_FILES="$BLOCKED_FILES$file"$'\n'
+                    is_blocked=true
                     break
                 fi
             done
+
+            if echo "$file" | grep -qE "^\.github/workflows/" && ! echo "$file" | grep -qE "^\.github/workflows/docs-"; then
+                is_blocked=true
+            fi
+
+            if [ "$is_blocked" = true ]; then
+                BLOCKED_FILES="$BLOCKED_FILES$file"$'\n'
+            fi
         done <<< "$CHANGED_FILES"
 
         if [ -n "$BLOCKED_FILES" ]; then

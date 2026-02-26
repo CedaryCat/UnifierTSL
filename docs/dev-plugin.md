@@ -62,7 +62,7 @@ Most plugin authors can stay outside the UnifierTSL repository by referencing th
    }
    ```
 
-   `[assembly: CoreModule]` marks the assembly as a core module (see `doc/PROJECT_OVERVIEW.md:Plugin Feature Overview:Runtime Module Types` for details). This designation allows other assemblies to declare themselves as "satellite modules" using `[RequiresCoreModule("CoreModuleName")]`, which will load in the same `AssemblyLoadContext` and share dependencies. `[PluginMetadata]` publishes the plugin identity that surfaces in load order, log entries, and publisher output. The loader discovers and organizes modules based on these attributes, not their initialization behavior.
+   `[assembly: CoreModule]` marks the assembly as a core module (see [README plugin system](../README.md#plugin-system) for a runtime overview). This designation allows other assemblies to declare themselves as "satellite modules" using `[RequiresCoreModule("CoreModuleName")]`, which will load in the same `AssemblyLoadContext` and share dependencies. `[PluginMetadata]` publishes the plugin identity that surfaces in load order, log entries, and publisher output. The loader discovers and organizes modules based on these attributes, not their initialization behavior.
 
    _Subscribe during initialization and log readiness_
 
@@ -219,7 +219,7 @@ Most plugin authors can stay outside the UnifierTSL repository by referencing th
 
 ### 1.2 Working from Source
 
-Need the full debugging story or want to bundle the runtime yourself? Clone the repository and follow the [`Run from Source`](PROJECT_OVERVIEW.md#run-from-source) checklist, then create or duplicate a plugin project under `src/Plugins/`.
+Need the full debugging story or want to bundle the runtime yourself? Clone the repository and follow the [`Run from Source`](../README.md#quick-start) checklist, then create or duplicate a plugin project under `src/Plugins/`.
 
 - Scaffold the plugin by copying `src/Plugins/ExamplePlugin` as a template, or create a new class library:
   ```
@@ -237,7 +237,7 @@ Need the full debugging story or want to bundle the runtime yourself? Clone the 
 - Add the project to the solution so it builds with everything else:
 
   ```
-  dotnet sln src/UnifierTSL.sln add src/Plugins/WelcomePlugin/WelcomePlugin.csproj
+  dotnet sln src/UnifierTSL.slnx add src/Plugins/WelcomePlugin/WelcomePlugin.csproj
   ```
 
 - Implement the plugin logic exactly as shown in the NuGet quickstart guide above (sections 3–5 of the example), using the same event registration, logging, and lifecycle patterns.
@@ -256,7 +256,7 @@ Need the full debugging story or want to bundle the runtime yourself? Clone the 
 The publisher has two distinct output modes controlled by the `--output-path` argument:
 
 **Default behavior (no `--output-path` specified):**
-- Output directory: `src/UnifierTSL.Publisher/bin/Release/utsl-<rid>/`
+- Output directory: `src/UnifierTSL.Publisher/bin/Release/net9.0/utsl-<rid>/`
 - This default uses the Publisher project's own Release build folder, which maintains compatibility with the repository structure.
 - The publisher automatically locates the solution root by searching up to 5 directories for `.sln` or `.slnx` files, so this works correctly whether you invoke it via `dotnet run` or from a compiled binary.
 
