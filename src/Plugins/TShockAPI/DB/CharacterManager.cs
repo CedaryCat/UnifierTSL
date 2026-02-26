@@ -1,8 +1,10 @@
 ﻿using LinqToDB;
 using LinqToDB.Data;
 using LinqToDB.Mapping;
-using LinqToDB.SqlQuery;
+using LinqToDB.DataProvider;
+using Microsoft.Data.Sqlite;
 using MySql.Data.MySqlClient;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,6 +16,8 @@ namespace TShockAPI.DB
 {
     public class CharacterManager
     {
+        private const string CharacterTableName = "tsCharacter";
+
         [Table(Name = "tsCharacter")]
         private class Character
         {
@@ -71,17 +75,49 @@ namespace TShockAPI.DB
 
         private void EnsureColumn(string columnName) {
             try {
-                database.Execute($"ALTER TABLE tsCharacter ADD COLUMN {columnName} INTEGER NOT NULL DEFAULT 0");
+                database.Execute(BuildAddColumnSql(columnName));
             }
-            catch (Exception ex) {
-                var error = ex.ToString();
-                if (error.IndexOf("duplicate column", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    error.IndexOf("already exists", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    return;
+            catch (Exception ex) when (IsDuplicateColumnError(ex)) {
+                return;
+            }
+        }
+
+        private string BuildAddColumnSql(string columnName) {
+            var providerName = database.DataProvider.Name;
+            var isMySql = string.Equals(providerName, ProviderName.MySql, StringComparison.OrdinalIgnoreCase);
+            var isPostgreSql = string.Equals(providerName, ProviderName.PostgreSQL, StringComparison.OrdinalIgnoreCase);
+            var quote = isMySql ? '`' : '"';
+            var ifNotExistsClause = isPostgreSql ? " IF NOT EXISTS" : string.Empty;
+            return $"ALTER TABLE {quote}{CharacterTableName}{quote} ADD COLUMN{ifNotExistsClause} {quote}{columnName}{quote} INTEGER NOT NULL DEFAULT 0";
+        }
+
+        private static bool IsDuplicateColumnError(Exception ex) {
+            for (Exception? current = ex; current is not null; current = current.InnerException) {
+                if (current is PostgresException postgresException &&
+                    string.Equals(postgresException.SqlState, PostgresErrorCodes.DuplicateColumn, StringComparison.Ordinal)) {
+                    return true;
                 }
 
-                throw;
+                if (current is MySqlException mySqlException && mySqlException.Number == 1060) {
+                    return true;
+                }
+
+                if (current is SqliteException sqliteException &&
+                    sqliteException.SqliteErrorCode == 1 &&
+                    sqliteException.Message.IndexOf("duplicate column name", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    return true;
+                }
+
+                var errorMessage = current.Message;
+                if (errorMessage.Contains("duplicate column", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("已经存在", StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
             }
+
+            return false;
         }
 
         public PlayerData GetPlayerData(TSPlayer player, int acctid) {
