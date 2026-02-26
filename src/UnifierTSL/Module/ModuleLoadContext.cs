@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using NuGet.Versioning;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
@@ -169,7 +170,16 @@ namespace UnifierTSL.Module
             }
 
             string manifestName = NormalizeNativeLibraryName(fileName);
-            return string.Equals(manifestName, requestName, StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(manifestName, requestName, StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+
+            if (!manifestName.StartsWith(requestName + ".", StringComparison.OrdinalIgnoreCase)) {
+                return false;
+            }
+
+            string versionSuffix = manifestName[(requestName.Length + 1)..];
+            return NuGetVersion.TryParse(versionSuffix, out _);
         }
 
         private static string NormalizeNativeLibraryName(string libraryName) {
