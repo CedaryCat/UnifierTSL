@@ -161,7 +161,7 @@ namespace UnifierTSL
                 MessageID type = (MessageID)readBuffer[packetStart];
                 fixed (byte* buffer = readBuffer) {
                     void* readPtr = buffer + packetStart + 1;
-                    void* endPtr = buffer + contentLength;
+                    void* endPtr = buffer + packetStart + contentLength;
                     switch (type) {
                         case MessageID.ClientHello: {
                                 ClientHello msg = new(ref readPtr, endPtr);
