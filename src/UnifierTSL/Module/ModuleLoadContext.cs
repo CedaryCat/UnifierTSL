@@ -143,8 +143,7 @@ namespace UnifierTSL.Module
             DependencyItem? match = config.Dependencies.Values
                 .SelectMany(x => x.Manifests)
                 .Where(x => !x.Obsolete)
-                .Where(x => Path.GetFileName(x.FilePath).StartsWith(unmanagedDllName + "."))
-                .Where(x => Path.GetExtension(x.FilePath) == extension)
+                .Where(x => IsNativeManifestMatch(x.FilePath, unmanagedDllName, extension))
                 .FirstOrDefault();
 
             if (match is not null) {
@@ -152,6 +151,38 @@ namespace UnifierTSL.Module
             }
 
             return base.LoadUnmanagedDll(unmanagedDllName);
+        }
+
+        private static bool IsNativeManifestMatch(string manifestPath, string unmanagedDllName, string extension) {
+            string fileName = Path.GetFileName(manifestPath);
+            if (string.IsNullOrWhiteSpace(fileName)) {
+                return false;
+            }
+
+            if (!string.Equals(Path.GetExtension(fileName), extension, StringComparison.OrdinalIgnoreCase)) {
+                return false;
+            }
+
+            string requestName = NormalizeNativeLibraryName(unmanagedDllName);
+            if (string.IsNullOrWhiteSpace(requestName)) {
+                return false;
+            }
+
+            string manifestName = NormalizeNativeLibraryName(fileName);
+            return string.Equals(manifestName, requestName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeNativeLibraryName(string libraryName) {
+            if (string.IsNullOrWhiteSpace(libraryName)) {
+                return string.Empty;
+            }
+
+            string fileName = Path.GetFileName(libraryName.Trim());
+            string ext = Path.GetExtension(fileName);
+            if (string.IsNullOrWhiteSpace(ext)) {
+                return fileName;
+            }
+            return fileName[..^ext.Length];
         }
 
         private Assembly LoadFromModuleContext(AssemblyName _, string assemblyPath) {
