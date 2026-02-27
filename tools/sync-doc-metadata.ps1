@@ -164,7 +164,11 @@ function Sync-MarkedBlock {
         throw "Missing version matrix markers in '$Path'."
     }
 
-    $updated = [regex]::Replace($content, $pattern, $NewBlock, 1)
+    # Preserve the current file's newline style so check mode is stable across Windows/Linux.
+    $lineEnding = if ($content -match "`r`n") { "`r`n" } else { "`n" }
+    $normalizedBlock = $NewBlock -replace "`r?`n", $lineEnding
+
+    $updated = [regex]::Replace($content, $pattern, $normalizedBlock, 1)
     if ($updated -eq $content) {
         Write-Host "Up-to-date: $Path"
         return $false
