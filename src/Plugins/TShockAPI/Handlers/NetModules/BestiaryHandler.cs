@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using TrProtocol.NetPackets.Modules;
 using UnifierTSL.Events.Handlers;
 
@@ -9,7 +9,7 @@ namespace TShockAPI.Handlers.NetModules
 	/// </summary>
 	public class BestiaryHandler : IPacketHandler<NetBestiaryModule>
     {
-        public void OnReceive(ref RecievePacketEvent<NetBestiaryModule> args) {
+        public void OnReceive(ref ReceivePacketEvent<NetBestiaryModule> args) {
 			args.HandleMode = PacketHandleMode.Cancel;
         }
     }

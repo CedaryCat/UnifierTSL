@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using Terraria.Localization;
 using Terraria.Utilities;
@@ -77,7 +77,7 @@ namespace UnifierTSL
         }
         internal static void CompleteLauncherInitialization() {
             ReadLauncherArgs();
-            EventHub.Lanucher.InitializedEvent.Invoke(new());
+            EventHub.Launcher.InitializedEvent.Invoke(new());
         }
         internal static void HandleCommandLinePreRun(string[] launcherArgs) {
 
@@ -100,24 +100,24 @@ namespace UnifierTSL
                 CultureInfo.CurrentCulture = culture.RedirectedCultureInfo();
             }
 
-            bool langSetted = false;
+            bool languageSet = false;
 
             if (Environment.GetEnvironmentVariable("UTSL_LANGUAGE") is string overrideLang) {
-                langSetted = TrySetLang(overrideLang);
+                languageSet = TrySetLang(overrideLang);
             }
 
-            Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);
+            Dictionary<string, List<string>> args = Utilities.CLI.ParseArguments(launcherArgs);
             foreach (KeyValuePair<string, List<string>> arg in args) {
                 string firstValue = arg.Value[0];
                 switch (arg.Key) {
-                    case "-culture":
-                    case "-lang":
-                    case "-language": {
-                            if (langSetted) {
+                        case "-culture":
+                        case "-lang":
+                        case "-language": {
+                            if (languageSet) {
                                 break;
                             }
                             if (TrySetLang(firstValue)) {
-                                langSetted = true;
+                                languageSet = true;
                             }
                         }
                         break;
@@ -135,8 +135,8 @@ namespace UnifierTSL
             }
         }
         private static void HandleCommandLine(string[] launcherArgs) {
-            Dictionary<string, List<string>> args = Utilities.CLI.ParseArguements(launcherArgs);
-            bool settedJoinServer = false;
+            Dictionary<string, List<string>> args = Utilities.CLI.ParseArguments(launcherArgs);
+            bool joinServerConfigured = false;
             foreach (KeyValuePair<string, List<string>> arg in args) {
                 string firstValue = arg.Value[0];
                 switch (arg.Key) {
@@ -158,7 +158,7 @@ namespace UnifierTSL
                         AutoStartServer(arg);
                         break;
                     case "-joinserver":
-                        if (settedJoinServer) {
+                        if (joinServerConfigured) {
                             break;
                         }
                         static void JoinRandom(ref ValueEventNoCancelArgs<SwitchJoinServerEvent> arg) {
@@ -172,11 +172,11 @@ namespace UnifierTSL
                             }
                         }
                         if (firstValue is "random" or "rnd" or "r") {
-                            settedJoinServer = true;
+                            joinServerConfigured = true;
                             EventHub.Coordinator.SwitchJoinServer.Register(JoinRandom, HandlerPriority.Lowest);
                         }
                         else if (firstValue is "first" or "f") {
-                            settedJoinServer = true;
+                            joinServerConfigured = true;
                             EventHub.Coordinator.SwitchJoinServer.Register(JoinFirst, HandlerPriority.Lowest);
                         }
                         break;
@@ -193,7 +193,7 @@ namespace UnifierTSL
                 int size = 3;
                 int evil = 0;
 
-                if (!Utilities.CLI.TryParseSubArguements(serverArgs, out Dictionary<string, string>? result)) {
+                if (!Utilities.CLI.TryParseSubArguments(serverArgs, out Dictionary<string, string>? result)) {
                     Console.WriteLine(GetParticularString("{0} is server argument string", $"Invalid server argument: {serverArgs}"));
                     Console.WriteLine(GetString($"Expected format: -server name:<name> worldname:<worldname> gamemode:<value> size:<value> evil:<value> seed:<value>"));
                     goto failToAddServer;

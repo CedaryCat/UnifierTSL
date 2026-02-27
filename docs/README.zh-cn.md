@@ -82,13 +82,14 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 <a id="version-matrix"></a>
 ## 📊 版本矩阵
 
+<!-- BEGIN:version-matrix -->
 下面这些基线值直接来自仓库内项目文件与运行时版本辅助逻辑：
 
 | 组件 | 版本 | 来源 |
 |:--|:--|:--|
 | 目标框架 | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
 | Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs`（从 OTAPI/Terraria 运行时程序集文件版本读取） |
-| OTAPI USP | `1.1.0-pre-release-upstream.23` | `src/UnifierTSL/UnifierTSL.csproj` |
+| OTAPI USP | `1.1.0-pre-release-upstream.25` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock 与依赖详情</strong></summary>
@@ -97,7 +98,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 |:--|:--|
 | 内置 TShock 版本 | `5.9.9` |
 | 同步分支 | `general-devel` |
-| 同步提交 | `a41e1f2046c5cd2f0be9f590efbbf1cda58aea5f` |
+| 同步提交 | `dab27acb4bf827924803f57918a7023231e43ab3` |
 | 来源 | `src/Plugins/TShockAPI/TShockAPI.csproj` |
 
 附加依赖版本：
@@ -111,6 +112,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 | Microsoft.Data.Sqlite | `9.0.0` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 </details>
+<!-- END:version-matrix -->
 
 ---
 
@@ -476,3 +478,4 @@ dotnet test src/UnifierTSL.slnx
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
+

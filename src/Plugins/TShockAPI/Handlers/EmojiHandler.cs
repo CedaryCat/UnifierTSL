@@ -1,4 +1,4 @@
-﻿using TrProtocol.NetPackets;
+using TrProtocol.NetPackets;
 using TShockAPI.Extension;
 using UnifierTSL.Events.Handlers;
 
@@ -9,9 +9,9 @@ namespace TShockAPI.Handlers
 	/// </summary>
 	public class EmojiHandler : IPacketHandler<Emoji>
 	{
-        public void OnReceive(ref RecievePacketEvent<Emoji> args) {
+        public void OnReceive(ref ReceivePacketEvent<Emoji> args) {
 			var player = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             if (player.Index != args.Packet.PlayerSlot) {
                 server.Log.Error(GetString($"IllegalPerSe: Emoji packet rejected for ID spoofing. Expected {player.Index}, received {args.Packet.PlayerSlot} from {player.Name}."));

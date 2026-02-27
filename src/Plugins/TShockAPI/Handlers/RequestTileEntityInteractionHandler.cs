@@ -1,4 +1,4 @@
-﻿using Terraria.DataStructures;
+using Terraria.DataStructures;
 using Terraria.GameContent.Tile_Entities;
 using TrProtocol.NetPackets;
 using TShockAPI.Extension;
@@ -8,9 +8,9 @@ namespace TShockAPI.Handlers
 {
     public class RequestTileEntityInteractionHandler : IPacketHandler<RequestTileEntityInteraction>
     {
-        public void OnReceive(ref RecievePacketEvent<RequestTileEntityInteraction> args) {
+        public void OnReceive(ref ReceivePacketEvent<RequestTileEntityInteraction> args) {
             var player = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var entityId = args.Packet.TileEntityID;
 
             if (!server.TileEntity.ByID.TryGetValue(entityId, out TileEntity? tileEntity))

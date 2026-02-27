@@ -1,8 +1,8 @@
-﻿using UnifierTSL.Events.Core;
+using UnifierTSL.Events.Core;
 
 namespace UnifierTSL.Events.Handlers
 {
-    public class LanucherEventHandler
+    public class LauncherEventHandler
     {
         public ReadonlyEventNoCancelProvider<InitializedEvent> InitializedEvent = new();
     }

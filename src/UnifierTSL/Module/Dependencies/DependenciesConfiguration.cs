@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
@@ -15,7 +15,7 @@ namespace UnifierTSL.Module.Dependencies
             Setting = setting;
         }
 
-        public static DependenciesSetting LoadDependenicesConfig(string moduleDirectory) {
+        public static DependenciesSetting LoadDependenciesConfig(string moduleDirectory) {
             string configPath = Path.Combine(moduleDirectory, "dependencies.json");
             if (!File.Exists(configPath)) {
                 return new DependenciesSetting { Dependencies = [] };
@@ -23,7 +23,7 @@ namespace UnifierTSL.Module.Dependencies
             return JsonSerializer.Deserialize<DependenciesSetting>(File.ReadAllText(configPath))!;
         }
 
-        public static bool TryLoadDependenicesConfig(string moduleDirectory, [NotNullWhen(true)] out DependenciesSetting? config) {
+        public static bool TryLoadDependenciesConfig(string moduleDirectory, [NotNullWhen(true)] out DependenciesSetting? config) {
             string configPath = Path.Combine(moduleDirectory, "dependencies.json");
             if (!File.Exists(configPath)) {
                 config = null;
@@ -39,7 +39,7 @@ namespace UnifierTSL.Module.Dependencies
             File.WriteAllText(configPath, JsonSerializer.Serialize(Setting, serializerOptions));
         }
 
-        public void NormalizeDependenicesConfig(string moduleDirectory) {
+        public void NormalizeDependenciesConfig(string moduleDirectory) {
             foreach (DependencyRecord? depEntry in Setting.Dependencies.Values.ToArray()) {
 
                 foreach (DependencyItem item in depEntry.Manifests) {
@@ -106,18 +106,18 @@ namespace UnifierTSL.Module.Dependencies
 
         public void SafeDependencyClean(string moduleDirectory, DependenciesSetting previous) {
             DirectoryInfo moduleDirInfo = new(moduleDirectory);
-            foreach (KeyValuePair<string, DependencyRecord> oldDependenicyPair in previous.Dependencies) {
-                if (!Setting.Dependencies.ContainsKey(oldDependenicyPair.Key)) {
+            foreach (KeyValuePair<string, DependencyRecord> oldDependencyPair in previous.Dependencies) {
+                if (!Setting.Dependencies.ContainsKey(oldDependencyPair.Key)) {
                     try {
-                        File.Delete(Path.Combine(moduleDirInfo.FullName, oldDependenicyPair.Key));
+                        File.Delete(Path.Combine(moduleDirInfo.FullName, oldDependencyPair.Key));
                         Logger.Debug(
                             category: "DepsCleanUp",
-                            message: GetParticularString("{0} is dependency file path (relative path)", $"Deleted unused dependencies file '{Path.Combine("bin", oldDependenicyPair.Key)}'"));
+                            message: GetParticularString("{0} is dependency file path (relative path)", $"Deleted unused dependencies file '{Path.Combine("bin", oldDependencyPair.Key)}'"));
                     }
                     catch (IOException ex) when (FileSystemHelper.FileIsInUse(ex)) {
                         Logger.Warning(
                             category: "DepsCleanUp",
-                            message: GetParticularString("{0} is dependency file path (relative path)", $"Failed to delete unused dependencies file '{Path.Combine("runtimes", oldDependenicyPair.Key)}'.\r\nIt is likely that the file is in use by another process. You can try to delete it manually."));
+                            message: GetParticularString("{0} is dependency file path (relative path)", $"Failed to delete unused dependencies file '{Path.Combine("runtimes", oldDependencyPair.Key)}'.\r\nIt is likely that the file is in use by another process. You can try to delete it manually."));
                     }
                     catch {
                         throw;

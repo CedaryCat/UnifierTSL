@@ -1097,31 +1097,143 @@ namespace TShockAPI
         public bool Hostile => TPlayer.hostile;
 
         /// <summary>
-        /// Gets the player's X coordinate.
+        /// Gets the player's X coordinate. May be influenced by mounts.
         /// </summary>
         public float X {
             get { return RealPlayer ? TPlayer.position.X : FakePlayer.position.X * 16; }
         }
 
         /// <summary>
-        /// Gets the player's Y coordinate.
+        /// Gets the player's X coordinate without mount influence.
+        /// </summary>
+        public float UnmountedX {
+            get { return RealPlayer ? TPlayer.Center.X - 10 : FakePlayer.position.X * 16; }
+        }
+
+        /// <summary>
+        /// Gets the player's centered X coordinate. Not influenced by mounts.
+        /// </summary>
+        public float CenterX {
+            get { return RealPlayer ? TPlayer.Center.X : FakePlayer.position.X * 16; }
+        }
+
+        /// <summary>
+        /// Gets the player's right X coordinate. May be influenced by mounts.
+        /// </summary>
+        public float RightX {
+            get { return RealPlayer ? TPlayer.Right.X : FakePlayer.position.X * 16; }
+        }
+
+        /// <summary>
+        /// Gets the player's right X coordinate without mount influence.
+        /// </summary>
+        public float UnmountedRightX {
+            get { return RealPlayer ? TPlayer.Center.X + 10 : FakePlayer.position.X * 16; }
+        }
+
+        /// <summary>
+        /// Gets the player's Y coordinate. May be influenced by mounts.
         /// </summary>
         public float Y {
             get { return RealPlayer ? TPlayer.position.Y : FakePlayer.position.X * 16; }
         }
 
         /// <summary>
-        /// Player X coordinate divided by 16. Supposed X world coordinate.
+        /// Gets the player's Y coordinate without mount influence.
+        /// </summary>
+        public float UnmountedY {
+            get { return RealPlayer ? TPlayer.Bottom.Y - 42 : FakePlayer.position.Y * 16; }
+        }
+
+        /// <summary>
+        /// Gets the player's centered Y coordinate. May be influenced by mounts.
+        /// </summary>
+        public float CenterY {
+            get { return RealPlayer ? TPlayer.Center.Y : FakePlayer.position.Y * 16; }
+        }
+
+        /// <summary>
+        /// Gets the player's centered Y coordinate without mount influence.
+        /// </summary>
+        public float UnmountedCenterY {
+            get { return RealPlayer ? TPlayer.Bottom.Y - 24 : FakePlayer.position.Y * 16; }
+        }
+
+        /// <summary>
+        /// Gets the player's bottom Y coordinate. Not influenced by mounts.
+        /// </summary>
+        public float BottomY {
+            get { return RealPlayer ? TPlayer.Bottom.Y : FakePlayer.position.Y * 16; }
+        }
+
+        /// <summary>
+        /// Player X coordinate divided by 16. Supposed X world coordinate. May be influenced by mounts.
         /// </summary>
         public int TileX {
             get { return (int)(X / 16); }
         }
 
         /// <summary>
-        /// Player Y coordinate divided by 16. Supposed Y world coordinate.
+        /// Player X coordinate divided by 16. Supposed X world coordinate without mount influence.
+        /// </summary>
+        public int UnmountedTileX {
+            get { return (int)(UnmountedX / 16); }
+        }
+
+        /// <summary>
+        /// Player center X coordinate divided by 16. Supposed X world coordinate.
+        /// </summary>
+        public int CenterTileX {
+            get { return (int)(CenterX / 16); }
+        }
+
+        /// <summary>
+        /// Player right X coordinate divided by 16. Supposed X world coordinate. May be influenced by mounts.
+        /// </summary>
+        public int RightTileX {
+            get { return (int)(RightX / 16); }
+        }
+
+        /// <summary>
+        /// Player right X coordinate divided by 16. Supposed X world coordinate without mount influence.
+        /// </summary>
+        public int UnmountedRightTileX {
+            get { return (int)(UnmountedRightX / 16); }
+        }
+
+        /// <summary>
+        /// Player Y coordinate divided by 16. Supposed Y world coordinate. May be influenced by mounts.
         /// </summary>
         public int TileY {
             get { return (int)(Y / 16); }
+        }
+
+        /// <summary>
+        /// Player Y coordinate divided by 16. Supposed Y world coordinate without mount influence.
+        /// </summary>
+        public int UnmountedTileY {
+            get { return (int)(UnmountedY / 16); }
+        }
+
+        /// <summary>
+        /// Player center Y coordinate divided by 16. Supposed Y world coordinate. May be influenced by mounts.
+        /// </summary>
+        public int CenterTileY {
+            get { return (int)(CenterY / 16); }
+        }
+
+        /// <summary>
+        /// Player center Y coordinate divided by 16. Supposed Y world coordinate without mount influence.
+        /// </summary>
+        public int UnmountedCenterTileY {
+            get { return (int)(UnmountedCenterY / 16); }
+        }
+
+        /// <summary>
+        /// Player bottom Y coordinate divided by 16. Supposed Y world coordinate. Not influenced by mounts.
+        /// </summary>
+        public int BottomTileY {
+            get { return (int)(BottomY / 16); }
         }
 
         /// <summary>
@@ -1273,6 +1385,47 @@ namespace TShockAPI
         }
 
         /// <summary>
+        /// Teleports the player to the given position in the world.
+        /// </summary>
+        /// <param name="tilePos">The tile position to teleport to.</param>
+        /// <param name="useBottom">If the bottom of the player should be modified instead.</param>
+        /// <param name="style">The teleportation style.</param>
+        /// <returns>True or false.</returns>
+        public bool Teleport(Point tilePos, bool useBottom = false, byte style = 1) {
+            if (useBottom) {
+                TPlayer.Bottom = tilePos.ToWorldCoordinates(8, 0);
+            }
+
+            return Teleport(X, Y, style);
+        }
+
+        /// <summary>
+        /// Teleports the player to the given position in the world.
+        /// </summary>
+        /// <param name="pos">The position to teleport to.</param>
+        /// <param name="useBottom">If the bottom of the player should be modified instead.</param>
+        /// <param name="style">The teleportation style.</param>
+        /// <returns>True or false.</returns>
+        public bool Teleport(Vector2 pos, bool useBottom = false, byte style = 1) {
+            if (useBottom) {
+                TPlayer.Bottom = pos;
+            }
+
+            return Teleport(X, Y, style);
+        }
+
+        /// <summary>
+        /// Teleports the player to the given position in the world, centered.
+        /// </summary>
+        /// <param name="pos">The position to teleport to.</param>
+        /// <param name="style">The teleportation style.</param>
+        /// <returns>True or false.</returns>
+        public bool TeleportCentered(Vector2 pos, byte style = 1) {
+            TPlayer.Center = pos;
+            return Teleport(X, Y, style);
+        }
+
+        /// <summary>
         /// Teleports the player to the given coordinates in the world.
         /// </summary>
         /// <param name="x">The X coordinate.</param>
@@ -1281,20 +1434,16 @@ namespace TShockAPI
         /// <returns>True or false.</returns>
         public bool Teleport(float x, float y, byte style = 1) {
             var server = GetCurrentServer();
-            if (x > server.Main.rightWorld - 992) {
-                x = server.Main.rightWorld - 992;
-            }
-            if (x < 992) {
-                x = 992;
-            }
-            if (y > server.Main.bottomWorld - 992) {
-                y = server.Main.bottomWorld - 992;
-            }
-            if (y < 992) {
-                y = 992;
-            }
+            x = Math.Clamp(x,
+                640,
+                server.Main.rightWorld - 640 - TPlayer.width);
+
+            y = Math.Clamp(y,
+                640,
+                server.Main.bottomWorld - 640 - TPlayer.height);
 
             SendTileSquareCentered((int)(x / 16), (int)(y / 16), 15);
+            server.RemoteClient.CheckSection(Index, new Vector2(x, y));
             TPlayer.Teleport(server, new Vector2(x, y), style);
             server.NetMessage.SendData((int)PacketTypes.Teleport, -1, -1, NetworkText.Empty, 0, TPlayer.whoAmI, x, y, style);
             return true;
@@ -1322,7 +1471,24 @@ namespace TShockAPI
                     y = server.Main.spawnTileY;
                 }
             }
-            return Teleport(x * 16, y * 16 - 48);
+            return Teleport(new Point(x, y), true);
+        }
+
+        /// <summary>
+        /// Teleports the player to the world spawn point, or the respective team-based spawnpoint if the world uses them.
+        /// </summary>
+        /// <param name="ignoreTeamBasedSpawns">If team-based spawnpoints should be ignored.</param>
+        /// <returns>True or false.</returns>
+        public bool TeleportToWorldSpawn(bool ignoreTeamBasedSpawns = false) {
+            var server = GetCurrentServer();
+            Point p = new Point(server.Main.spawnTileX, server.Main.spawnTileY);
+            if (!ignoreTeamBasedSpawns &&
+                server.Main.teamBasedSpawnsSeed &&
+                server.ExtraSpawnPointManager.TryGetExtraSpawnPointForTeam(Team, out var spawnPoint)) {
+                p = spawnPoint;
+            }
+
+            return Teleport(p, true);
         }
 
         /// <summary>

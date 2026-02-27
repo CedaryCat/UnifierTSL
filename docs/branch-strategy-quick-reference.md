@@ -107,4 +107,4 @@ Verify commit message contains "Merge" and "develop" or "hotfix"
 - GitVersion config: `GitVersion.yml`
 - Workflow: `.github/workflows/build.yaml`
 - Full docs: `docs/branch-setup-guide.md`
-- Implementation details: `docs/implementation-summary.md`
+- Detailed setup guide: `docs/branch-setup-guide.md`

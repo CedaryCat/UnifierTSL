@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -77,9 +77,9 @@ namespace TShockAPI.Handlers
             ItemID.GolfBallDyedTeal,
             ItemID.GolfBallDyedViolet
         };
-        public void OnReceive(ref RecievePacketEvent<LandGolfBallInCup> args) {
+        public void OnReceive(ref ReceivePacketEvent<LandGolfBallInCup> args) {
             var player = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var packetPlr = args.Packet.OtherPlayerSlot;
             var pos = args.Packet.Position;
 

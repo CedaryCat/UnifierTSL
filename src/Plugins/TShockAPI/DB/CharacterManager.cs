@@ -58,6 +58,9 @@ namespace TShockAPI.DB
             [Column] public int enabledSuperCart { get; set; }
             [Column] public int deathsPVE { get; set; }
             [Column] public int deathsPVP { get; set; }
+            [Column] public int? voiceVariant { get; set; }
+            [Column] public float? voicePitchOffset { get; set; }
+            [Column] public int team { get; set; }
         }
         public DataConnection database;
         ITable<Character> characterTable;
@@ -69,26 +72,31 @@ namespace TShockAPI.DB
         }
 
         private void EnsureSchemaColumns() {
-            EnsureColumn("deathsPVE");
-            EnsureColumn("deathsPVP");
+            EnsureColumn("deathsPVE", "INTEGER", nullable: false, defaultValue: "0");
+            EnsureColumn("deathsPVP", "INTEGER", nullable: false, defaultValue: "0");
+            EnsureColumn("voiceVariant", "INTEGER");
+            EnsureColumn("voicePitchOffset", "REAL");
+            EnsureColumn("team", "INTEGER", nullable: false, defaultValue: "0");
         }
 
-        private void EnsureColumn(string columnName) {
+        private void EnsureColumn(string columnName, string sqlType, bool nullable = true, string? defaultValue = null) {
             try {
-                database.Execute(BuildAddColumnSql(columnName));
+                database.Execute(BuildAddColumnSql(columnName, sqlType, nullable, defaultValue));
             }
             catch (Exception ex) when (IsDuplicateColumnError(ex)) {
                 return;
             }
         }
 
-        private string BuildAddColumnSql(string columnName) {
+        private string BuildAddColumnSql(string columnName, string sqlType, bool nullable, string? defaultValue) {
             var providerName = database.DataProvider.Name;
             var isMySql = string.Equals(providerName, ProviderName.MySql, StringComparison.OrdinalIgnoreCase);
             var isPostgreSql = string.Equals(providerName, ProviderName.PostgreSQL, StringComparison.OrdinalIgnoreCase);
             var quote = isMySql ? '`' : '"';
             var ifNotExistsClause = isPostgreSql ? " IF NOT EXISTS" : string.Empty;
-            return $"ALTER TABLE {quote}{CharacterTableName}{quote} ADD COLUMN{ifNotExistsClause} {quote}{columnName}{quote} INTEGER NOT NULL DEFAULT 0";
+            var nullClause = nullable ? " NULL" : " NOT NULL";
+            var defaultClause = defaultValue is null ? string.Empty : $" DEFAULT {defaultValue}";
+            return $"ALTER TABLE {quote}{CharacterTableName}{quote} ADD COLUMN{ifNotExistsClause} {quote}{columnName}{quote} {sqlType}{nullClause}{defaultClause}";
         }
 
         private static bool IsDuplicateColumnError(Exception ex) {
@@ -174,6 +182,9 @@ namespace TShockAPI.DB
                     playerData.enabledSuperCart = character.enabledSuperCart;
                     playerData.deathsPVE = character.deathsPVE;
                     playerData.deathsPVP = character.deathsPVP;
+                    playerData.voiceVariant = character.voiceVariant;
+                    playerData.voicePitchOffset = character.voicePitchOffset;
+                    playerData.team = character.team;
                 }
             }
             catch (Exception ex) {
@@ -201,7 +212,8 @@ namespace TShockAPI.DB
                     spawnY = -1,
                     questsCompleted = 0,
                     deathsPVE = 0,
-                    deathsPVP = 0
+                    deathsPVP = 0,
+                    team = 0
                 });
                 return true;
             }
@@ -257,7 +269,10 @@ namespace TShockAPI.DB
                 unlockedSuperCart = player.TPlayer.unlockedSuperCart ? 1 : 0,
                 enabledSuperCart = player.TPlayer.enabledSuperCart ? 1 : 0,
                 deathsPVE = playerData.deathsPVE,
-                deathsPVP = playerData.deathsPVP
+                deathsPVP = playerData.deathsPVP,
+                voiceVariant = player.TPlayer.voiceVariant,
+                voicePitchOffset = player.TPlayer.voicePitchOffset,
+                team = player.TPlayer.team
             };
 
             try {
@@ -334,7 +349,10 @@ namespace TShockAPI.DB
                 unlockedSuperCart = data.unlockedSuperCart,
                 enabledSuperCart = data.enabledSuperCart,
                 deathsPVE = data.deathsPVE,
-                deathsPVP = data.deathsPVP
+                deathsPVP = data.deathsPVP,
+                voiceVariant = data.voiceVariant,
+                voicePitchOffset = data.voicePitchOffset,
+                team = data.team
             };
 
             try {

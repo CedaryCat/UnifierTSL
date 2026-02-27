@@ -1,4 +1,4 @@
-﻿using TrProtocol;
+using TrProtocol;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace TShockAPI.Extension
 {
     public static class EventContentExt
     {
-        public static TSPlayer GetTSPlayer<TPacket>(this in RecievePacketEvent<TPacket> args) where TPacket : struct, INetPacket {
+        public static TSPlayer GetTSPlayer<TPacket>(this in ReceivePacketEvent<TPacket> args) where TPacket : struct, INetPacket {
             return TShock.Players[args.Who];
         }
     }

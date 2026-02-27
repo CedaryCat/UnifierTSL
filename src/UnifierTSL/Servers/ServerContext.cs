@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using UnifiedServerProcess;
 using UnifierTSL.CLI;
 using UnifierTSL.Extensions;
@@ -11,7 +11,7 @@ namespace UnifierTSL.Servers
     {
         public readonly Guid UniqueId = Guid.NewGuid();
         public readonly IWorldDataProvider worldDataProvider;
-        public readonly ClientPacketReciever PacketReciever;
+        public readonly ClientPacketReceiver PacketReceiver;
         public readonly RoleLogger Log;
 
         public Thread? RunningThread { get; private set; }
@@ -50,7 +50,7 @@ namespace UnifierTSL.Servers
 
         public ServerContext(string serverName, IWorldDataProvider worldData, Logger? overrideLogCore = null) : base(serverName) {
             Console = CreateConsoleService();
-            PacketReciever = new ClientPacketReciever(this);
+            PacketReceiver = new ClientPacketReceiver(this);
             Log = UnifierApi.CreateLogger(this, overrideLogCore);
             Log.AddMetadataInjector(injector: this);
 

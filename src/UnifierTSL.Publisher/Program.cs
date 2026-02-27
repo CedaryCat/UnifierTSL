@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace UnifierTSL.Publisher
@@ -6,7 +6,7 @@ namespace UnifierTSL.Publisher
     internal class Program
     {
         static void Main(string[] args) {
-            var options = CLIHelper.ParseArguements(args);
+            var options = CLIHelper.ParseArguments(args);
             string rid;
             if (!options.TryGetValue("--rid", out var rids)) {
                 throw new ArgumentException("--rid is required.");

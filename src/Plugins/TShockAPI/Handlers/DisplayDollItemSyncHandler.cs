@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,9 +13,9 @@ namespace TShockAPI.Handlers
 {
     internal class DisplayDollItemSyncHandler : IPacketHandler<TEDisplayDollItemSync>
     {
-        public void OnReceive(ref RecievePacketEvent<TEDisplayDollItemSync> args) {
+        public void OnReceive(ref ReceivePacketEvent<TEDisplayDollItemSync> args) {
             var player = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             if (!server.TileEntity.ByID.TryGetValue(args.Packet.TileEntityID, out var tileEntity) || tileEntity is not TEDisplayDoll displayDoll)
                 return;

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.Localization;
@@ -58,12 +58,13 @@ namespace TShockAPI
             NetPacketHandler.Register<PlayerDeathV2>(HandlePlayerKillMeV2, HandlerPriority.Low);
             NetPacketHandler.Register<SyncCavernMonsterType>(HandleSyncCavernMonsterType, HandlerPriority.Low);
             NetPacketHandler.Register<SyncLoadout>(HandleSyncLoadout, HandlerPriority.Low);
+            NetPacketHandler.Register<TeamChangeFromUI>(HandlePlayerTeamFromUI, HandlerPriority.Low);
         }
 
-        private static void HandlePlayerInfo(ref RecievePacketEvent<SyncPlayer> args) {
+        private static void HandlePlayerInfo(ref ReceivePacketEvent<SyncPlayer> args) {
 
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             if (args.HandleMode is PacketHandleMode.Cancel) {
@@ -204,10 +205,10 @@ namespace TShockAPI
             tsPlayer.ReceivedInfo = true;
         }
 
-        private static void HandlePlayerSlot(ref RecievePacketEvent<SyncEquipment> args) {
+        private static void HandlePlayerSlot(ref ReceivePacketEvent<SyncEquipment> args) {
 
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             byte plr = args.Packet.PlayerSlot;
@@ -339,10 +340,10 @@ namespace TShockAPI
             return -1;
         }
 
-        private static void HandleConnecting(ref RecievePacketEvent<RequestWorldInfo> args) {
+        private static void HandleConnecting(ref ReceivePacketEvent<RequestWorldInfo> args) {
 
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var account = TShock.UserAccounts.GetUserAccountByName(tsPlayer.Name);
@@ -418,10 +419,10 @@ namespace TShockAPI
             args.HandleMode = PacketHandleMode.Cancel;
         }
 
-        private static void HandleGetSection(ref RecievePacketEvent<RequestTileData> args) {
+        private static void HandleGetSection(ref ReceivePacketEvent<RequestTileData> args) {
 
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             if (Utils.GetActivePlayerCount() + 1 > setting.MaxSlots &&
@@ -435,9 +436,9 @@ namespace TShockAPI
             return;
         }
 
-        private static void HandleSpawn(ref RecievePacketEvent<SpawnPlayer> args) {
+        private static void HandleSpawn(ref ReceivePacketEvent<SpawnPlayer> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             if (tsPlayer.Dead && tsPlayer.RespawnTimer > 0) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawn rejected dead player spawn request {0}", tsPlayer.Name));
@@ -532,19 +533,19 @@ namespace TShockAPI
             return;
         }
 
-        private static void HandlePlayerUpdate_NullCheck(ref RecievePacketEvent<PlayerControls> args) {
+        private static void HandlePlayerUpdate_NullCheck(ref ReceivePacketEvent<PlayerControls> args) {
             var tsPlayer = args.GetTSPlayer();
             if (tsPlayer == null || tsPlayer.TPlayer == null) {
-                var server = args.LocalReciever.Server;
+                var server = args.LocalReceiver.Server;
                 server.Log.Debug(GetString("GetDataHandlers / OnPlayerUpdate rejected from null player."));
                 args.HandleMode = PacketHandleMode.Cancel;
                 args.StopPropagation = true;
                 return;
             }
         }
-        private static void HandlePlayerUpdate(ref RecievePacketEvent<PlayerControls> args) {
+        private static void HandlePlayerUpdate(ref ReceivePacketEvent<PlayerControls> args) {
             if (args.Packet.PlayerMiscData2.CanReturnWithPotionOfReturn) {
-                var server = args.LocalReciever.Server;
+                var server = args.LocalReceiver.Server;
                 var tsPlayer = args.GetTSPlayer();
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerUpdate home position delta {0}", tsPlayer.Name));
             }
@@ -553,9 +554,9 @@ namespace TShockAPI
             //    args.HandleMode = PacketHandleMode.Cancel;
         }
 
-        private static void HandlePlayerHp(ref RecievePacketEvent<PlayerHealth> args) {
+        private static void HandlePlayerHp(ref ReceivePacketEvent<PlayerHealth> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var cur = args.Packet.StatLife;
@@ -582,9 +583,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleDoorUse(ref RecievePacketEvent<ChangeDoor> args) {
+        private static void HandleDoorUse(ref ReceivePacketEvent<ChangeDoor> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var doorAction = args.Packet.ChangeType;
             short x = args.Packet.Position.X;
@@ -615,9 +616,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleItemOwner(ref RecievePacketEvent<ItemOwner> args) {
+        private static void HandleItemOwner(ref ReceivePacketEvent<ItemOwner> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var id = args.Packet.ItemSlot;
             var owner = args.Packet.OtherPlayerSlot;
@@ -632,9 +633,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleNpcItemStrike(ref RecievePacketEvent<UnusedStrikeNPC> args) {
+        private static void HandleNpcItemStrike(ref ReceivePacketEvent<UnusedStrikeNPC> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             // Never sent by vanilla client, ignore this
             server.Log.Debug(GetString("GetDataHandlers / HandleNpcItemStrike surprise packet! Someone tell the TShock team! {0}", tsPlayer.Name));
             args.HandleMode = PacketHandleMode.Cancel; 
@@ -642,9 +643,9 @@ namespace TShockAPI
             return;
         }
 
-        private static void HandleProjectileNew(ref RecievePacketEvent<SyncProjectile> args) {
+        private static void HandleProjectileNew(ref ReceivePacketEvent<SyncProjectile> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             short ident = args.Packet.ProjSlot;
             byte owner = args.Packet.PlayerSlot;
@@ -661,9 +662,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleNpcStrike(ref RecievePacketEvent<StrikeNPC> args) {
+        private static void HandleNpcStrike(ref ReceivePacketEvent<StrikeNPC> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var id = args.Packet.NPCSlot;
@@ -706,9 +707,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleProjectileKill(ref RecievePacketEvent<KillProjectile> args) {
+        private static void HandleProjectileKill(ref ReceivePacketEvent<KillProjectile> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var ident = args.Packet.ProjSlot;
@@ -751,9 +752,9 @@ namespace TShockAPI
             return;
         }
 
-        private static void HandleTogglePvp(ref RecievePacketEvent<PlayerPvP> args) {
+        private static void HandleTogglePvp(ref ReceivePacketEvent<PlayerPvP> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var id = args.Packet.PlayerSlot;
@@ -775,9 +776,9 @@ namespace TShockAPI
             tsPlayer.LastPvPTeamChange = DateTime.UtcNow;
         }
 
-        private static void HandleChestItem(ref RecievePacketEvent<SyncChestItem> args) {
+        private static void HandleChestItem(ref ReceivePacketEvent<SyncChestItem> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var stacks = args.Packet.Stack;
             var type = args.Packet.ItemType;
@@ -793,9 +794,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleChestActive(ref RecievePacketEvent<SyncPlayerChest> args) {
+        private static void HandleChestActive(ref ReceivePacketEvent<SyncPlayerChest> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             //chest ID
@@ -814,18 +815,18 @@ namespace TShockAPI
             }
         }
 
-        private static void HandlePlayerZone_NullCheck(ref RecievePacketEvent<PlayerZone> args) {
+        private static void HandlePlayerZone_NullCheck(ref ReceivePacketEvent<PlayerZone> args) {
             var tsPlayer = args.GetTSPlayer();
             if (tsPlayer == null || tsPlayer.TPlayer == null) {
-                var server = args.LocalReciever.Server;
+                var server = args.LocalReceiver.Server;
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerZone rejected null check"));
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
         }
 
-        private static void HandlePassword(ref RecievePacketEvent<SendPassword> args) {
+        private static void HandlePassword(ref ReceivePacketEvent<SendPassword> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GlobalSettings;
 // #error TODO HandlePassword Logic
 
@@ -924,9 +925,9 @@ namespace TShockAPI
             return;
         }
 
-        private static void HandleNpcTalk(ref RecievePacketEvent<PlayerTalkingNPC> args) {
+        private static void HandleNpcTalk(ref ReceivePacketEvent<PlayerTalkingNPC> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var npc = args.Packet.NPCSlot;
 
@@ -952,9 +953,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandlePlayerMana(ref RecievePacketEvent<PlayerMana> args) {
+        private static void HandlePlayerMana(ref ReceivePacketEvent<PlayerMana> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var plr = args.Packet.PlayerSlot;
@@ -977,33 +978,61 @@ namespace TShockAPI
             }
         }
 
-        private static void HandlePlayerTeam(ref RecievePacketEvent<PlayerTeam> args) {
+        private static void HandlePlayerTeam(ref ReceivePacketEvent<PlayerTeam> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
-            var setting = TShock.Config.GetServerSettings(server.Name);
+            var server = args.LocalReceiver.Server;
 
             byte id = args.Packet.PlayerSlot;
             byte team = args.Packet.Team;
             //if (OnPlayerTeam(tsPlayer, args.Data, id, team))
             //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
-            if (id != tsPlayer.Index)
+            if (HandlePlayerTeamCore(tsPlayer, server, id, team)) {
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
+            }
+        }
 
+        private static void HandlePlayerTeamFromUI(ref ReceivePacketEvent<TeamChangeFromUI> args) {
+            var tsPlayer = args.GetTSPlayer();
+            var server = args.LocalReceiver.Server;
+
+            byte id = args.Packet.PlayerSlot;
+            byte team = args.Packet.Team;
+
+            if (HandlePlayerTeamCore(tsPlayer, server, id, team)) {
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
+            }
+        }
+
+        private static bool HandlePlayerTeamCore(TSPlayer tsPlayer, ServerContext server, byte id, byte team) {
+            if (id != tsPlayer.Index)
+                return true;
+
+            if (team == tsPlayer.Team) {
+                return false;
+            }
+
+            if (tsPlayer.IgnoreSSCPackets) {
+                server.Log.Debug(GetString("GetDataHandlers / HandlePlayerTeam rejected ignore ssc packets"));
+                tsPlayer.SendData(PacketTypes.PlayerTeam, "", tsPlayer.Index);
+                return true;
+            }
+
+            var setting = TShock.Config.GetServerSettings(server.Name);
             string pvpMode = setting.PvPMode.ToLowerInvariant();
             if (pvpMode == "pvpwithnoteam" || (DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
                 tsPlayer.SendData(PacketTypes.PlayerTeam, "", id);
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerTeam rejected team fastswitch {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
+                return true;
             }
 
             tsPlayer.LastPvPTeamChange = DateTime.UtcNow;
-            // return false;
+            return false;
         }
 
-        private static void HandleSignRead(ref RecievePacketEvent<RequestReadSign> args) {
+        private static void HandleSignRead(ref ReceivePacketEvent<RequestReadSign> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var x = args.Packet.Position.X;
             var y = args.Packet.Position.Y;
@@ -1017,9 +1046,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleSign(ref RecievePacketEvent<ReadSign> args) {
+        private static void HandleSign(ref ReceivePacketEvent<ReadSign> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var id = args.Packet.SignSlot;
             var x = args.Packet.Position.X;
@@ -1041,9 +1070,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandlePlayerBuffList(ref RecievePacketEvent<PlayerBuffs> args) {
+        private static void HandlePlayerBuffList(ref ReceivePacketEvent<PlayerBuffs> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var id = args.Packet.PlayerSlot;
@@ -1080,9 +1109,9 @@ namespace TShockAPI
             { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
         }
 
-        private static void HandleSpecial(ref RecievePacketEvent<Assorted1> args) {
+        private static void HandleSpecial(ref ReceivePacketEvent<Assorted1> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var id = args.Packet.PlayerSlot;
@@ -1146,9 +1175,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleUpdateNPCHome(ref RecievePacketEvent<NPCHome> args) {
+        private static void HandleUpdateNPCHome(ref ReceivePacketEvent<NPCHome> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var id = args.Packet.NPCSlot;
             var x = args.Packet.Position.X;
@@ -1167,12 +1196,12 @@ namespace TShockAPI
             }
         }
 
-        private static readonly int[] invasions = { -1, -2, -3, -4, -5, -6, -7, -8, -10 };
+        private static readonly int[] invasions = { -1, -2, -3, -4, -5, -6, -7, -8, -10, -19 };
         private static readonly int[] pets = { -12, -13, -14, -15 };
         private static readonly int[] upgrades = { -11, -17, -18 };
-        private static void HandleSpawnBoss(ref RecievePacketEvent<SpawnBoss> args) {
+        private static void HandleSpawnBoss(ref ReceivePacketEvent<SpawnBoss> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             if (tsPlayer.IsBouncerThrottled()) {
@@ -1213,6 +1242,9 @@ namespace TShockAPI
 
             string thing;
             switch (thingType) {
+                case -19:
+                    thing = GetString("{0} summoned a Slime Rain!", tsPlayer.Name);
+                    break;
                 case -18:
                     thing = GetString("{0} applied traveling merchant's satchel!", tsPlayer.Name);
                     break;
@@ -1287,9 +1319,9 @@ namespace TShockAPI
                item.type == ItemID.ArchitectGizmoPack ||
                item.type == ItemID.HandOfCreation);
 
-        private static void HandlePaintTile(ref RecievePacketEvent<PaintTile> args) {
+        private static void HandlePaintTile(ref ReceivePacketEvent<PaintTile> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var x = args.Packet.Position.X;
@@ -1332,9 +1364,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandlePaintWall(ref RecievePacketEvent<PaintWall> args) {
+        private static void HandlePaintWall(ref ReceivePacketEvent<PaintWall> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var x = args.Packet.Position.X;
@@ -1377,9 +1409,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleTeleport(ref RecievePacketEvent<Teleport> args) {
+        private static void HandleTeleport(ref ReceivePacketEvent<Teleport> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             BitsByte flag = args.Packet.Bit1;
@@ -1417,7 +1449,7 @@ namespace TShockAPI
             if (type == 0 && !tsPlayer.HasPermission(Permissions.rod)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleTeleport rejected rod type {0} {1}", tsPlayer.Name, type));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to teleport using items.")); // Was going to write using RoD but Hook of Disonnance and Potion of Return both use the same teleport packet as RoD. 
-                tsPlayer.Teleport(tsPlayer.TPlayer.position.X, tsPlayer.TPlayer.position.Y); // Suggest renaming rod permission unless someone plans to add separate perms for the other 2 tp items.
+                tsPlayer.Teleport(tsPlayer.TPlayer.position); // Suggest renaming rod permission unless someone plans to add separate perms for the other 2 tp items.
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
@@ -1437,15 +1469,15 @@ namespace TShockAPI
                 if (!tsPlayer.HasPermission(Permissions.wormhole)) {
                     server.Log.Debug(GetString("GetDataHandlers / HandleTeleport rejected p2p wormhole permission {0} {1}", tsPlayer.Name, type));
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to teleport using Wormhole Potions."));
-                    tsPlayer.Teleport(tsPlayer.TPlayer.position.X, tsPlayer.TPlayer.position.Y);
+                    tsPlayer.Teleport(tsPlayer.TPlayer.position);
                     { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
         }
 
-        private static void HandleCatchNpc(ref RecievePacketEvent<BugCatching> args) {
+        private static void HandleCatchNpc(ref ReceivePacketEvent<BugCatching> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var npcID = args.Packet.NPCSlot;
@@ -1463,9 +1495,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleTeleportationPotion(ref RecievePacketEvent<TeleportationPotion> args) {
+        private static void HandleTeleportationPotion(ref ReceivePacketEvent<TeleportationPotion> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var type = args.Packet.Style;
@@ -1535,21 +1567,21 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleCompleteAnglerQuest(ref RecievePacketEvent<AnglerQuestFinished> args) {
+        private static void HandleCompleteAnglerQuest(ref ReceivePacketEvent<AnglerQuestFinished> args) {
             // Since packet 76 is NEVER sent to us, we actually have to rely on this to get the true count
             var tsPlayer = args.GetTSPlayer();
             tsPlayer.TPlayer.anglerQuestsFinished++;
         }
 
-        private static void HandleNumberOfAnglerQuestsCompleted(ref RecievePacketEvent<AnglerQuestCountSync> args) {
+        private static void HandleNumberOfAnglerQuestsCompleted(ref ReceivePacketEvent<AnglerQuestCountSync> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             // Never sent by vanilla client, ignore this
             server.Log.Debug(GetString("GetDataHandlers / HandleNumberOfAnglerQuestsCompleted surprise packet! Someone tell the TShock team! {0}", tsPlayer.Name));
             { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
         }
 
-        private static void HandlePlaceTileEntity(ref RecievePacketEvent<TileEntityPlacement> args) {
+        private static void HandlePlaceTileEntity(ref ReceivePacketEvent<TileEntityPlacement> args) {
             var tsPlayer = args.GetTSPlayer();
 
             var x = args.Packet.Position.X;
@@ -1569,9 +1601,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleSyncExtraValue(ref RecievePacketEvent<SyncExtraValue> args) {
+        private static void HandleSyncExtraValue(ref ReceivePacketEvent<SyncExtraValue> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var npcIndex = args.Packet.NPCSlot;
             var extraValue = args.Packet.Extra;
@@ -1606,9 +1638,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleKillPortal(ref RecievePacketEvent<MurderSomeoneElsesProjectile> args) {
+        private static void HandleKillPortal(ref ReceivePacketEvent<MurderSomeoneElsesProjectile> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             short projectileIndex = args.Packet.OtherPlayerSlot;
             // args.Packet.; // Read byte projectile AI
@@ -1622,9 +1654,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleNpcTeleportPortal(ref RecievePacketEvent<TeleportNPCThroughPortal> args) {
+        private static void HandleNpcTeleportPortal(ref ReceivePacketEvent<TeleportNPCThroughPortal> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var npcIndex = args.Packet.NPCSlot;
             var portalColorIndex = args.Packet.Extra;
@@ -1646,9 +1678,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleToggleParty(ref RecievePacketEvent<ToggleParty> args) {
+        private static void HandleToggleParty(ref ReceivePacketEvent<ToggleParty> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             if (tsPlayer != null && !tsPlayer.HasPermission(Permissions.toggleparty)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleToggleParty rejected no party {0}", tsPlayer.Name));
@@ -1657,9 +1689,9 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleOldOnesArmy(ref RecievePacketEvent<CrystalInvasionStart> args) {
+        private static void HandleOldOnesArmy(ref ReceivePacketEvent<CrystalInvasionStart> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             if (tsPlayer.IsBouncerThrottled()) {
@@ -1679,9 +1711,9 @@ namespace TShockAPI
                 Utils.Broadcast(server, GetString("{0} started the Old One's Army event!", tsPlayer.Name), 175, 75, 255);
         }
 
-        private static void HandlePlayerKillMeV2(ref RecievePacketEvent<PlayerDeathV2> args) {
+        private static void HandlePlayerKillMeV2(ref ReceivePacketEvent<PlayerDeathV2> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             var id = args.Packet.PlayerSlot;
@@ -1742,18 +1774,18 @@ namespace TShockAPI
             }
         }
 
-        private static void HandleSyncCavernMonsterType(ref RecievePacketEvent<SyncCavernMonsterType> args) {
+        private static void HandleSyncCavernMonsterType(ref ReceivePacketEvent<SyncCavernMonsterType> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             tsPlayer.Kick(GetString("Exploit attempt detected!"));
             server.Log.Debug(GetString($"HandleSyncCavernMonsterType: Player is trying to modify NPC cavernMonsterType; this is a crafted packet! - From {tsPlayer.Name}"));
             { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
         }
 
-        private static void HandleSyncLoadout(ref RecievePacketEvent<SyncLoadout> args) {
+        private static void HandleSyncLoadout(ref ReceivePacketEvent<SyncLoadout> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 
             var loadoutIndex = args.Packet.LoadOutSlot;
 
@@ -1770,7 +1802,7 @@ namespace TShockAPI
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
-            if (tsPlayer.IsBeingDisabled()) {
+            if (tsPlayer.IsBeingDisabled() && tsPlayer.State == (int)ConnectionState.Complete) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSyncLoadout rejected loadout index sync {0}", tsPlayer.Name));
                 server.NetMessage.SendData((int)PacketTypes.SyncLoadout, number: tsPlayer.Index, number2: tsPlayer.TPlayer.CurrentLoadoutIndex);
 

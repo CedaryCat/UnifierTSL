@@ -1,4 +1,4 @@
-﻿/*
+/*
 TShock, a server mod for Terraria
 Copyright (C) 2011-2019 Pryaxis & TShock Contributors
 This program is free software: you can redistribute it and/or modify
@@ -56,9 +56,9 @@ namespace TShockAPI
             NetPacketHandler.UnRegister<GemLockToggle>(OnGemLockToggle);
         }
 
-        private void OnGemLockToggle(ref RecievePacketEvent<GemLockToggle> args) {
+        private void OnGemLockToggle(ref ReceivePacketEvent<GemLockToggle> args) {
             var player = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var settings = TShock.Config.GetServerSettings(server.Name);
             if (settings.RegionProtectGemLocks) {
                 if (!_regionManager.CanBuild(server, args.Packet.Position.X, args.Packet.Position.Y, player)) {
@@ -69,13 +69,13 @@ namespace TShockAPI
             }
         }
 
-        private void OnPlayerUpdate(ref RecievePacketEvent<PlayerControls> args) {
-			static void PostMovement(in RecievePacketEvent<PlayerControls> args, PacketHandleMode handle) { 
+        private void OnPlayerUpdate(ref ReceivePacketEvent<PlayerControls> args) {
+			static void PostMovement(in ReceivePacketEvent<PlayerControls> args, PacketHandleMode handle) { 
                 if (handle is PacketHandleMode.Cancel) {
 					return;
                 }
                 var player = args.GetTSPlayer();
-				var server = args.LocalReciever.Server;
+				var server = args.LocalReceiver.Server;
 				var worldId = server.Main.worldID.ToString();
 
                 // Store the player's last known region and update the current based on known regions at their coordinates.
@@ -101,10 +101,10 @@ namespace TShockAPI
 			args.PacketProcessed += PostMovement;
         }
 
-        private void OnTileEdit(ref RecievePacketEvent<TileChange> args) {
+        private void OnTileEdit(ref ReceivePacketEvent<TileChange> args) {
 
             var player = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var worldId = server.Main.worldID.ToString();
             var pos = args.Packet.Position;
 
