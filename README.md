@@ -89,7 +89,7 @@ The baseline values below come straight from project files and runtime version h
 |:--|:--|:--|
 | Target framework | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
 | Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs` (assembly file version from OTAPI/Terraria runtime) |
-| OTAPI USP | `1.1.0-pre-release-upstream.24` | `src/UnifierTSL/UnifierTSL.csproj` |
+| OTAPI USP | `1.1.0-pre-release-upstream.25` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock and dependency details</strong></summary>
@@ -98,7 +98,7 @@ The baseline values below come straight from project files and runtime version h
 |:--|:--|
 | Bundled TShock version | `5.9.9` |
 | Sync branch | `general-devel` |
-| Sync commit | `cd68321fcc7b7b2a02d8ed6449910c4763b45350` |
+| Sync commit | `dab27acb4bf827924803f57918a7023231e43ab3` |
 | Source | `src/Plugins/TShockAPI/TShockAPI.csproj` |
 
 Additional dependency baselines:
@@ -478,3 +478,4 @@ dotnet test src/UnifierTSL.slnx
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
+
