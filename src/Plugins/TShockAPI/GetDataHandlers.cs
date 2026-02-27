@@ -58,6 +58,7 @@ namespace TShockAPI
             NetPacketHandler.Register<PlayerDeathV2>(HandlePlayerKillMeV2, HandlerPriority.Low);
             NetPacketHandler.Register<SyncCavernMonsterType>(HandleSyncCavernMonsterType, HandlerPriority.Low);
             NetPacketHandler.Register<SyncLoadout>(HandleSyncLoadout, HandlerPriority.Low);
+            NetPacketHandler.Register<TeamChangeFromUI>(HandlePlayerTeamFromUI, HandlerPriority.Low);
         }
 
         private static void HandlePlayerInfo(ref ReceivePacketEvent<SyncPlayer> args) {
@@ -980,25 +981,53 @@ namespace TShockAPI
         private static void HandlePlayerTeam(ref ReceivePacketEvent<PlayerTeam> args) {
             var tsPlayer = args.GetTSPlayer();
             var server = args.LocalReceiver.Server;
-            var setting = TShock.Config.GetServerSettings(server.Name);
 
             byte id = args.Packet.PlayerSlot;
             byte team = args.Packet.Team;
             //if (OnPlayerTeam(tsPlayer, args.Data, id, team))
             //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
-            if (id != tsPlayer.Index)
+            if (HandlePlayerTeamCore(tsPlayer, server, id, team)) {
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
+            }
+        }
 
+        private static void HandlePlayerTeamFromUI(ref ReceivePacketEvent<TeamChangeFromUI> args) {
+            var tsPlayer = args.GetTSPlayer();
+            var server = args.LocalReceiver.Server;
+
+            byte id = args.Packet.PlayerSlot;
+            byte team = args.Packet.Team;
+
+            if (HandlePlayerTeamCore(tsPlayer, server, id, team)) {
+                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
+            }
+        }
+
+        private static bool HandlePlayerTeamCore(TSPlayer tsPlayer, ServerContext server, byte id, byte team) {
+            if (id != tsPlayer.Index)
+                return true;
+
+            if (team == tsPlayer.Team) {
+                return false;
+            }
+
+            if (tsPlayer.IgnoreSSCPackets) {
+                server.Log.Debug(GetString("GetDataHandlers / HandlePlayerTeam rejected ignore ssc packets"));
+                tsPlayer.SendData(PacketTypes.PlayerTeam, "", tsPlayer.Index);
+                return true;
+            }
+
+            var setting = TShock.Config.GetServerSettings(server.Name);
             string pvpMode = setting.PvPMode.ToLowerInvariant();
             if (pvpMode == "pvpwithnoteam" || (DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
                 tsPlayer.SendData(PacketTypes.PlayerTeam, "", id);
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerTeam rejected team fastswitch {0}", tsPlayer.Name));
-                { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
+                return true;
             }
 
             tsPlayer.LastPvPTeamChange = DateTime.UtcNow;
-            // return false;
+            return false;
         }
 
         private static void HandleSignRead(ref ReceivePacketEvent<RequestReadSign> args) {
@@ -1167,7 +1196,7 @@ namespace TShockAPI
             }
         }
 
-        private static readonly int[] invasions = { -1, -2, -3, -4, -5, -6, -7, -8, -10 };
+        private static readonly int[] invasions = { -1, -2, -3, -4, -5, -6, -7, -8, -10, -19 };
         private static readonly int[] pets = { -12, -13, -14, -15 };
         private static readonly int[] upgrades = { -11, -17, -18 };
         private static void HandleSpawnBoss(ref ReceivePacketEvent<SpawnBoss> args) {
@@ -1213,6 +1242,9 @@ namespace TShockAPI
 
             string thing;
             switch (thingType) {
+                case -19:
+                    thing = GetString("{0} summoned a Slime Rain!", tsPlayer.Name);
+                    break;
                 case -18:
                     thing = GetString("{0} applied traveling merchant's satchel!", tsPlayer.Name);
                     break;
@@ -1417,7 +1449,7 @@ namespace TShockAPI
             if (type == 0 && !tsPlayer.HasPermission(Permissions.rod)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleTeleport rejected rod type {0} {1}", tsPlayer.Name, type));
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to teleport using items.")); // Was going to write using RoD but Hook of Disonnance and Potion of Return both use the same teleport packet as RoD. 
-                tsPlayer.Teleport(tsPlayer.TPlayer.position.X, tsPlayer.TPlayer.position.Y); // Suggest renaming rod permission unless someone plans to add separate perms for the other 2 tp items.
+                tsPlayer.Teleport(tsPlayer.TPlayer.position); // Suggest renaming rod permission unless someone plans to add separate perms for the other 2 tp items.
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
@@ -1437,7 +1469,7 @@ namespace TShockAPI
                 if (!tsPlayer.HasPermission(Permissions.wormhole)) {
                     server.Log.Debug(GetString("GetDataHandlers / HandleTeleport rejected p2p wormhole permission {0} {1}", tsPlayer.Name, type));
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to teleport using Wormhole Potions."));
-                    tsPlayer.Teleport(tsPlayer.TPlayer.position.X, tsPlayer.TPlayer.position.Y);
+                    tsPlayer.Teleport(tsPlayer.TPlayer.position);
                     { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
@@ -1770,7 +1802,7 @@ namespace TShockAPI
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
-            if (tsPlayer.IsBeingDisabled()) {
+            if (tsPlayer.IsBeingDisabled() && tsPlayer.State == (int)ConnectionState.Complete) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleSyncLoadout rejected loadout index sync {0}", tsPlayer.Name));
                 server.NetMessage.SendData((int)PacketTypes.SyncLoadout, number: tsPlayer.Index, number2: tsPlayer.TPlayer.CurrentLoadoutIndex);
 

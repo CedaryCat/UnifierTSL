@@ -73,24 +73,25 @@ namespace TShockAPI
 					continue;
 				}
 
-				var disableFlags = player.GetCurrentSettings().DisableSecondUpdateLogs ? DisableFlags.WriteToConsole : DisableFlags.WriteToLogAndConsole;
-				var server = player.GetCurrentServer();
+                var server = player.GetCurrentServer();
+				var setting = TShock.Config.GetServerSettings(server.Name);
+                var disableFlags = setting.DisableSecondUpdateLogs ? DisableFlags.WriteToConsole : DisableFlags.WriteToLogAndConsole;
 
                 // Untaint now, re-taint if they fail the check.
                 UnTaint(player);
 
-				// No matter the player type, we do a check when a player is holding an item that's banned.
-				if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[player.TPlayer.selectedItem].type), player))
+				// If player isn't disabled for not being logged in, check for any banned items in use.
+				if (((setting.RequireLogin || server.Main.ServerSideCharacter) && player.IsLoggedIn) ||
+					(!setting.RequireLogin && !server.Main.ServerSideCharacter))
 				{
-					string itemName = player.TPlayer.inventory[player.TPlayer.selectedItem].Name;
-					player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
-					SendCorrectiveMessage(player, itemName);
-				}
+					// No matter the player type, we do a check when a player is holding an item that's banned.
+					if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[player.TPlayer.selectedItem].type), player))
+					{
+						string itemName = player.TPlayer.inventory[player.TPlayer.selectedItem].Name;
+						player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
+						SendCorrectiveMessage(player, itemName);
+					}
 
-				// If SSC isn't enabled OR if SSC is enabled and the player is logged in
-				// In a case like this, we do the full check too.
-				if (!server.Main.ServerSideCharacter || (server.Main.ServerSideCharacter && player.IsLoggedIn))
-				{
 					// The Terraria inventory is composed of a multicultural set of arrays
 					// with various different contents and beliefs
 

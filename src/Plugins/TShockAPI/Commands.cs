@@ -269,6 +269,10 @@ namespace TShockAPI
                 AllowCoord = false,
                 HelpText = GetString("Toggles the world's hardmode status.")
             });
+            add(new Command(Permissions.switchevil, SwitchEvil, "evil") {
+                AllowCoord = false,
+                HelpText = GetString("Switches the world's evil.")
+            });
             add(new Command(Permissions.editspawn, ProtectSpawn, "protectspawn") {
                 AllowCoord = false,
                 HelpText = GetString("Toggles spawn protection.")
@@ -2236,6 +2240,15 @@ namespace TShockAPI
             }
         }
 
+        static string GetWorldEvil(ServerContext server) => server.WorldGen.crimson ? "crimson" : "corruption";
+
+        private static void SwitchEvil(CommandArgs args) {
+            var server = args.Server!;
+            server.WorldGen.crimson = !server.WorldGen.crimson;
+            server.NetMessage.SendData((int)PacketTypes.WorldInfo, -1, -1);
+            args.Executor.SendSuccessMessage(GetString("World evil switched to {0}.", GetWorldEvil(server)));
+        }
+
         private static void SpawnBoss(CommandArgs args) {
             if (args.Parameters.Count < 1 || args.Parameters.Count > 2) {
                 args.Executor.SendErrorMessage(GetString("Invalid syntax. Proper syntax: {0}spawnboss <boss type> [amount].", Specifier));
@@ -2543,8 +2556,7 @@ namespace TShockAPI
 
         private static void Spawn(CommandArgs args) {
             var tsPlayer = args.Player!;
-            var server = args.Server!;
-            if (tsPlayer.Teleport(server.Main.spawnTileX * 16, (server.Main.spawnTileY * 16) - 48))
+            if (tsPlayer.TeleportToWorldSpawn())
                 args.Executor.SendSuccessMessage(GetString("Teleported to the map's spawn point."));
         }
 
@@ -2570,7 +2582,7 @@ namespace TShockAPI
                         args.Executor.SendErrorMessage(GetString("{0} has disabled incoming teleports.", target.Name));
                         return;
                     }
-                    if (tsPlayer.Teleport(target.TPlayer.position.X, target.TPlayer.position.Y)) {
+                    if (tsPlayer.Teleport(target.TPlayer.Bottom, true)) {
                         args.Executor.SendSuccessMessage(GetString("Teleported to {0}.", target.Name));
                         if (!args.Executor.HasPermission(Permissions.tpsilent))
                             target.SendInfoMessage(GetString("{0} teleported to you.", args.Executor.Name));
@@ -2601,7 +2613,7 @@ namespace TShockAPI
                         foreach (var source in TShock.Players.Where(p => p != null && p != tsPlayer)) {
                             if (!target.TPAllow && !args.Executor.HasPermission(Permissions.tpoverride))
                                 continue;
-                            if (source.Teleport(target.TPlayer.position.X, target.TPlayer.position.Y)) {
+                            if (source.Teleport(target.TPlayer.Bottom, true)) {
                                 if (tsPlayer != source) {
                                     if (args.Executor.HasPermission(Permissions.tpsilent))
                                         source.SendSuccessMessage(GetString("You were teleported to {0}.", target.Name));
@@ -2635,7 +2647,7 @@ namespace TShockAPI
                         return;
                     }
                     args.Executor.SendSuccessMessage(GetString("Teleported {0} to {1}.", source.Name, target.Name));
-                    if (source.Teleport(target.TPlayer.position.X, target.TPlayer.position.Y)) {
+                    if (source.Teleport(target.TPlayer.Bottom, true)) {
                         if (tsPlayer != source) {
                             if (args.Executor.HasPermission(Permissions.tpsilent))
                                 source.SendSuccessMessage(GetString("You were teleported to {0}.", target.Name));
@@ -2662,7 +2674,6 @@ namespace TShockAPI
                 return;
             }
             var tsPlayer = args.Player!;
-            var tplayer = tsPlayer.TPlayer;
 
             string playerName = String.Join(" ", args.Parameters);
             var players = TSPlayer.FindByNameOrID(playerName);
@@ -2674,7 +2685,7 @@ namespace TShockAPI
                     }
                     foreach (var player in TShock.Players) {
                         if (player != null && player.Active && player.Index != tsPlayer.Index) {
-                            if (player.Teleport(tplayer.position.X, tplayer.position.Y))
+                            if (player.Teleport(tsPlayer.TPlayer.Bottom, true))
                                 player.SendSuccessMessage(GetString("You were teleported to {0}.", args.Executor.Name));
                         }
                     }
@@ -2687,7 +2698,7 @@ namespace TShockAPI
                 args.Executor.SendMultipleMatchError(players.Select(p => p.Name));
             else {
                 var plr = players[0];
-                if (plr.Teleport(tplayer.position.X, tplayer.position.Y)) {
+                if (plr.Teleport(tsPlayer.TPlayer.Bottom, true)) {
                     plr.SendInfoMessage(GetString("You were teleported to {0}.", args.Executor.Name));
                     args.Executor.SendSuccessMessage(GetString("Teleported {0} to yourself.", plr.Name));
                 }
@@ -2727,7 +2738,7 @@ namespace TShockAPI
             }
 
             var target = matches[0];
-            tsPlayer.Teleport(target.position.X, target.position.Y);
+            tsPlayer.Teleport(target.Bottom, true);
             args.Executor.SendSuccessMessage(GetString("Teleported to the '{0}'.", target.FullName));
         }
 
@@ -2827,7 +2838,8 @@ namespace TShockAPI
                     if (warpName == "list" || warpName == "hide" || warpName == "del" || warpName == "add") {
                         args.Executor.SendErrorMessage(GetString("Invalid warp name. The names 'list', 'hide', 'del' and 'add' are reserved for commands."));
                     }
-                    else if (TShock.Warps.Add(worldID, tsPlayer.TileX, tsPlayer.TileY, warpName)) {
+                    // For compatibility, warps are technically floating, so we have to add it at the player's Y position without any mount influence.
+                    else if (TShock.Warps.Add(worldID, tsPlayer.CenterTileX, tsPlayer.UnmountedTileY, warpName)) {
                         args.Executor.SendSuccessMessage(GetString($"Warp added: {warpName}."));
                     }
                     else {
@@ -2895,7 +2907,8 @@ namespace TShockAPI
                 var warp = TShock.Warps.Find(worldID, warpName);
                 var plr = foundplr[0];
                 if (warp != null) {
-                    if (plr.Teleport(warp.Position.X * 16, warp.Position.Y * 16)) {
+                    // For compatibility, warps are technically floating, so we have to move the target position down by 3 blocks.
+                    if (plr.Teleport(new Vector2(warp.Position.X * 16 + (plr.TPlayer.width / 2f), (warp.Position.Y + 3) * 16), true)) {
                         plr.SendSuccessMessage(GetString("{0} warped you to {1}.", args.Executor.Name, warpName));
                         args.Executor.SendSuccessMessage(GetString("You warped {0} to {1}.", plr.Name, warpName));
                     }
@@ -2909,7 +2922,8 @@ namespace TShockAPI
                 string warpName = String.Join(" ", args.Parameters);
                 var warp = TShock.Warps.Find(worldID, warpName);
                 if (warp != null) {
-                    if (tsPlayer.Teleport(warp.Position.X * 16, warp.Position.Y * 16))
+                    // For compatibility, warps are technically floating, so we have to move the target position down by 3 blocks.
+                    if (tsPlayer.Teleport(new Vector2(warp.Position.X * 16 + (tsPlayer.TPlayer.width / 2f), (warp.Position.Y + 3) * 16), true))
                         args.Executor.SendSuccessMessage(GetString($"Warped to {warpName}."));
                 }
                 else {
@@ -4540,7 +4554,7 @@ namespace TShockAPI
                             break;
                         }
 
-                        tsPlayer.Teleport(region.Area.Center.X * 16, region.Area.Center.Y * 16);
+                        tsPlayer.TeleportCentered(region.Area.Center.ToWorldCoordinates());
                         break;
                     }
                 case "help":
