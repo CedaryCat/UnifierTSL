@@ -142,9 +142,9 @@ namespace TShockAPI
 			LastTimelyRun = DateTime.UtcNow;
 		}
 
-        private void OnPlayerUpdate(ref RecievePacketEvent<PlayerControls> args) {
-            var player = TShock.Players[args.RecieveFrom.ID];
-            var server = args.LocalReciever.Server;
+        private void OnPlayerUpdate(ref ReceivePacketEvent<PlayerControls> args) {
+            var player = TShock.Players[args.ReceiveFrom.ID];
+            var server = args.LocalReceiver.Server;
             var disableFlags = player.GetCurrentSettings().DisableSecondUpdateLogs ? DisableFlags.WriteToConsole : DisableFlags.WriteToLogAndConsole;
 
 			string itemName = player.TPlayer.inventory[args.Packet.SelectedItem].Name;
@@ -164,9 +164,9 @@ namespace TShockAPI
             return;
         }
 
-        private void OnChestItemChange(ref RecievePacketEvent<SyncChestItem> args) {
-            var player = TShock.Players[args.RecieveFrom.ID];
-			var server = args.LocalReciever.Server;
+        private void OnChestItemChange(ref ReceivePacketEvent<SyncChestItem> args) {
+            var player = TShock.Players[args.ReceiveFrom.ID];
+			var server = args.LocalReceiver.Server;
 
             Item item = new Item();
             item.netDefaults(server, args.Packet.ItemType);
@@ -180,11 +180,11 @@ namespace TShockAPI
             }
         }
 
-        private void OnTileEdit(ref RecievePacketEvent<TileChange> args) {
+        private void OnTileEdit(ref ReceivePacketEvent<TileChange> args) {
 			var action = args.Packet.ChangeType;
 
             if (action == TileEditAction.PlaceTile || action == TileEditAction.PlaceWall) {
-				var player = TShock.Players[args.RecieveFrom.ID];
+				var player = TShock.Players[args.ReceiveFrom.ID];
                 if (player.TPlayer.autoActuator && DataModel.ItemIsBanned("Actuator", player)) {
                     player.SendTileSquareCentered(args.Packet.Position.X, args.Packet.Position.Y, 1);
                     player.SendErrorMessage(GetString("You do not have permission to place actuators."));

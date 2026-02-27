@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -390,8 +390,8 @@ namespace UnifierTSL.Module
 
             moduleDirInfo.Create();
 
-            DependenciesConfiguration prevConfig = new(Logger, DependenciesConfiguration.LoadDependenicesConfig(moduleDir));
-            prevConfig.NormalizeDependenicesConfig(moduleDir);
+            DependenciesConfiguration prevConfig = new(Logger, DependenciesConfiguration.LoadDependenciesConfig(moduleDir));
+            prevConfig.NormalizeDependenciesConfig(moduleDir);
 
             try {
                 dependencies = info.Dependencies.GetDependencies()?.ToImmutableArray() ?? [];

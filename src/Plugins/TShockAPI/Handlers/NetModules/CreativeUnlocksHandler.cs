@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using Terraria.GameContent.NetModules;
 using Terraria.ID;
 using Terraria.Net;
@@ -14,8 +14,8 @@ namespace TShockAPI.Handlers.NetModules
 	/// </summary>
 public class CreativeUnlocksHandler : IPacketHandler<NetCreativeUnlocksPlayerReportModule>
 	{
-        public void OnReceive(ref RecievePacketEvent<NetCreativeUnlocksPlayerReportModule> args) {
-			var server = args.LocalReciever.Server;
+        public void OnReceive(ref ReceivePacketEvent<NetCreativeUnlocksPlayerReportModule> args) {
+			var server = args.LocalReceiver.Server;
 			var player = args.GetTSPlayer();
 
             if (server.Main.GameMode != GameModeID.Creative) {

@@ -352,7 +352,7 @@ namespace TShockAPI
             });
             add(new Command(Permissions.whisper, Wallow, "wallow", "wa") {
                 AllowServer = false,
-                HelpText = GetString("Toggles to either ignore or recieve whispers from other players.")
+                HelpText = GetString("Toggles to either ignore or receive whispers from other players.")
             });
             add(new Command(Permissions.createdumps, CreateDumps, "dump-reference-data") {
                 HelpText = GetString("Creates a reference tables for Terraria data types and the TShock permission system in the server folder.")

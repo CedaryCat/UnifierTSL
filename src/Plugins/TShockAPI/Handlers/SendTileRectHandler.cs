@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 
 using Terraria;
@@ -366,9 +366,9 @@ namespace TShockAPI.Handlers
 
 
 
-        public void OnReceive(ref RecievePacketEvent<TileSquare> args) {
-			var player = TShock.Players[args.RecieveFrom.ID];
-			var server = args.LocalReciever.Server;
+        public void OnReceive(ref ReceivePacketEvent<TileSquare> args) {
+			var player = TShock.Players[args.ReceiveFrom.ID];
+			var server = args.LocalReceiver.Server;
 
             if (player.HasPermission(Permissions.allowclientsideworldedit)) {
                 server.Log.Debug(GetString($"Bouncer / SendTileRect accepted clientside world edit from {player.Name}"));

@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using UnifierTSL.Plugins;
 
 namespace UnifierTSL.PluginHost.ConfigFormats
 {
-    public class NewtonsoftJsonFormater : IConfigFormatProvider
+    public class NewtonsoftJsonFormatter : IConfigFormatProvider
     {
         public string Name => "NewtonsoftJson.json";
         public string NullText => "null";
@@ -11,7 +11,7 @@ namespace UnifierTSL.PluginHost.ConfigFormats
 
         private readonly JsonSerializerSettings _settings;
 
-        public NewtonsoftJsonFormater() {
+        public NewtonsoftJsonFormatter() {
             _settings = new JsonSerializerSettings {
                 Formatting = Formatting.Indented,
                 NullValueHandling = NullValueHandling.Ignore,

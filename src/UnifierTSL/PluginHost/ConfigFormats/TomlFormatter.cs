@@ -1,10 +1,10 @@
-﻿using Tomlyn;
+using Tomlyn;
 using Tomlyn.Syntax;
 using UnifierTSL.Plugins;
 
 namespace UnifierTSL.PluginHost.ConfigFormats
 {
-    public class TomlFormater : IConfigFormatProvider
+    public class TomlFormatter : IConfigFormatProvider
     {
         public string Name => "toml";
         public string NullText => "";

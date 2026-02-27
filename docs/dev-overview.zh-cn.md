@@ -1,45 +1,81 @@
-# UnifierTSL 开发者概览
+﻿# UnifierTSL 开发者概览
 
-本文档解释 UnifierTSL 运行时如何在 OTAPI Unified Server Process (USP) 之上构建，各关键子系统的职责，以及向集成者公开的公共 API。本文假设你已阅读过 [README](./README.zh-cn.md) 和 USP 的 `Developer-Guide.md`。
+欢迎！这份文档会带你快速过一遍 UnifierTSL 运行时在 OTAPI Unified Server Process（USP）之上的整体构成：关键子系统、它们怎么协作，以及你可以直接用的公共 API。如果你还没看过 [README](README.zh-cn.md) 或 USP 的 [Developer-Guide.md](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess/blob/main/docs/Developer-Guide.md)，建议先从那两份开始。
 
+## 快速导航
+
+- [1. 运行时架构](#1-runtime-architecture)
+  - [1.1 分层](#11-layering)
+  - [1.2 启动流程](#12-boot-flow)
+  - [1.3 主要组件](#13-major-components)
+- [2. 核心服务和子系统](#2-core-services--subsystems)
+  - [2.1 事件中心](#21-event-hub)
+  - [2.2 模块系统](#22-module-system)
+  - [2.3 插件宿主编排](#23-plugin-host-orchestration)
+  - [2.4 网络和协调器](#24-networking--coordinator)
+  - [2.5 日志记录基础设施](#25-logging-infrastructure)
+  - [2.6 配置服务](#26-configuration-service)
+- [3. USP 集成点](#3-usp-integration-points)
+- [4. 公共 API 接口](#4-public-api-surface)
+  - [4.1 门面 (`UnifierApi`)](#41-facade-unifierapi)
+  - [4.2 事件载荷与辅助类型](#42-event-payloads--helpers)
+  - [4.3 模块和插件类型](#43-module--plugin-types)
+  - [4.4 网络 API](#44-networking-apis)
+  - [4.5 日志与诊断](#45-logging--diagnostics)
+- [5. 运行时生命周期和操作](#5-runtime-lifecycle--operations)
+  - [5.1 启动顺序](#51-startup-sequence)
+  - [5.2 运行时操作](#52-runtime-operations)
+  - [5.3 关机和重新加载](#53-shutdown--reload)
+  - [5.4 诊断](#54-diagnostics)
+- [6. 可扩展性指南和最佳实践](#6-extensibility-guidelines--best-practices)
+
+<a id="1-runtime-architecture"></a>
 ## 1. 运行时架构
 
-### 1.1 分层结构
-- **USP (OTAPI.UnifiedServerProcess)** — 提供上下文绑定的 Terraria 运行时（`RootContext`、TrProtocol 数据包模型、可 detour 的 hook）。Unifier 在接触 Terraria 静态成员时从不绕过这一层。
-- **UnifierTSL Core** — 启动器、编排服务、多服务器协调器(Coordinator)、日志记录、配置管理、模块加载器和插件宿主。
-- **Modules & Plugins（模块与插件）** — 存放在 `plugins/` 下的程序集；可以是核心宿主或功能卫星模块。模块可以嵌入依赖负载（托管库、原生库、NuGet 包）供加载器提取。
-- **Console Client / Publisher（控制台客户端/发布器）** — 与运行时并列的工具项目，但复用相同的子系统。
+<a id="11-layering"></a>
+### 1.1 分层
+- **USP (OTAPI.UnifiedServerProcess)** – 这是从 OTAPI 补丁演进而来的服务端运行时层。它提供按服务器实例隔离的上下文（`RootContext`），并暴露 TrProtocol 数据包模型、可 detour 的挂钩等运行时契约。Unifier 对 Terraria 状态的运行时访问都应经过这一层。
+- **UnifierTSL Core** – 启动器本身，加上编排、多服务器协调、日志记录、配置、模块加载和 `Plugin Host（插件宿主）`。
+- **模块和插件** – 你的程序集，暂存于 `plugins/` 下。它们可以是核心宿主或功能卫星，并且可以嵌入依赖项（托管、本机、NuGet）以便加载程序自动提取。
+- **控制台客户端/发布者** – 与运行时并存并共享相同子系统的工具项目。
 
+<a id="12-boot-flow"></a>
 ### 1.2 启动流程
-1. `Program.cs` 解析启动器参数并转发给 `UnifierApi.Initialize`。
-2. `UnifierApi` 准备全局服务（日志、事件中心、模块加载器）并组合一个 `PluginOrchestrator`（插件编排器）。
-3. 模块通过 `ModuleAssemblyLoader` 被发现和预加载，暂存程序集和依赖 blob。
-4. 插件宿主（内置的 `.NET` 宿主加上任何标记了 `[CoreModule]` 的宿主）发现、加载并初始化插件。
-5. `UnifiedServerCoordinator` 启动监听套接字，并为每个配置的世界启动 `ServerContext` 实例。
-6. 事件桥接器（聊天、游戏、协调器、网络播放、服务器）将 detour 注册到 USP/Terraria，将事件引入 `EventHub`。
+1. `Program.cs` 调用 `UnifierApi.HandleCommandLinePreRun(args)`，通过 `UnifierApi.InitializeCore(args)` 启动核心初始化，并使用 `UnifierApi.CompleteLauncherInitialization()` 完成启动器初始化。
+2. `UnifierApi` 设置全局服务（日志记录、事件中心、模块加载器）并初始化 `PluginOrchestrator`。
+3. 通过 `ModuleAssemblyLoader` 发现并预加载模块 — 暂存程序集并提取依赖 blob。
+4. 插件宿主（内置 .NET 宿主 + 从已加载模块中发现并通过 `[PluginHost(...)]` 标注的自定义宿主）负责发现、加载和初始化插件。
+5. `UnifiedServerCoordinator` 打开侦听套接字并为每个配置的世界启动 `ServerContext`。
+6. 事件桥（聊天、游戏、协调器、网络游戏、服务器）通过 detour 挂接到 USP/Terraria，并将事件统一送入 `EventHub`。
 
+<a id="13-major-components"></a>
 ### 1.3 主要组件
-- `UnifierApi` — 静态外观，用于获取 logger、事件、插件宿主和窗口标题辅助工具。
-- `UnifiedServerCoordinator` — 多服务器路由器，管理共享的 Terraria 状态和连接生命周期。
-- `ServerContext` — 每个世界一个 USP `RootContext` 子类；集成日志记录、数据包接收器和扩展槽位。
-- `PluginOrchestrator` + 宿主 — 管理插件发现、加载、排序、关闭和卸载。
-- `ModuleAssemblyLoader` — 处理模块暂存、依赖提取、可收集的加载上下文以及卸载顺序。
-- `EventHub` — 集中式事件提供者注册表，将 MonoMod detour 桥接到优先级感知的事件管道。
-- `Logging` 子系统 — 分配感知的日志记录，具备元数据注入和可插拔的写入器。
+- `UnifierApi` – 获取记录器、事件、插件宿主和窗口标题助手的主要入口点。
+- `UnifiedServerCoordinator` – 管理共享泰拉瑞亚状态和连接生命周期的多服务器路由器。
+- `ServerContext` – 每个世界的 USP `RootContext` 子类，并接入日志、数据包接收器和扩展插槽。
+- `PluginOrchestrator` + 宿主 – 处理插件发现、加载、初始化排序和关闭/卸载。
+- `ModuleAssemblyLoader` – 负责模块暂存、依赖项提取、可收集的加载上下文和卸载顺序。
+- `EventHub` – 中央事件注册表，将 MonoMod detour 接入按优先级排序的事件管道。
+- `Logging` 子系统 – 轻量级、分配友好的日志记录，具有元数据注入和可插拔写入器。
 
-## 2. 核心服务与子系统
+<a id="2-core-services--subsystems"></a>
+## 2. 核心服务和子系统
 
-### 2.1 事件中心 (Event Hub)
+<a id="21-event-hub"></a>
+### 2.1 事件中心
 
-事件系统是 UnifierTSL 的中央发布/订阅基础设施，提供零分配、优先级排序的事件管道，具有编译时类型安全和运行时灵活性。
+事件系统是 UnifierTSL 发布/订阅（pub/sub）模型的核心：一条高性能、按优先级排序、零堆分配且类型安全的事件管道。
 
-#### 架构概览
+<details>
+<summary><strong>展开事件中心实现细节深挖</strong></summary>
 
-**`EventHub`** (src/UnifierTSL/EventHub.cs) 作为所有事件提供者的聚合点，按域组织：
+#### 架构概述
+
+**`EventHub` (src/UnifierTSL/EventHub.cs)** 将所有事件提供程序收集在一处，并按域分组：
 ```csharp
 public class EventHub
 {
-    public readonly LanucherEventHandler Lanucher = new();
+    public readonly LauncherEventHandler Launcher = new();
     public readonly ChatHandler Chat = new();
     public readonly CoordinatorEventBridge Coordinator = new();
     public readonly GameEventBridge Game = new();
@@ -48,24 +84,26 @@ public class EventHub
 }
 ```
 
-通过以下方式访问事件：`UnifierApi.EventHub.Game.PreUpdate`、`UnifierApi.EventHub.Chat.MessageEvent` 等。
+你可以访问如下事件：`UnifierApi.EventHub.Game.PreUpdate`、`UnifierApi.EventHub.Chat.MessageEvent` 等。
+
+一旦启动器参数最终确定（包括交互式提示），`UnifierApi.EventHub.Launcher.InitializedEvent` 就会从 `UnifierApi.CompleteLauncherInitialization()` 触发——就在 `UnifiedServerCoordinator.Launch(...)` 开始接受客户端之前。
 
 #### 事件提供者类型
 
-事件系统提供**四种不同的提供者类型**，针对不同的可变性和取消需求进行了优化：
+有**四种提供程序类型**，每种类型都针对可变性和取消的不同需求进行了调整：
 
-| 提供者类型 | 事件数据 | 取消机制 | 使用场景 |
-|-----------|---------|---------|----------|
-| `ValueEventProvider<T>` | 可变 (`ref T`) | 是（`Handled` 标志） | 处理器修改数据并可取消操作的事件（如聊天命令、传输） |
-| `ReadonlyEventProvider<T>` | 不可变 (`in T`) | 是（`Handled` 标志） | 处理器检查数据并可否决操作的事件（如连接验证） |
-| `ValueEventNoCancelProvider<T>` | 可变 (`ref T`) | 否 | 处理器可能需要修改共享状态的通知事件 |
-| `ReadonlyEventNoCancelProvider<T>` | 不可变 (`in T`) | 否 | 用于生命周期/遥测的纯通知事件（如 `PreUpdate`、`PostUpdate`） |
+|提供商类型 |事件数据|取消 |使用案例|
+|--------------|------------|--------------|----------|
+| `ValueEventProvider<T>` |可变 (`ref T`) |是（`Handled` 标志）|处理程序修改数据并可以取消操作（例如聊天命令、传输）的事件 |
+| `ReadonlyEventProvider<T>` |不可变 (`in T`) |是（`Handled` 标志）|处理程序检查数据并可以否决操作（例如连接验证）的事件 |
+| `ValueEventNoCancelProvider<T>` |可变 (`ref T`) |没有 |处理程序可能需要修改共享状态的信息事件 |
+| `ReadonlyEventNoCancelProvider<T>` |不可变 (`in T`) |没有 |用于生命周期/遥测的纯通知事件（例如 `PreUpdate`、`PostUpdate`）|
 
-所有事件参数都是在栈上分配的 `ref struct` 类型——**零堆分配**、**零 GC 压力**。
+所有事件参数都是 `ref struct` 类型，存在于堆栈中 — 无堆分配，无 GC 压力。
 
-#### 优先级系统和处理器注册
+#### 优先级系统与处理程序注册
 
-处理器按**优先级升序**执行（数值越小 = 优先级越高）：
+处理程序以**优先级升序**运行（数字越小=优先级越高）：
 ```csharp
 public enum HandlerPriority : byte
 {
@@ -83,47 +121,47 @@ public enum HandlerPriority : byte
 }
 ```
 
-**注册 API**：
+**注册API**：
 ```csharp
-// 基本注册（Normal 优先级）
-UnifierApi.EventHub.Chat.MessageEvent.Register(OnMessage);
+// 基础注册（ValueEventProvider 的 Normal 优先级）
+UnifierApi.EventHub.Chat.ChatEvent.Register(OnChat);
 
-// 指定优先级
+// 显式指定优先级
 UnifierApi.EventHub.Netplay.ConnectEvent.Register(OnConnect, HandlerPriority.Higher);
 
 // 使用过滤选项（仅在已处理时运行）
 UnifierApi.EventHub.Game.GameHardmodeTileUpdate.Register(OnTileUpdate,
     HandlerPriority.Low, FilterEventOption.Handled);
 
-// 取消注册（传递相同的委托引用）
-UnifierApi.EventHub.Chat.MessageEvent.UnRegister(OnMessage);
+// 取消注册（传入同一委托引用）
+UnifierApi.EventHub.Chat.ChatEvent.UnRegister(OnChat);
 ```
 
-**处理器管理内部机制** (src/UnifierTSL/Events/Core/ValueEventBaseProvider.cs:28-68)：
-- 使用**易失性快照数组**在调用期间实现无锁读取
-- **二分查找插入**自动维护优先级顺序
-- **写时复制**语义：注册创建新数组，旧数组对正在进行的调用保持有效
-- 仅对修改操作使用 `Lock _sync` 实现线程安全
+**底层**（src/UnifierTSL/Events/Core/ValueEventBaseProvider.cs:28-68）：
+- 使用**volatile 快照数组**，因此调用期间的读取是无锁的
+- **二分搜索插入**使处理程序自动按优先级排序
+- **写入时复制**：注册创建一个新数组，因此对旧快照的持续调用不会中断
+- 仅修改受 `Lock _sync` 保护
 
 #### 过滤和取消机制
 
-**FilterEventOption** 根据事件状态控制处理器执行：
+**FilterEventOption** 根据事件状态控制处理程序执行：
 ```csharp
 public enum FilterEventOption : byte
 {
-    Normal = 1,      // 仅当未处理时执行
-    Handled = 2,     // 仅当已处理时执行（如清理/日志）
+    Normal = 1,      // 仅在未处理时执行
+    Handled = 2,     // 仅在已处理时执行（例如清理/日志）
     All = 3          // 始终执行（Normal | Handled）
 }
 ```
 
-**取消模型**：
-- `Handled = true`：标记事件为"已消费"（概念上取消操作）
-- `StopPropagation = true`：停止执行剩余处理器
-- 不同提供者对 `Handled` 有不同解释：
-  - `ReadonlyEventProvider`：向调用者返回布尔值（`out bool handled`）
-  - `ValueEventProvider`：调用者在调用后检查 `args.Handled`
-  - 无取消提供者：不暴露 `Handled` 标志
+**取消模式**：
+- `Handled = true`：将事件标记为“已消耗”（概念上取消操作）
+- `StopPropagation = true`：停止执行剩余的处理程序
+- 不同的提供商对 `Handled` 的解释不同：
+  - `ReadonlyEventProvider`：向调用者返回布尔值 (`out bool handled`)
+  - `ValueEventProvider`：调用者通过 `Invoke(ref data, out bool handled)` 的 `out bool handled` 获取取消结果（由处理程序设置 `args.Handled`）
+  - 不可取消提供商：未暴露 `Handled` 标志
 
 **示例 - 聊天命令拦截**：
 ```csharp
@@ -133,43 +171,67 @@ UnifierApi.EventHub.Chat.MessageEvent.Register(
         if (args.Content.Text.StartsWith("!help"))
         {
             SendHelpText(args.Content.Sender);
-            args.Handled = true;  // 阻止进一步处理
+            args.Handled = true;  // 阻止后续处理
         }
     },
     HandlerPriority.Higher);
 ```
 
-#### 事件桥接器 - MonoMod 集成
+#### 事件桥 — MonoMod 集成
 
-事件桥接器将 **MonoMod 运行时 detour** 连接到事件系统，将低级 hook 转换为类型化的事件调用：
+事件桥是 **MonoMod 运行时 detour** 与事件系统之间的粘合层，它们会把底层挂钩转换为类型化事件调用：
 
 **GameEventBridge** (src/UnifierTSL/Events/Handlers/GameEventBridge.cs)：
 ```csharp
 public class GameEventBridge
 {
+    public readonly ReadonlyEventNoCancelProvider<ServerEvent> GameInitialize = new();
+    public readonly ReadonlyEventNoCancelProvider<ServerEvent> GamePostInitialize = new();
     public readonly ReadonlyEventNoCancelProvider<ServerEvent> PreUpdate = new();
     public readonly ReadonlyEventNoCancelProvider<ServerEvent> PostUpdate = new();
     public readonly ReadonlyEventProvider<GameHardmodeTileUpdateEvent> GameHardmodeTileUpdate = new();
 
     public GameEventBridge() {
+        On.Terraria.Main.Initialize += OnInitialize;
+        On.Terraria.NetplaySystemContext.StartServer += OnStartServer;
         On.Terraria.Main.Update += OnUpdate;
+        On.OTAPI.HooksSystemContext.WorldGenSystemContext.InvokeHardmodeTilePlace += OnHardmodeTilePlace;
         On.OTAPI.HooksSystemContext.WorldGenSystemContext.InvokeHardmodeTileUpdate += OnHardmodeTileUpdate;
+    }
+
+    private void OnInitialize(...) {
+        GameInitialize.Invoke(new(root.ToServer())); // 在 Terraria.Main.Initialize 原始逻辑之前
+        orig(self, root);
+    }
+
+    private void OnStartServer(...) {
+        orig(self);
+        GamePostInitialize.Invoke(new(self.root.ToServer())); // 在 NetplaySystemContext.StartServer 之后
     }
 
     private void OnUpdate(On.Terraria.Main.orig_Update orig, Main self, RootContext root, GameTime gameTime) {
         ServerEvent data = new(root.ToServer());
-        PreUpdate.Invoke(data);      // 原始逻辑之前
-        orig(self, root, gameTime);  // 执行原始 Terraria 逻辑
-        PostUpdate.Invoke(data);     // 原始逻辑之后
+        PreUpdate.Invoke(data);      // 原始逻辑前
+        orig(self, root, gameTime);  // 执行 Terraria 原始逻辑
+        PostUpdate.Invoke(data);     // 原始逻辑后
+    }
+
+    private bool OnHardmodeTilePlace(...) {
+        GameHardmodeTileUpdateEvent data = new(x, y, type, self.root.ToServer());
+        GameHardmodeTileUpdate.Invoke(data, out bool handled);
+        return !handled;
     }
 
     private bool OnHardmodeTileUpdate(...) {
         GameHardmodeTileUpdateEvent data = new(x, y, type, self.root.ToServer());
         GameHardmodeTileUpdate.Invoke(data, out bool handled);
-        return !handled;  // 如果已处理则返回 false 以取消
+        return !handled;  // 若已处理则返回 false 以取消
     }
 }
 ```
+`GameHardmodeTileUpdate` 会把原始 OTAPI 提供的两个困难模式事件（`HardmodeTilePlace` 和 `HardmodeTileUpdate`）聚合到同一个事件提供程序里。
+这两个 hook 对应 Terraria 困难模式下的图格感染/生长路径（例如邪恶/神圣蔓延与水晶碎块生长），因此可以在一个处理器里统一策略。
+USP 上下文化后，这两个事件从静态入口变成上下文实例上的成员，可按实例订阅，但不利于全局统一注册。通过 MonoMod detour 去 hook 其事件入口函数（`InvokeHardmodeTilePlace` 和 `InvokeHardmodeTileUpdate`）后，就能汇聚为一个全局事件；其中 `self` 作为上下文实例携带当前事件关联服务器的根上下文，桥接层再通过 `self.root.ToServer()` 传出 `ServerContext`。
 
 **ChatHandler** (src/UnifierTSL/Events/Handlers/ChatHandler.cs)：
 ```csharp
@@ -186,36 +248,41 @@ public class ChatHandler
 ```
 
 **NetplayEventBridge** (src/UnifierTSL/Events/Handlers/NetplayEventBridge.cs)：
-- `ConnectEvent`（可取消）- 在客户端握手期间触发
+- `ConnectEvent` (可取消) - 在客户端握手期间触发
 - `ReceiveFullClientInfoEvent`（可取消）- 收到客户端元数据后
-- `LeaveEvent`（通知性）- 客户端断开连接通知
-- `SocketResetEvent`（通知性）- 套接字清理通知
+- `LeaveEvent`（信息性）- 客户端断开连接通知
+- `SocketResetEvent`（信息性） - 套接字清理通知
 
 **CoordinatorEventBridge** (src/UnifierTSL/Events/Handlers/CoordinatorEventBridge.cs)：
-- `SwitchJoinServerEvent`（可变）- 为加入的玩家选择目标服务器
-- `PreServerTransfer`（可取消）- 在服务器间传输玩家之前
-- `PostServerTransfer`（通知性）- 成功传输后
-- `CreateSocketEvent`（可变）- 自定义套接字创建
+- `CheckVersion`（可变） - 在挂起的连接身份验证期间检查 `ClientHello` 版本
+- `SwitchJoinServerEvent` (可变) - 选择加入玩家的目标服务器
+- `ServerCheckPlayerCanJoinIn` (可变) - 在选择候选服务器之前使用的每服务器准入挂钩
+- `JoinServer`（信息性） - 一旦玩家绑定到目标服务器就会引发
+- `PreServerTransfer`（可取消） - 在服务器之间转移玩家之前
+- `PostServerTransfer`（信息性）- 成功转移后
+- `CreateSocketEvent` (可变) - 自定义套接字创建
+- `Started`（信息性） - 协调器启动和启动日志记录完成后触发
+- `LastPlayerLeftEvent`（信息性） - 从 `ActiveConnections > 0` 过渡到 `0` 时触发
 
 **ServerEventBridge** (src/UnifierTSL/Events/Handlers/ServerEventBridge.cs)：
-- `CreateConsoleService`（可变）- 提供自定义控制台实现
-- `AddServer` / `RemoveServer`（通知性）- 服务器生命周期通知
-- `ServerListChanged`（通知性）- 聚合的服务器列表变化
+- `CreateConsoleService` (可变) - 提供自定义控制台实现
+- `AddServer` / `RemoveServer`（信息性） - 服务器生命周期通知
+- `ServerListChanged`（信息性） - 聚合服务器列表更改
 
 #### 事件内容层次结构
 
-事件负载实现类型化接口以进行上下文传播：
+事件载荷使用类型化接口来携带上下文：
 ```csharp
-public interface IEventContent { }  // 基础标记
+public interface IEventContent { }  // 基础标记接口
 
 public interface IServerEventContent : IEventContent
 {
-    ServerContext Server { get; }  // 服务器范围事件
+    ServerContext Server { get; }  // 服务器作用域事件
 }
 
 public interface IPlayerEventContent : IServerEventContent
 {
-    int Who { get; }  // 玩家范围事件（包含服务器）
+    int Who { get; }  // 玩家作用域事件（包含服务器上下文）
 }
 ```
 
@@ -224,10 +291,10 @@ public interface IPlayerEventContent : IServerEventContent
 // 基础事件（无上下文）
 public readonly struct MessageEvent(...) : IEventContent { ... }
 
-// 服务器范围
+// 服务器作用域
 public readonly struct ServerEvent(ServerContext server) : IServerEventContent { ... }
 
-// 玩家范围（继承服务器上下文）
+// 玩家作用域（继承服务器上下文）
 public readonly struct LeaveEvent(int plr, ServerContext server) : IPlayerEventContent
 {
     public int Who { get; } = plr;
@@ -235,34 +302,37 @@ public readonly struct LeaveEvent(int plr, ServerContext server) : IPlayerEventC
 }
 ```
 
-#### 性能特征
+</details>
 
-**处理器调用**：
+#### 性能特点
+
+**处理程序调用**：
 - 快照读取：O(1) 易失性访问（无锁）
-- 处理器迭代：O(n)，其中 n = 处理器数量
-- 过滤检查：每个处理器 O(1) 位运算 AND
+- 处理程序迭代：O(n)，其中 n = 处理程序计数
+- 过滤器检查：每个处理程序 O(1) 按位 AND
 
 **内存**：
-- 事件参数：栈分配的 `ref struct`（零堆分配）
-- 处理器快照：不可变数组（GC 友好，长期存活的 Gen2）
+- 事件参数：堆栈分配 `ref struct` — 无堆分配
+- 处理程序快照：不可变数组，GC 友好（长寿命 Gen2）
 - 注册：O(log n) 二分查找 + O(n) 数组复制
 
-**典型性能**：
-- 具有 5 个处理器的简单事件：约 100-200 ns
-- 具有 20 个处理器 + 过滤的事件：约 500-800 ns
-- 稳态调用期间零 GC 分配
+**在实践中**，实际成本取决于你拥有多少个处理程序、哪些过滤器处于活动状态以及你的处理程序逻辑有多重。只要你的处理程序执行相同的操作，管道就会避免每次调用堆分配。
 
 #### 最佳实践
 
-1. **优先使用事件提供者而非直接 Detour**：为保持一致性使用 `EventHub` 提供者；将新提供者贡献到核心运行时而不是添加插件特定的 detour
-2. **遵守 `ref struct` 约束**：事件参数不能在闭包或异步方法中捕获；同步提取必要数据
-3. **避免阻塞操作**：事件处理器在游戏线程上运行；通过 `Task.Run()` 调度长时间运行的工作
-4. **在关闭期间取消注册**：始终在 `DisposeAsync()` 中调用 `UnRegister()` 以防止内存泄漏
-5. **使用适当的提供者类型**：在适用时选择只读/无取消变体以获得更好的性能
-6. **注意优先级顺序**：谨慎使用 `Highest`；为关键基础设施（如权限检查）保留
-7. **高级：自定义事件提供者**
+1. **对共享/高频挂钩点优先接入 `EventHub`** - 它提供处理器级别的优先级、过滤和更可控的执行顺序。原始 MonoMod detour 只能按 detour 注册顺序（通常后注册先执行）组合，粒度更偏“插件级”，在多插件交互时容易出现顺序冲突。若该挂钩具有通用价值，优先向核心补充 `EventHub` 提供程序
+2. **记住 `ref struct` 规则** - 事件参数无法在闭包或异步方法中捕获，因此请同步从它们中获取你需要的内容
+3. **不要阻塞处理程序** — 它们在游戏线程上运行。使用 `Task.Run()` 减轻繁重的工作
+4. **关闭时取消注册** — 始终在插件的 dispose hook (`DisposeAsync`/`DisposeAsync(bool isDisposing)`) 中调用 `UnRegister()` 以避免泄漏
+5. **选择正确的提供商类型** — 尽可能使用只读/不可取消变体；它们更轻
+6. **谨慎使用 `Highest` 优先级** - 将其保存到关键基础设施（如权限检查）
 
-要添加新事件，遵循此模式：
+<details>
+<summary><strong>展开自定义事件提供器扩展示例</strong></summary>
+
+#### 高级：自定义事件提供程序
+
+要添加新事件，请遵循以下模式：
 ```csharp
 // 1. 定义事件内容结构
 public readonly struct MyCustomEvent(ServerContext server, int data) : IServerEventContent
@@ -271,7 +341,7 @@ public readonly struct MyCustomEvent(ServerContext server, int data) : IServerEv
     public int Data { get; } = data;
 }
 
-// 2. 在适当的桥接器中创建提供者
+// 2. 在对应桥接器中创建提供程序
 public class MyEventBridge
 {
     public readonly ValueEventProvider<MyCustomEvent> CustomEvent = new();
@@ -283,7 +353,7 @@ public class MyEventBridge
     private void OnMethod(...) {
         MyCustomEvent data = new(server, 42);
         CustomEvent.Invoke(ref data, out bool handled);
-        if (handled) return;  // 遵守取消
+        if (handled) return;  // 遵循取消标记
         // ... 原始逻辑
     }
 }
@@ -295,43 +365,49 @@ public class EventHub
 }
 ```
 
-有关完整示例，请参阅 `src/Plugins/TShockAPI/Handlers/MiscHandler.cs` 和 `src/Plugins/CommandTeleport`。
+有关实际示例，请查看 `src/Plugins/TShockAPI/Handlers/MiscHandler.cs` 和 `src/Plugins/CommandTeleport`。
 
+</details>
+
+<a id="22-module-system"></a>
 ### 2.2 模块系统
 
-模块系统提供**可收集的程序集加载**，具备自动依赖管理、热重载支持和安全卸载语义。它在原始 DLL 和插件宿主层之间架起桥梁。
+模块系统负责加载插件 DLL、引入依赖项、热重载以及卸载时的清理。它位于原始 DLL 和插件宿主之间，使用可收集的 `AssemblyLoadContext`，因此可以在运行时交换模块。
 
-#### 模块类型与组织
+<details>
+<summary><strong>展开模块系统实现细节深挖</strong></summary>
 
-**三种模块类别** (src/UnifierTSL/Module/ModulePreloadInfo.cs)：
+#### 模块类型和组织
+
+**三个模块类别** (src/UnifierTSL/Module/ModulePreloadInfo.cs)：
 
 1. **核心模块** (`[assembly: CoreModule]`)：
-   - 相关程序集的锚点
-   - 获得专用子目录：`plugins/<ModuleName>/`
-   - 在隔离的 `ModuleLoadContext` 中加载（可收集）
-   - 可通过 `[assembly: ModuleDependencies<TProvider>]` 声明依赖
-   - 其他模块可通过 `[assembly: RequiresCoreModule("ModuleName")]` 依赖它们
+   - 相关组件的锚点
+   - 获取专用子目录：`plugins/<ModuleName>/`
+   - 装载于隔离的 `ModuleLoadContext` （可回收）
+   - 可以通过 `[assembly: ModuleDependencies<TProvider>]` 声明依赖关系
+   - 其他模块可以通过 `[assembly: RequiresCoreModule("ModuleName")]` 依赖它们
 
 2. **卫星模块** (`[assembly: RequiresCoreModule("CoreModuleName")]`)：
-   - 必须引用现有核心模块
-   - 暂存在核心模块目录中：`plugins/<CoreModuleName>/SatelliteName.dll`
-   - **共享核心模块的 `ModuleLoadContext`**（关键：共享类型，协调卸载）
-   - 不能声明自己的依赖（从核心模块继承）
-   - 在核心模块初始化后加载
+   - 必须引用现有的核心模块
+   - 暂存于核心模块目录：`plugins/<CoreModuleName>/SatelliteName.dll`
+   - **共享核心模块的`ModuleLoadContext`**（关键：共享类型，协调卸载）
+   - 无法声明自己的依赖项（从核心模块继承）
+   - 核心模块初始化后加载
 
 3. **独立模块**（无特殊属性）：
-   - 保留在 `plugins/` 根目录
-   - 在隔离的 `ModuleLoadContext` 中加载
-   - 不能被卫星模块目标化
-   - 如需要可声明依赖
+   - 留在 `plugins/` 根目录
+   - 加载到隔离的 `ModuleLoadContext` 中
+   - 不能作为卫星模块的依赖目标
+   - 如果需要可以声明依赖项
 
 **模块发现与暂存** (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:43-175)：
 
-加载器**在发现期间不加载程序集**——它通过 `MetadataLoadContext` 直接读取 PE 头：
+加载器**在发现期间实际上并不加载程序集** - 它只是通过 `MetadataLoadContext` 读取 PE 标头：
 ```csharp
 public ModulePreloadInfo PreloadModule(string dll)
 {
-    // 1. 读取 PE 头而不加载程序集
+    // 1. 在不加载程序集的情况下读取 PE 头
     using PEReader peReader = MetadataBlobHelpers.GetPEReader(dll);
     MetadataReader metadataReader = peReader.GetMetadataReader();
 
@@ -339,7 +415,7 @@ public ModulePreloadInfo PreloadModule(string dll)
     AssemblyDefinition asmDef = metadataReader.GetAssemblyDefinition();
     string moduleName = metadataReader.GetString(asmDef.Name);
 
-    // 3. 通过 PE 元数据检查属性
+    // 3. 通过 PE 元数据检查特性
     bool isCoreModule = MetadataBlobHelpers.HasCustomAttribute(metadataReader, "CoreModuleAttribute");
     bool hasDependencies = MetadataBlobHelpers.HasCustomAttribute(metadataReader, "ModuleDependenciesAttribute");
     string? requiresCoreModule = TryReadAssemblyAttributeData(metadataReader, "RequiresCoreModuleAttribute");
@@ -347,7 +423,7 @@ public ModulePreloadInfo PreloadModule(string dll)
     // 4. 确定暂存位置
     string newLocation;
     if (!hasDependencies && !isCoreModule && requiresCoreModule is null) {
-        newLocation = Path.Combine(loadDirectory, fileName);  // 独立：保留在根目录
+        newLocation = Path.Combine(loadDirectory, fileName);  // 独立模块：保留在根目录
     } else {
         string moduleDir = Path.Combine(loadDirectory,
             (hasDependencies || isCoreModule) ? moduleName : requiresCoreModule!);
@@ -358,20 +434,22 @@ public ModulePreloadInfo PreloadModule(string dll)
     // 5. 移动文件（保留时间戳）并生成签名
     CopyFileWithTimestamps(dll, newLocation);
     CopyFileWithTimestamps(dll.Replace(".dll", ".pdb"), newLocation.Replace(".dll", ".pdb"));
-    File.Delete(dll);  // 删除原始文件
+    File.Delete(dll);  // 删除原文件
 
     return new ModulePreloadInfo(FileSignature.Generate(newLocation), ...);
 }
 ```
 
+`PreloadModules()` 在字典中对 `dll.Name` 发现的 DLL 进行索引。如果 `plugins/` 子目录（或子目录和根目录之间）有重复的名称，则后索引项会覆盖前项。由于根级文件在子目录之后建立索引，因此根目录中的 `plugins/<Name>.dll` 将覆盖之前在子文件夹中找到的同名文件。
+
 **验证规则**：
-- 不能同时是 `CoreModule` 和 `RequiresCoreModule`
-- `RequiresCoreModule` 模块不能声明依赖
+- 不能同时为 `CoreModule` 和 `RequiresCoreModule`
+- `RequiresCoreModule` 模块无法声明依赖项
 - `RequiresCoreModule` 必须指定核心模块名称
 
-#### FileSignature 变更检测
+#### 文件签名更改检测
 
-**FileSignature** (src/UnifierTSL/FileSystem/FileSignature.cs) 通过三级检测跟踪模块变化：
+**FileSignature** (src/UnifierTSL/FileSystem/FileSignature.cs) 通过三个级别的检查来跟踪模块更改：
 
 ```csharp
 public record FileSignature(string FilePath, string Hash, DateTime LastWriteTimeUtc)
@@ -387,18 +465,18 @@ public record FileSignature(string FilePath, string Hash, DateTime LastWriteTime
         return Hash == ComputeHash(filePath);
     }
 
-    // 级别 3：最慢/最彻底 - 仅检查 SHA256 哈希
+    // 级别 3：最慢/最全面 - 仅检查 SHA256 哈希
     public bool ContentEquals(string filePath) {
         return Hash == ComputeHash(filePath);
     }
 }
 ```
 
-**用法**：模块加载器在 `Load()` 期间使用 `FileSignature.Hash` 比较来检测更新的模块 (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:204-207)。
+模块加载器在 `Load()` 期间使用 `FileSignature.Hash` 比较来发现更新的模块 (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:204-207)。
 
 #### ModuleLoadContext - 可收集的程序集加载
 
-**ModuleLoadContext** (src/UnifierTSL/Module/ModuleLoadContext.cs:16) 扩展 `AssemblyLoadContext`，具有：
+**ModuleLoadContext** (src/UnifierTSL/Module/ModuleLoadContext.cs:16) 扩展 `AssemblyLoadContext` 为：
 
 ```csharp
 public class ModuleLoadContext : AssemblyLoadContext
@@ -412,48 +490,49 @@ public class ModuleLoadContext : AssemblyLoadContext
 }
 ```
 
-**关键属性**：
-- **`isCollectible: true`** - 启用运行时卸载（无引用时 GC 收集 ALC）
-- **清理动作** - 插件通过 `AddDisposeAction(Func<Task>)` 注册清理，在 `Unloading` 事件期间执行
-- **解析链** - 托管和原生程序集的多级回退
+**这里重要的是**：
+- **`isCollectible: true`** — 这可以让你在运行时卸载模块（一旦没有引用剩余，GC 就会收集 ALC）
+- **处置操作** — 插件通过 `AddDisposeAction(Func<Task>)` 注册清理，该操作在 `Unloading` 事件期间运行
+- **解析链** — 用于解析托管和本机程序集的多层回退
 
 **程序集解析策略** (src/UnifierTSL/Module/ModuleLoadContext.cs:83-128)：
 
 ```
 OnResolving(AssemblyName assemblyName)
     ↓
-1. 框架程序集？-> 从默认 ALC 加载（BCL、System.* 等）
+1. Framework assemblies? -> Load from default ALC (BCL, System.*, etc.)
     ↓
-2. 宿主程序集（UnifierTSL.dll）？-> 返回单例
+2. Host assembly (UnifierTSL.dll)? -> Return singleton
     ↓
-3. UTSL 核心库？-> 通过 AssemblyDependencyResolver 解析
+3. UTSL core libraries? -> Resolve via AssemblyDependencyResolver
     ↓
-4. 首选共享程序集解析（精确版本匹配）：
-   - 在已加载模块中搜索匹配名称 + 版本
-   - 通过 LoadedModule.Reference() 注册依赖
-   - 从其他模块的 ALC 返回程序集
+4. Preferred shared assembly resolution (EXACT version match):
+   - Search loaded modules for matching name + version
+   - Register dependency via LoadedModule.Reference()
+   - Return assembly from other module's ALC
     ↓
-5. 模块本地依赖：
-   - 检查 {moduleDir}/lib/{assemblyName}.dll
-   - 如果存在则从此上下文加载
+5. Module-local dependency:
+   - Check {moduleDir}/lib/{assemblyName}.dll
+   - Load from this context if exists
     ↓
-6. 回退共享程序集解析（仅名称匹配）：
-   - 在已加载模块中搜索任何版本
-   - 尝试代理加载（如果请求者引用提供者的核心程序集）
-   - 从其他模块的 ALC 返回程序集
+6. Fallback shared assembly resolution (NAME-ONLY match):
+   - Search loaded modules for any version
+   - Try proxy loading (if requester references provider's core assembly)
+   - Return assembly from other module's ALC
     ↓
-7. 返回 null（解析失败）
+7. Return null (resolution failed)
 ```
 
 **非托管 DLL 解析** (src/UnifierTSL/Module/ModuleLoadContext.cs:134-155)：
 - 从模块目录读取 `dependencies.json`
-- 通过 `RidGraph.Instance.ExpandRuntimeIdentifier()` 扩展当前 RID（例如，`win-x64` → `win` → `any`）
-- 使用 RID 回退链搜索匹配的原生库
-- 通过 `LoadUnmanagedDllFromPath()` 加载
+- 按清单条目 (`DependencyItem.FilePath`) 进行匹配，而不是在加载时探测文件系统 RID 文件夹
+- 接受直接名称匹配 (`sqlite3.dll`) 和版本后缀的清单名称 (`sqlite3.1.2.3.dll`)
+- 通过 `LoadUnmanagedDllFromPath()` 加载第一个未过时的清单匹配
+- 当前 `LoadUnmanagedDll` 的行为是清单驱动的； RID 回退主要在依赖项提取期间较早应用（`NugetPackageFetcher.GetNativeLibsPathsAsync`、`NativeEmbeddedDependency`）
 
 #### 依赖管理
 
-**依赖声明** (src/UnifierTSL/Module/ModuleDependenciesAttribute.cs)：
+**依赖关系声明** (src/UnifierTSL/Module/ModuleDependencyAttribute.cs)：
 ```csharp
 [assembly: ModuleDependencies<MyDependencyProvider>]
 
@@ -469,54 +548,54 @@ public class MyDependencyProvider : IDependencyProvider
 
 **依赖类型**：
 
-1. **NuGet 依赖** (src/UnifierTSL/Module/Dependencies/NugetDependency.cs)：
-   - 通过 `NugetPackageCache.ResolveDependenciesAsync()` 解析传递依赖
-   - 将缺失的包下载到全局包文件夹（`~/.nuget/packages`）
-   - 提取托管库（匹配目标框架）+ 原生库（匹配 RID）
-   - 返回带有惰性流的 `LibraryEntry[]`
+1. **NuGet 依赖项** (src/UnifierTSL/Module/Dependencies/NugetDependency.cs)：
+   - 通过 `NugetPackageCache.ResolveDependenciesAsync()` 解决传递依赖
+   - 将缺少的包下载到全局包文件夹 (`~/.nuget/packages`)
+   - 提取托管库（匹配目标框架）+本机库（匹配 RID）
+   - 使用惰性流返回 `LibraryEntry[]`
 
-2. **托管嵌入式依赖** (src/UnifierTSL/Module/Dependencies/ManagedEmbeddedDependency.cs)：
-   - 通过 PE 头从嵌入资源读取程序集标识
+2. **托管嵌入式依赖项** (src/UnifierTSL/Module/Dependencies/ManagedEmbeddedDependency.cs)：
+   - 通过 PE 标头从嵌入式资源读取程序集标识
    - 将嵌入的 DLL 提取到 `{moduleDir}/lib/{AssemblyName}.dll`
 
-3. **原生嵌入式依赖** (src/UnifierTSL/Module/Dependencies/NativeEmbeddedDependency.cs)：
-   - 探测 RID 回退链以查找匹配的嵌入资源
-   - 提取到 `{moduleDir}/lib/runtimes/{rid}/native/{libraryName}.{ext}`
+3. **本机嵌入式依赖项** (src/UnifierTSL/Module/Dependencies/NativeEmbeddedDependency.cs)：
+   - 探测 RID 后备链以匹配嵌入资源
+   - 提取到 `{moduleDir}/runtimes/{rid}/native/{libraryName}.{ext}`
 
-**依赖提取过程** (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:368-560)：
+**依赖项提取过程** (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:368-560)：
 
 ```csharp
 private bool UpdateDependencies(string dll, ModuleInfo info)
 {
-    // 1. 验证模块结构（必须在命名目录中）
-    // 2. 加载先前的 dependencies.json
-    DependenciesConfiguration prevConfig = DependenciesConfiguration.LoadDependenicesConfig(moduleDir);
+    // 1. 验证模块结构（必须位于具名目录）
+    // 2. 加载旧的 dependencies.json
+    DependenciesConfiguration prevConfig = DependenciesConfiguration.LoadDependenciesConfig(moduleDir);
 
-    // 3. 提取新的/更新的依赖
+    // 3. 提取新增/更新的依赖
     foreach (ModuleDependency dependency in dependencies) {
         if (dependency.Version != prevConfig.Version) {
             ImmutableArray<LibraryEntry> items = dependency.LibraryExtractor.Extract(Logger);
-            // ... 跟踪每个文件路径的最高版本
+            // ... 按文件路径跟踪最高版本
         }
     }
 
-    // 4. 处理锁处理的文件复制
+    // 4. 复制文件并处理文件锁
     foreach (var (dependency, item) in highestVersion) {
         try {
             using Stream source = item.Stream.Value;
             destination = Utilities.IO.SafeFileCreate(targetPath, out Exception? ex);
 
             if (destination != null) {
-                source.CopyTo(destination);  // 成功路径
+                source.CopyTo(destination);  // 正常路径
             }
             else if (ex is IOException && FileSystemHelper.FileIsInUse(ex)) {
-                // 文件被已加载的程序集锁定！创建版本化文件
+                // 文件被已加载程序集锁定，改为创建带版本后缀的新文件
                 string versionedPath = Path.ChangeExtension(item.FilePath,
                     $"{item.Version}.{Path.GetExtension(item.FilePath)}");
                 destination = Utilities.IO.SafeFileCreate(versionedPath, ...);
                 source.CopyTo(destination);
 
-                // 跟踪旧（过时）和新（活动）文件
+                // 同时跟踪旧文件（待淘汰）与新文件（生效中）
                 currentSetting.Dependencies[dependency.Name].Manifests.Add(
                     new DependencyItem(item.FilePath, item.Version) { Obsolete = true });
                 currentSetting.Dependencies[dependency.Name].Manifests.Add(
@@ -532,20 +611,21 @@ private bool UpdateDependencies(string dll, ModuleInfo info)
 }
 ```
 
-**锁处理策略**：
-- 通过 `IOException` HResult 代码检测锁定文件
-- 创建版本化副本：`Newtonsoft.Json.13.0.3.dll` 而不是 `Newtonsoft.Json.dll`
-- 在清单中将旧文件标记为 `Obsolete`
-- 下次重启时文件不再被锁定时运行清理
+**文件被锁定时会发生什么**：
+- 加载器通过 `IOException` HResult 代码检测锁定的文件
+- 它会创建一个版本控制副本：`Newtonsoft.Json.13.0.3.dll` 和 `Newtonsoft.Json.dll` 一起
+- 旧文件在清单中被标记为 `Obsolete`
+- 一旦文件不再锁定，下次重新启动时就会进行清理
 
-**原生依赖的 RID 图** (src/UnifierTSL/Module/Dependencies/RidGraph.cs)：
-- 加载嵌入的 `RuntimeIdentifierGraph.json`（NuGet 的官方 RID 图）
-- RID 扩展的 BFS 遍历：`win-x64` → [`win-x64`, `win`, `any`]
-- 使用者：`NugetPackageFetcher`、`ModuleLoadContext.LoadUnmanagedDll()`、`NativeEmbeddedDependency`
+**本机依赖项的 RID 图表** (src/UnifierTSL/Module/Dependencies/RidGraph.cs)：
+- 加载嵌入的 `RuntimeIdentifierGraph.json` （NuGet 的官方 RID 图）
+- RID扩展的BFS遍历：`win-x64` → [`win-x64`, `win`, `any`]
+- 由提取时本机选择使用（`NugetPackageFetcher`、`NativeEmbeddedDependency`）
+- `ModuleLoadContext.LoadUnmanagedDll()` 当前是清单驱动的，本身不执行 RID 回退探测
 
-#### 模块卸载与依赖图
+#### 模块卸载和依赖关系图
 
-**LoadedModule** (src/UnifierTSL/Module/LoadedModule.cs) 跟踪双向依赖：
+**LoadedModule** (src/UnifierTSL/Module/LoadedModule.cs) 跟踪谁依赖于谁：
 
 ```csharp
 public record LoadedModule(
@@ -553,7 +633,7 @@ public record LoadedModule(
     Assembly Assembly,
     ImmutableArray<ModuleDependency> Dependencies,
     FileSignature Signature,
-    LoadedModule? CoreModule)  // 核心/独立模块为 null
+    LoadedModule? CoreModule)  // 核心/独立模块时为 null
 {
     // 依赖此模块的模块
     public ImmutableArray<LoadedModule> DependentModules => dependentModules;
@@ -573,34 +653,34 @@ public record LoadedModule(
 ```csharp
 public void Unload()
 {
-    if (CoreModule is not null) return;  // 不能卸载卫星（共享 ALC）
+    if (CoreModule is not null) return;  // 卫星模块共享 ALC，不能单独卸载
     if (Unloaded) return;
 
-    // 递归卸载所有依赖者
+    // 递归卸载所有依赖方
     foreach (LoadedModule dependent in DependentModules) {
         if (dependent.CoreModule == this) {
-            dependent.Unreference();  // 只断开链接（将与核心一起卸载）
+            dependent.Unreference();  // 仅断开引用（会随核心模块一起卸载）
         } else {
-            dependent.Unload();  // 递归级联
+            dependent.Unload();  // 递归级联卸载
         }
     }
 
-    Unreference();     // 清除所有引用
+    Unreference();     // 清理所有引用
     unloaded = true;
-    Context.Unload();  // 触发 OnUnloading 事件 -> 清理动作
+    Context.Unload();  // 触发 OnUnloading 事件 -> 执行释放动作
 }
 ```
 
 **有序卸载的拓扑排序** (src/UnifierTSL/Module/LoadedModule.cs:77-109)：
 ```csharp
-// 按执行顺序获取依赖者（preorder = 叶到根，postorder = 根到叶）
+// 按执行顺序获取依赖方（前序=叶到根，后序=根到叶）
 public ImmutableArray<LoadedModule> GetDependentOrder(bool includeSelf, bool preorder)
 {
-    HashSet<LoadedModule> visited = [];  // 循环检测
+    HashSet<LoadedModule> visited = [];  // 环检测
     Queue<LoadedModule> result = [];
 
     void Visit(LoadedModule module) {
-        if (!visited.Add(module)) return;  // 已访问（检测到循环）
+        if (!visited.Add(module)) return;  // 已访问过（检测到环）
 
         if (preorder) result.Enqueue(module);
         foreach (var dep in module.DependentModules) Visit(dep);
@@ -612,17 +692,17 @@ public ImmutableArray<LoadedModule> GetDependentOrder(bool includeSelf, bool pre
 }
 ```
 
-**ForceUnload** (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:179-189)：
+**强制卸载** (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:179-189)：
 ```csharp
 public void ForceUnload(LoadedModule module)
 {
-    // 如果是卫星，改为卸载核心（卫星共享 ALC）
+    // 若是卫星模块则改为卸载核心模块（共享 ALC）
     if (module.CoreModule is not null) {
         ForceUnload(module.CoreModule);
         return;
     }
 
-    // 按后序卸载（依赖者在依赖之前）
+    // 按后序卸载（先依赖方，后被依赖方）
     foreach (LoadedModule m in module.GetDependentOrder(includeSelf: true, preorder: false)) {
         Logger.Debug($"Unloading module {m.Signature.FilePath}");
         m.Unload();
@@ -633,18 +713,18 @@ public void ForceUnload(LoadedModule module)
 
 #### 模块与插件的关系
 
-**明确的关注点分离**：
+**这是两个不同的事情**：
 
-| 概念 | 职责 | 关键类型 |
-|------|------|---------|
-| **模块** | 程序集加载、依赖管理、ALC 生命周期 | `LoadedModule` |
-| **插件** | 业务逻辑、事件处理器、游戏集成 | `IPlugin` / `PluginContainer` |
+|概念|职责|关键类型 |
+|---------|---------------|----------|
+| **模块** |程序集加载、依赖管理、ALC 生命周期 | `LoadedModule` |
+| **插件** |业务逻辑、事件处理程序、游戏集成| `IPlugin` / `PluginContainer` |
 
-**流程**：
+**流动**：
 1. `ModuleAssemblyLoader` 暂存并加载程序集 → `LoadedModule`
-2. `PluginDiscoverer` 扫描已加载模块的 `IPlugin` 实现 → `IPluginInfo`
-3. `PluginLoader` 实例化插件类 → `IPlugin` 实例
-4. `PluginContainer` 包装 `LoadedModule` + `IPlugin` + `PluginMetadata`
+2. `PluginDiscoverer` 扫描加载的模块以查找 `IPlugin` 实现 → `IPluginInfo`
+3. `PluginLoader`实例化插件类→`IPlugin`实例
+4. `PluginContainer` 包裹 `LoadedModule` + `IPlugin` + `PluginMetadata`
 5. `PluginOrchestrator` 管理插件生命周期（初始化、关闭、卸载）
 
 **插件发现** (src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginDiscoverer.cs)：
@@ -678,224 +758,216 @@ public IPluginContainer? LoadPlugin(IPluginInfo pluginInfo)
     Type? type = loaded.Assembly.GetType(info.EntryPoint.EntryPointString);
     IPlugin instance = (IPlugin)Activator.CreateInstance(type)!;
 
-    // 3. 在 ALC 中注册清理动作
+    // 3. 在 ALC 中注册释放动作
     loaded.Context.AddDisposeAction(async () => await instance.DisposeAsync());
 
-    // 4. 包装在容器中
+    // 4. 封装为容器
     return new PluginContainer(info.Metadata, loaded, instance);
 }
 ```
 
+</details>
+
 #### 最佳实践
 
-1. **为相关功能使用核心模块**：在核心模块下分组卫星以共享依赖并简化卸载
-2. **声明所有依赖**：使用 `ModuleDependenciesAttribute` 而不是手动复制 DLL
-3. **测试热重载**：使用 `FileSignature.Hash` 检查验证更新检测是否正常工作
-4. **处理锁定文件**：设计插件以快速释放文件句柄（避免长期存在的流）
-5. **遵守卸载顺序**：不要跨重载缓存 `LoadedModule` 引用
-6. **优先选择 NuGet 依赖**：让加载器自动处理传递解析
-7. **使用 RID 感知的原生库**：为多个 RID 嵌入或依赖 NuGet 包 RID 探测
+1. **将相关功能分组到核心模块** - 卫星共享依赖项并一起卸载，从而保持干净
+2. **声明你的依赖项** — 使用 `ModuleDependenciesAttribute` 而不是手动复制 DLL
+3. **测试热重载** — 使用 `FileSignature.Hash` 检查来确保更新检测有效
+4. **快速释放文件句柄** - 长期存在的流可能会阻止干净卸载
+5. **不要在重新加载时缓存 `LoadedModule` 引用** - 它们会过时
+6. **让加载程序处理 NuGet** — 传递解析是自动的
+7. **嵌入多个 RID** 如果你提供本机库，或者依赖 NuGet 包 RID 探测
 
-#### 性能特征
+#### 性能说明
 
-**模块加载**：
-- PE 头解析：每个程序集约 1-2 ms
-- 暂存（文件复制）：每个程序集约 10-50 ms（磁盘受限）
-- 程序集加载：每个程序集约 5-20 ms
-- 依赖提取：约 100-500 ms（NuGet 解析）或约 1-10 ms（嵌入式）
+**加载**：成本取决于你拥有的程序集数量、依赖关系图的深度、磁盘速度以及 NuGet 缓存是否处于热状态。元数据扫描比完整负载轻，但首次 NuGet 解析或本机载荷提取可以占主导地位。
 
-**内存**：
-- 每个 `ModuleLoadContext`：约 50-200 KB 开销
-- 共享程序集：加载一次，从多个 ALC 引用（无重复）
-- 卸载的模块：GC 后可收集（Gen2 收集）
+**内存**：占用空间随加载的程序集和活动 `ModuleLoadContext` 实例而变化。一旦引用被释放并且 GC 运行，卸载的模块就变得可回收。
 
-**典型场景**：10 个插件，50 个总程序集（包括依赖），约 1-3 秒冷启动。
-
+<a id="23-plugin-host-orchestration"></a>
 ### 2.3 插件宿主编排
-- `PluginOrchestrator` (`src/UnifierTSL/PluginHost/PluginOrchestrator.cs`) 注册内置宿主（`DotnetPluginHost`）和从核心模块发现的任何其他宿主。
-- `.InitializeAllAsync` 预加载模块，发现插件入口点（`PluginDiscoverer`），并通过 `PluginLoader` 加载它们。
-- 插件容器按 `InitializationOrder` 排序，构造描述先前插件的 `PluginInitInfo` 列表，并在允许等待依赖的同时并发调用 `IPlugin.InitializeAsync`。
-- 关闭/卸载镜像此流程：`ShutdownAllAsync` 确保插件运行清理，如果需要则进行模块卸载。
+- `PluginOrchestrator` (`src/UnifierTSL/PluginHost/PluginOrchestrator.cs`) 会注册内置 `DotnetPluginHost`，并从已加载模块中发现额外的 `[PluginHost(...)]` 宿主。这一扩展点可用于引入非默认插件/脚本运行时支持。
+- 如果要自定义插件宿主，请实现 `IPluginHost`，提供无参构造函数，并使用 `[PluginHost(majorApiVersion, minorApiVersion)]` 标注类型。
+- 宿主准入由 `PluginOrchestrator.ApiVersion`（当前 `1.0.0`）控制：`major` 必须完全一致，宿主 `minor` 必须 ≤ 运行时 `minor`。不满足条件的宿主会被跳过并记录警告。
+- `.InitializeAllAsync` 预加载模块，通过 `PluginDiscoverer` 发现插件入口点，并通过 `PluginLoader` 加载它们。
+- 插件容器按 `InitializationOrder` 排序，并使用 `PluginInitInfo` 列表调用 `IPlugin.InitializeAsync`，以便你可以等待特定的依赖项。
+- `ShutdownAllAsync` 和 `UnloadAllAsync` 由编排器提供；但内置 `DotnetPluginHost` 在 `ShutdownAsync`/`UnloadPluginsAsync` 上仍是 TODO 占位实现。目前释放流程主要由模块卸载路径驱动。
 
-### 2.4 网络与协调器
+<a id="24-networking--coordinator"></a>
+### 2.4 网络和协调器
 
-UnifierTSL 的网络层在单个端口上提供**统一的多服务器数据包路由**，具有中间件风格的数据包拦截、优先级排序的处理器和内存池序列化。
+网络层在统一监听端口下承载所有服务器 - 它将数据包路由到正确的服务器，让你以中间件方式拦截/修改它们，并使用池缓冲区来保持较低的分配。
 
-#### UnifiedServerCoordinator 架构
+<details>
+<summary><strong>展开网络与协调器实现细节深挖</strong></summary>
 
-**UnifiedServerCoordinator** (src/UnifierTSL/UnifiedServerCoordinator.cs) 集中管理所有服务器的共享网络状态：
+#### 统一服务器协调器架构
+
+**UnifiedServerCoordinator** (src/UnifierTSL/UnifiedServerCoordinator.cs) 集中所有服务器之间的共享网络状态：
 
 **全局共享状态**：
 ```csharp
 // 索引 = 客户端槽位（0-255）
 Player[] players                              // 玩家实体状态
-RemoteClient[] globalClients                  // TCP 套接字包装器
+RemoteClient[] globalClients                  // 传输层套接字封装（TCP）
 LocalClientSender[] clientSenders             // 每客户端数据包发送器
-MessageBuffer[] globalMsgBuffers              // 接收缓冲区（256 × 服务器数量）
-volatile ServerContext?[] clientCurrentlyServers  // 客户端 → 服务器映射
+MessageBuffer[] globalMsgBuffers              // 接收缓冲区（256 × 服务器数）
+ServerContext?[] clientCurrentlyServers       // 客户端 → 服务器映射（通过 Volatile 助手读写）
 ```
 
 **连接管道**：
 
 ```
-TcpClient 连接到统一端口（7777）
+TcpClient connects to unified port (7777)
     ↓
-OnConnectionAccepted()：查找空槽位（0-255）
+OnConnectionAccepted(): Find empty slot (0-255)
     ↓
-创建 PendingConnection（预认证阶段）
+Create PendingConnection (pre-auth phase)
     ↓
-异步接收循环：ClientHello、SendPassword、SyncPlayer、ClientUUID
+Async receive loop: ClientHello, SendPassword, SyncPlayer, ClientUUID
     ↓
-触发 SwitchJoinServerEvent → 插件选择目标服务器
+SwitchJoinServerEvent fires → plugin selects destination server
     ↓
-在选定的 ServerContext 中激活客户端
+Activate client in chosen ServerContext
     ↓
-字节处理通过 ProcessBytes hook 路由
+Byte processing routed via ProcessBytes hook
 ```
 
-**PendingConnection** (src/UnifierTSL/UnifiedServerCoordinator.cs:529-696)：
-- 在服务器分配之前处理预认证数据包
-- 验证 Terraria 版本（Terraria279）
-- 密码认证（如果设置了 `Config.ServerPassword`）
-- 收集客户端元数据：`ClientUUID`、玩家名称和外观
-- 使用 `NetworkText` 原因踢出不兼容的客户端
+**待连接** (src/UnifierTSL/UnifiedServerCoordinator.cs:529-696)：
+- 在服务器分配之前处理预身份验证数据包
+- 根据 `Terraria{Main.curRelease}` 验证客户端版本（通过 `Coordinator.CheckVersion` 覆盖）
+- `Coordinator.CheckVersion` 当前在 `ClientHello` 处理期间被调用两次；处理程序应该是幂等的，并避免假设单次调用的副作用
+- 密码验证（如果设置了 `UnifierApi.ServerPassword`）
+- 收集客户端元数据：`ClientUUID`、玩家姓名和外观
+- 以 `NetworkText` 原因踢掉不兼容的客户端
 
 **服务器传输协议** (src/UnifierTSL/UnifiedServerCoordinator.cs:290-353)：
 ```csharp
-public static void TransferPlayerToServer(byte clientIndex, ServerContext targetServer)
+public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false)
 {
-    RemoteClient client = globalClients[clientIndex];
-    ServerContext currentServer = clientCurrentlyServers[clientIndex]!;
+    ServerContext? from = GetClientCurrentlyServer(plr);
+    if (from is null || from == to) return;
+    if (!to.IsRunning && !ignoreChecks) return;
 
-    // 1. 触发可取消的传输前事件
-    PreServerTransferEvent preEvent = new(clientIndex, currentServer, targetServer);
-    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(preEvent, out bool cancelled);
-    if (cancelled) return;
+    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
+    if (handled) return;
 
-    // 2. 原子服务器切换
-    SetClientCurrentlyServer(clientIndex, targetServer);
+    // 同步离开 → 切换映射 → 同步加入
+    from.SyncPlayerLeaveToOthers(plr);
+    from.SyncServerOfflineToPlayer(plr);
+    SetClientCurrentlyServer(plr, to);
+    to.SyncServerOnlineToPlayer(plr);
+    to.SyncPlayerJoinToOthers(plr);
 
-    // 3. 同步玩家状态到新服务器
-    Player player = players[clientIndex];
-    targetServer.NetMessage.SendData(MessageID.PlayerInfo, -1, -1, player: clientIndex);
-    targetServer.NetMessage.SendData(MessageID.PlayerActive, -1, -1, player: clientIndex);
-
-    // 4. 通知目标服务器中的其他玩家
-    targetServer.SyncPlayerJoinToOthers(client, player);
-
-    // 5. 触发传输后事件
-    PostServerTransferEvent postEvent = new(clientIndex, currentServer, targetServer);
-    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(postEvent);
+    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
 }
 ```
 
-**数据包路由 Hook** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416)：
+**数据包路由挂钩** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416)：
 ```csharp
-On.Terraria.NetMessageSystemContext.CheckBytes += (orig, self, clientIndex, buffer, length, out int messageType) =>
-{
-    ServerContext? server = clientCurrentlyServers[clientIndex];
-    if (server is null) {
-        // 待处理连接 - 通过 PendingConnection 处理
-        return pendingConnections[clientIndex].ProcessBytes(buffer, length, out messageType);
-    }
+On.Terraria.NetMessageSystemContext.CheckBytes += ProcessBytes;
 
-    // 路由到服务器的数据包处理器
-    lock (globalMsgBuffers[clientIndex]) {
-        return NetPacketHandler.ProcessBytes(server, clientIndex, buffer, length, out messageType);
+private static void ProcessBytes(
+    On.Terraria.NetMessageSystemContext.orig_CheckBytes orig,
+    NetMessageSystemContext netMsg,
+    int clientIndex)
+{
+    ServerContext server = netMsg.root.ToServer();
+    MessageBuffer buffer = globalMsgBuffers[clientIndex];
+    lock (buffer) {
+        // 解码包长度，然后把载荷路由到 NetPacketHandler.ProcessBytes(...)
+        NetPacketHandler.ProcessBytes(server, buffer, contentStart, contentLength);
     }
-};
+}
 ```
 
 #### 数据包拦截 - NetPacketHandler
 
-**NetPacketHandler** (src/UnifierTSL/Events/Handlers/NetPacketHandler.cs) 提供**中间件风格的数据包处理**，具有取消和重写能力。
+**NetPacketHandler** (src/UnifierTSL/Events/Handlers/NetPacketHandler.cs) 提供具有取消和重写功能的**中间件式数据包处理**。
 
-**处理器注册**：
+**处理程序注册**：
 ```csharp
-NetPacketHandler.Register<TrProtocol.NetPackets.ChatMessage>(
-    (ref RecievePacketEvent<ChatMessage> args) =>
+NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
+    (ref ReceivePacketEvent<TileChange> args) =>
     {
-        if (args.Packet.Message.StartsWith("/admin")) {
-            if (!HasPermission(args.Who, "admin")) {
-                args.HandleMode = PacketHandleMode.Cancel;  // 阻止数据包
-            }
+        if (IsProtectedRegion(args.Packet.X, args.Packet.Y)) {
+            args.HandleMode = PacketHandleMode.Cancel;  // 阻止数据包
         }
     },
     HandlerPriority.Highest);
 ```
 
-**处理器存储**：
+**处理程序存储**：
 - 静态数组：`Array?[] handlers = new Array[INetPacket.GlobalIDCount]`
-- 每个数据包类型一个槽位（按 `TPacket.GlobalID` 索引）
-- 每个槽位存储 `PriorityItem<TPacket>[]`（按优先级排序）
+- 每种数据包类型一个插槽（由 `TPacket.GlobalID` 索引）
+- 每个槽存储 `PriorityItem<TPacket>[]` （按优先级排序）
 
 **数据包处理流程**：
 ```
-ProcessBytes(server, clientIndex, buffer, length)
+ProcessBytes(server, messageBuffer, contentStart, contentLength)
     ↓
-1. 从缓冲区解析 MessageID
+1. Parse MessageID from buffer
     ↓
-2. 通过 switch(messageID) 分发到类型特定处理器：
-    - ProcessPacket_F<TPacket>()    // 固定，非长度感知
-    - ProcessPacket_FL<TPacket>()   // 固定，长度感知
-    - ProcessPacket_D<TPacket>()    // 动态（托管）
-    - ProcessPacket_DS<TPacket>()   // 动态，特定端
-    - ProcessPacket_DLS<TPacket>()  // 动态，长度感知，特定端
+2. Dispatch to type-specific handler via switch(messageID):
+    - ProcessPacket_F<TPacket>()    // 固定长度，非边侧特定
+    - ProcessPacket_FS<TPacket>()   // 固定长度，边侧特定
+    - ProcessPacket_D<TPacket>()    // 动态长度（托管）
+    - ProcessPacket_DS<TPacket>()   // 动态长度，边侧特定
     ↓
-3. 从缓冲区反序列化数据包（不安全指针）
+3. Deserialize packet from buffer (unsafe pointers)
     ↓
-4. 执行处理器链（优先级排序）
+4. Execute handler chain (priority-ordered)
     ↓
-5. 评估 PacketHandleMode：
-    - None：转发到 MessageBuffer.GetData()（原始逻辑）
-    - Cancel：完全抑制数据包
-    - Overwrite：通过 ClientPacketReceiver.AsRecieveFromSender_*() 重新注入
+5. Evaluate PacketHandleMode:
+    - None: Forward to MessageBuffer.GetData() (original logic)
+    - Cancel: Suppress packet entirely
+    - Overwrite: Re-inject via ClientPacketReceiver.AsReceiveFromSender_*()
     ↓
-6. 调用 PacketProcessed 回调
+6. Invoke PacketProcessed callbacks
 ```
 
 **PacketHandleMode** (src/UnifierTSL/Events/Handlers/NetPacketHandler.cs)：
 ```csharp
 public enum PacketHandleMode : byte
 {
-    None = 0,       // 传递到原始 Terraria 逻辑
-    Cancel = 1,     // 阻止数据包（阻止处理）
-    Overwrite = 2   // 使用修改的数据包（通过 ClientPacketReceiver 重新注入）
+    None = 0,       // 透传到 Terraria 原始逻辑
+    Cancel = 1,     // 阻止数据包（不再处理）
+    Overwrite = 2   // 使用修改后的数据包（通过 ClientPacketReceiver 重新注入）
 }
 ```
 
 **示例 - 数据包修改**：
 ```csharp
 NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
-    (ref RecievePacketEvent<TileChange> args) =>
+    (ref ReceivePacketEvent<TileChange> args) =>
     {
-        // 拒绝在受保护区域放置方块
+        // 禁止在受保护区域放置图格
         if (IsProtectedRegion(args.Packet.X, args.Packet.Y)) {
             args.HandleMode = PacketHandleMode.Cancel;
         }
     });
 ```
 
-#### 数据包发送 - PacketSender 与 LocalClientSender
+#### 数据包发送 - PacketSender 和 LocalClientSender
 
-**PacketSender** (src/UnifierTSL/Network/PacketSender.cs) - 类型安全数据包传输的抽象基类：
+**PacketSender** (src/UnifierTSL/Network/PacketSender.cs) - 用于泛型特化数据包发送的抽象基类（让结构体数据包走无装箱的高性能路径）：
 
-**API 方法**：
+**API方法**：
 ```csharp
-// 固定大小数据包（非托管结构）
-public void SendFixedPacket<TPacket>(in TPacket packet)
-    where TPacket : struct, INetPacket, INonSideSpecific, INonLengthAware
+// 固定长度数据包（非托管结构体）
+public void SendFixedPacket<TPacket>(scoped in TPacket packet)
+    where TPacket : unmanaged, INonSideSpecific, INetPacket
 
-// 动态大小数据包（托管类型）
-public void SendDynamicPacket<TPacket>(in TPacket packet)
-    where TPacket : struct, IManagedPacket, INonSideSpecific
+// 动态长度数据包（托管类型）
+public void SendDynamicPacket<TPacket>(scoped in TPacket packet)
+    where TPacket : struct, IManagedPacket, INonSideSpecific, INetPacket
 
-// 服务器端变体（设置 IsServerSide 标志）
-public void SendFixedPacket_S<TPacket>(in TPacket packet) where TPacket : ISideSpecific, ...
-public void SendDynamicPacket_S<TPacket>(in TPacket packet) where TPacket : ISideSpecific, ...
+// 服务端变体（设置 IsServerSide 标记）
+public void SendFixedPacket_S<TPacket>(scoped in TPacket packet) where TPacket : unmanaged, ISideSpecific, INetPacket
+public void SendDynamicPacket_S<TPacket>(scoped in TPacket packet) where TPacket : struct, IManagedPacket, ISideSpecific, INetPacket
 
-// 运行时调度（对所有 246 种数据包类型使用 switch）
-public void SendUnknownPacket<TPacket>(in TPacket packet) where TPacket : INetPacket
+// 运行时分发（通过覆盖多数据包类型的 switch）
+public void SendUnknownPacket<TPacket>(scoped in TPacket packet) where TPacket : struct, INetPacket
 ```
 
 **缓冲区管理** (src/UnifierTSL/Network/SocketSender.cs:79-117)：
@@ -906,7 +978,7 @@ private unsafe byte[] AllocateBuffer<TPacket>(in TPacket packet, out byte* ptr_s
     byte[] buffer = ArrayPool<byte>.Shared.Rent(capacity);
 
     fixed (byte* buf = buffer) {
-        ptr_start = buf + 2;  // 为长度头保留 2 字节
+        ptr_start = buf + 2;  // 预留 2 字节长度头
     }
     return buffer;
 }
@@ -926,32 +998,28 @@ private void SendDataAndFreeBuffer(byte[] buffer, int totalLength, SocketSendCal
 }
 ```
 
-**LocalClientSender** (src/UnifierTSL/Network/LocalClientSender.cs) - 每客户端数据包发送器：
+**LocalClientSender** (src/UnifierTSL/Network/LocalClientSender.cs) - 每个客户端数据包发送者：
 ```csharp
 public class LocalClientSender : SocketSender
 {
-    public byte ID { get; init; }
+    public readonly int ID;
 
-    protected override ISocket Socket =>
-        UnifiedServerCoordinator.globalClients[ID].Socket;
+    public RemoteClient Client => UnifiedServerCoordinator.globalClients[ID];
+    public sealed override ISocket Socket => Client.Socket;
 
-    // 重写 Kick 以原子方式设置终止标志
-    public override void Kick(NetworkText text, bool writeToConsole = true) {
-        RemoteClient client = UnifiedServerCoordinator.globalClients[ID];
-        if (!Volatile.Read(ref client.PendingTermination)) {
-            client.PendingTerminationApproved = true;
-            Volatile.Write(ref client.PendingTermination, true);
-        }
-        base.Kick(text, writeToConsole);
+    public sealed override void Kick(NetworkText reason, bool bg = false) {
+        Client.PendingTermination = true;
+        Client.PendingTerminationApproved = true;
+        base.Kick(reason, bg);
     }
 }
 ```
 
-**数据包接收模拟 - ClientPacketReceiver** (src/UnifierTSL/Network/ClientPacketReciever.cs)：
+**数据包接收模拟 - ClientPacketReceiver** (src/UnifierTSL/Network/ClientPacketReceiver.cs)：
 
-当处理器设置 `HandleMode = Overwrite` 时使用：
+当处理程序设置 `HandleMode = Overwrite` 时使用：
 ```csharp
-public static void AsRecieveFromSender_FixedPkt<TPacket>(ServerContext server, byte who, in TPacket packet)
+public void AsReceiveFromSender_FixedPkt<TPacket>(LocalClientSender sender, scoped in TPacket packet)
     where TPacket : unmanaged, INetPacket, INonSideSpecific
 {
     byte[] buffer = ArrayPool<byte>.Shared.Rent(sizeof(TPacket) + 4);
@@ -965,8 +1033,8 @@ public static void AsRecieveFromSender_FixedPkt<TPacket>(ServerContext server, b
             }
         }
 
-        // 作为从发送者接收注入
-        server.NetMessage.buffer[who].GetData(buffer, 2, len - 2);
+        // 以“来自发送者接收”的方式注入
+        Server.NetMessage.buffer[sender.ID].GetData(Server, 0, len, out _, buffer, ...);
     }
     finally {
         ArrayPool<byte>.Shared.Return(buffer);
@@ -976,43 +1044,19 @@ public static void AsRecieveFromSender_FixedPkt<TPacket>(ServerContext server, b
 
 #### TrProtocol 集成
 
-UnifierTSL 利用 **TrProtocol**（从 USP IL 合并）作为数据包模型：
+UnifierTSL 直接使用 USP 通过 IL Merge 打包进运行时的 **TrProtocol** 数据包模型：
 
 **数据包特征**：
-- **140+ 种数据包类型**定义为结构
-- **接口**：`INetPacket`、`IManagedPacket`、`ILengthAware`、`ISideSpecific`
-- **序列化**：基于不安全指针（`void ReadContent(ref void* ptr)`、`void WriteContent(ref void* ptr)`）
+- **许多数据包类型**定义为 `TrProtocol.NetPackets` 和 `TrProtocol.NetPackets.Modules` 下的结构
+- **接口**：`INetPacket`、`IManagedPacket`、`ISideSpecific`、`INonSideSpecific`
+- **分发策略**：优先使用“泛型 + 接口约束”生成特化路径，而不是运行时通过 `is` 把数据包装箱到接口后再分发；像 `ISideSpecific` / `INonSideSpecific` 这类成对接口就是为了在编译期表达互斥路径，避免逻辑误路由
+- **序列化契约**：`ReadContent(ref void* ptr, void* ptrEnd)` 与 `WriteContent(ref void* ptr)`；读取时传入结尾指针可做边界检查，越界会抛出托管异常
 
-**示例数据包**：
-```csharp
-// 固定大小，非特定端
-public struct SpawnPlayer : INetPacket, INonSideSpecific
-{
-    public short _PlayerSlot;
-    public short _SpawnX;
-    public short _SpawnY;
-    // ...
-}
+对于具体的数据包模型和字段，请检查运行时附带的实际 TrProtocol 数据包结构。
 
-// 动态大小，特定端
-public struct ChatMessage : IManagedPacket, ISideSpecific
-{
-    public bool IsServerSide { get; set; }
-    public NetworkText Message;
-    public Color Color;
-    public byte PlayerId;
-}
+#### USP 网络补丁
 
-// 长度感知（需要结束指针进行反序列化）
-public struct TileSection : INetPacket, ILengthAware
-{
-    public void ReadContent(ref void* ptr, void* end_ptr);  // 必须读取到 end_ptr
-}
-```
-
-#### USP 的网络补丁
-
-**UnifiedNetworkPatcher** (src/UnifierTSL/Network/UnifiedNetworkPatcher.cs:10-31) hook USP 初始化以重定向到共享数组：
+**UnifiedNetworkPatcher** (src/UnifierTSL/Network/UnifiedNetworkPatcher.cs:10-31) 挂钩 USP 初始化以重定向到共享数组：
 
 ```csharp
 On.Terraria.NetplaySystemContext.StartServer += (orig, self) =>
@@ -1021,56 +1065,58 @@ On.Terraria.NetplaySystemContext.StartServer += (orig, self) =>
     self.Connection.ResetSpecialFlags();
     self.ResetNetDiag();
 
-    // 用全局共享数组替换每服务器数组
+    // 将每服务器数组替换为全局共享数组
     self.Clients = UnifiedServerCoordinator.globalClients;
     server.NetMessage.buffer = UnifiedServerCoordinator.globalMsgBuffers;
 
-    // 禁用每服务器广播（协调器处理）
+    // 关闭每服务器广播（由协调器处理）
     On.Terraria.NetplaySystemContext.StartBroadCasting = (_, _) => { };
-    On.Terraria.NetplaySystemContext.StopBroadCasting = (_, _) => { };
+On.Terraria.NetplaySystemContext.StopBroadCasting = (_, _) => { };
 };
 ```
 
+</details>
+
 #### 最佳实践
 
-1. **数据包处理器**：
-   - 早期注册（在 `InitializeAsync` 或 `BeforeGlobalInitialize` 中）
-   - 谨慎使用 `Highest` 优先级（仅用于安全检查）
-   - 始终在 `DisposeAsync()` 中取消注册
+1. **数据包处理程序**：
+   - 尽早注册（`InitializeAsync` 或 `BeforeGlobalInitialize`）
+   - 按顺序需求选择优先级；`Highest` 只留给必须最先执行的处理器（例如强制安全闸）
+   - 始终在你的处置挂钩中取消注册（如果你使用的是 `BasePlugin`，则为 `DisposeAsync(bool isDisposing)`）
 
 2. **数据包修改**：
-   - 尽可能优先使用 `Cancel` 而非 `Overwrite`（开销更小）
-   - 在设置 `Overwrite` 之前验证修改的数据包
-   - 使用 `PacketProcessed` 回调进行遥测，而非逻辑
+   - 按意图选择 `Cancel` 或 `Overwrite`：`Cancel` 丢弃数据包，`Overwrite` 重新注入你修改后的数据包
+   - 设置 `HandleMode = Overwrite` 时，通常也应设置 `StopPropagation = true`，除非你明确希望后续处理器继续处理改写后的包
+   - 除非明确要改写，否则对数据包保持只读，避免在透传路径里做隐式修改
 
-3. **服务器传输**：
-   - 优雅地处理 `PreServerTransfer` 取消
-   - 在 `PostServerTransfer` 中更新插件特定状态
-   - 不要缓存 `clientCurrentlyServers` 引用
+3. **后处理回调（`PacketProcessed`）**：
+   - 适用于处理完成后的逻辑，例如指标、追踪，或依赖最终处理结果的业务逻辑
+   - 根据回调中的 `PacketHandleMode`（`None`、`Cancel`、`Overwrite`）分支处理，而不是假设只有单一路径
 
-4. **内存管理**：
-   - 数据包序列化使用 `ArrayPool<byte>.Shared` - 永远不要缓存缓冲区
-   - `LocalClientSender` 实例在 `UnifiedServerCoordinator.clientSenders` 中池化
+4. **服务器传输**：
+   - 把 `PreServerTransfer` 视为状态切换前的否决点
+   - 把 `PostServerTransfer` 用于映射切换 + 入服同步完成后的后续逻辑
+   - 通过协调器助手（`GetClientCurrentlyServer`）查询当前映射，不要长期缓存快照
 
-#### 性能特征
+5. **内存与发送器生命周期**：
+   - `PacketSender` 和 `ClientPacketReceiver` 会从 `ArrayPool<byte>.Shared` 租用临时缓冲区；不要在回调/作用域之外持有这些数组
+   - `UnifiedServerCoordinator` 会在 `clientSenders` 中为每个客户端槽位预分配一个 `LocalClientSender`
 
-**数据包处理**：
-- 处理器查找：按数据包 GlobalID 的 O(1) 数组索引
-- 处理器链：O(n × log m)，其中 n = 处理器数量，m = 过滤检查
-- 序列化：每个数据包约 100-500 ns（不安全指针，无分配）
+#### 性能说明
 
-**缓冲区池化**：
-- 标准数据包：1 KB 缓冲区（租用时间约 50 ns）
-- TileSection 数据包：16 KB 缓冲区
-- 约 95% 缓冲区重用率（在 TShock 生产中测量）
+**数据包处理**：通过数据包 GlobalID 查找处理程序的时间复杂度为 O(1)。总成本与你为该数据包类型注册的处理程序数量及其功能有关。序列化开销取决于数据包的形状和大小。
 
-**多服务器路由**：
-- 客户端服务器查找：O(1) 易失性读取
-- 服务器切换：约 10-20 μs（原子指针交换 + 事件调用）
+**缓冲池**：使用 `ArrayPool<byte>.Shared` 和较大的初始缓冲区来处理大量数据包。其效果如何取决于你的流量模式和并发性。
 
+**多服务器路由**：通过易失性支持的映射，客户端→服务器查找的时间复杂度为 O(1)。传输成本主要与同步步骤和事件处理程序有关。
+
+<a id="25-logging-infrastructure"></a>
 ### 2.5 日志基础设施
 
-UnifierTSL 提供**高性能结构化日志系统**，具有元数据注入、服务器范围路由和基于 ArrayPool 的分配，实现零 GC 日志记录。
+日志系统是为了性能而构建的 - `LogEntry` 存在于堆栈中，元数据被池化，所有内容都通过具有服务器范围输出的可插拔写入器进行路由。
+
+<details>
+<summary><strong>展开日志基础设施实现细节深挖</strong></summary>
 
 #### Logger 架构
 
@@ -1103,8 +1149,8 @@ public class Logger
 ```csharp
 public ref struct LogEntry
 {
-    public string Role { get; init; }           // Logger 范围（如 "TShockAPI"、"Log"）
-    public string? Category { get; init; }      // 子类别（如 "ConnectionAccept"）
+    public string Role { get; init; }           // 日志作用域（例如 "TShockAPI"、"Log"）
+    public string? Category { get; init; }      // 子类别（例如 "ConnectionAccept"）
     public string Message { get; init; }
     public LogLevel Level { get; init; }
     public DateTime Timestamp { get; init; }
@@ -1112,17 +1158,17 @@ public ref struct LogEntry
     public LogEventId? EventId { get; init; }
     public ref readonly TraceContext TraceContext { get; }
 
-    private MetadataCollection metadata;  // ArrayPool 支持的排序集合
+    private MetadataCollection metadata;  // 基于 ArrayPool 的有序集合
 
     public void SetMetadata(string key, string value) {
-        metadata.Set(key, value);  // 二分查找插入
+        metadata.Set(key, value);  // 二分插入
     }
 }
 ```
 
-#### RoleLogger - 范围日志
+#### RoleLogger - 作用域日志
 
-**RoleLogger** (src/UnifierTSL/Logging/RoleLogger.cs) 用宿主上下文包装 `Logger`：
+**RoleLogger** (src/UnifierTSL/Logging/RoleLogger.cs) 将 `Logger` 与 Host 上下文封装在一起：
 
 ```csharp
 public class RoleLogger
@@ -1133,7 +1179,7 @@ public class RoleLogger
 
     public void Log(LogLevel level, string message, ReadOnlySpan<KeyValueMetadata> metadata = default)
     {
-        // 1. 创建条目
+        // 1. 创建日志条目
         MetadataAllocHandle allocHandle = logger.CreateMetadataAllocHandle();
         LogEntry entry = new(host.Name, message, level, ref allocHandle);
 
@@ -1173,12 +1219,12 @@ public static void LogHandledException(this RoleLogger logger, string message, E
 
 #### 元数据管理
 
-**MetadataCollection** (src/UnifierTSL/Logging/Metadata/MetadataCollection.cs) - 排序的键值存储：
+**MetadataCollection** (src/UnifierTSL/Logging/Metadata/MetadataCollection.cs) - 排序键值存储：
 
 ```csharp
 public ref struct MetadataCollection
 {
-    private Span<KeyValueMetadata> _entries;  // ArrayPool 缓冲区
+    private Span<KeyValueMetadata> _entries;  // 缓冲池（ArrayPool）缓冲区
     private int _count;
 
     public void Set(string key, string value)
@@ -1186,7 +1232,7 @@ public ref struct MetadataCollection
         // 二分查找插入点
         int index = BinarySearch(key);
         if (index >= 0) {
-            // 键存在 - 更新值
+            // 键已存在 - 更新值
             _entries[index] = new(key, value);
         } else {
             // 键不存在 - 在 ~index 处插入
@@ -1202,7 +1248,7 @@ public ref struct MetadataCollection
     {
         if (_entries.Length >= requiredCapacity) return;
 
-        // 通过 ArrayPool 增长
+        // 通过 ArrayPool 扩容
         int newCapacity = _entries.Length == 0 ? 4 : _entries.Length * 2;
         Span<KeyValueMetadata> newBuffer = ArrayPool<KeyValueMetadata>.Shared.Rent(newCapacity);
         _entries.CopyTo(newBuffer);
@@ -1224,7 +1270,7 @@ public unsafe struct MetadataAllocHandle
 }
 ```
 
-#### ConsoleLogWriter - 带颜色编码的输出
+#### ConsoleLogWriter - 颜色编码输出
 
 **ConsoleLogWriter** (src/UnifierTSL/Logging/LogWriters/ConsoleLogWriter.cs) - 服务器路由的控制台输出：
 
@@ -1233,7 +1279,7 @@ public class ConsoleLogWriter : ILogWriter
 {
     public void Write(in LogEntry raw)
     {
-        // 1. 检查服务器特定路由
+        // 1. 检查是否命中服务器专属路由
         if (raw.TryGetMetadata("ServerContext", out string? serverName)) {
             ServerContext? server = UnifiedServerCoordinator.Servers
                 .FirstOrDefault(s => s.Name == serverName);
@@ -1251,7 +1297,7 @@ public class ConsoleLogWriter : ILogWriter
     private static void WriteToConsole(IConsole console, in LogEntry raw)
     {
         lock (SynchronizedGuard.ConsoleLock) {
-            // 使用颜色代码格式化段
+            // 使用颜色码格式化分段
             foreach (ColoredSegment segment in DefConsoleFormatter.Format(raw)) {
                 console.ForegroundColor = segment.ForegroundColor;
                 console.BackgroundColor = segment.BackgroundColor;
@@ -1264,16 +1310,16 @@ public class ConsoleLogWriter : ILogWriter
 ```
 
 **颜色映射**：
-| LogLevel | 级别文本 | 前景色 |
-|----------|---------|--------|
-| Trace | `[Trace]` | Gray |
-| Debug | `[Debug]` | Blue |
-| Info | `[+Info]` | White |
-| Success | `[Succe]` | Green |
-| Warning | `[+Warn]` | Yellow |
-| Error | `[Error]` | Red |
-| Critical | `[Criti]` | DarkRed |
-| (未知) | `[+-·-+]` | White |
+|日志级别 |级别文本|前景色|
+|----------|-----------|------------------|
+|追踪 | `[Trace]` |灰色|
+|调试| `[Debug]` |蓝色|
+|信息 | `[+Info]` |白色|
+|成功| `[Succe]` |绿色|
+|警告| `[+Warn]` |黄色|
+|错误 | `[Error]` |红色|
+|关键| `[Criti]` |深红色|
+| （未知）| `[+-·-+]` |白色|
 
 **输出格式** (src/UnifierTSL/Logging/Formatters/ConsoleLog/DefConsoleFormatter.cs:13-71)：
 
@@ -1289,7 +1335,7 @@ public class ConsoleLogWriter : ILogWriter
  └── Last line
 ```
 
-带异常（已处理 - Level ≤ Warning）：
+异常场景（已处理 - 级别 ≤ 警告）：
 ```
 [Level][Role|Category] Message
  │ Handled Exception:
@@ -1298,7 +1344,7 @@ public class ConsoleLogWriter : ILogWriter
  └── Exception line N
 ```
 
-带异常（意外 - Level > Warning）：
+异常场景（未处理 - 级别 > 警告）：
 ```
 [Level][Role|Category] Message
  │ Unexpected Exception:
@@ -1307,11 +1353,11 @@ public class ConsoleLogWriter : ILogWriter
  └── Exception line N
 ```
 
-**段结构**：
+**细分结构**：
 - **段 0**：级别文本（按级别着色）
-- **段 1**：Role/Category 文本（青色前景，黑色背景）
-- **段 2**：主消息，多行使用框绘制字符（按级别着色）
-- **段 3**（可选）：异常详情，带框绘制字符（红色前景，白色背景）
+- **段 1**：角色/类别文本（青色前景，黑色背景）
+- **第 2 段**：带有多行方框图字符的主要信息（按级别着色）
+- **第 3 段**（可选）：带有方框图字符的异常详细信息（红色前景，白色背景）
 
 #### TraceContext - 请求关联
 
@@ -1322,8 +1368,8 @@ public class ConsoleLogWriter : ILogWriter
 public readonly struct TraceContext(Guid correlationId, TraceId traceId, SpanId spanId)
 {
     [FieldOffset(00)] public readonly Guid CorrelationId = correlationId;  // 16 字节
-    [FieldOffset(16)] public readonly TraceId TraceId = traceId;           // 8 字节 (ulong)
-    [FieldOffset(32)] public readonly SpanId SpanId = spanId;              // 8 字节 (ulong)
+    [FieldOffset(16)] public readonly TraceId TraceId = traceId;           // 8 字节（ulong）
+    [FieldOffset(32)] public readonly SpanId SpanId = spanId;              // 8 字节（ulong）
 }
 ```
 
@@ -1331,7 +1377,7 @@ public readonly struct TraceContext(Guid correlationId, TraceId traceId, SpanId 
 ```csharp
 TraceContext trace = new(
     Guid.NewGuid(),                                 // 唯一请求 ID
-    new TraceId((ulong)DateTime.UtcNow.Ticks),     // 逻辑跟踪链
+    new TraceId((ulong)DateTime.UtcNow.Ticks),     // 逻辑追踪链
     new SpanId((ulong)Thread.CurrentThread.ManagedThreadId)  // 操作跨度
 );
 
@@ -1339,9 +1385,9 @@ logger.Log(LogLevel.Info, "Player authenticated", in trace,
     metadata: stackalloc[] { new("PlayerId", playerId.ToString()) });
 ```
 
-#### ServerContext 集成
+#### 服务器上下文集成
 
-**ServerContext** (src/UnifierTSL/Servers/ServerContext.cs) 同时实现 `ILoggerHost` 和 `ILogMetadataInjector`：
+**ServerContext** (src/UnifierTSL/Servers/ServerContext.cs) 实现 `ILoggerHost` 和 `ILogMetadataInjector`：
 
 ```csharp
 public partial class ServerContext : RootContext, ILoggerHost, ILogMetadataInjector
@@ -1356,7 +1402,7 @@ public partial class ServerContext : RootContext, ILoggerHost, ILogMetadataInjec
     }
 
     void ILogMetadataInjector.InjectMetadata(scoped ref LogEntry entry) {
-        entry.SetMetadata("ServerContext", this.Name);  // 自动注入服务器名称
+        entry.SetMetadata("ServerContext", this.Name);  // 自动注入服务器名
     }
 }
 ```
@@ -1367,42 +1413,35 @@ Server1.Log.Info("Player joined")
     ↓
 LogEntry with metadata["ServerContext"] = "Server1"
     ↓
-ConsoleLogWriter 检测元数据，路由到 Server1.Console
+ConsoleLogWriter detects metadata, routes to Server1.Console
     ↓
-在 Server1 的控制台窗口输出，带有服务器特定颜色
+Output in Server1's console window with server-specific colors
 ```
 
-#### 性能特征
+</details>
 
-**日志开销**：
-- 简单日志（无元数据）：约 200-400 ns
-- 结构化日志（5 个元数据键）：约 800-1200 ns
-- 零分配：仅栈的 `LogEntry`，池化的 `MetadataCollection`
+#### 性能说明
 
-**内存**：
-- 元数据缓冲区起始：4 个条目（池化）
-- 自动调整大小：4 → 8 → 16 个条目
-- 约 90% 的日志使用 ≤4 个元数据键（无重新分配）
+**开销**：日志记录是轻分配的 — `LogEntry` 基于堆栈，元数据由池支持。实际开销取决于你附加的元数据数量、格式化程序以及你要写入的接收器。
 
-**吞吐量**：
-- 约 100-200 万日志/秒（单线程，无过滤）
-- 控制台输出：约 5 万日志/秒（I/O 受限）
-- 文件输出：约 50 万日志/秒（缓冲写入）
+**内存**：元数据缓冲区按需增长并得到重用。保持元数据集较小以避免频繁扩容抖动。
+
+**吞吐量**：实际上，吞吐量受到接收器的限制。控制台输出比缓冲文件写入慢得多。如果你有生产延迟目标，请使用实际接收器和日志量进行基准测试。
 
 #### 最佳实践
 
-1. **元数据优于字符串插值**：
+1. **使用元数据，而不是字符串插值**：
    ```csharp
-   // 不好：创建字符串分配
+   // 不佳：会产生字符串分配
    logger.Info($"Player {playerId} joined");
 
-   // 好：使用结构化元数据
+   // 更佳：使用结构化元数据
    logger.Info("Player joined", metadata: stackalloc[] {
        new("PlayerId", playerId.ToString())
    });
    ```
 
-2. **类别范围**：
+2. **确定日志类别的范围**：
    ```csharp
    // 为相关日志块设置类别
    serverContext.CurrentLogCategory = "WorldGen";
@@ -1410,7 +1449,7 @@ ConsoleLogWriter 检测元数据，路由到 Server1.Console
    serverContext.CurrentLogCategory = null;
    ```
 
-3. **自定义元数据注入器**：
+3. **添加自定义元数据注入器**以进行关联：
    ```csharp
    public class RequestIdInjector : ILogMetadataInjector
    {
@@ -1426,147 +1465,125 @@ ConsoleLogWriter 检测元数据，路由到 Server1.Console
    logger.AddMetadataInjector(new RequestIdInjector());
    ```
 
-4. **异常日志**：
+4. **正确记录异常**：
    ```csharp
    try {
        DangerousOperation();
    }
    catch (Exception ex) {
        logger.LogHandledException("Operation failed", ex, category: "DangerousOperation");
-       // 异常详情在控制台输出中自动格式化
+       // 异常细节会在控制台输出中自动格式化
    }
    ```
 
-有关扩展日志示例，请参阅 `src/Plugins/TShockAPI/TShock.cs` 和 `src/UnifierTSL/Servers/ServerContext.cs`。
+有关更多日志记录示例，请参阅 `src/Plugins/TShockAPI/TShock.cs` 和 `src/UnifierTSL/Servers/ServerContext.cs`。
 
+<a id="26-configuration-service"></a>
 ### 2.6 配置服务
-- `ConfigRegistrar` 实现 `IPluginConfigRegistrar`，用于 `config/<PluginName>/` 下的插件配置文件。
-- `CreateConfigRegistration<T>` 生成 `ConfigRegistrationBuilder`，启用默认值、序列化选项、错误策略（`DeserializationFailureHandling`）和外部变更触发器。
-- 完成的注册返回 `ConfigHandle<T>`，公开 `RequestAsync`、`Overwrite`、`ModifyInMemory` 和 `OnChangedAsync` 以支持热重载。文件访问使用 `FileLockManager` 以避免多线程环境中的损坏。
+- `ConfigRegistrar` 实现 `IPluginConfigRegistrar`。在内置 .NET 宿主中，插件配置根目录固定为 `Path.Combine("config", Path.GetFileNameWithoutExtension(container.Location.FilePath))`（例如 `config/TShockAPI`）。
+- `CreateConfigRegistration<T>` 为你提供 `ConfigRegistrationBuilder`，你可以在其中设置默认值、序列化选项、错误策略 (`DeserializationFailureHandling`) 和外部更改触发器。
+- 你得到一个 `ConfigHandle<T>` ，它可以让你 `RequestAsync` 、 `Overwrite` 、 `ModifyInMemory` ，并通过 `OnChangedAsync` 订阅热重载。文件访问由 `FileLockManager` 保护以防止损坏。
 
+<a id="3-usp-integration-points"></a>
 ## 3. USP 集成点
 
-- `ServerContext` 继承 USP `RootContext`，将 Unifier 服务连接到上下文中（自定义控制台、数据包接收器、日志元数据）。与 Terraria 世界/游戏状态的每次交互都通过此上下文流动。
-- 网络补丁器（`UnifiedNetworkPatcher`）detour `NetplaySystemContext` 函数以重用共享缓冲区并在多服务器环境中强制执行协调的发送/接收路径。
-- MonoMod `On.` detour 被谨慎使用，将 USP hook 桥接到 Unifier 管理的事件中。添加新 detour 时，优先将它们公开为 `EventHub` 提供者，以便下游插件可以依赖一致的 API。
-- USP 的 TrProtocol 数据包结构被重新导出，供 `PacketSender` 和 `NetPacketHandler` 直接使用，保持与 USP 序列化语义的兼容性（长度感知数据包、`IExtraData` 等）。
+- `ServerContext` 继承了 USP 的 `RootContext`，将 Unifier 服务插入上下文（自定义控制台、数据包接收器、记录元数据）。涉及泰拉瑞亚世界/游戏状态的所有内容都会经过此上下文。
+- 网络修补程序 (`UnifiedNetworkPatcher`) 对 `NetplaySystemContext` 函数做 detour，以共享缓冲区并协调跨服务器发送/接收路径。
+- MonoMod `On.` detour 适合冷门/低复用 hook。对于常见或竞争激烈的热点 hook，优先做成/使用 `EventHub` 提供程序，让插件共享处理器级别的顺序与过滤能力，而不是叠加各自的 detour。
+- Unifier 直接使用 USP 运行时中的 TrProtocol 数据包结构与接口（`INetPacket`、`IManagedPacket`、`ISideSpecific` 等），`PacketSender`/`NetPacketHandler` 按 TrProtocol 读写契约工作。
 
-## 4. 公共 API 界面
+<a id="4-public-api-surface"></a>
+## 4. 公共 API 接口
 
-### 4.1 外观 (`UnifierApi`)
-- `Initialize(string[] launcherArgs)` 启动运行时，连接事件，加载插件宿主，并解析启动器参数。
-- `EventHub` 在初始化完成后公开分组的事件提供者。
-- `PluginHosts` 惰性实例化 `PluginOrchestrator` 以进行宿主级交互。
-- `CreateLogger(ILoggerHost, Logger? overrideLogCore = null)` 返回范围限定于调用者的 `RoleLogger` 并重用共享的 `Logger`。
-- `UpdateTitle(bool empty = false)` 根据协调器状态控制窗口标题更新。
-- `VersionHelper`、`FileMonitor` 和 `LogCore`/`Logger` 提供对共享实用程序的访问（版本信息、文件监视器、日志核心）。
+<a id="41-facade-unifierapi"></a>
+### 4.1 门面 (`UnifierApi`)
+- 运行时在启动器入口 (`Program.cs`) 中通过 `HandleCommandLinePreRun`、`InitializeCore` 和 `CompleteLauncherInitialization` 完成启动 — 这些是内部启动 API，不是你的插件调用的东西。
+- `EventHub` 使你可以在初始化完成后访问所有分组的事件提供程序。
+- `EventHub.Launcher.InitializedEvent` 在启动器参数完成时触发，就在协调器启动之前。
+- `PluginHosts` 延迟设置 `PluginOrchestrator` 以进行宿主级交互。
+- `CreateLogger(ILoggerHost, Logger? overrideLogCore = null)` 返回作用于插件作用域的 `RoleLogger`，并复用共享 `Logger`。
+- `UpdateTitle(bool empty = false)` 根据协调器状态控制窗口标题。
+- `VersionHelper` 和 `LogCore`/`Logger` 提供共享实用程序（版本信息、日志记录核心）。
 
-### 4.2 事件负载与辅助工具
-- 事件负载结构位于 `src/UnifierTSL/Events/*` 下并实现 `IEventContent`。专用接口（`IPlayerEventContent`、`IServerEventContent`）添加上下文特定的元数据。
-- `HandlerPriority` 和 `FilterEventOption` 枚举定义调用顺序和过滤语义。
-- 注册/取消注册处理器的辅助方法确保线程安全、低分配的操作。
+<a id="42-event-payloads--helpers"></a>
+### 4.2 事件载荷与辅助类型
+- 事件载荷结构位于 `src/UnifierTSL/Events/*` 下并实现 `IEventContent`。专用接口（`IPlayerEventContent`、`IServerEventContent`）添加服务器或玩家信息等上下文。
+- `HandlerPriority` 和 `FilterEventOption` 控制调用顺序和过滤。
+- 注册/注销助手是线程安全且分配轻量的。
 
-### 4.3 模块与插件类型
+<a id="43-module--plugin-types"></a>
+### 4.3 模块和插件类型
 - `ModulePreloadInfo`、`ModuleLoadResult`、`LoadedModule` 描述模块元数据和生命周期。
-- `IPlugin`、`BasePlugin`、`PluginContainer`、`PluginInitInfo` 和 `IPluginHost` 定义插件契约和容器。
-- 配置界面包括 `IPluginConfigRegistrar`、`ConfigHandle<T>` 和 `ConfigFormat` 枚举。
+- `IPlugin`、`BasePlugin`、`PluginContainer`、`PluginInitInfo` 和 `IPluginHost` 定义插件合约和容器。
+- 配置接口面包括 `IPluginConfigRegistrar`、`ConfigHandle<T>` 和 `ConfigFormat` 枚举。
 
+<a id="44-networking-apis"></a>
 ### 4.4 网络 API
-- `PacketSender` 公开固定/动态数据包发送辅助工具加上服务器端变体。
-- `NetPacketHandler` 提供 `Register<TPacket>`、`ProcessBytes` 和 `RecievePacketEvent<T>`。
-- `LocalClientSender` 包装 `RemoteClient`，公开 `Kick`、`SendData` 和 `Client` 元数据。`ClientPacketReciever` 重放或重写入站数据包。
-- 协调器辅助工具提供 `TransferPlayerToServer`、`SwitchJoinServerEvent` 和状态查询（`GetClientCurrentlyServer`、`Servers` 列表）。
+- `PacketSender` 公开固定/动态数据包发送帮助程序以及服务器端变体。
+- `NetPacketHandler` 提供 `Register<TPacket>`、`UnRegister<TPacket>`、`ProcessBytes` 以及 `ReceivePacketEvent<T>` 上的数据包回调。
+- `LocalClientSender` 包装 `RemoteClient`，公开 `Kick`、`SendData` 和 `Client` 元数据。 `ClientPacketReceiver` 重放或重写入站数据包。
+- 协调器助手提供 `TransferPlayerToServer`、`SwitchJoinServerEvent` 和状态查询（`GetClientCurrentlyServer`、`Servers` 列表）。
 
+<a id="45-logging--diagnostics"></a>
 ### 4.5 日志与诊断
-- `RoleLogger` 扩展方法（参见 `src/UnifierTSL/Logging/LoggerExt.cs`）提供严重性辅助工具（`Debug`、`Info`、`Warning`、`Error`、`Success`、`LogHandledException`）。
-- `LogEventIds` 枚举标准事件标识符以对日志输出进行分类。
-- 事件提供者公开 `HandlerCount`，`EventProvider.AllEvents` 可用于诊断仪表板。
+- `RoleLogger` 扩展方法（参见 `src/UnifierTSL/Logging/LoggerExt.cs`）为你提供严重性帮助：`Debug`、`Info`、`Warning`、`Error`、`Success`、`LogHandledException`。
+- `LogEventIds` 列出用于对日志输出进行分类的标准事件标识符。
+- 事件提供程序公开 `HandlerCount`，你可以为诊断仪表板枚举 `EventProvider.AllEvents`。
 
-## 5. 运行时生命周期与操作
+<a id="5-runtime-lifecycle--operations"></a>
+## 5. 运行时生命周期和操作
 
-### 5.1 启动序列
-1. 启动器解析 CLI 并设置日志记录。
-2. `ModuleAssemblyLoader.Load` 扫描 `plugins/`，暂存程序集并准备依赖提取。
-3. 插件宿主发现合格的入口点并实例化 `IPlugin` 实现。
-4. `BeforeGlobalInitialize` 在每个插件上同步运行，启用跨插件服务连接。
-5. `InitializeAsync` 为每个插件运行；编排器传递先前的初始化任务，以便可以等待依赖。
-6. `UnifiedServerCoordinator` 配置服务器上下文，调用 USP 启动世界，并注册事件桥接器。
+<a id="51-startup-sequence"></a>
+### 5.1 启动顺序
+1. 启动器解析 CLI 参数并设置日志记录。
+2. `ModuleAssemblyLoader.Load` 扫描 `plugins/`、暂存程序集并处理依赖项提取。
+3. 插件宿主找到符合条件的入口点并实例化 `IPlugin` 实现。
+4. `BeforeGlobalInitialize` 在每个插件上同步运行 - 使用它进行跨插件服务连接。
+5. `InitializeAsync` 为每个插件运行；你将获得先前的插件初始化任务，以便你可以等待你的依赖项。
+6. `UnifiedServerCoordinator` 设置服务器上下文，调用 USP 启动世界，并注册事件桥。
 
+**关于启动器参数的一些注意事项**：
+- 语言优先级：`UTSL_LANGUAGE` env var 在 CLI 解析之前应用，并阻止稍后的 `-lang` / `-culture` / `-language` 覆盖。
+- `-server` / `-addserver` / `-autostart` 解析服务器描述符并在核心初始化期间对世界启动进行排队。
+- `-joinserver` 安装低优先级 `SwitchJoinServer` 策略（`random|rnd|r` 或 `first|f`）；第一个有效的策略优先生效。
+- `UnifierApi.CompleteLauncherInitialization()` 提示输入任何丢失的端口/密码，然后触发 `EventHub.Launcher.InitializedEvent`。
+- `Program.Run()` 启动协调器，记录成功，然后触发 `EventHub.Coordinator.Started`。
+
+<a id="52-runtime-operations"></a>
 ### 5.2 运行时操作
-- 事件处理器捕获横切逻辑（聊天审核、传输控制、数据包过滤）。
-- 配置句柄响应文件更改，允许无需重启的运行时调整。
-- 协调器更新窗口标题，维护服务器列表，并管理加入/离开重放。
-- 日志元数据确保每个日志都可以关联到服务器、插件或子系统。
+- 事件处理程序处理横切问题——聊天审核、传输控制、数据包过滤等。
+- 配置处理对文件更改的反应，因此你可以调整设置而无需重新启动。
+- 协调器保持窗口标题更新，维护服务器列表，并重放加入/离开序列。
+- 记录元数据使你可以将任何日志条目追溯到其服务器、插件或子系统。
 
-### 5.3 关闭与重载
-- 关闭路径：编排器请求每个插件 `ShutdownAsync`，然后卸载模块（遵守依赖图），并释放加载上下文。
-- 模块重载（用于更新的 DLL）触发 `ModuleAssemblyLoader.TryLoadSpecific`，如果哈希不同，则重新初始化相关插件。
-- `ForceUnload` 和 `TryUnloadPlugin` 允许在插件发出释放信号时进行针对性的卸载操作。
+<a id="53-shutdown--reload"></a>
+### 5.3 关机和重新加载
+- `PluginOrchestrator` 提供 `ShutdownAllAsync` 和 `UnloadAllAsync`，但内置 `DotnetPluginHost` 在 `ShutdownAsync`/`UnloadPluginsAsync` 上仍是 TODO 占位实现。
+- 通过加载器 API (`ModuleAssemblyLoader.TryLoadSpecific`、`ForceUnload`) 和插件加载器操作 (`TryUnloadPlugin`/`ForceUnloadPlugin`) 进行模块重新加载和有针对性的卸载工作。
+- 通过注册的处置操作将 `DisposeAsync` 挂钩插入 `ModuleLoadContext` 卸载。
 
+<a id="54-diagnostics"></a>
 ### 5.4 诊断
-- 事件提供者发布处理器计数以供可观察性使用；通过枚举 `EventProvider.AllEvents` 与工具集成。
-- `PacketSender.SentPacket` 和 `NetPacketHandler.RecievePacketEvent` 可以为网络跟踪发出指标或日志。
-- 日志元数据注入器提供每服务器/每插件标签，以便在外部接收器中进行过滤。
+- 事件提供程序公开处理程序计数以实现可观察性 - 枚举 `EventProvider.AllEvents` 来构建仪表板。
+- `PacketSender.SentPacket`、`NetPacketHandler.ProcessPacketEvent` 和每数据包 `PacketProcessed` 回调非常适合流量指标和跟踪。
+- 记录元数据注入器为你提供每个服务器/每个插件的标签，用于在外部接收器中进行过滤。
 
-## 6. 扩展性指南与最佳实践
+<a id="6-extensibility-guidelines--best-practices"></a>
+## 6. 可扩展性指南和最佳实践
 
-- **优先使用事件提供者** — 在插件中添加新的 MonoMod detour 之前，检查是否存在提供者，或通过核心项目扩展 `EventHub` 以保持行为一致。
-- **遵守上下文边界** — 始终通过 `ServerContext` 和 USP 上下文 API 操作，以避免跨服务器错误。
-- **管理加载上下文** — 在发布带有原生/托管依赖的模块时，实现 `ModuleDependenciesAttribute` 提供者，以便加载器跟踪负载并干净地卸载。
-- **避免事件中的异步间隙** — `ref struct` 事件参数需要同步处理器。如果需要异步工作，捕获必要的状态并调度任务，而不持有参数引用。
-- **协调初始化** — 使用 `PluginInitInfo` 等待先决条件插件，而不是仅依赖顺序假设。
-- **日志纪律** — 通过 `UnifierApi.CreateLogger` 创建 logger 以继承元数据注入和控制台格式化；为关联数据添加自定义 `ILogMetadataInjector` 实例。
-- **测试策略** — 围绕事件处理器和协调器流程锚定集成测试（例如，模拟数据包序列）。USP 上下文可以独立实例化以进行验证。
-- **性能考虑** — 事件的注册/取消注册是线程安全的，但并非微不足道；在启动期间批量注册。使用池化缓冲区（数据包发送器）并避免在热路径内分配。
-- **诊断 Hook** — 利用 `PacketSender.SentPacket` 和事件过滤器构建监控插件，而无需修改核心运行时。
+- **优先使用事件提供程序** - 在插件中添加 MonoMod detour 之前，先检查 `EventHub` 是否已有对应提供程序（如果没有，优先考虑向核心补一个，供其他插件复用）。
+- **保持在上下文边界内** — 始终通过 `ServerContext` 和 USP 上下文 API 以避免跨服务器错误。
+- **声明你的依赖项** - 如果你要发布带有本机/托管依赖的模块，请使用 `ModuleDependenciesAttribute` 以便加载程序可以正确跟踪和清理。
+- **事件处理函数中不要写异步** - `ref struct` 参数无法在闭包或异步方法中捕获。获取你需要的内容，然后单独安排异步工作。
+- **显式等待你的依赖项** — 使用 `PluginInitInfo` 等待先决条件插件，而不是仅仅希望顺序能够解决。
+- **使用内置日志记录** — 通过 `UnifierApi.CreateLogger` 创建记录器，以便自动获得元数据注入和控制台格式化能力。添加 `ILogMetadataInjector` 作为相关数据。
+- **围绕事件和协调器流编写测试** - 模拟数据包序列、玩家加入等。USP 上下文可以独立运行，这使得这非常简单。
+- **启动时批量注册** — 事件注册是线程安全的，但不是免费的。使用来自数据包发送方的池化缓冲区，并将分配保留在热路径之外。
+- **使用挂钩构建监控插件** — `PacketSender.SentPacket` 和事件过滤器可让你在不触及核心运行时的情况下观察流量。
 
----
 
-## 附录：关键术语对照
 
-为便于理解，以下是文档中出现的关键技术术语及其中英文对照：
 
-**核心概念**：
-- **Runtime（运行时）** - 程序执行环境
-- **Context（上下文）** - 执行环境的状态容器
-- **Detour** - MonoMod 运行时方法拦截机制
-- **Hook** - 在特定执行点插入自定义代码
-- **Assembly（程序集）** - .NET 编译单元（DLL/EXE）
-- **Collectible（可收集的）** - 可被 GC 回收的对象
 
-**模块系统**：
-- **Core Module（核心模块）** - 独立可加载的功能单元
-- **Satellite Module（卫星模块）** - 依赖核心模块的扩展
-- **Load Context（加载上下文）** - 程序集隔离边界
-- **Dependency（依赖）** - 模块所需的外部库
-- **RID (Runtime Identifier)** - 运行时平台标识符
 
-**事件系统**：
-- **Event Provider（事件提供者）** - 事件发布源
-- **Handler（处理器）** - 事件响应函数
-- **Priority（优先级）** - 处理器执行顺序
-- **Cancellation（取消）** - 阻止后续处理
-- **Filter（过滤器）** - 处理器执行条件
 
-**网络系统**：
-- **Packet（数据包）** - 网络传输的数据单元
-- **Coordinator（协调器）** - 多服务器管理中心
-- **Transfer（传输）** - 玩家在服务器间移动
-- **Buffer（缓冲区）** - 临时数据存储区域
-- **Pool（池）** - 可重用对象集合
-
-**日志系统**：
-- **Logger（日志器）** - 日志记录器
-- **Metadata（元数据）** - 日志附加信息
-- **Injector（注入器）** - 自动添加元数据的组件
-- **Writer（写入器）** - 日志输出目标
-- **Trace（跟踪）** - 请求链路追踪
-
-**插件系统**：
-- **Plugin（插件）** - 功能扩展模块
-- **Host（宿主）** - 插件运行环境
-- **Orchestrator（编排器）** - 插件生命周期管理器
-- **Container（容器）** - 插件实例包装器
-- **Discovery（发现）** - 插件自动识别过程
-
-这些术语在整个 UnifierTSL 架构中频繁使用，理解它们有助于更好地掌握系统的设计理念和实现细节。

@@ -7,7 +7,7 @@ namespace UnifierTSL.ConsoleClient
 {
     public static class ConsoleClientLogic
     {
-        static readonly Channel<SEND_READ_FLAG> settedFlags = Channel.CreateUnbounded<SEND_READ_FLAG>();
+        static readonly Channel<SEND_READ_FLAG> readFlagsChannel = Channel.CreateUnbounded<SEND_READ_FLAG>();
         public static unsafe void ProcessData(ConsoleClient client, byte id, Span<byte> content) {
             switch (id) {
                 case SET_BG_COLOR.id:
@@ -55,12 +55,12 @@ namespace UnifierTSL.ConsoleClient
                 case SEND_READ_FLAG.id:
                     var flag = IPacket.ReadUnmanaged<SEND_READ_FLAG>(content);
                     client.Send(new CONFIRM_READ_FLAG(flag.Flags, flag.Order));
-                    settedFlags.Writer.TryWrite(flag);
+                    readFlagsChannel.Writer.TryWrite(flag);
                     break;
             }
         }
         public static async Task Run(ConsoleClient client) {
-            await foreach (var item in settedFlags.Reader.ReadAllAsync()) {
+            await foreach (var item in readFlagsChannel.Reader.ReadAllAsync()) {
                 switch (item.Flags) {
                     case ReadFlags.Read:
                         client.Send(new PUSH_READ(Console.Read(), item.Order));

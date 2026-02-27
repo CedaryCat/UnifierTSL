@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -26,12 +26,12 @@ namespace UnifierTSL
             public Player player = new() { whoAmI = index };
             public byte[] readBuffer = new byte[1024 * 8];
             public int totalData = 0;
-            public string? RecievedUUID = "";
+            public string? ReceivedUUID = "";
             public void Reset(ISocket socket) {
                 players[Index] = player;
 
                 RemoteClient client = globalClients[Index];
-                client.ClientUUID = RecievedUUID = null;
+                client.ClientUUID = ReceivedUUID = null;
                 client.Name = player.name = string.Empty;
 
                 totalData = 0;
@@ -230,7 +230,7 @@ namespace UnifierTSL
                                     return;
                                 }
 
-                                client.ClientUUID = RecievedUUID = Crypto.Sha512Hex(uuid, Encoding.ASCII);
+                                client.ClientUUID = ReceivedUUID = Crypto.Sha512Hex(uuid, Encoding.ASCII);
 
                                 UnifierApi.EventHub.Netplay.ReceiveFullClientInfoEvent.Invoke(new(client, player, sender), out bool h);
                                 if (h) {
@@ -768,7 +768,7 @@ namespace UnifierTSL
                 // Log
                 Logger.Info(
                     category: "PlayerTransfer",
-                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Player '{to.Main.player[plr].name}' {from.Name} → {to.Name} transferred."));
+                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Player '{to.Main.player[plr].name}' {from.Name} ? {to.Name} transferred."));
             }
         }
     }

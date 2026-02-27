@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using NuGet.Versioning;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -139,7 +139,7 @@ namespace UnifierTSL.Module
             string moduleDir = Path.GetDirectoryName(moduleFile.FullName)!;
             string extension = FileSystemHelper.GetLibraryExtension();
 
-            DependenciesSetting config = DependenciesConfiguration.LoadDependenicesConfig(moduleDir);
+            DependenciesSetting config = DependenciesConfiguration.LoadDependenciesConfig(moduleDir);
 
             DependencyItem? match = config.Dependencies.Values
                 .SelectMany(x => x.Manifests)

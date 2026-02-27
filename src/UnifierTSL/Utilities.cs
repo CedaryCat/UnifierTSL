@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -15,7 +15,7 @@ namespace UnifierTSL
             /// </summary>
             /// <param name="args"></param>
             /// <returns></returns>
-            public static Dictionary<string, List<string>> ParseArguements(string[] args) {
+            public static Dictionary<string, List<string>> ParseArguments(string[] args) {
                 string? key = null;
                 string value = "";
                 Dictionary<string, List<string>> dictionary = [];
@@ -59,7 +59,7 @@ namespace UnifierTSL
             /// <param name="input"></param>
             /// <param name="result"></param>
             /// <returns></returns>
-            public static bool TryParseSubArguements(string input, [NotNullWhen(true)] out Dictionary<string, string>? result) {
+            public static bool TryParseSubArguments(string input, [NotNullWhen(true)] out Dictionary<string, string>? result) {
                 result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 StringBuilder sb = new();
                 string? currentKey = null;

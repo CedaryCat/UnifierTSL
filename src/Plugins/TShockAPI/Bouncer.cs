@@ -640,9 +640,9 @@ namespace TShockAPI
 			return orig(self, playerId, item, chestIndex);
         }
 
-        private void OnGetSection(ref RecievePacketEvent<TileSection> args) {
+        private void OnGetSection(ref ReceivePacketEvent<TileSection> args) {
 			var tsPlayer = args.GetTSPlayer();
-			var server = args.LocalReciever.Server;
+			var server = args.LocalReceiver.Server;
 
             if (tsPlayer.RequestedSection) {
                 server.Log.Debug(GetString("Bouncer / OnGetSection rejected GetSection packet from {0}", tsPlayer.Name));
@@ -666,9 +666,9 @@ namespace TShockAPI
 		/// <summary>Handles disabling enforcement and minor anti-exploit stuff</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnPlayerUpdate(ref RecievePacketEvent<PlayerControls> args) {
+		internal void OnPlayerUpdate(ref ReceivePacketEvent<PlayerControls> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
 			var setting = TShock.Config.GetServerSettings(server.Name);
 
 			byte item = args.Packet.SelectedItem;
@@ -797,9 +797,9 @@ namespace TShockAPI
         /// <summary>Bouncer's TileEdit hook is used to revert malicious tile changes.</summary>
         /// <param name="sender">The object that triggered the event.</param>
         /// <param name="args">The packet arguments that the event has.</param>
-        internal void OnTileEdit(ref RecievePacketEvent<TileChange> args) {
+        internal void OnTileEdit(ref ReceivePacketEvent<TileChange> args) {
             var tsPlayer = args.GetTSPlayer();
-            var server = args.LocalReciever.Server;
+            var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
             // TODO: Add checks on the new edit actions. ReplaceTile, ReplaceWall, TryKillTile, Acutate, PokeLogicGate, SlopePoundTile
@@ -1333,10 +1333,10 @@ namespace TShockAPI
 				}
 			}
         }
-        internal void OnItemDrop(ref RecievePacketEvent<SyncItem> args) {
-            OnItemDrop(args.LocalReciever.Server, args.GetTSPlayer(), args.Packet, ref args.HandleMode);
+        internal void OnItemDrop(ref ReceivePacketEvent<SyncItem> args) {
+            OnItemDrop(args.LocalReceiver.Server, args.GetTSPlayer(), args.Packet, ref args.HandleMode);
         }
-        internal void OnItemDrop(ref RecievePacketEvent<InstancedItem> args) {
+        internal void OnItemDrop(ref ReceivePacketEvent<InstancedItem> args) {
 			var pkt = default(SyncItem);
             pkt.ItemSlot = args.Packet.ItemSlot;
             pkt.Position = args.Packet.Position;
@@ -1345,7 +1345,7 @@ namespace TShockAPI
             pkt.Stack = args.Packet.Stack;
             pkt.Prefix = args.Packet.Prefix;
             pkt.Owner = args.Packet.Owner;
-            OnItemDrop(args.LocalReciever.Server, args.GetTSPlayer(), pkt, ref args.HandleMode);
+            OnItemDrop(args.LocalReceiver.Server, args.GetTSPlayer(), pkt, ref args.HandleMode);
 			if (args.HandleMode == PacketHandleMode.Cancel) {
                 args.StopPropagation = true;
             }
@@ -1463,9 +1463,9 @@ namespace TShockAPI
 		/// <summary>Bouncer's projectile trigger hook stops world damaging projectiles from destroying the world.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnNewProjectile(ref RecievePacketEvent<SyncProjectile> args)
+		internal void OnNewProjectile(ref ReceivePacketEvent<SyncProjectile> args)
 		{
-			var server = args.LocalReciever.Server;
+			var server = args.LocalReceiver.Server;
 			var tsPlayer = args.GetTSPlayer();
 			var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -1717,8 +1717,8 @@ namespace TShockAPI
 		/// <summary>Handles the NPC Strike event for Bouncer.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnNPCStrike(ref RecievePacketEvent<StrikeNPC> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnNPCStrike(ref ReceivePacketEvent<StrikeNPC> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -1781,8 +1781,8 @@ namespace TShockAPI
 		/// <summary>Handles ProjectileKill events for throttling and out of bounds projectiles.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnProjectileKill(ref RecievePacketEvent<KillProjectile> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnProjectileKill(ref ReceivePacketEvent<KillProjectile> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 
 			var ident = args.Packet.ProjSlot;
@@ -1816,8 +1816,8 @@ namespace TShockAPI
 		/// <summary>Handles when a chest item is changed.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnChestItemChange(ref RecievePacketEvent<SyncChestItem> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnChestItemChange(ref ReceivePacketEvent<SyncChestItem> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 			var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -1860,8 +1860,8 @@ namespace TShockAPI
 		/// <summary>The Bouncer handler for when chests are opened.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnChestOpen(ref RecievePacketEvent<RequestChestOpen> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnChestOpen(ref ReceivePacketEvent<RequestChestOpen> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -1895,8 +1895,8 @@ namespace TShockAPI
 		/// <summary>The place chest event that Bouncer hooks to prevent accidental damage.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnPlaceChest(ref RecievePacketEvent<ChestUpdates> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlaceChest(ref ReceivePacketEvent<ChestUpdates> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -1973,8 +1973,8 @@ namespace TShockAPI
 		/// <summary>Handles PlayerZone events for preventing spawning NPC maliciously.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnPlayerZone(ref RecievePacketEvent<PlayerZone> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlayerZone(ref ReceivePacketEvent<PlayerZone> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 
             var zone2 = (BitsByte)args.Packet.Zone[1];
@@ -2013,8 +2013,8 @@ namespace TShockAPI
 		/// <summary>Handles basic animation throttling for disabled players.</summary>
 		/// <param name="sender">sender</param>
 		/// <param name="args">args</param>
-		internal void OnPlayerAnimation(ref RecievePacketEvent<ItemAnimation> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlayerAnimation(ref ReceivePacketEvent<ItemAnimation> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 
             if (tsPlayer.IsBeingDisabled())
@@ -2037,8 +2037,8 @@ namespace TShockAPI
 		/// <summary>Handles Bouncer's liquid set anti-cheat.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnLiquidSet(ref RecievePacketEvent<LiquidUpdate> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnLiquidSet(ref ReceivePacketEvent<LiquidUpdate> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -2109,7 +2109,7 @@ namespace TShockAPI
 			{
 				int selectedItemType = tsPlayer.TPlayer.inventory[tsPlayer.TPlayer.selectedItem].type;
 
-				void Reject(ref RecievePacketEvent<LiquidUpdate> args, string reason)
+				void Reject(ref ReceivePacketEvent<LiquidUpdate> args, string reason)
 				{
 					server.Log.Debug(GetString("Bouncer / OnLiquidSet rejected liquid type {0} from {1} holding {2}", type, tsPlayer.Name, selectedItemType));
 					tsPlayer.SendErrorMessage(GetString("You do not have permission to perform this action."));
@@ -2238,15 +2238,15 @@ namespace TShockAPI
 		/// <summary>Handles Buff events.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnPlayerBuff(ref RecievePacketEvent<AddPlayerBuff> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlayerBuff(ref ReceivePacketEvent<AddPlayerBuff> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 
             byte id = args.Packet.OtherPlayerSlot;
 			int type = args.Packet.BuffType;
 			int time = args.Packet.BuffTime;
 
-			void Reject(ref RecievePacketEvent<AddPlayerBuff> args, bool shouldResync = true)
+			void Reject(ref ReceivePacketEvent<AddPlayerBuff> args, bool shouldResync = true)
 			{
                 args.HandleMode = PacketHandleMode.Cancel;
 				args.StopPropagation = true;
@@ -2353,8 +2353,8 @@ namespace TShockAPI
 		/// <summary>Handles NPCAddBuff events.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnNPCAddBuff(ref RecievePacketEvent<AddNPCBuff> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnNPCAddBuff(ref ReceivePacketEvent<AddNPCBuff> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 
             short id = args.Packet.NPCSlot;
@@ -2442,8 +2442,8 @@ namespace TShockAPI
         /// <summary>The Bouncer handler for when an NPC is rehomed.</summary>
         /// <param name="sender">The object that triggered the event.</param>
         /// <param name="args">The packet arguments that the event has.</param>
-        internal void OnUpdateNPCHome(ref RecievePacketEvent<NPCHome> args) {
-            var server = args.LocalReciever.Server;
+        internal void OnUpdateNPCHome(ref ReceivePacketEvent<NPCHome> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 
             int id = args.Packet.NPCSlot;
@@ -2473,8 +2473,8 @@ namespace TShockAPI
 		/// <summary>Bouncer's HealOther handler prevents gross misuse of HealOther packets by hackers.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnHealOtherPlayer(ref RecievePacketEvent<SpiritHeal> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnHealOtherPlayer(ref ReceivePacketEvent<SpiritHeal> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -2531,8 +2531,8 @@ namespace TShockAPI
 		/// </summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnReleaseNPC(ref RecievePacketEvent<BugReleasing> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnReleaseNPC(ref ReceivePacketEvent<BugReleasing> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -2557,7 +2557,7 @@ namespace TShockAPI
 				return;
 			}
 
-			void rejectForCritterNotReleasedFromItem(ref RecievePacketEvent<BugReleasing> args)
+			void rejectForCritterNotReleasedFromItem(ref ReceivePacketEvent<BugReleasing> args)
 			{
 				server.Log.Debug(GetString("Bouncer / OnReleaseNPC released different critter from {0}", tsPlayer.Name));
 				tsPlayer.Kick(GetString("Released critter was not from its item."), true);
@@ -2613,8 +2613,8 @@ namespace TShockAPI
 		/// <summary>Bouncer's PlaceObject hook reverts malicious tile placement.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnPlaceObject(ref RecievePacketEvent<PlaceObject> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlaceObject(ref ReceivePacketEvent<PlaceObject> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -2840,8 +2840,8 @@ namespace TShockAPI
 		/// <summary>Fired when a PlaceTileEntity occurs for basic anti-cheat on perms and range.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnPlaceTileEntity(ref RecievePacketEvent<TileEntityPlacement> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlaceTileEntity(ref ReceivePacketEvent<TileEntityPlacement> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 			var pos = args.Packet.Position;
 
@@ -2877,8 +2877,8 @@ namespace TShockAPI
 		/// <summary>Fired when an item frame is placed for anti-cheat detection.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnPlaceItemFrame(ref RecievePacketEvent<ItemFrameTryPlacing> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlaceItemFrame(ref ReceivePacketEvent<ItemFrameTryPlacing> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var pos = args.Packet.Position;
 
@@ -2924,8 +2924,8 @@ namespace TShockAPI
 			}
 		}
 
-		internal void OnPlayerPortalTeleport(ref RecievePacketEvent<TeleportPlayerThroughPortal> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlayerPortalTeleport(ref ReceivePacketEvent<TeleportPlayerThroughPortal> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var pos = args.Packet.Position;
 
@@ -2958,8 +2958,8 @@ namespace TShockAPI
 			}
 		}
 
-		internal void OnQuickStackPacket(ref RecievePacketEvent<QuickStackChests> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnQuickStackPacket(ref ReceivePacketEvent<QuickStackChests> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 
 			// TODO: Fine-grained chest-level quick stack validation is skipped in current package.
@@ -2994,8 +2994,8 @@ namespace TShockAPI
 		/// <summary>Handles the anti-cheat components of gem lock toggles.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnGemLockToggle(ref RecievePacketEvent<GemLockToggle> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnGemLockToggle(ref ReceivePacketEvent<GemLockToggle> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 			var setting = TShock.Config.GetServerSettings(server.Name);
             var pos = args.Packet.Position;
@@ -3035,8 +3035,8 @@ namespace TShockAPI
 		/// <summary>Handles validation of of basic anti-cheat on mass wire operations.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnMassWireOperation(ref RecievePacketEvent<MassWireOperation> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnMassWireOperation(ref ReceivePacketEvent<MassWireOperation> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
 			var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -3087,8 +3087,8 @@ namespace TShockAPI
 		/// <summary>Called when a player is damaged.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnPlayerDamage(ref RecievePacketEvent<PlayerHurtV2> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnPlayerDamage(ref ReceivePacketEvent<PlayerHurtV2> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -3186,8 +3186,8 @@ namespace TShockAPI
 		/// <summary>Bouncer's KillMe hook stops crash exploits from out of bounds values.</summary>
 		/// <param name="sender">The object that triggered the event.</param>
 		/// <param name="args">The packet arguments that the event has.</param>
-		internal void OnKillMe(ref RecievePacketEvent<PlayerDeathV2> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnKillMe(ref ReceivePacketEvent<PlayerDeathV2> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -3243,8 +3243,8 @@ namespace TShockAPI
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="args"></param>
-		internal void OnFishOutNPC(ref RecievePacketEvent<FishOutNPC> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnFishOutNPC(ref ReceivePacketEvent<FishOutNPC> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 
@@ -3287,8 +3287,8 @@ namespace TShockAPI
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="args"></param>
-		internal void OnFoodPlatterTryPlacing(ref RecievePacketEvent<FoodPlatterTryPlacing> args) {
-            var server = args.LocalReciever.Server;
+		internal void OnFoodPlatterTryPlacing(ref ReceivePacketEvent<FoodPlatterTryPlacing> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
 

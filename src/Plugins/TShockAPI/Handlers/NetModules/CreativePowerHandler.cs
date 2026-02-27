@@ -1,4 +1,4 @@
-﻿using TrProtocol.Models;
+using TrProtocol.Models;
 using TrProtocol.NetPackets.Modules;
 using TShockAPI.Extension;
 using UnifierTSL.Events.Handlers;
@@ -42,8 +42,8 @@ namespace TShockAPI.Handlers.NetModules
 			return true;
 		}
 
-        public void OnReceive(ref RecievePacketEvent<NetCreativePowersModule> args) {
-			if (!HasPermission(args.LocalReciever.Server, args.Packet.CreativePower.PowerType, args.GetTSPlayer())) {
+        public void OnReceive(ref ReceivePacketEvent<NetCreativePowersModule> args) {
+			if (!HasPermission(args.LocalReceiver.Server, args.Packet.CreativePower.PowerType, args.GetTSPlayer())) {
 				args.HandleMode = PacketHandleMode.Cancel;
 			}
         }

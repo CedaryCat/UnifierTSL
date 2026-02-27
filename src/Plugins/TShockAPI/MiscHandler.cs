@@ -1,4 +1,4 @@
-﻿using MaxMind;
+using MaxMind;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 using System.Net;
@@ -701,7 +701,7 @@ namespace TShockAPI
             }
             var type = (PacketTypes)args.Content.RawData[0];
 
-            var player = TShock.Players[args.Content.RecieveFrom.ID];
+            var player = TShock.Players[args.Content.ReceiveFrom.ID];
             if (player == null || !player.ConnectionAlive) {
                 args.Handled = true;
                 args.StopPropagation = true;
