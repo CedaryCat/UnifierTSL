@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,8 +11,8 @@ namespace TShockAPI.Handlers
 {
     public class SyncTilePickingHandler : IPacketHandler<SyncTilePicking>
     {
-        public void OnReceive(ref RecievePacketEvent<SyncTilePicking> args) {
-            var server = args.LocalReciever.Server;
+        public void OnReceive(ref ReceivePacketEvent<SyncTilePicking> args) {
+            var server = args.LocalReceiver.Server;
             var tsPlayer = args.GetTSPlayer();
             var setting = TShock.Config.GetServerSettings(server.Name);
             var pos = args.Packet.Position;

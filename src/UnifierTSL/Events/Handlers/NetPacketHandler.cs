@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Terraria;
 using TrProtocol;
@@ -24,38 +24,38 @@ namespace UnifierTSL.Events.Handlers
         BeforeAllLogic = 0,
         BeforeOriginalProcess = 1
     }
-    public delegate void PacketProcessedDelegate<TPacket>(in RecievePacketEvent<TPacket> args, PacketHandleMode handleMode) where TPacket : struct, INetPacket;
-    public readonly unsafe struct RecieveBytesInfo(LocalClientSender sender, ClientPacketReciever reciever, void* ptr, void* ptr_end) : IEventContent
+    public delegate void PacketProcessedDelegate<TPacket>(in ReceivePacketEvent<TPacket> args, PacketHandleMode handleMode) where TPacket : struct, INetPacket;
+    public readonly unsafe struct ReceiveBytesInfo(LocalClientSender sender, ClientPacketReceiver receiver, void* ptr, void* ptr_end) : IEventContent
     {
-        public readonly LocalClientSender RecieveFrom = sender;
-        public readonly ClientPacketReciever LocalReciever = reciever;
+        public readonly LocalClientSender ReceiveFrom = sender;
+        public readonly ClientPacketReceiver LocalReceiver = receiver;
         public readonly void* rawDataBegin = ptr;
         public readonly void* rawDataEnd = ptr_end;
         public readonly ReadOnlySpan<byte> RawData => new(rawDataBegin, (int)((byte*)rawDataEnd - (byte*)rawDataBegin));
     }
     public readonly unsafe struct ProcessPacketEvent : IPlayerEventContent
     {
-        public readonly RecieveBytesInfo Info;
+        public readonly ReceiveBytesInfo Info;
         public readonly ProcessPacketEventType EventType;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ProcessPacketEvent(ref readonly RecieveBytesInfo info, ProcessPacketEventType eventType) {
+        public ProcessPacketEvent(ref readonly ReceiveBytesInfo info, ProcessPacketEventType eventType) {
             Info = info;
             EventType = eventType;
         }
 
-        public readonly LocalClientSender RecieveFrom => Info.RecieveFrom;
-        public readonly ClientPacketReciever LocalReciever => Info.LocalReciever;
+        public readonly LocalClientSender ReceiveFrom => Info.ReceiveFrom;
+        public readonly ClientPacketReceiver LocalReceiver => Info.LocalReceiver;
         public readonly void* rawDataBegin => Info.rawDataBegin;
         public readonly void* rawDataEnd => Info.rawDataEnd;
         public readonly ReadOnlySpan<byte> RawData => Info.RawData;
-        public readonly int Who => RecieveFrom.ID;
-        public readonly ServerContext Server => LocalReciever.Server;
+        public readonly int Who => ReceiveFrom.ID;
+        public readonly ServerContext Server => LocalReceiver.Server;
     }
-    public unsafe ref struct RecievePacketEvent<TPacket>(ref readonly RecieveBytesInfo info) : IPlayerEventContent where TPacket : struct, INetPacket
+    public unsafe ref struct ReceivePacketEvent<TPacket>(ref readonly ReceiveBytesInfo info) : IPlayerEventContent where TPacket : struct, INetPacket
     {
-        public readonly LocalClientSender RecieveFrom = info.RecieveFrom;
-        public readonly ClientPacketReciever LocalReciever = info.LocalReciever;
+        public readonly LocalClientSender ReceiveFrom = info.ReceiveFrom;
+        public readonly ClientPacketReceiver LocalReceiver = info.LocalReceiver;
         public readonly void* rawDataBegin = info.rawDataBegin;
         public readonly void* rawDataEnd = info.rawDataEnd;
         public readonly ReadOnlySpan<byte> RawData = info.RawData;
@@ -63,17 +63,17 @@ namespace UnifierTSL.Events.Handlers
         public PacketHandleMode HandleMode;
         public bool StopPropagation;
         public PacketProcessedDelegate<TPacket>? PacketProcessed;
-        public readonly int Who => RecieveFrom.ID;
-        public readonly ServerContext Server => LocalReciever.Server;
+        public readonly int Who => ReceiveFrom.ID;
+        public readonly ServerContext Server => LocalReceiver.Server;
     }
 
-    public delegate void RecievePacket<TPacket>(ref RecievePacketEvent<TPacket> args) where TPacket : struct, INetPacket;
+    public delegate void ReceivePacket<TPacket>(ref ReceivePacketEvent<TPacket> args) where TPacket : struct, INetPacket;
     public static class NetPacketHandler
     {
         public static readonly ReadonlyEventProvider<ProcessPacketEvent> ProcessPacketEvent = new();
-        private readonly struct PriorityItem<TPacket>(RecievePacket<TPacket> handler, HandlerPriority priority, FilterEventOption option) : IPriorityHandler, IComparable<PriorityItem<TPacket>> where TPacket : struct, INetPacket
+        private readonly struct PriorityItem<TPacket>(ReceivePacket<TPacket> handler, HandlerPriority priority, FilterEventOption option) : IPriorityHandler, IComparable<PriorityItem<TPacket>> where TPacket : struct, INetPacket
         {
-            public readonly RecievePacket<TPacket> Handler = handler;
+            public readonly ReceivePacket<TPacket> Handler = handler;
             public readonly HandlerPriority Priority = priority;
             public readonly FilterEventOption Option = option;
             HandlerPriority IPriorityHandler.Priority {
@@ -86,7 +86,7 @@ namespace UnifierTSL.Events.Handlers
             }
         }
         private static readonly Array?[] handlers = new Array?[INetPacket.GlobalIDCount];
-        private static unsafe PacketHandleMode ProcessPacketAndTryEndEvent<TPacket>(Array boxedHandlers, ref RecievePacketEvent<TPacket> args) where TPacket : struct, INetPacket {
+        private static unsafe PacketHandleMode ProcessPacketAndTryEndEvent<TPacket>(Array boxedHandlers, ref ReceivePacketEvent<TPacket> args) where TPacket : struct, INetPacket {
             Span<PriorityItem<TPacket>> handlers = ((PriorityItem<TPacket>[])boxedHandlers).AsSpan();
             if (handlers.IsEmpty) {
                 return PacketHandleMode.None;
@@ -112,7 +112,7 @@ namespace UnifierTSL.Events.Handlers
                     }
                 case PacketHandleMode.None:
                 default: {
-                        RecieveBytesInfo info = new(args.RecieveFrom, args.LocalReciever, args.rawDataBegin, args.rawDataEnd);
+                        ReceiveBytesInfo info = new(args.ReceiveFrom, args.LocalReceiver, args.rawDataBegin, args.rawDataEnd);
                         if (!OriginalProcess(in info)) {
                             args.PacketProcessed?.Invoke(args, PacketHandleMode.Cancel);
                             return PacketHandleMode.Cancel;
@@ -125,79 +125,79 @@ namespace UnifierTSL.Events.Handlers
 
         #region ProcessPacket
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool InvokeProcessPacketEvent(ref readonly RecieveBytesInfo info, ProcessPacketEventType type) {
+        private static bool InvokeProcessPacketEvent(ref readonly ReceiveBytesInfo info, ProcessPacketEventType type) {
             ProcessPacketEvent eventInfo = new(in info, type);
             ProcessPacketEvent.Invoke(in eventInfo, out bool handled);
             return handled;
         }
-        private static unsafe bool OriginalProcess(ref readonly RecieveBytesInfo info) {
+        private static unsafe bool OriginalProcess(ref readonly ReceiveBytesInfo info) {
             if (InvokeProcessPacketEvent(in info, ProcessPacketEventType.BeforeOriginalProcess)) {
                 return false;
             }
-            MessageBuffer msgBuffer = UnifiedServerCoordinator.globalMsgBuffers[info.RecieveFrom.ID];
+            MessageBuffer msgBuffer = UnifiedServerCoordinator.globalMsgBuffers[info.ReceiveFrom.ID];
             int begin, length;
             fixed (byte* ptr = msgBuffer.readBuffer) {
                 begin = (int)((byte*)info.rawDataBegin - ptr);
                 length = (int)((byte*)info.rawDataEnd - (byte*)info.rawDataBegin);
             }
-            msgBuffer.GetData(info.LocalReciever.Server, begin, length, out _);
+            msgBuffer.GetData(info.LocalReceiver.Server, begin, length, out _);
             return true;
         }
-        private static unsafe void ProcessPacket_F<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, INonSideSpecific {
+        private static unsafe void ProcessPacket_F<TPacket>(ref readonly ReceiveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, INonSideSpecific {
             Array? boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
                 return;
             }
-            RecievePacketEvent<TPacket> args = new(in info);
+            ReceivePacketEvent<TPacket> args = new(in info);
             void* ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.ReadContent(ref ptr, args.rawDataEnd);
             if (ProcessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
-                args.LocalReciever.AsRecieveFromSender_FixedPkt(args.RecieveFrom, args.Packet);
+                args.LocalReceiver.AsReceiveFromSender_FixedPkt(args.ReceiveFrom, args.Packet);
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        private static unsafe void ProcessPacket_FS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, ISideSpecific {
+        private static unsafe void ProcessPacket_FS<TPacket>(ref readonly ReceiveBytesInfo info, int contentOffset = 1) where TPacket : unmanaged, INetPacket, ISideSpecific {
             Array? boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
                 return;
             }
-            RecievePacketEvent<TPacket> args = new(in info);
+            ReceivePacketEvent<TPacket> args = new(in info);
             void* ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.IsServerSide = true;
             args.Packet.ReadContent(ref ptr, args.rawDataEnd);
             if (ProcessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
-                args.LocalReciever.AsRecieveFromSender_FixedPkt_S(args.RecieveFrom, args.Packet);
+                args.LocalReceiver.AsReceiveFromSender_FixedPkt_S(args.ReceiveFrom, args.Packet);
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        private static unsafe void ProcessPacket_D<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INonSideSpecific, INetPacket {
+        private static unsafe void ProcessPacket_D<TPacket>(ref readonly ReceiveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INonSideSpecific, INetPacket {
             Array? boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
                 return;
             }
-            RecievePacketEvent<TPacket> args = new(in info);
+            ReceivePacketEvent<TPacket> args = new(in info);
             void* ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.ReadContent(ref ptr, args.rawDataEnd);
             if (ProcessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
-                args.LocalReciever.AsRecieveFromSender_DynamicPkt(args.RecieveFrom, args.Packet);
+                args.LocalReceiver.AsReceiveFromSender_DynamicPkt(args.ReceiveFrom, args.Packet);
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
-        private static unsafe void ProcessPacket_DS<TPacket>(ref readonly RecieveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, ISideSpecific {
+        private static unsafe void ProcessPacket_DS<TPacket>(ref readonly ReceiveBytesInfo info, int contentOffset = 1) where TPacket : struct, IManagedPacket, INetPacket, ISideSpecific {
             Array? boxedHandlers = handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 OriginalProcess(in info);
                 return;
             }
-            RecievePacketEvent<TPacket> args = new(in info);
+            ReceivePacketEvent<TPacket> args = new(in info);
             void* ptr = Unsafe.Add<byte>(args.rawDataBegin, contentOffset);
             args.Packet.IsServerSide = true;
             args.Packet.ReadContent(ref ptr, args.rawDataEnd);
             if (ProcessPacketAndTryEndEvent(boxedHandlers, ref args) is PacketHandleMode.Overwrite) {
-                args.LocalReciever.AsRecieveFromSender_DynamicPkt_S(args.RecieveFrom, args.Packet);
+                args.LocalReceiver.AsReceiveFromSender_DynamicPkt_S(args.ReceiveFrom, args.Packet);
                 args.PacketProcessed?.Invoke(args, PacketHandleMode.Overwrite);
             }
         }
@@ -206,16 +206,16 @@ namespace UnifierTSL.Events.Handlers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void ProcessBytes(ServerContext server, MessageBuffer buffer, int contentStart, int contentLength) {
             fixed (void* ptr = buffer.readBuffer) {
-                PrecessBytes(
+                ProcessBytesCore(
                     UnifiedServerCoordinator.clientSenders[buffer.whoAmI],
-                    server.PacketReciever,
+                    server.PacketReceiver,
                     Unsafe.Add<byte>(ptr, contentStart),
                     Unsafe.Add<byte>(ptr, contentStart + contentLength));
             }
         }
-        private static unsafe void PrecessBytes(LocalClientSender sender, ClientPacketReciever reciever, void* ptr, void* ptr_end) {
+        private static unsafe void ProcessBytesCore(LocalClientSender sender, ClientPacketReceiver receiver, void* ptr, void* ptr_end) {
             MessageID id = (MessageID)Unsafe.Read<byte>(ptr);
-            RecieveBytesInfo info = new(sender, reciever, ptr, ptr_end);
+            ReceiveBytesInfo info = new(sender, receiver, ptr, ptr_end);
             if (InvokeProcessPacketEvent(in info, ProcessPacketEventType.BeforeAllLogic)) {
                 return;
             }
@@ -406,7 +406,7 @@ namespace UnifierTSL.Events.Handlers
         }
 
         private static readonly Lock _sync = new();
-        public static void Register<TPacket>(RecievePacket<TPacket> handler, HandlerPriority priority = HandlerPriority.Normal, FilterEventOption option = FilterEventOption.Normal) where TPacket : struct, INetPacket {
+        public static void Register<TPacket>(ReceivePacket<TPacket> handler, HandlerPriority priority = HandlerPriority.Normal, FilterEventOption option = FilterEventOption.Normal) where TPacket : struct, INetPacket {
             lock (_sync) {
                 PriorityItem<TPacket>[]? handlerItems = (PriorityItem<TPacket>[]?)handlers[TPacket.GlobalID];
                 if (handlerItems is null) {
@@ -429,7 +429,7 @@ namespace UnifierTSL.Events.Handlers
                 }
             }
         }
-        public static void UnRegister<TPacket>(RecievePacket<TPacket> handler) where TPacket : struct, INetPacket {
+        public static void UnRegister<TPacket>(ReceivePacket<TPacket> handler) where TPacket : struct, INetPacket {
             PriorityItem<TPacket>[]? boxedHandlers = (PriorityItem<TPacket>[]?)handlers[TPacket.GlobalID];
             if (boxedHandlers is null) {
                 return;

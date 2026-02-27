@@ -1,10 +1,10 @@
-﻿using UnifierTSL.Events.Handlers;
+using UnifierTSL.Events.Handlers;
 
 namespace UnifierTSL
 {
     public class EventHub
     {
-        public readonly LanucherEventHandler Lanucher = new();
+        public readonly LauncherEventHandler Launcher = new();
         public readonly ChatHandler Chat = new();
         public readonly CoordinatorEventBridge Coordinator = new();
         public readonly GameEventBridge Game = new();

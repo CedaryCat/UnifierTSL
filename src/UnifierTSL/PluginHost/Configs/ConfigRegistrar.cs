@@ -1,4 +1,4 @@
-﻿using UnifierTSL.Plugins;
+using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;
 namespace UnifierTSL.PluginHost.Configs
 {
@@ -12,7 +12,7 @@ namespace UnifierTSL.PluginHost.Configs
             return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, option);
         }
         public IConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TConfig>(string relativePath, ConfigFormat format) where TConfig : class, new() {
-            return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, option, ConfigOption.GetFormater(format));
+            return new ConfigRegistrationBuilder<TConfig>(plugin, configsPath, relativePath, option, ConfigOption.GetFormatter(format));
         }
 
         public IConfigRegistrationBuilder<TConfig> CreateConfigRegistration<TFormatProvider, TConfig>(string relativePath)

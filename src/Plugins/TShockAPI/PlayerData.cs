@@ -62,6 +62,9 @@ namespace TShockAPI
 		public int enabledSuperCart;
 		public int deathsPVE;
 		public int deathsPVP;
+		public int? voiceVariant;
+		public float? voicePitchOffset;
+		public int team;
 
 		/// <summary>
 		/// Sets the default values for the inventory.
@@ -166,6 +169,9 @@ namespace TShockAPI
 			this.enabledSuperCart = player.TPlayer.enabledSuperCart ? 1 : 0;
 			this.deathsPVE = player.DeathsPVE;
 			this.deathsPVP = player.DeathsPVP;
+			this.voiceVariant = player.TPlayer.voiceVariant;
+			this.voicePitchOffset = player.TPlayer.voicePitchOffset;
+			this.team = player.TPlayer.team;
 
 			Item[] inventory = player.TPlayer.inventory;
 			Item[] armor = player.TPlayer.armor;
@@ -317,9 +323,18 @@ namespace TShockAPI
 			player.sscDeathsPVP = this.deathsPVP;
 			tplayer.numberOfDeathsPVE = this.deathsPVE;
 			tplayer.numberOfDeathsPVP = this.deathsPVP;
+			tplayer.team = this.team;
 
-			if (extraSlot != null)
-				tplayer.extraAccessory = extraSlot.Value == 1 ? true : false;
+			string pvpMode = TShock.Config.GetServerSettings(server.Name).PvPMode.ToLowerInvariant();
+			if (pvpMode == "pvpwithnoteam")
+				tplayer.team = 0;
+
+			tplayer.extraAccessory = extraSlot.HasValue && extraSlot.Value == 1;
+
+			if (this.voiceVariant != null)
+				tplayer.voiceVariant = this.voiceVariant.Value;
+			if (this.voicePitchOffset != null)
+				tplayer.voicePitchOffset = this.voicePitchOffset.Value;
 			if (this.skinVariant != null)
 				tplayer.skinVariant = this.skinVariant.Value;
 			if (this.hair != null)
@@ -707,6 +722,9 @@ namespace TShockAPI
 
 			server.NetMessage.SendData(76, player.Index, -1, NetworkText.Empty, player.Index);
 			server.NetMessage.SendData(76, -1, -1, NetworkText.Empty, player.Index);
+
+			server.NetMessage.SendData(45, player.Index, -1, NetworkText.Empty, player.Index);
+			server.NetMessage.SendData(45, -1, -1, NetworkText.Empty, player.Index);
 
 			server.NetMessage.SendData(39, player.Index, -1, NetworkText.Empty, 400);
 

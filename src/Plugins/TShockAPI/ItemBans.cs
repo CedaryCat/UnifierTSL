@@ -73,24 +73,25 @@ namespace TShockAPI
 					continue;
 				}
 
-				var disableFlags = player.GetCurrentSettings().DisableSecondUpdateLogs ? DisableFlags.WriteToConsole : DisableFlags.WriteToLogAndConsole;
-				var server = player.GetCurrentServer();
+                var server = player.GetCurrentServer();
+				var setting = TShock.Config.GetServerSettings(server.Name);
+                var disableFlags = setting.DisableSecondUpdateLogs ? DisableFlags.WriteToConsole : DisableFlags.WriteToLogAndConsole;
 
                 // Untaint now, re-taint if they fail the check.
                 UnTaint(player);
 
-				// No matter the player type, we do a check when a player is holding an item that's banned.
-				if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[player.TPlayer.selectedItem].type), player))
+				// If player isn't disabled for not being logged in, check for any banned items in use.
+				if (((setting.RequireLogin || server.Main.ServerSideCharacter) && player.IsLoggedIn) ||
+					(!setting.RequireLogin && !server.Main.ServerSideCharacter))
 				{
-					string itemName = player.TPlayer.inventory[player.TPlayer.selectedItem].Name;
-					player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
-					SendCorrectiveMessage(player, itemName);
-				}
+					// No matter the player type, we do a check when a player is holding an item that's banned.
+					if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[player.TPlayer.selectedItem].type), player))
+					{
+						string itemName = player.TPlayer.inventory[player.TPlayer.selectedItem].Name;
+						player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
+						SendCorrectiveMessage(player, itemName);
+					}
 
-				// If SSC isn't enabled OR if SSC is enabled and the player is logged in
-				// In a case like this, we do the full check too.
-				if (!server.Main.ServerSideCharacter || (server.Main.ServerSideCharacter && player.IsLoggedIn))
-				{
 					// The Terraria inventory is composed of a multicultural set of arrays
 					// with various different contents and beliefs
 
@@ -142,9 +143,9 @@ namespace TShockAPI
 			LastTimelyRun = DateTime.UtcNow;
 		}
 
-        private void OnPlayerUpdate(ref RecievePacketEvent<PlayerControls> args) {
-            var player = TShock.Players[args.RecieveFrom.ID];
-            var server = args.LocalReciever.Server;
+        private void OnPlayerUpdate(ref ReceivePacketEvent<PlayerControls> args) {
+            var player = TShock.Players[args.ReceiveFrom.ID];
+            var server = args.LocalReceiver.Server;
             var disableFlags = player.GetCurrentSettings().DisableSecondUpdateLogs ? DisableFlags.WriteToConsole : DisableFlags.WriteToLogAndConsole;
 
 			string itemName = player.TPlayer.inventory[args.Packet.SelectedItem].Name;
@@ -164,9 +165,9 @@ namespace TShockAPI
             return;
         }
 
-        private void OnChestItemChange(ref RecievePacketEvent<SyncChestItem> args) {
-            var player = TShock.Players[args.RecieveFrom.ID];
-			var server = args.LocalReciever.Server;
+        private void OnChestItemChange(ref ReceivePacketEvent<SyncChestItem> args) {
+            var player = TShock.Players[args.ReceiveFrom.ID];
+			var server = args.LocalReceiver.Server;
 
             Item item = new Item();
             item.netDefaults(server, args.Packet.ItemType);
@@ -180,11 +181,11 @@ namespace TShockAPI
             }
         }
 
-        private void OnTileEdit(ref RecievePacketEvent<TileChange> args) {
+        private void OnTileEdit(ref ReceivePacketEvent<TileChange> args) {
 			var action = args.Packet.ChangeType;
 
             if (action == TileEditAction.PlaceTile || action == TileEditAction.PlaceWall) {
-				var player = TShock.Players[args.RecieveFrom.ID];
+				var player = TShock.Players[args.ReceiveFrom.ID];
                 if (player.TPlayer.autoActuator && DataModel.ItemIsBanned("Actuator", player)) {
                     player.SendTileSquareCentered(args.Packet.Position.X, args.Packet.Position.Y, 1);
                     player.SendErrorMessage(GetString("You do not have permission to place actuators."));

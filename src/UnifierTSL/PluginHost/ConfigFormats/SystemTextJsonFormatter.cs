@@ -1,10 +1,10 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using UnifierTSL.Plugins;
 
 namespace UnifierTSL.PluginHost.ConfigFormats
 {
-    public class SystemTextJsonFormater : IConfigFormatProvider
+    public class SystemTextJsonFormatter : IConfigFormatProvider
     {
         public string Name => "SystemTextJson.json";
         public string NullText => "null";
@@ -12,7 +12,7 @@ namespace UnifierTSL.PluginHost.ConfigFormats
 
         private readonly JsonSerializerOptions _options;
 
-        public SystemTextJsonFormater() {
+        public SystemTextJsonFormatter() {
             _options = new JsonSerializerOptions {
                 WriteIndented = true,
                 PropertyNameCaseInsensitive = true,

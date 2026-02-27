@@ -1,7 +1,8 @@
-﻿using MaxMind;
+using MaxMind;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 using System.Net;
+using System.Text.RegularExpressions;
 using Terraria;
 using Terraria.GameContent.Creative;
 using Terraria.ID;
@@ -594,6 +595,11 @@ namespace TShockAPI
                     Log.Debug(GetString("TShock / OnChat truncating excessive chat message length of {0}/{1} from {2}", text.Length, maxLength, tsplr.Name));
                     text = text[..maxLength] + "...";
                 }
+
+                // Filter out [ct:xxx] tags because invalid values can crash some mobile clients.
+                if (!settings.AllowCtTag) {
+                    text = Regex.Replace(text, @"\[ct:[^\]]*\]", "");
+                }
             }
 
             var chatText = text;
@@ -701,7 +707,7 @@ namespace TShockAPI
             }
             var type = (PacketTypes)args.Content.RawData[0];
 
-            var player = TShock.Players[args.Content.RecieveFrom.ID];
+            var player = TShock.Players[args.Content.ReceiveFrom.ID];
             if (player == null || !player.ConnectionAlive) {
                 args.Handled = true;
                 args.StopPropagation = true;

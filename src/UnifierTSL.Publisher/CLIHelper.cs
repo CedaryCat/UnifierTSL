@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -14,7 +14,7 @@ namespace UnifierTSL.Publisher
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static Dictionary<string, List<string>> ParseArguements(string[] args) {
+        public static Dictionary<string, List<string>> ParseArguments(string[] args) {
             string? key = null;
             string value = "";
             Dictionary<string, List<string>> dictionary = new Dictionary<string, List<string>>();
@@ -58,7 +58,7 @@ namespace UnifierTSL.Publisher
         /// <param name="input"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public static bool TryParseSubArguements(string input, [NotNullWhen(true)] out Dictionary<string, string>? result) {
+        public static bool TryParseSubArguments(string input, [NotNullWhen(true)] out Dictionary<string, string>? result) {
             result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var sb = new StringBuilder();
             string? currentKey = null;

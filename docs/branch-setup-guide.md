@@ -221,4 +221,4 @@ Verify:
 
 - [GitVersion Documentation](https://gitversion.net/docs/)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Branch Strategy Proposal](./proposal-branch-strategy.md)
+- [Branch Strategy Quick Reference](./branch-strategy-quick-reference.md)

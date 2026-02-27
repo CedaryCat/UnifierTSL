@@ -1,45 +1,75 @@
 # UnifierTSL Developer Overview
 
-This document explains how the UnifierTSL runtime is assembled on top of OTAPI Unified Server Process (USP), the responsibilities of key subsystems, and the public APIs exposed to integrators. It assumes you already read `PROJECT_OVERVIEW.md` and USP’s `Developer-Guide.md`.
+Welcome! This doc walks you through how the UnifierTSL runtime is put together on top of OTAPI Unified Server Process (USP) — the key subsystems, how they fit together, and the public APIs you can use. If you haven't checked out the [README](../README.md) or USP's [Developer-Guide.md](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess/blob/main/docs/Developer-Guide.md) yet, those are good starting points.
+
+## Quick Navigation
+
+- [1. Runtime Architecture](#1-runtime-architecture)
+  - [1.1 Layering](#11-layering)
+  - [1.2 Boot Flow](#12-boot-flow)
+  - [1.3 Major Components](#13-major-components)
+- [2. Core Services & Subsystems](#2-core-services--subsystems)
+  - [2.1 Event Hub](#21-event-hub)
+  - [2.2 Module System](#22-module-system)
+  - [2.3 Plugin Host Orchestration](#23-plugin-host-orchestration)
+  - [2.4 Networking & Coordinator](#24-networking--coordinator)
+  - [2.5 Logging Infrastructure](#25-logging-infrastructure)
+  - [2.6 Configuration Service](#26-configuration-service)
+- [3. USP Integration Points](#3-usp-integration-points)
+- [4. Public API Surface](#4-public-api-surface)
+  - [4.1 Facade (`UnifierApi`)](#41-facade-unifierapi)
+  - [4.2 Event Payloads & Helpers](#42-event-payloads--helpers)
+  - [4.3 Module & Plugin Types](#43-module--plugin-types)
+  - [4.4 Networking APIs](#44-networking-apis)
+  - [4.5 Logging & Diagnostics](#45-logging--diagnostics)
+- [5. Runtime Lifecycle & Operations](#5-runtime-lifecycle--operations)
+  - [5.1 Startup Sequence](#51-startup-sequence)
+  - [5.2 Runtime Operations](#52-runtime-operations)
+  - [5.3 Shutdown & Reload](#53-shutdown--reload)
+  - [5.4 Diagnostics](#54-diagnostics)
+- [6. Extensibility Guidelines & Best Practices](#6-extensibility-guidelines--best-practices)
 
 ## 1. Runtime Architecture
 
 ### 1.1 Layering
-- **USP (OTAPI.UnifiedServerProcess)** – supplies the context-bound Terraria runtime (`RootContext`, TrProtocol packet models, detourable hooks). Unifier never bypasses this layer when touching Terraria statics.
-- **UnifierTSL Core** – launcher, orchestration services, multi-server coordinator, logging, configuration, module loader, and plugin host.
-- **Modules & Plugins** – assemblies staged under `plugins/`; may be core hosts or feature satellites. Modules can embed dependency payloads (managed, native, NuGet) for the loader to extract.
-- **Console Client / Publisher** – tooling projects that live beside the runtime but reuse the same subsystems.
+- **USP (OTAPI.UnifiedServerProcess)** – the patched server runtime layer (evolved from OTAPI) that provides per-server context isolation (`RootContext`) and runtime contracts such as TrProtocol packet models and detourable hook surfaces. Unifier runtime code reaches Terraria state through this layer.
+- **UnifierTSL Core** – the launcher itself, plus orchestration, multi-server coordination, logging, config, module loading, and the plugin host.
+- **Modules & Plugins** – your assemblies, staged under `plugins/`. They can be core hosts or feature satellites, and they can embed dependencies (managed, native, NuGet) for the loader to pull out automatically.
+- **Console Client / Publisher** – tooling projects that sit alongside the runtime and share the same subsystems.
 
 ### 1.2 Boot Flow
-1. `Program.cs` parses launcher arguments and forwards them to `UnifierApi.Initialize`.
-2. `UnifierApi` prepares global services (logging, event hub, module loader) and composes a `PluginOrchestrator`.
-3. Modules are discovered and preloaded via `ModuleAssemblyLoader`, staging assemblies and dependency blobs.
-4. Plugin hosts (built-in `.NET` plus any `[CoreModule]` hosts) discover, load, and initialize plugins.
-5. `UnifiedServerCoordinator` starts listening sockets and spins up `ServerContext` instances for each configured world.
-6. Event bridges (chat, game, coordinator, netplay, server) register detours into USP/Terraria to surface events into `EventHub`.
+1. `Program.cs` calls `UnifierApi.HandleCommandLinePreRun(args)`, starts core initialization via `UnifierApi.InitializeCore(args)`, and completes launcher initialization with `UnifierApi.CompleteLauncherInitialization()`.
+2. `UnifierApi` sets up global services (logging, event hub, module loader) and initializes a `PluginOrchestrator`.
+3. Modules get discovered and preloaded through `ModuleAssemblyLoader` — assemblies are staged and dependency blobs extracted.
+4. Plugin hosts (the built-in .NET host plus custom `[PluginHost(...)]` hosts discovered from loaded modules) discover, load, and initialize plugins.
+5. `UnifiedServerCoordinator` opens the listening socket and spins up a `ServerContext` for each configured world.
+6. Event bridges (chat, game, coordinator, netplay, server) hook into USP/Terraria via detours and pipe everything into `EventHub`.
 
 ### 1.3 Major Components
-- `UnifierApi` – static facade to obtain loggers, events, plugin hosts, and window title helpers.
-- `UnifiedServerCoordinator` – multi-server router managing shared Terraria state and connection lifecycles.
-- `ServerContext` – USP `RootContext` subclass per world; integrates logging, packet receivers, and extension slots.
-- `PluginOrchestrator` + hosts – manage plugin discovery, loading, sequencing, shutdown, and unload.
-- `ModuleAssemblyLoader` – handles module staging, dependency extraction, collectible load contexts, and unload order.
-- `EventHub` – centralised event provider registry bridging MonoMod detours to priority-aware event pipelines.
-- `Logging` subsystem – allocation-conscious logging with metadata injection and pluggable writers.
+- `UnifierApi` – your main entry point for grabbing loggers, events, plugin hosts, and window title helpers.
+- `UnifiedServerCoordinator` – the multi-server router that manages shared Terraria state and connection lifecycles.
+- `ServerContext` – a USP `RootContext` subclass per world, wiring in logging, packet receivers, and extension slots.
+- `PluginOrchestrator` + hosts – handle plugin discovery, loading, init ordering, and shutdown/unload.
+- `ModuleAssemblyLoader` – takes care of module staging, dependency extraction, collectible load contexts, and unload order.
+- `EventHub` – the central event registry that bridges MonoMod detours into priority-sorted event pipelines.
+- `Logging` subsystem – lightweight, allocation-friendly logging with metadata injection and pluggable writers.
 
 ## 2. Core Services & Subsystems
 
 ### 2.1 Event Hub
 
-The event system is UnifierTSL's central pub/sub infrastructure, providing a zero-allocation, priority-ordered event pipeline with compile-time type safety and runtime flexibility.
+The event system is the heart of UnifierTSL's pub/sub — a fast, priority-sorted pipeline with no heap allocations and full type safety.
+
+<details>
+<summary><strong>Expand Event Hub implementation deep dive</strong></summary>
 
 #### Architecture Overview
 
-**`EventHub` (src/UnifierTSL/EventHub.cs)** serves as the aggregation point for all event providers, organized by domain:
+**`EventHub` (src/UnifierTSL/EventHub.cs)** collects all event providers in one place, grouped by domain:
 ```csharp
 public class EventHub
 {
-    public readonly LanucherEventHandler Lanucher = new();
+    public readonly LauncherEventHandler Launcher = new();
     public readonly ChatHandler Chat = new();
     public readonly CoordinatorEventBridge Coordinator = new();
     public readonly GameEventBridge Game = new();
@@ -48,11 +78,13 @@ public class EventHub
 }
 ```
 
-Access events via: `UnifierApi.EventHub.Game.PreUpdate`, `UnifierApi.EventHub.Chat.MessageEvent`, etc.
+You access events like this: `UnifierApi.EventHub.Game.PreUpdate`, `UnifierApi.EventHub.Chat.MessageEvent`, etc.
+
+`UnifierApi.EventHub.Launcher.InitializedEvent` fires from `UnifierApi.CompleteLauncherInitialization()` once launcher arguments are finalized (including interactive prompts) — right before `UnifiedServerCoordinator.Launch(...)` starts accepting clients.
 
 #### Event Provider Types
 
-The event system provides **four distinct provider types** optimized for different mutability and cancellation requirements:
+There are **four provider types**, each tuned for different needs around mutability and cancellation:
 
 | Provider Type | Event Data | Cancellation | Use Case |
 |--------------|------------|--------------|----------|
@@ -61,11 +93,11 @@ The event system provides **four distinct provider types** optimized for differe
 | `ValueEventNoCancelProvider<T>` | Mutable (`ref T`) | No | Informational events where handlers may need to modify shared state |
 | `ReadonlyEventNoCancelProvider<T>` | Immutable (`in T`) | No | Pure notification events for lifecycle/telemetry (e.g., `PreUpdate`, `PostUpdate`) |
 
-All event args are `ref struct` types allocated on the stack—**zero heap allocation**, **zero GC pressure**.
+All event args are `ref struct` types living on the stack — no heap allocations, no GC pressure.
 
 #### Priority System and Handler Registration
 
-Handlers execute in **ascending priority order** (lower numeric values = higher priority):
+Handlers run in **ascending priority order** (lower number = higher priority):
 ```csharp
 public enum HandlerPriority : byte
 {
@@ -85,8 +117,8 @@ public enum HandlerPriority : byte
 
 **Registration API**:
 ```csharp
-// Basic registration (Normal priority)
-UnifierApi.EventHub.Chat.MessageEvent.Register(OnMessage);
+// Basic registration (Normal priority on ValueEventProvider)
+UnifierApi.EventHub.Chat.ChatEvent.Register(OnChat);
 
 // With explicit priority
 UnifierApi.EventHub.Netplay.ConnectEvent.Register(OnConnect, HandlerPriority.Higher);
@@ -96,14 +128,14 @@ UnifierApi.EventHub.Game.GameHardmodeTileUpdate.Register(OnTileUpdate,
     HandlerPriority.Low, FilterEventOption.Handled);
 
 // Unregistration (pass same delegate reference)
-UnifierApi.EventHub.Chat.MessageEvent.UnRegister(OnMessage);
+UnifierApi.EventHub.Chat.ChatEvent.UnRegister(OnChat);
 ```
 
-**Handler Management Internals** (src/UnifierTSL/Events/Core/ValueEventBaseProvider.cs:28-68):
-- Uses **volatile snapshot array** for lock-free reads during invocation
-- **Binary search insertion** maintains priority order automatically
-- **Copy-on-write** semantics: registration creates new array, old array remains valid for ongoing invocations
-- Thread-safe via `Lock _sync` for modifications only
+**Under the hood** (src/UnifierTSL/Events/Core/ValueEventBaseProvider.cs:28-68):
+- Uses a **volatile snapshot array** so reads during invocation are lock-free
+- **Binary search insertion** keeps handlers sorted by priority automatically
+- **Copy-on-write**: registration creates a new array, so ongoing invocations against the old snapshot aren't disrupted
+- Only modifications are guarded by `Lock _sync`
 
 #### Filtering and Cancellation Mechanics
 
@@ -122,7 +154,7 @@ public enum FilterEventOption : byte
 - `StopPropagation = true`: Stops executing remaining handlers
 - Different providers interpret `Handled` differently:
   - `ReadonlyEventProvider`: Returns boolean to caller (`out bool handled`)
-  - `ValueEventProvider`: Caller checks `args.Handled` after invocation
+  - `ValueEventProvider`: Caller receives the cancellation result from `Invoke(ref data, out bool handled)` (handlers set `args.Handled`)
   - No-cancel providers: No `Handled` flag exposed
 
 **Example - Chat Command Interception**:
@@ -139,21 +171,36 @@ UnifierApi.EventHub.Chat.MessageEvent.Register(
     HandlerPriority.Higher);
 ```
 
-#### Event Bridges - MonoMod Integration
+#### Event Bridges — MonoMod Integration
 
-Event bridges connect **MonoMod runtime detours** to the event system, translating low-level hooks into typed event invocations:
+Event bridges are the glue between **MonoMod runtime detours** and the event system — they turn low-level hooks into typed event invocations:
 
 **GameEventBridge** (src/UnifierTSL/Events/Handlers/GameEventBridge.cs):
 ```csharp
 public class GameEventBridge
 {
+    public readonly ReadonlyEventNoCancelProvider<ServerEvent> GameInitialize = new();
+    public readonly ReadonlyEventNoCancelProvider<ServerEvent> GamePostInitialize = new();
     public readonly ReadonlyEventNoCancelProvider<ServerEvent> PreUpdate = new();
     public readonly ReadonlyEventNoCancelProvider<ServerEvent> PostUpdate = new();
     public readonly ReadonlyEventProvider<GameHardmodeTileUpdateEvent> GameHardmodeTileUpdate = new();
 
     public GameEventBridge() {
+        On.Terraria.Main.Initialize += OnInitialize;
+        On.Terraria.NetplaySystemContext.StartServer += OnStartServer;
         On.Terraria.Main.Update += OnUpdate;
+        On.OTAPI.HooksSystemContext.WorldGenSystemContext.InvokeHardmodeTilePlace += OnHardmodeTilePlace;
         On.OTAPI.HooksSystemContext.WorldGenSystemContext.InvokeHardmodeTileUpdate += OnHardmodeTileUpdate;
+    }
+
+    private void OnInitialize(...) {
+        GameInitialize.Invoke(new(root.ToServer())); // Before Terraria.Main.Initialize original logic
+        orig(self, root);
+    }
+
+    private void OnStartServer(...) {
+        orig(self);
+        GamePostInitialize.Invoke(new(self.root.ToServer())); // After NetplaySystemContext.StartServer
     }
 
     private void OnUpdate(On.Terraria.Main.orig_Update orig, Main self, RootContext root, GameTime gameTime) {
@@ -163,6 +210,12 @@ public class GameEventBridge
         PostUpdate.Invoke(data);     // After original
     }
 
+    private bool OnHardmodeTilePlace(...) {
+        GameHardmodeTileUpdateEvent data = new(x, y, type, self.root.ToServer());
+        GameHardmodeTileUpdate.Invoke(data, out bool handled);
+        return !handled;
+    }
+
     private bool OnHardmodeTileUpdate(...) {
         GameHardmodeTileUpdateEvent data = new(x, y, type, self.root.ToServer());
         GameHardmodeTileUpdate.Invoke(data, out bool handled);
@@ -170,6 +223,9 @@ public class GameEventBridge
     }
 }
 ```
+`GameHardmodeTileUpdate` intentionally aggregates the two original OTAPI hardmode events (`HardmodeTilePlace` and `HardmodeTileUpdate`) behind one event provider.
+Those hooks sit on Terraria hardmode tile infection/growth paths (for example evil/hallow spread and crystal shard growth), so one handler can enforce one policy.
+After USP contextification, those event entry points move from static access to members on context instances, which is good for per-instance subscriptions but awkward for global registration. By detouring the two instance entry functions (`InvokeHardmodeTilePlace` and `InvokeHardmodeTileUpdate`) via MonoMod, Unifier exposes one global event stream; `self` carries the server root for the current call, and the bridge forwards `self.root.ToServer()` as `ServerContext`.
 
 **ChatHandler** (src/UnifierTSL/Events/Handlers/ChatHandler.cs):
 ```csharp
@@ -192,10 +248,15 @@ public class ChatHandler
 - `SocketResetEvent` (informational) - Socket cleanup notification
 
 **CoordinatorEventBridge** (src/UnifierTSL/Events/Handlers/CoordinatorEventBridge.cs):
+- `CheckVersion` (mutable) - Gate `ClientHello` version checks during pending connection authentication
 - `SwitchJoinServerEvent` (mutable) - Select destination server for joining player
+- `ServerCheckPlayerCanJoinIn` (mutable) - Per-server admission hook used before candidate server selection
+- `JoinServer` (informational) - Raised once a player is bound to a destination server
 - `PreServerTransfer` (cancellable) - Before transferring player between servers
 - `PostServerTransfer` (informational) - After successful transfer
 - `CreateSocketEvent` (mutable) - Customize socket creation
+- `Started` (informational) - Fired after coordinator launch and startup logging completes
+- `LastPlayerLeftEvent` (informational) - Fired on transition from `ActiveConnections > 0` to `0`
 
 **ServerEventBridge** (src/UnifierTSL/Events/Handlers/ServerEventBridge.cs):
 - `CreateConsoleService` (mutable) - Provide custom console implementation
@@ -204,7 +265,7 @@ public class ChatHandler
 
 #### Event Content Hierarchy
 
-Event payloads implement typed interfaces for context propagation:
+Event payloads use typed interfaces to carry context around:
 ```csharp
 public interface IEventContent { }  // Base marker
 
@@ -235,6 +296,8 @@ public readonly struct LeaveEvent(int plr, ServerContext server) : IPlayerEventC
 }
 ```
 
+</details>
+
 #### Performance Characteristics
 
 **Handler Invocation**:
@@ -243,23 +306,23 @@ public readonly struct LeaveEvent(int plr, ServerContext server) : IPlayerEventC
 - Filter check: O(1) bitwise AND per handler
 
 **Memory**:
-- Event args: Stack-allocated `ref struct` (zero heap allocation)
-- Handler snapshots: Immutable arrays (GC-friendly, long-lived Gen2)
+- Event args: stack-allocated `ref struct` — no heap allocation
+- Handler snapshots: immutable arrays, GC-friendly (long-lived Gen2)
 - Registration: O(log n) binary search + O(n) array copy
 
-**Typical Performance**:
-- Simple event with 5 handlers: ~100-200 ns
-- Event with 20 handlers + filtering: ~500-800 ns
-- Zero GC allocations during steady-state invocation
+**In practice**, the actual cost depends on how many handlers you have, what filters are active, and how heavy your handler logic is. The pipeline avoids per-call heap allocations as long as your handlers do the same.
 
 #### Best Practices
 
-1. **Prefer Event Providers Over Direct Detours**: Use `EventHub` providers for consistency; contribute new providers to the core runtime rather than adding plugin-specific detours
-2. **Respect `ref struct` Constraints**: Event args cannot be captured in closures or async methods; extract necessary data synchronously
-3. **Avoid Blocking Operations**: Event handlers run on the game thread; dispatch long-running work via `Task.Run()`
-4. **Unregister During Shutdown**: Always call `UnRegister()` in `DisposeAsync()` to prevent memory leaks
-5. **Use Appropriate Provider Type**: Choose readonly/no-cancel variants when applicable for better performance
-6. **Mind Priority Ordering**: Use `Highest` sparingly; reserve for critical infrastructure (e.g., permission checks)
+1. **Use `EventHub` for shared/high-traffic hook points** — it gives handler-level priority/filter control and predictable ordering. Raw MonoMod detours compose by detour registration order (typically last-registered-first), which is too coarse when multiple plugins need different ordering per event. If a hook is broadly useful, contribute an `EventHub` provider instead of adding plugin-specific detours
+2. **Remember `ref struct` rules** — event args can't be captured in closures or async methods, so grab what you need from them synchronously
+3. **Don't block in handlers** — they run on the game thread. Offload heavy work with `Task.Run()`
+4. **Unregister on shutdown** — always call `UnRegister()` in your plugin's dispose hook (`DisposeAsync`/`DisposeAsync(bool isDisposing)`) to avoid leaks
+5. **Pick the right provider type** — use readonly/no-cancel variants when you can; they're lighter
+6. **Go easy on `Highest` priority** — save it for critical infrastructure like permission checks
+
+<details>
+<summary><strong>Expand custom event provider extension example</strong></summary>
 
 #### Advanced: Custom Event Providers
 
@@ -296,11 +359,16 @@ public class EventHub
 }
 ```
 
-For comprehensive examples, see `src/Plugins/TShockAPI/Handlers/MiscHandler.cs` and `src/Plugins/CommandTeleport`.
+For real-world examples, check out `src/Plugins/TShockAPI/Handlers/MiscHandler.cs` and `src/Plugins/CommandTeleport`.
+
+</details>
 
 ### 2.2 Module System
 
-The module system provides **collectible assembly loading** with automatic dependency management, hot reload support, and safe unload semantics. It bridges the gap between raw DLLs and the plugin host layer.
+The module system handles loading your plugin DLLs, pulling in dependencies, hot-reloading, and cleaning up when you unload. It sits between raw DLLs and the plugin host, using collectible `AssemblyLoadContext`s so modules can be swapped at runtime.
+
+<details>
+<summary><strong>Expand Module System implementation deep dive</strong></summary>
 
 #### Module Types and Organization
 
@@ -328,7 +396,7 @@ The module system provides **collectible assembly loading** with automatic depen
 
 **Module Discovery and Staging** (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:43-175):
 
-The loader **does not load assemblies during discovery**—it reads PE headers directly via `MetadataLoadContext`:
+The loader **doesn't actually load assemblies during discovery** — it just reads PE headers via `MetadataLoadContext`:
 ```csharp
 public ModulePreloadInfo PreloadModule(string dll)
 {
@@ -365,6 +433,8 @@ public ModulePreloadInfo PreloadModule(string dll)
 }
 ```
 
+`PreloadModules()` indexes discovered DLLs by `dll.Name` in a dictionary. If you have duplicate names across `plugins/` subdirectories (or between a subdirectory and root), the last one indexed wins. Since root-level files are indexed after subdirectories, a `plugins/<Name>.dll` at the root will override same-name files found earlier in child folders.
+
 **Validation Rules**:
 - Cannot be both `CoreModule` and `RequiresCoreModule`
 - `RequiresCoreModule` modules cannot declare dependencies
@@ -372,7 +442,7 @@ public ModulePreloadInfo PreloadModule(string dll)
 
 #### FileSignature Change Detection
 
-**FileSignature** (src/UnifierTSL/FileSystem/FileSignature.cs) tracks module changes via three-level detection:
+**FileSignature** (src/UnifierTSL/FileSystem/FileSignature.cs) tracks module changes with three levels of checking:
 
 ```csharp
 public record FileSignature(string FilePath, string Hash, DateTime LastWriteTimeUtc)
@@ -395,7 +465,7 @@ public record FileSignature(string FilePath, string Hash, DateTime LastWriteTime
 }
 ```
 
-**Usage**: Module loader uses `FileSignature.Hash` comparison during `Load()` to detect updated modules (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:204-207).
+The module loader uses `FileSignature.Hash` comparison during `Load()` to spot updated modules (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:204-207).
 
 #### ModuleLoadContext - Collectible Assembly Loading
 
@@ -413,10 +483,10 @@ public class ModuleLoadContext : AssemblyLoadContext
 }
 ```
 
-**Key Properties**:
-- **`isCollectible: true`** - Enables runtime unloading (GC collects ALC when no references remain)
-- **Disposal Actions** - Plugins register cleanup via `AddDisposeAction(Func<Task>)`, executed during `Unloading` event
-- **Resolution Chain** - Multi-tier fallback for managed and native assemblies
+**What's important here**:
+- **`isCollectible: true`** — this is what lets you unload modules at runtime (GC collects the ALC once no references remain)
+- **Disposal actions** — plugins register cleanup via `AddDisposeAction(Func<Task>)`, which runs during the `Unloading` event
+- **Resolution chain** — multi-tier fallback for resolving both managed and native assemblies
 
 **Assembly Resolution Strategy** (src/UnifierTSL/Module/ModuleLoadContext.cs:83-128):
 
@@ -448,9 +518,10 @@ OnResolving(AssemblyName assemblyName)
 
 **Unmanaged DLL Resolution** (src/UnifierTSL/Module/ModuleLoadContext.cs:134-155):
 - Reads `dependencies.json` from module directory
-- Expands current RID via `RidGraph.Instance.ExpandRuntimeIdentifier()` (e.g., `win-x64` → `win` → `any`)
-- Searches for matching native library with RID fallback chain
-- Loads via `LoadUnmanagedDllFromPath()`
+- Matches by manifest entry (`DependencyItem.FilePath`) rather than probing filesystem RID folders at load time
+- Accepts direct name matches (`sqlite3.dll`) and version-suffixed manifest names (`sqlite3.1.2.3.dll`)
+- Loads the first non-obsolete manifest match via `LoadUnmanagedDllFromPath()`
+- Current `LoadUnmanagedDll` behavior is manifest-driven; RID fallback is primarily applied earlier during dependency extraction (`NugetPackageFetcher.GetNativeLibsPathsAsync`, `NativeEmbeddedDependency`)
 
 #### Dependency Management
 
@@ -482,7 +553,7 @@ public class MyDependencyProvider : IDependencyProvider
 
 3. **Native Embedded Dependencies** (src/UnifierTSL/Module/Dependencies/NativeEmbeddedDependency.cs):
    - Probes RID fallback chain for matching embedded resource
-   - Extracts to `{moduleDir}/lib/runtimes/{rid}/native/{libraryName}.{ext}`
+   - Extracts to `{moduleDir}/runtimes/{rid}/native/{libraryName}.{ext}`
 
 **Dependency Extraction Process** (src/UnifierTSL/Module/ModuleAssemblyLoader.cs:368-560):
 
@@ -491,7 +562,7 @@ private bool UpdateDependencies(string dll, ModuleInfo info)
 {
     // 1. Validate module structure (must be in named directory)
     // 2. Load previous dependencies.json
-    DependenciesConfiguration prevConfig = DependenciesConfiguration.LoadDependenicesConfig(moduleDir);
+    DependenciesConfiguration prevConfig = DependenciesConfiguration.LoadDependenciesConfig(moduleDir);
 
     // 3. Extract new/updated dependencies
     foreach (ModuleDependency dependency in dependencies) {
@@ -533,20 +604,21 @@ private bool UpdateDependencies(string dll, ModuleInfo info)
 }
 ```
 
-**Lock Handling Strategy**:
-- Detects locked files via `IOException` HResult code
-- Creates versioned copy: `Newtonsoft.Json.13.0.3.dll` instead of `Newtonsoft.Json.dll`
-- Marks old file as `Obsolete` in manifest
-- Cleanup runs on next restart when file is no longer locked
+**What happens when a file is locked**:
+- The loader detects locked files via `IOException` HResult code
+- It creates a versioned copy instead: `Newtonsoft.Json.13.0.3.dll` alongside `Newtonsoft.Json.dll`
+- The old file gets marked `Obsolete` in the manifest
+- Cleanup happens on next restart, once the file is no longer locked
 
 **RID Graph for Native Dependencies** (src/UnifierTSL/Module/Dependencies/RidGraph.cs):
 - Loads embedded `RuntimeIdentifierGraph.json` (NuGet's official RID graph)
 - BFS traversal for RID expansion: `win-x64` → [`win-x64`, `win`, `any`]
-- Used by: `NugetPackageFetcher`, `ModuleLoadContext.LoadUnmanagedDll()`, `NativeEmbeddedDependency`
+- Used by extraction-time native selection (`NugetPackageFetcher`, `NativeEmbeddedDependency`)
+- `ModuleLoadContext.LoadUnmanagedDll()` is currently manifest-driven and does not perform RID fallback probing itself
 
 #### Module Unload and Dependency Graph
 
-**LoadedModule** (src/UnifierTSL/Module/LoadedModule.cs) tracks bidirectional dependencies:
+**LoadedModule** (src/UnifierTSL/Module/LoadedModule.cs) keeps track of who depends on whom:
 
 ```csharp
 public record LoadedModule(
@@ -634,7 +706,7 @@ public void ForceUnload(LoadedModule module)
 
 #### Module vs. Plugin Relationship
 
-**Clear Separation of Concerns**:
+**These are two different things**:
 
 | Concept | Responsibility | Key Type |
 |---------|---------------|----------|
@@ -687,40 +759,38 @@ public IPluginContainer? LoadPlugin(IPluginInfo pluginInfo)
 }
 ```
 
+</details>
+
 #### Best Practices
 
-1. **Use Core Modules for Related Features**: Group satellites under core modules to share dependencies and simplify unload
-2. **Declare All Dependencies**: Use `ModuleDependenciesAttribute` rather than manually copying DLLs
-3. **Test Hot Reload**: Use `FileSignature.Hash` checks to verify update detection works
-4. **Handle Locked Files**: Design plugins to release file handles promptly (avoid long-lived streams)
-5. **Respect Unload Order**: Don't cache `LoadedModule` references across reloads
-6. **Prefer NuGet Dependencies**: Let the loader handle transitive resolution automatically
-7. **Use RID-Aware Native Libs**: Embed for multiple RIDs or rely on NuGet package RID probing
+1. **Group related features into core modules** — satellites share dependencies and unload together, which keeps things clean
+2. **Declare your dependencies** — use `ModuleDependenciesAttribute` instead of manually copying DLLs
+3. **Test hot reload** — use `FileSignature.Hash` checks to make sure update detection works
+4. **Release file handles quickly** — long-lived streams can prevent clean unloads
+5. **Don't cache `LoadedModule` references across reloads** — they go stale
+6. **Let the loader handle NuGet** — transitive resolution is automatic
+7. **Embed for multiple RIDs** if you ship native libs, or lean on NuGet package RID probing
 
-#### Performance Characteristics
+#### Performance Notes
 
-**Module Loading**:
-- PE header parsing: ~1-2 ms per assembly
-- Staging (file copy): ~10-50 ms per assembly (disk-bound)
-- Assembly loading: ~5-20 ms per assembly
-- Dependency extraction: ~100-500 ms (NuGet resolution) or ~1-10 ms (embedded)
+**Loading**: Cost depends on how many assemblies you have, how deep the dependency graph goes, disk speed, and whether the NuGet cache is warm. Metadata scanning is lighter than a full load, but first-time NuGet resolution or native payload extraction can dominate.
 
-**Memory**:
-- Each `ModuleLoadContext`: ~50-200 KB overhead
-- Shared assemblies: Loaded once, referenced from multiple ALCs (no duplication)
-- Unloaded modules: Collectible after GC (Gen2 collection)
-
-**Typical Scenario**: 10 plugins, 50 total assemblies (including dependencies), ~1-3 seconds cold start.
+**Memory**: Footprint scales with loaded assemblies and active `ModuleLoadContext` instances. Unloaded modules become reclaimable once references are released and GC runs.
 
 ### 2.3 Plugin Host Orchestration
-- `PluginOrchestrator` (`src/UnifierTSL/PluginHost/PluginOrchestrator.cs`) registers built-in hosts (`DotnetPluginHost`) and any additional hosts discovered from core modules.
-- `.InitializeAllAsync` preloads modules, discovers plugin entry points (`PluginDiscoverer`), and loads them via `PluginLoader`.
-- Plugin containers sort by `InitializationOrder`, construct `PluginInitInfo` lists describing prior plugins, and invoke `IPlugin.InitializeAsync` concurrently while allowing awaited dependencies.
-- Shutdown/unload mirrors this flow: `ShutdownAllAsync` ensures plugins run cleanup, followed by module unload if requested.
+- `PluginOrchestrator` (`src/UnifierTSL/PluginHost/PluginOrchestrator.cs`) registers the built-in `DotnetPluginHost` plus any extra `[PluginHost(...)]` hosts discovered from loaded modules. This extension point is what enables non-default plugin/script runtimes.
+- Want a custom host? Implement `IPluginHost`, give it a parameterless constructor, and tag it with `[PluginHost(majorApiVersion, minorApiVersion)]`.
+- Host admission is version-gated against `PluginOrchestrator.ApiVersion` (currently `1.0.0`): `major` must match exactly, and the host's `minor` must be ≤ the runtime's `minor`. If it doesn't match, the host is skipped with a warning.
+- `.InitializeAllAsync` preloads modules, discovers plugin entry points via `PluginDiscoverer`, and loads them through `PluginLoader`.
+- Plugin containers are sorted by `InitializationOrder`, and `IPlugin.InitializeAsync` is called with `PluginInitInfo` lists so you can await specific dependencies.
+- `ShutdownAllAsync` and `UnloadAllAsync` exist on the orchestrator, but heads up — the built-in `DotnetPluginHost` still has TODO stubs for `ShutdownAsync`/`UnloadPluginsAsync`. For now, disposal is mainly driven by the module unload path.
 
 ### 2.4 Networking & Coordinator
 
-UnifierTSL's networking layer provides **unified multi-server packet routing** on a single port with middleware-style packet interception, priority-ordered handlers, and memory-pooled serialization.
+The networking layer runs all your servers behind **a single port** — it routes packets to the right server, lets you intercept/modify them middleware-style, and uses pooled buffers to keep allocations low.
+
+<details>
+<summary><strong>Expand Networking & Coordinator implementation deep dive</strong></summary>
 
 #### UnifiedServerCoordinator Architecture
 
@@ -733,7 +803,7 @@ Player[] players                              // Player entity state
 RemoteClient[] globalClients                  // TCP socket wrappers
 LocalClientSender[] clientSenders             // Per-client packet senders
 MessageBuffer[] globalMsgBuffers              // Receive buffers (256 × servers count)
-volatile ServerContext?[] clientCurrentlyServers  // Client → server mapping
+ServerContext?[] clientCurrentlyServers       // Client → server mapping (read/write via Volatile helpers)
 ```
 
 **Connection Pipeline**:
@@ -756,55 +826,50 @@ Byte processing routed via ProcessBytes hook
 
 **PendingConnection** (src/UnifierTSL/UnifiedServerCoordinator.cs:529-696):
 - Handles pre-authentication packets before server assignment
-- Validates Terraria version (Terraria279)
-- Password authentication (if `Config.ServerPassword` set)
+- Validates client version against `Terraria{Main.curRelease}` (with override via `Coordinator.CheckVersion`)
+- `Coordinator.CheckVersion` is currently invoked twice during `ClientHello` handling; handlers should be idempotent and avoid side effects that assume single invocation
+- Password authentication (if `UnifierApi.ServerPassword` is set)
 - Collects client metadata: `ClientUUID`, player name and appearance
 - Kicks incompatible clients with `NetworkText` reasons
 
 **Server Transfer Protocol** (src/UnifierTSL/UnifiedServerCoordinator.cs:290-353):
 ```csharp
-public static void TransferPlayerToServer(byte clientIndex, ServerContext targetServer)
+public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false)
 {
-    RemoteClient client = globalClients[clientIndex];
-    ServerContext currentServer = clientCurrentlyServers[clientIndex]!;
+    ServerContext? from = GetClientCurrentlyServer(plr);
+    if (from is null || from == to) return;
+    if (!to.IsRunning && !ignoreChecks) return;
 
-    // 1. Raise cancellable pre-transfer event
-    PreServerTransferEvent preEvent = new(clientIndex, currentServer, targetServer);
-    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(preEvent, out bool cancelled);
-    if (cancelled) return;
+    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
+    if (handled) return;
 
-    // 2. Atomic server switch
-    SetClientCurrentlyServer(clientIndex, targetServer);
+    // Sync leave → switch mapping → sync join
+    from.SyncPlayerLeaveToOthers(plr);
+    from.SyncServerOfflineToPlayer(plr);
+    SetClientCurrentlyServer(plr, to);
+    to.SyncServerOnlineToPlayer(plr);
+    to.SyncPlayerJoinToOthers(plr);
 
-    // 3. Sync player state to new server
-    Player player = players[clientIndex];
-    targetServer.NetMessage.SendData(MessageID.PlayerInfo, -1, -1, player: clientIndex);
-    targetServer.NetMessage.SendData(MessageID.PlayerActive, -1, -1, player: clientIndex);
-
-    // 4. Notify other players in target server
-    targetServer.SyncPlayerJoinToOthers(client, player);
-
-    // 5. Raise post-transfer event
-    PostServerTransferEvent postEvent = new(clientIndex, currentServer, targetServer);
-    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(postEvent);
+    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
 }
 ```
 
 **Packet Routing Hook** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416):
 ```csharp
-On.Terraria.NetMessageSystemContext.CheckBytes += (orig, self, clientIndex, buffer, length, out int messageType) =>
-{
-    ServerContext? server = clientCurrentlyServers[clientIndex];
-    if (server is null) {
-        // Pending connection - handle via PendingConnection
-        return pendingConnections[clientIndex].ProcessBytes(buffer, length, out messageType);
-    }
+On.Terraria.NetMessageSystemContext.CheckBytes += ProcessBytes;
 
-    // Route to server's packet handler
-    lock (globalMsgBuffers[clientIndex]) {
-        return NetPacketHandler.ProcessBytes(server, clientIndex, buffer, length, out messageType);
+private static void ProcessBytes(
+    On.Terraria.NetMessageSystemContext.orig_CheckBytes orig,
+    NetMessageSystemContext netMsg,
+    int clientIndex)
+{
+    ServerContext server = netMsg.root.ToServer();
+    MessageBuffer buffer = globalMsgBuffers[clientIndex];
+    lock (buffer) {
+        // Decode packet length, then route payload to NetPacketHandler.ProcessBytes(...)
+        NetPacketHandler.ProcessBytes(server, buffer, contentStart, contentLength);
     }
-};
+}
 ```
 
 #### Packet Interception - NetPacketHandler
@@ -813,13 +878,11 @@ On.Terraria.NetMessageSystemContext.CheckBytes += (orig, self, clientIndex, buff
 
 **Handler Registration**:
 ```csharp
-NetPacketHandler.Register<TrProtocol.NetPackets.ChatMessage>(
-    (ref RecievePacketEvent<ChatMessage> args) =>
+NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
+    (ref ReceivePacketEvent<TileChange> args) =>
     {
-        if (args.Packet.Message.StartsWith("/admin")) {
-            if (!HasPermission(args.Who, "admin")) {
-                args.HandleMode = PacketHandleMode.Cancel;  // Block packet
-            }
+        if (IsProtectedRegion(args.Packet.X, args.Packet.Y)) {
+            args.HandleMode = PacketHandleMode.Cancel;  // Block packet
         }
     },
     HandlerPriority.Highest);
@@ -832,16 +895,15 @@ NetPacketHandler.Register<TrProtocol.NetPackets.ChatMessage>(
 
 **Packet Processing Flow**:
 ```
-ProcessBytes(server, clientIndex, buffer, length)
+ProcessBytes(server, messageBuffer, contentStart, contentLength)
     ↓
 1. Parse MessageID from buffer
     ↓
 2. Dispatch to type-specific handler via switch(messageID):
-    - ProcessPacket_F<TPacket>()    // Fixed, non-length-aware
-    - ProcessPacket_FL<TPacket>()   // Fixed, length-aware
+    - ProcessPacket_F<TPacket>()    // Fixed, non-side-specific
+    - ProcessPacket_FS<TPacket>()   // Fixed, side-specific
     - ProcessPacket_D<TPacket>()    // Dynamic (managed)
     - ProcessPacket_DS<TPacket>()   // Dynamic, side-specific
-    - ProcessPacket_DLS<TPacket>()  // Dynamic, length-aware, side-specific
     ↓
 3. Deserialize packet from buffer (unsafe pointers)
     ↓
@@ -850,7 +912,7 @@ ProcessBytes(server, clientIndex, buffer, length)
 5. Evaluate PacketHandleMode:
     - None: Forward to MessageBuffer.GetData() (original logic)
     - Cancel: Suppress packet entirely
-    - Overwrite: Re-inject via ClientPacketReceiver.AsRecieveFromSender_*()
+    - Overwrite: Re-inject via ClientPacketReceiver.AsReceiveFromSender_*()
     ↓
 6. Invoke PacketProcessed callbacks
 ```
@@ -868,7 +930,7 @@ public enum PacketHandleMode : byte
 **Example - Packet Modification**:
 ```csharp
 NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
-    (ref RecievePacketEvent<TileChange> args) =>
+    (ref ReceivePacketEvent<TileChange> args) =>
     {
         // Deny tile placement in protected regions
         if (IsProtectedRegion(args.Packet.X, args.Packet.Y)) {
@@ -879,24 +941,24 @@ NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
 
 #### Packet Sending - PacketSender & LocalClientSender
 
-**PacketSender** (src/UnifierTSL/Network/PacketSender.cs) - Abstract base class for type-safe packet transmission:
+**PacketSender** (src/UnifierTSL/Network/PacketSender.cs) - Abstract base class for generic-specialized packet transmission (lets struct packet types stay on no-boxing fast paths):
 
 **API Methods**:
 ```csharp
 // Fixed-size packets (unmanaged structs)
-public void SendFixedPacket<TPacket>(in TPacket packet)
-    where TPacket : struct, INetPacket, INonSideSpecific, INonLengthAware
+public void SendFixedPacket<TPacket>(scoped in TPacket packet)
+    where TPacket : unmanaged, INonSideSpecific, INetPacket
 
 // Dynamic-size packets (managed types)
-public void SendDynamicPacket<TPacket>(in TPacket packet)
-    where TPacket : struct, IManagedPacket, INonSideSpecific
+public void SendDynamicPacket<TPacket>(scoped in TPacket packet)
+    where TPacket : struct, IManagedPacket, INonSideSpecific, INetPacket
 
 // Server-side variants (set IsServerSide flag)
-public void SendFixedPacket_S<TPacket>(in TPacket packet) where TPacket : ISideSpecific, ...
-public void SendDynamicPacket_S<TPacket>(in TPacket packet) where TPacket : ISideSpecific, ...
+public void SendFixedPacket_S<TPacket>(scoped in TPacket packet) where TPacket : unmanaged, ISideSpecific, INetPacket
+public void SendDynamicPacket_S<TPacket>(scoped in TPacket packet) where TPacket : struct, IManagedPacket, ISideSpecific, INetPacket
 
-// Runtime dispatch (uses switch for all 246 packet types)
-public void SendUnknownPacket<TPacket>(in TPacket packet) where TPacket : INetPacket
+// Runtime dispatch (uses a switch covering many packet types)
+public void SendUnknownPacket<TPacket>(scoped in TPacket packet) where TPacket : struct, INetPacket
 ```
 
 **Buffer Management** (src/UnifierTSL/Network/SocketSender.cs:79-117):
@@ -931,28 +993,24 @@ private void SendDataAndFreeBuffer(byte[] buffer, int totalLength, SocketSendCal
 ```csharp
 public class LocalClientSender : SocketSender
 {
-    public byte ID { get; init; }
+    public readonly int ID;
 
-    protected override ISocket Socket =>
-        UnifiedServerCoordinator.globalClients[ID].Socket;
+    public RemoteClient Client => UnifiedServerCoordinator.globalClients[ID];
+    public sealed override ISocket Socket => Client.Socket;
 
-    // Override Kick to set termination flags atomically
-    public override void Kick(NetworkText text, bool writeToConsole = true) {
-        RemoteClient client = UnifiedServerCoordinator.globalClients[ID];
-        if (!Volatile.Read(ref client.PendingTermination)) {
-            client.PendingTerminationApproved = true;
-            Volatile.Write(ref client.PendingTermination, true);
-        }
-        base.Kick(text, writeToConsole);
+    public sealed override void Kick(NetworkText reason, bool bg = false) {
+        Client.PendingTermination = true;
+        Client.PendingTerminationApproved = true;
+        base.Kick(reason, bg);
     }
 }
 ```
 
-**Packet Reception Simulation - ClientPacketReceiver** (src/UnifierTSL/Network/ClientPacketReciever.cs):
+**Packet Reception Simulation - ClientPacketReceiver** (src/UnifierTSL/Network/ClientPacketReceiver.cs):
 
 Used when handlers set `HandleMode = Overwrite`:
 ```csharp
-public static void AsRecieveFromSender_FixedPkt<TPacket>(ServerContext server, byte who, in TPacket packet)
+public void AsReceiveFromSender_FixedPkt<TPacket>(LocalClientSender sender, scoped in TPacket packet)
     where TPacket : unmanaged, INetPacket, INonSideSpecific
 {
     byte[] buffer = ArrayPool<byte>.Shared.Rent(sizeof(TPacket) + 4);
@@ -967,7 +1025,7 @@ public static void AsRecieveFromSender_FixedPkt<TPacket>(ServerContext server, b
         }
 
         // Inject as if received from sender
-        server.NetMessage.buffer[who].GetData(buffer, 2, len - 2);
+        Server.NetMessage.buffer[sender.ID].GetData(Server, 0, len, out _, buffer, ...);
     }
     finally {
         ArrayPool<byte>.Shared.Return(buffer);
@@ -977,39 +1035,15 @@ public static void AsRecieveFromSender_FixedPkt<TPacket>(ServerContext server, b
 
 #### TrProtocol Integration
 
-UnifierTSL leverages **TrProtocol** (IL-merged from USP) for packet models:
+UnifierTSL consumes **TrProtocol** packet models that USP bundles into the runtime via IL merge:
 
 **Packet Characteristics**:
-- **140+ packet types** defined as structs
-- **Interfaces**: `INetPacket`, `IManagedPacket`, `ILengthAware`, `ISideSpecific`
-- **Serialization**: Unsafe pointer-based (`void ReadContent(ref void* ptr)`, `void WriteContent(ref void* ptr)`)
+- **Many packet types** defined as structs under `TrProtocol.NetPackets` and `TrProtocol.NetPackets.Modules`
+- **Interfaces**: `INetPacket`, `IManagedPacket`, `ISideSpecific`, `INonSideSpecific`
+- **Dispatch strategy**: prefer generic methods with interface constraints over runtime `is`-based interface dispatch that boxes packet structs; paired interfaces like `ISideSpecific` / `INonSideSpecific` encode mutually exclusive compile-time paths and reduce misrouting risk
+- **Serialization contract**: pointer-based `ReadContent(ref void* ptr, void* ptrEnd)` and `WriteContent(ref void* ptr)`; the read end-pointer enables bounded reads and managed exceptions on overflow attempts
 
-**Example Packets**:
-```csharp
-// Fixed-size, non-side-specific
-public struct SpawnPlayer : INetPacket, INonSideSpecific
-{
-    public short _PlayerSlot;
-    public short _SpawnX;
-    public short _SpawnY;
-    // ...
-}
-
-// Dynamic-size, side-specific
-public struct ChatMessage : IManagedPacket, ISideSpecific
-{
-    public bool IsServerSide { get; set; }
-    public NetworkText Message;
-    public Color Color;
-    public byte PlayerId;
-}
-
-// Length-aware (needs end pointer for deserialization)
-public struct TileSection : INetPacket, ILengthAware
-{
-    public void ReadContent(ref void* ptr, void* end_ptr);  // Must read until end_ptr
-}
-```
+For concrete packet models and fields, inspect the actual TrProtocol packet structs shipped with the runtime.
 
 #### Network Patching for USP
 
@@ -1028,50 +1062,51 @@ On.Terraria.NetplaySystemContext.StartServer += (orig, self) =>
 
     // Disable per-server broadcasting (coordinator handles it)
     On.Terraria.NetplaySystemContext.StartBroadCasting = (_, _) => { };
-    On.Terraria.NetplaySystemContext.StopBroadCasting = (_, _) => { };
+On.Terraria.NetplaySystemContext.StopBroadCasting = (_, _) => { };
 };
 ```
 
+</details>
+
 #### Best Practices
 
-1. **Packet Handlers**:
-   - Register early (in `InitializeAsync` or `BeforeGlobalInitialize`)
-   - Use `Highest` priority sparingly (security checks only)
-   - Always unregister in `DisposeAsync()`
+1. **Packet handlers**:
+   - Register them early (in `InitializeAsync` or `BeforeGlobalInitialize`)
+   - Choose priority by ordering requirements; reserve `Highest` for handlers that must run before everything else (for example hard security gates)
+   - Always unregister in your dispose hook (`DisposeAsync(bool isDisposing)` if you're using `BasePlugin`)
 
-2. **Packet Modification**:
-   - Prefer `Cancel` over `Overwrite` when possible (cheaper)
-   - Validate modified packets before setting `Overwrite`
-   - Use `PacketProcessed` callback for telemetry, not logic
+2. **Packet modification**:
+   - Pick `Cancel` vs `Overwrite` by intent: `Cancel` drops the packet, `Overwrite` re-injects your modified packet
+   - If you set `HandleMode = Overwrite`, usually also set `StopPropagation = true` unless you explicitly want downstream handlers to process the rewritten packet
+   - Keep packet data read-only unless you intentionally overwrite it
 
-3. **Server Transfers**:
-   - Handle `PreServerTransfer` cancellation gracefully
-   - Update plugin-specific state in `PostServerTransfer`
-   - Don't cache `clientCurrentlyServers` references
+3. **Post-processing callbacks (`PacketProcessed`)**:
+   - Use for after-processing work such as metrics, tracing, or business logic that depends on final outcome
+   - Branch on the callback `PacketHandleMode` (`None`, `Cancel`, `Overwrite`) instead of assuming a single path
 
-4. **Memory Management**:
-   - Packet serialization uses `ArrayPool<byte>.Shared` - never cache buffers
-   - `LocalClientSender` instances are pooled in `UnifiedServerCoordinator.clientSenders`
+4. **Server transfers**:
+   - Treat `PreServerTransfer` as the veto point before any state swap
+   - Use `PostServerTransfer` for logic that must run after mapping switch + join sync
+   - Query current mapping via coordinator helpers (`GetClientCurrentlyServer`) instead of caching long-lived snapshots
 
-#### Performance Characteristics
+5. **Memory and sender lifecycle**:
+   - `PacketSender` and `ClientPacketReceiver` rent temporary buffers from `ArrayPool<byte>.Shared`; never retain rented arrays past the callback/scope
+   - `UnifiedServerCoordinator` pre-allocates one `LocalClientSender` per client slot in `clientSenders`
 
-**Packet Processing**:
-- Handler lookup: O(1) array indexing by packet GlobalID
-- Handler chain: O(n × log m) where n = handler count, m = filter checks
-- Serialization: ~100-500 ns per packet (unsafe pointers, no allocations)
+#### Performance Notes
 
-**Buffer Pooling**:
-- Standard packets: 1 KB buffer (rent time ~50 ns)
-- TileSection packets: 16 KB buffer
-- ~95% buffer reuse rate (measured in TShock production)
+**Packet processing**: Handler lookup is O(1) via packet GlobalID. Total cost scales with how many handlers you registered for that packet type and what they do. Serialization overhead depends on packet shape and size.
 
-**Multi-Server Routing**:
-- Client server lookup: O(1) volatile read
-- Server switch: ~10-20 μs (atomic pointer swap + event invocation)
+**Buffer pooling**: Uses `ArrayPool<byte>.Shared` with larger initial buffers for tile-heavy packets. How well this works depends on your traffic patterns and concurrency.
+
+**Multi-server routing**: Client→server lookup is O(1) through volatile-backed mapping. Transfer cost is mostly about sync steps and your event handlers.
 
 ### 2.5 Logging Infrastructure
 
-UnifierTSL provides a **high-performance structured logging system** with metadata injection, server-scoped routing, and ArrayPool-backed allocation for zero-GC logging.
+The logging system is built for performance — `LogEntry` lives on the stack, metadata is pooled, and everything routes through pluggable writers with server-scoped output.
+
+<details>
+<summary><strong>Expand Logging Infrastructure implementation deep dive</strong></summary>
 
 #### Logger Architecture
 
@@ -1373,26 +1408,19 @@ ConsoleLogWriter detects metadata, routes to Server1.Console
 Output in Server1's console window with server-specific colors
 ```
 
-#### Performance Characteristics
+</details>
 
-**Logging Overhead**:
-- Simple log (no metadata): ~200-400 ns
-- Structured log (5 metadata keys): ~800-1200 ns
-- Zero allocation: Stack-only `LogEntry`, pooled `MetadataCollection`
+#### Performance Notes
 
-**Memory**:
-- Metadata buffer start: 4 entries (pooled)
-- Auto-resize: 4 → 8 → 16 entries
-- ~90% logs use ≤4 metadata keys (no reallocation)
+**Overhead**: Logging is allocation-light — `LogEntry` is stack-based, metadata is pool-backed. Actual overhead depends on how much metadata you attach, your formatter, and which sink you're writing to.
 
-**Throughput**:
-- ~1-2 million logs/sec (single thread, no filtering)
-- Console output: ~50k logs/sec (I/O bound)
-- File output: ~500k logs/sec (buffered writes)
+**Memory**: Metadata buffers grow on demand and get reused. Keep your metadata sets small to avoid resize churn.
+
+**Throughput**: In practice, throughput is limited by your sink. Console output is much slower than buffered file writes. If you have production latency targets, benchmark with your actual sink and log volume.
 
 #### Best Practices
 
-1. **Metadata Over String Interpolation**:
+1. **Use metadata, not string interpolation**:
    ```csharp
    // Bad: Creates string allocation
    logger.Info($"Player {playerId} joined");
@@ -1403,7 +1431,7 @@ Output in Server1's console window with server-specific colors
    });
    ```
 
-2. **Category Scoping**:
+2. **Scope your log categories**:
    ```csharp
    // Set category for block of related logs
    serverContext.CurrentLogCategory = "WorldGen";
@@ -1411,7 +1439,7 @@ Output in Server1's console window with server-specific colors
    serverContext.CurrentLogCategory = null;
    ```
 
-3. **Custom Metadata Injectors**:
+3. **Add custom metadata injectors** for correlation:
    ```csharp
    public class RequestIdInjector : ILogMetadataInjector
    {
@@ -1427,7 +1455,7 @@ Output in Server1's console window with server-specific colors
    logger.AddMetadataInjector(new RequestIdInjector());
    ```
 
-4. **Exception Logging**:
+4. **Log exceptions properly**:
    ```csharp
    try {
        DangerousOperation();
@@ -1438,34 +1466,35 @@ Output in Server1's console window with server-specific colors
    }
    ```
 
-For extended logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/UnifierTSL/Servers/ServerContext.cs`.
+For more logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/UnifierTSL/Servers/ServerContext.cs`.
 
 ### 2.6 Configuration Service
-- `ConfigRegistrar` implements `IPluginConfigRegistrar` for plugin configuration files under `config/<PluginName>/`.
-- `CreateConfigRegistration<T>` produces `ConfigRegistrationBuilder` enabling defaults, serialization options, error policies (`DeserializationFailureHandling`), and external change triggers.
-- Completed registrations return a `ConfigHandle<T>` that exposes `RequestAsync`, `Overwrite`, `ModifyInMemory`, and `OnChangedAsync` for hot reload support. File access uses `FileLockManager` to avoid corruption in multi-threaded environments.
+- `ConfigRegistrar` implements `IPluginConfigRegistrar`. In the built-in .NET host, plugin config root is `Path.Combine("config", Path.GetFileNameWithoutExtension(container.Location.FilePath))` (for example `config/TShockAPI`).
+- `CreateConfigRegistration<T>` gives you a `ConfigRegistrationBuilder` where you set defaults, serialization options, error policies (`DeserializationFailureHandling`), and external-change triggers.
+- You get back a `ConfigHandle<T>` that lets you `RequestAsync`, `Overwrite`, `ModifyInMemory`, and subscribe via `OnChangedAsync` for hot reload. File access is guarded by `FileLockManager` to prevent corruption.
 
 ## 3. USP Integration Points
 
-- `ServerContext` inherits USP `RootContext`, wiring Unifier services into the context (custom console, packet receiver, logging metadata). Every interaction with Terraria world/game state flows through this context.
-- The networking patcher (`UnifiedNetworkPatcher`) detours `NetplaySystemContext` functions to reuse shared buffers and enforce coordinated send/receive paths in a multi-server environment.
-- MonoMod `On.` detours are used sparingly to bridge USP hooks into Unifier-managed events. When adding new detours, prefer to expose them as `EventHub` providers so downstream plugins can rely on consistent APIs.
-- USP’s TrProtocol packet structs are re-exported for direct use by `PacketSender` and `NetPacketHandler`, keeping compatibility with USP’s serialization semantics (length-aware packets, `IExtraData`, etc.).
+- `ServerContext` inherits USP's `RootContext`, plugging Unifier services into the context (custom console, packet receiver, logging metadata). Everything that touches Terraria world/game state goes through this context.
+- The networking patcher (`UnifiedNetworkPatcher`) detours `NetplaySystemContext` functions to share buffers and coordinate send/receive paths across servers.
+- MonoMod `On.` detours are a valid tool for niche/cold hooks. For common or contested hook points, prefer exposing/using `EventHub` providers so plugins can share handler-level ordering/filtering instead of stacking plugin-local detours.
+- Unifier directly uses TrProtocol packet structs/interfaces from the USP runtime (`INetPacket`, `IManagedPacket`, `ISideSpecific`, etc.), and `PacketSender`/`NetPacketHandler` follow TrProtocol read/write contracts.
 
 ## 4. Public API Surface
 
 ### 4.1 Facade (`UnifierApi`)
-- `Initialize(string[] launcherArgs)` boots the runtime, wires up events, loads plugin hosts, and parses launcher arguments.
-- `EventHub` exposes grouped event providers once initialisation completes.
-- `PluginHosts` lazily instantiates the `PluginOrchestrator` for host-level interactions.
-- `CreateLogger(ILoggerHost, Logger? overrideLogCore = null)` returns a `RoleLogger` scoped to the caller and reuses the shared `Logger`.
-- `UpdateTitle(bool empty = false)` controls window title updates based on coordinator state.
-- `VersionHelper`, `FileMonitor`, and `LogCore`/`Logger` offer access to shared utilities (version info, file watchers, logging core).
+- The runtime boots through launcher entrypoints (`Program.cs`) via `HandleCommandLinePreRun`, `InitializeCore`, and `CompleteLauncherInitialization` — these are internal startup APIs, not something your plugin calls.
+- `EventHub` gives you access to all grouped event providers once init is done.
+- `EventHub.Launcher.InitializedEvent` fires when launcher arguments are finalized, right before the coordinator starts.
+- `PluginHosts` lazily sets up the `PluginOrchestrator` for host-level interactions.
+- `CreateLogger(ILoggerHost, Logger? overrideLogCore = null)` gives you a `RoleLogger` scoped to your plugin, reusing the shared `Logger`.
+- `UpdateTitle(bool empty = false)` controls the window title based on coordinator state.
+- `VersionHelper` and `LogCore`/`Logger` provide shared utilities (version info, logging core).
 
 ### 4.2 Event Payloads & Helpers
-- Event payload structs live under `src/UnifierTSL/Events/*` and implement `IEventContent`. Specialised interfaces (`IPlayerEventContent`, `IServerEventContent`) add context-specific metadata.
-- `HandlerPriority` and `FilterEventOption` enumerations define invocation order and filtering semantics.
-- Helper methods for registering/unregistering handlers ensure thread-safe, allocation-light operations.
+- Event payload structs live under `src/UnifierTSL/Events/*` and implement `IEventContent`. The specialised interfaces (`IPlayerEventContent`, `IServerEventContent`) add context like server or player info.
+- `HandlerPriority` and `FilterEventOption` control invocation order and filtering.
+- Registration/unregistration helpers are thread-safe and allocation-light.
 
 ### 4.3 Module & Plugin Types
 - `ModulePreloadInfo`, `ModuleLoadResult`, `LoadedModule` describe module metadata and lifecycle.
@@ -1474,49 +1503,58 @@ For extended logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/Un
 
 ### 4.4 Networking APIs
 - `PacketSender` exposes fixed/dynamic packet send helpers plus server-side variants.
-- `NetPacketHandler` offers `Register<TPacket>`, `ProcessBytes`, and `RecievePacketEvent<T>`.
-- `LocalClientSender` wraps a `RemoteClient`, exposing `Kick`, `SendData`, and `Client` metadata. `ClientPacketReciever` replays or rewrites inbound packets.
+- `NetPacketHandler` offers `Register<TPacket>`, `UnRegister<TPacket>`, `ProcessBytes`, and packet callbacks over `ReceivePacketEvent<T>`.
+- `LocalClientSender` wraps a `RemoteClient`, exposing `Kick`, `SendData`, and `Client` metadata. `ClientPacketReceiver` replays or rewrites inbound packets.
 - Coordinator helpers provide `TransferPlayerToServer`, `SwitchJoinServerEvent`, and state queries (`GetClientCurrentlyServer`, `Servers` list).
 
 ### 4.5 Logging & Diagnostics
-- `RoleLogger` extension methods (see `src/UnifierTSL/Logging/LoggerExt.cs`) provide severity helpers (`Debug`, `Info`, `Warning`, `Error`, `Success`, `LogHandledException`).
-- `LogEventIds` enumerates standard event identifiers for categorising log output.
-- Event providers expose `HandlerCount`, and `EventProvider.AllEvents` can be used for diagnostics dashboards.
+- `RoleLogger` extension methods (see `src/UnifierTSL/Logging/LoggerExt.cs`) give you severity helpers: `Debug`, `Info`, `Warning`, `Error`, `Success`, `LogHandledException`.
+- `LogEventIds` lists standard event identifiers for categorising log output.
+- Event providers expose `HandlerCount`, and you can enumerate `EventProvider.AllEvents` for diagnostics dashboards.
 
 ## 5. Runtime Lifecycle & Operations
 
 ### 5.1 Startup Sequence
-1. Launcher parses CLI and sets up logging.
-2. `ModuleAssemblyLoader.Load` scans `plugins/`, stages assemblies, and prepares dependency extraction.
-3. Plugin hosts discover eligible entry points and instantiate `IPlugin` implementations.
-4. `BeforeGlobalInitialize` runs synchronously on every plugin, enabling cross-plugin service wiring.
-5. `InitializeAsync` runs for each plugin; the orchestrator passes prior initialization tasks so dependencies can be awaited.
-6. `UnifiedServerCoordinator` provisions server contexts, calls into USP to start worlds, and registers event bridges.
+1. Launcher parses CLI args and sets up logging.
+2. `ModuleAssemblyLoader.Load` scans `plugins/`, stages assemblies, and handles dependency extraction.
+3. Plugin hosts find eligible entry points and instantiate `IPlugin` implementations.
+4. `BeforeGlobalInitialize` runs synchronously on every plugin — use it for cross-plugin service wiring.
+5. `InitializeAsync` runs for each plugin; you get prior plugin init tasks so you can await your dependencies.
+6. `UnifiedServerCoordinator` sets up server contexts, calls USP to start worlds, and registers event bridges.
+
+**A few notes on launcher args**:
+- Language precedence: `UTSL_LANGUAGE` env var is applied before CLI parsing and blocks later `-lang` / `-culture` / `-language` overrides.
+- `-server` / `-addserver` / `-autostart` parse server descriptors and queue up world startup during core init.
+- `-joinserver` installs a low-priority `SwitchJoinServer` policy (`random|rnd|r` or `first|f`); first valid policy wins.
+- `UnifierApi.CompleteLauncherInitialization()` prompts for any missing port/password, then fires `EventHub.Launcher.InitializedEvent`.
+- `Program.Run()` launches the coordinator, logs success, then fires `EventHub.Coordinator.Started`.
 
 ### 5.2 Runtime Operations
-- Event handlers capture cross-cutting logic (chat moderation, transfer control, packet filtering).
-- Config handles respond to file changes, allowing runtime tuning without restart.
-- The coordinator updates window titles, maintains server lists, and manages join/leave replays.
-- Logging metadata ensures each log can be correlated to a server, plugin, or subsystem.
+- Event handlers handle cross-cutting concerns — chat moderation, transfer control, packet filtering, etc.
+- Config handles react to file changes, so you can tweak settings without restarting.
+- The coordinator keeps window titles updated, maintains server lists, and replays join/leave sequences.
+- Logging metadata lets you trace any log entry back to its server, plugin, or subsystem.
 
 ### 5.3 Shutdown & Reload
-- Shutdown path: orchestrator requests each plugin to `ShutdownAsync`, then modules are unloaded (respecting dependency graphs), and load contexts are disposed.
-- Module reloads (for updated DLLs) trigger `ModuleAssemblyLoader.TryLoadSpecific` and, if hashes differ, reinitialise relevant plugins.
-- `ForceUnload` and `TryUnloadPlugin` allow targeted unload operations when a plugin signals disposal.
+- `PluginOrchestrator` exposes `ShutdownAllAsync` and `UnloadAllAsync`, though the built-in `DotnetPluginHost` still has TODO stubs for `ShutdownAsync`/`UnloadPluginsAsync`.
+- Module reload and targeted unload work through loader APIs (`ModuleAssemblyLoader.TryLoadSpecific`, `ForceUnload`) and plugin-loader ops (`TryUnloadPlugin`/`ForceUnloadPlugin`).
+- Plugin `DisposeAsync` hooks into `ModuleLoadContext` unload via registered dispose actions.
 
 ### 5.4 Diagnostics
-- Event providers publish handler counts for observability; integrate with tooling by enumerating `EventProvider.AllEvents`.
-- `PacketSender.SentPacket` and `NetPacketHandler.RecievePacketEvent` can emit metrics or logs for network tracing.
-- Logging metadata injectors offer per-server/per-plugin tags to enable filtering in external sinks.
+- Event providers expose handler counts for observability — enumerate `EventProvider.AllEvents` to build dashboards.
+- `PacketSender.SentPacket`, `NetPacketHandler.ProcessPacketEvent`, and per-packet `PacketProcessed` callbacks are great for traffic metrics and tracing.
+- Logging metadata injectors give you per-server/per-plugin tags for filtering in external sinks.
 
 ## 6. Extensibility Guidelines & Best Practices
 
-- **Prefer Event Providers** – before adding new MonoMod detours in plugins, check whether a provider exists or extend `EventHub` via the core project to keep behaviour consistent.
-- **Respect Context Boundaries** – always operate through `ServerContext` and USP context APIs to avoid cross-server bugs.
-- **Manage Load Contexts** – when shipping modules with native/managed dependencies, implement `ModuleDependenciesAttribute` providers so the loader keeps track of payloads and unloads cleanly.
-- **Avoid Async Gaps in Events** – `ref struct` event args require synchronous handlers. If you need async work, capture necessary state and schedule tasks without holding onto the args.
-- **Coordinate Initialization** – use `PluginInitInfo` to await prerequisite plugins rather than relying on order-only assumptions.
-- **Logging Discipline** – create loggers via `UnifierApi.CreateLogger` to inherit metadata injection and console formatting; add custom `ILogMetadataInjector` instances for correlation data.
-- **Testing Strategy** – anchor integration tests around event handlers and coordinator flows (e.g., simulate packet sequences). USP contexts can be instantiated in isolation for validation.
-- **Performance Considerations** – registration/unregistration of events is thread-safe but not trivial; batch registrations during startup. Use pooled buffers (packet sender) and avoid allocations inside hot paths.
-- **Diagnostics Hooks** – leverage `PacketSender.SentPacket` and event filters for building monitoring plugins without modifying the core runtime.
+- **Use event providers first** — before adding MonoMod detours in your plugin, check if an `EventHub` provider already exists (or add one to the core so others can benefit too).
+- **Stay within context boundaries** — always go through `ServerContext` and USP context APIs to avoid cross-server bugs.
+- **Declare your dependencies** — if you're shipping modules with native/managed deps, use `ModuleDependenciesAttribute` so the loader can track and clean up properly.
+- **No async in event handlers** — `ref struct` args can't be captured in closures or async methods. Grab what you need, then schedule async work separately.
+- **Await your dependencies explicitly** — use `PluginInitInfo` to await prerequisite plugins instead of just hoping the order works out.
+- **Use the built-in logging** — create loggers via `UnifierApi.CreateLogger` so you get metadata injection and console formatting for free. Add `ILogMetadataInjector` for correlation data.
+- **Write tests around events and coordinator flows** — simulate packet sequences, player joins, etc. USP contexts can run in isolation, which makes this pretty straightforward.
+- **Batch registrations at startup** — event registration is thread-safe but not free. Use pooled buffers from the packet sender and keep allocations out of hot paths.
+- **Build monitoring plugins with hooks** — `PacketSender.SentPacket` and event filters let you observe traffic without touching the core runtime.
+
+

@@ -1,4 +1,4 @@
-﻿using UnifierTSL.PluginHost.ConfigFormats;
+using UnifierTSL.PluginHost.ConfigFormats;
 using UnifierTSL.Plugins;
 
 namespace UnifierTSL.PluginHost.Configs
@@ -9,7 +9,7 @@ namespace UnifierTSL.PluginHost.Configs
         public DeserializationFailureHandling DeseriFailureHandling = DeserializationFailureHandling.ThrowException;
         public bool DeseriAutoPersistFallback;
         public SerializationFailureHandling SeriFailureHandling = SerializationFailureHandling.ThrowException;
-        public IConfigFormatProvider FormatProvider = new SystemTextJsonFormater();
+        public IConfigFormatProvider FormatProvider = new SystemTextJsonFormatter();
         public IConfigOption OnDeserializationFailure(DeserializationFailureHandling handling, bool autoPersistFallback = true) {
             AutoReloadOnExternalChange = autoPersistFallback;
             DeseriFailureHandling = handling;
@@ -27,7 +27,7 @@ namespace UnifierTSL.PluginHost.Configs
         }
 
         public IConfigOption WithFormat(ConfigFormat format) {
-            FormatProvider = GetFormater(format);
+            FormatProvider = GetFormatter(format);
             return this;
         }
 
@@ -36,15 +36,15 @@ namespace UnifierTSL.PluginHost.Configs
             return this;
         }
 
-        public static IConfigFormatProvider GetFormater(ConfigFormat format) {
+        public static IConfigFormatProvider GetFormatter(ConfigFormat format) {
             return format switch {
-                ConfigFormat.NewtonsoftJson => new NewtonsoftJsonFormater(),
+                ConfigFormat.NewtonsoftJson => new NewtonsoftJsonFormatter(),
 
-                ConfigFormat.Toml => new TomlFormater(),
+                ConfigFormat.Toml => new TomlFormatter(),
 
                 ConfigFormat.Json or
                 ConfigFormat.SystemTextJson or
-                _ => new SystemTextJsonFormater(),
+                _ => new SystemTextJsonFormatter(),
                 // _ => throw new NotSupportedException($"Unsupported config format: {format}"),
             };
         }

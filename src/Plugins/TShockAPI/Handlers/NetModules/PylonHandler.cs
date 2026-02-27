@@ -1,4 +1,4 @@
-﻿using Terraria.GameContent.NetModules;
+using Terraria.GameContent.NetModules;
 using TShockAPI.Extension;
 using UnifierTSL.Events.Handlers;
 using NetTeleportPylonModule = TrProtocol.NetPackets.Modules.NetTeleportPylonModule;
@@ -10,7 +10,7 @@ namespace TShockAPI.Handlers.NetModules
 	/// </summary>
 	public class PylonHandler : IPacketHandler<NetTeleportPylonModule>
 	{
-        public void OnReceive(ref RecievePacketEvent<NetTeleportPylonModule> args) {
+        public void OnReceive(ref ReceivePacketEvent<NetTeleportPylonModule> args) {
 			if (args.Packet.PylonPacketType == Terraria.GameContent.NetModules.NetTeleportPylonModule.SubPacketType.PlayerRequestsTeleport) {
 				var player = args.GetTSPlayer();
 

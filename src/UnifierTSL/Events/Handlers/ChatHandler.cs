@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using OTAPI;
 using System.Diagnostics.CodeAnalysis;
 using Terraria.Chat;
@@ -73,10 +73,10 @@ namespace UnifierTSL.Events.Handlers
             On.OTAPI.HooksSystemContext.MainSystemContext.InvokeCommandProcess_string += ProcessConsoleMessage;
         }
 
-        private void OnChat(ref RecievePacketEvent<NetTextModule> args) {
+        private void OnChat(ref ReceivePacketEvent<NetTextModule> args) {
             var data = args.Packet.TextC2S!;
             var msg = new ChatMessage(data.Text, new ChatCommandId(data.Command));
-            ChatManager.Commands.ProcessIncomingMessage(args.LocalReciever.Server, msg, args.Who);
+            ChatManager.Commands.ProcessIncomingMessage(args.LocalReceiver.Server, msg, args.Who);
             args.StopPropagation = true;
             args.HandleMode = PacketHandleMode.Cancel;
         }
@@ -140,7 +140,7 @@ namespace UnifierTSL.Events.Handlers
                     continue;
                 }
                 ServerContext? otherServer = UnifiedServerCoordinator.GetClientCurrentlyServer(i);
-                otherServer?.OnPlayerRecieveForwardedMsg(i, root.ToServer(), player, text);
+                otherServer?.OnPlayerReceiveForwardedMsg(i, root.ToServer(), player, text);
             }
         }
     }

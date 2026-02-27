@@ -7,8 +7,6 @@ on:
       - develop
       - 'release/**'
       - 'releases/**'
-    tags:
-      - 'v*'
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -24,12 +22,27 @@ on:
       - 'docs/**'
       - '.github/workflows/docs*.yaml'
   workflow_dispatch:
+    inputs:
+      release_channel:
+        description: 'Manual release channel'
+        required: true
+        default: 'rc'
+        type: choice
+        options:
+          - rc
+          - stable
+      stable_tag:
+        description: 'Optional stable tag override (example: v1.2.3)'
+        required: false
+        default: ''
+        type: string
 
 env:
   DOTNET_VERSION: '9.0.x'
   PROJECT_PATH: 'src/'
   PUBLISHER_PATH: 'src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj'
   EXCLUDED_PLUGINS: 'ExamplePlugin,ExamplePlugin.Features'
+  RELEASE_EXTRA_DOCS: ''
   ACTIONS_STEP_DEBUG: true
 
 jobs:
@@ -80,6 +93,10 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check docs metadata sync
+        shell: pwsh
+        run: ./tools/sync-doc-metadata.ps1 -Mode check
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -133,6 +150,32 @@ jobs:
           echo "Branch: ${{ github.ref_name }}" >> "$VERSION_FILE"
         shell: bash
 
+      - name: Stage extra release docs (optional)
+        run: |
+          WORKSPACE_PATH=$(echo "${{ github.workspace }}" | sed 's/\\/\//g')
+          OUTPUT_DIR="${WORKSPACE_PATH}/utsl-${{ matrix.arch }}"
+          DOCS_RAW="${{ env.RELEASE_EXTRA_DOCS }}"
+
+          if [ -z "$DOCS_RAW" ]; then
+            echo "No extra release docs configured."
+            exit 0
+          fi
+
+          IFS=',' read -ra DOCS <<< "$DOCS_RAW"
+          for doc in "${DOCS[@]}"; do
+            trimmed=$(echo "$doc" | xargs)
+            if [ -z "$trimmed" ]; then
+              continue
+            fi
+            if [ -f "$trimmed" ]; then
+              cp "$trimmed" "$OUTPUT_DIR/"
+              echo "Copied: $trimmed"
+            else
+              echo "Warning: extra release doc not found: $trimmed"
+            fi
+          done
+        shell: bash
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -141,11 +184,11 @@ jobs:
           compression-level: 9
           retention-days: 30
 
-  rc_release:
-    name: Create RC Release
+  alpha_release:
+    name: Create Alpha Release
     needs: build
     if: |
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.event_name == 'push' &&
       (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/releases/'))
     runs-on: ubuntu-latest
     permissions:
@@ -157,6 +200,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch tags
+        run: git fetch --tags --force
+        shell: bash
+
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v3.0.0
         with:
@@ -168,6 +215,26 @@ jobs:
         with:
           useConfigFile: true
           configFilePath: GitVersion.yml
+
+      - name: Prepare alpha metadata
+        id: release_meta
+        run: |
+          MAJOR="${{ steps.gitversion.outputs.major }}"
+          MINOR="${{ steps.gitversion.outputs.minor }}"
+          PATCH="${{ steps.gitversion.outputs.patch }}"
+          BASE_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          LAST_ALPHA_TAG_NUMBER=$(
+            git tag --list "${BASE_VERSION}-alpha.*" \
+              | sed -nE "s/^v${MAJOR}\\.${MINOR}\\.${PATCH}-alpha\\.([0-9]+)$/\\1/p" \
+              | sort -n \
+              | tail -n 1
+          )
+          NEXT_ALPHA_TAG_NUMBER=$(( ${LAST_ALPHA_TAG_NUMBER:-0} + 1 ))
+          TAG_NAME="${BASE_VERSION}-alpha.${NEXT_ALPHA_TAG_NUMBER}"
+          RELEASE_NAME="Alpha ${TAG_NAME}"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "release_name=$RELEASE_NAME" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -195,30 +262,38 @@ jobs:
 
       - name: Generate changelog
         run: |
-          CURRENT_TAG="v${{ steps.gitversion.outputs.semVer }}"
-          LAST_TAG=$(git tag --sort=-creatordate | grep -v "^${CURRENT_TAG}$" | head -n 1 || true)
+          CURRENT_TAG="${{ steps.release_meta.outputs.tag_name }}"
+          BASE_TAG=$(git tag --sort=-creatordate | grep -E '^v' | grep -v "^${CURRENT_TAG}$" | head -n 1 || true)
 
-          if [ -z "$LAST_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          if [ -z "$BASE_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --first-parent -20)
           else
-            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+            CHANGELOG=$(git log "${BASE_TAG}..HEAD" --pretty=format:"- %s (%h)" --first-parent)
+          fi
+
+          if [ -z "$CHANGELOG" ]; then
+            if [ -n "$BASE_TAG" ]; then
+              CHANGELOG="- No source changes since ${BASE_TAG}; release channel/tag promotion only."
+            else
+              CHANGELOG="- No source changes detected in recent history."
+            fi
           fi
 
           echo "## What's Changed" > CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "$CHANGELOG" >> CHANGELOG.md
 
-          if [ -n "$LAST_TAG" ]; then
+          if [ -n "$BASE_TAG" ]; then
             echo "" >> CHANGELOG.md
-            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${CURRENT_TAG}" >> CHANGELOG.md
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${BASE_TAG}...${CURRENT_TAG}" >> CHANGELOG.md
           fi
         shell: bash
 
-      - name: Create GitHub RC Release
+      - name: Create GitHub Alpha Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.gitversion.outputs.semVer }}
-          name: Release v${{ steps.gitversion.outputs.semVer }}
+          tag_name: ${{ steps.release_meta.outputs.tag_name }}
+          name: ${{ steps.release_meta.outputs.release_name }}
           body_path: CHANGELOG.md
           draft: false
           prerelease: true
@@ -229,18 +304,17 @@ jobs:
 
       - name: Release summary
         run: |
-          echo "# RC release created successfully" >> $GITHUB_STEP_SUMMARY
+          echo "# Alpha release created successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Version: v${{ steps.gitversion.outputs.semVer }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: ${{ steps.release_meta.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
 
-  stable_release:
-    name: Create Stable Release
+  manual_release:
+    name: Create Manual Release
     needs: build
     if: |
-      github.event_name == 'push' &&
-      startsWith(github.ref, 'refs/tags/v') &&
-      !contains(github.ref_name, '-')
+      github.event_name == 'workflow_dispatch' &&
+      (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/releases/'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -250,6 +324,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+        shell: bash
 
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v3.0.0
@@ -262,6 +340,52 @@ jobs:
         with:
           useConfigFile: true
           configFilePath: GitVersion.yml
+
+      - name: Prepare release metadata
+        id: release_meta
+        run: |
+          MAJOR="${{ steps.gitversion.outputs.major }}"
+          MINOR="${{ steps.gitversion.outputs.minor }}"
+          PATCH="${{ steps.gitversion.outputs.patch }}"
+          BASE_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          CHANNEL="${{ inputs.release_channel }}"
+          TAG_NAME=""
+          RELEASE_NAME=""
+          IS_PRERELEASE="true"
+
+          if [ "$CHANNEL" = "stable" ]; then
+            INPUT_TAG="${{ inputs.stable_tag }}"
+            if [ -n "$INPUT_TAG" ]; then
+              TAG_NAME="$INPUT_TAG"
+            else
+              TAG_NAME="$BASE_VERSION"
+            fi
+
+            if [[ "$TAG_NAME" != v* ]]; then
+              echo "stable_tag must start with 'v'."
+              exit 1
+            fi
+
+            RELEASE_NAME="Release ${TAG_NAME}"
+            IS_PRERELEASE="false"
+          else
+            LAST_RC_TAG_NUMBER=$(
+              git tag --list "${BASE_VERSION}-rc.*" \
+                | sed -nE "s/^v${MAJOR}\\.${MINOR}\\.${PATCH}-rc\\.([0-9]+)$/\\1/p" \
+                | sort -n \
+                | tail -n 1
+            )
+            NEXT_RC_TAG_NUMBER=$(( ${LAST_RC_TAG_NUMBER:-0} + 1 ))
+            TAG_NAME="${BASE_VERSION}-rc.${NEXT_RC_TAG_NUMBER}"
+            RELEASE_NAME="RC ${TAG_NAME}"
+            IS_PRERELEASE="true"
+          fi
+
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "release_name=$RELEASE_NAME" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -289,33 +413,46 @@ jobs:
 
       - name: Generate changelog
         run: |
-          CURRENT_TAG="${{ github.ref_name }}"
-          LAST_TAG=$(git tag --sort=-creatordate | grep -v "^${CURRENT_TAG}$" | head -n 1 || true)
-
-          if [ -z "$LAST_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          CURRENT_TAG="${{ steps.release_meta.outputs.tag_name }}"
+          CHANNEL="${{ steps.release_meta.outputs.channel }}"
+          if [ "$CHANNEL" = "rc" ]; then
+            BASE_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$' | grep -v "^${CURRENT_TAG}$" | head -n 1 || true)
           else
-            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+            BASE_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${CURRENT_TAG}$" | head -n 1 || true)
+          fi
+
+          if [ -z "$BASE_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --first-parent -20)
+          else
+            CHANGELOG=$(git log "${BASE_TAG}..HEAD" --pretty=format:"- %s (%h)" --first-parent)
+          fi
+
+          if [ -z "$CHANGELOG" ]; then
+            if [ -n "$BASE_TAG" ]; then
+              CHANGELOG="- No source changes since ${BASE_TAG}; release channel/tag promotion only."
+            else
+              CHANGELOG="- No source changes detected in recent history."
+            fi
           fi
 
           echo "## What's Changed" > CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "$CHANGELOG" >> CHANGELOG.md
 
-          if [ -n "$LAST_TAG" ]; then
+          if [ -n "$BASE_TAG" ]; then
             echo "" >> CHANGELOG.md
-            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${CURRENT_TAG}" >> CHANGELOG.md
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${BASE_TAG}...${CURRENT_TAG}" >> CHANGELOG.md
           fi
         shell: bash
 
-      - name: Create GitHub Stable Release
+      - name: Create GitHub Manual Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ steps.release_meta.outputs.tag_name }}
+          name: ${{ steps.release_meta.outputs.release_name }}
           body_path: CHANGELOG.md
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.release_meta.outputs.is_prerelease == 'true' }}
           files: |
             artifacts/*.zip
             artifacts/*.tar.gz
@@ -323,7 +460,8 @@ jobs:
 
       - name: Release summary
         run: |
-          echo "# Stable release created successfully" >> $GITHUB_STEP_SUMMARY
+          echo "# Manual release created successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Version: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Channel: ${{ steps.release_meta.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: ${{ steps.release_meta.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
