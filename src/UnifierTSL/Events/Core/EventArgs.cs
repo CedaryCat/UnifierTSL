@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 namespace UnifierTSL.Events.Core
 {

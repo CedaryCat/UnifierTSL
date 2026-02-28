@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL
+namespace UnifierTSL
 {
     // TODO: implement
     public static class LogEventIds

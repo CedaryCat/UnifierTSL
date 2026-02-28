@@ -1,4 +1,4 @@
-﻿using UnifierTSL.Reflection.Metadata;
+using UnifierTSL.Reflection.Metadata;
 
 namespace UnifierTSL.Plugins
 {

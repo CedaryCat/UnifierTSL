@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Logging.LogFilters
+namespace UnifierTSL.Logging.LogFilters
 {
     public class EmptyLogFilter : ILogFilter
     {

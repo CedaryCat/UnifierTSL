@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Terraria.Localization;
 using UnifierTSL.Extensions;
 using UnifierTSL.Logging;

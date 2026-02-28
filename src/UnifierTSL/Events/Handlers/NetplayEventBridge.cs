@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using UnifiedServerProcess;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Extensions;

@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Plugins
+namespace UnifierTSL.Plugins
 {
     /// <summary>
     /// Handle through which clients can read, write, reload, and observe changes to a plugin configuration.

@@ -1,4 +1,4 @@
-﻿# UnifierTSL 开发者概览
+# UnifierTSL 开发者概览
 
 欢迎！这份文档会带你快速过一遍 UnifierTSL 运行时在 OTAPI Unified Server Process（USP）之上的整体构成：关键子系统、它们怎么协作，以及你可以直接用的公共 API。如果你还没看过 [README](README.zh-cn.md) 或 USP 的 [Developer-Guide.md](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess/blob/main/docs/Developer-Guide.md)，建议先从那两份开始。
 

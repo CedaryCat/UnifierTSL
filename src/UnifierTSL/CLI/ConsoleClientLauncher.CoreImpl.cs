@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Text;
 using UnifierTSL.ConsoleClient.Protocol;
 using UnifierTSL.ConsoleClient.Protocol.C2S;

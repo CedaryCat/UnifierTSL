@@ -1,4 +1,4 @@
-﻿using UnifiedServerProcess;
+using UnifiedServerProcess;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Servers;
 

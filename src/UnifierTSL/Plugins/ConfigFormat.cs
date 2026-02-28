@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Plugins
+namespace UnifierTSL.Plugins
 {
     /// <summary>
     /// The built-in config formats that the framework supports by default.

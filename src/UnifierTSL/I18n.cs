@@ -1,4 +1,4 @@
-﻿global using static UnifierTSL.I18n;
+global using static UnifierTSL.I18n;
 using GetText;
 
 namespace UnifierTSL

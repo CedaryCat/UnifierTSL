@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Plugins
+namespace UnifierTSL.Plugins
 {
     /// <summary>
     /// Entry point for registering plugin configuration files.

@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UnifierTSL.Logging.Formatters.ConsoleLog;
 using UnifierTSL.Servers;

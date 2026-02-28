@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.PluginHost
+namespace UnifierTSL.PluginHost
 {
     public interface IPluginDiscoverer
     {

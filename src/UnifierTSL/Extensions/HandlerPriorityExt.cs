@@ -1,4 +1,4 @@
-﻿using UnifierTSL.Events.Core;
+using UnifierTSL.Events.Core;
 
 namespace UnifierTSL.Extensions
 {

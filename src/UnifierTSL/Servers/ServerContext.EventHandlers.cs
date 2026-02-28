@@ -13,7 +13,7 @@ namespace UnifierTSL.Servers
             }
             ChatHelper.SendChatMessageToClientAs(
                 255,
-                NetworkText.FromLiteral(GetParticularString("{0} is server name, {1} is player name, {2} is chat message", $"[Realm·{otherServer.Name}] <{sender.name}>: {text}")),
+                NetworkText.FromLiteral(GetParticularString("{0} is server name, {1} is player name, {2} is chat message", $"[RealmÂ·{otherServer.Name}] <{sender.name}>: {text}")),
                 sender.ChatColor(),
                 receiver);
         }

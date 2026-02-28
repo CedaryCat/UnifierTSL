@@ -1,4 +1,4 @@
-﻿using UnifierTSL.Logging.Formatters;
+using UnifierTSL.Logging.Formatters;
 using UnifierTSL.Logging.LogWriters;
 
 namespace UnifierTSL.Logging

@@ -1,4 +1,4 @@
-﻿using LinqToDB.Data;
+using LinqToDB.Data;
 using MaxMind;
 using Rests;
 using System.Collections.Immutable;

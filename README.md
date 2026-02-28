@@ -1,4 +1,4 @@
-﻿# UnifierTSL
+# UnifierTSL
 
 > Languages: [English](./README.md) | [简体中文](./docs/README.zh-cn.md)
 

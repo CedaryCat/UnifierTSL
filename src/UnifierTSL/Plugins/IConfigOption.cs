@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Plugins
+namespace UnifierTSL.Plugins
 {
     public interface IConfigOption
     {

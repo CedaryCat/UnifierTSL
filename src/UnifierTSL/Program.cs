@@ -1,4 +1,4 @@
-﻿using Terraria.Localization;
+using Terraria.Localization;
 using UnifierTSL.PluginHost;
 
 namespace UnifierTSL

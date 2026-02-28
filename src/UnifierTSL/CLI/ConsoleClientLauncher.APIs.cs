@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.CLI
+namespace UnifierTSL.CLI
 {
     public partial class ConsoleClientLauncher
     {

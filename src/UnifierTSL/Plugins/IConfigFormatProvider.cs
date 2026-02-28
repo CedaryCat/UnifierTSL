@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Plugins
+namespace UnifierTSL.Plugins
 {
     /// <summary>
     /// Provides serialization/deserialization logic for a custom config format.

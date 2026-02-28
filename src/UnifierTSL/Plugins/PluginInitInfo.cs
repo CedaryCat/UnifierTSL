@@ -1,4 +1,4 @@
-﻿using UnifierTSL.PluginService;
+using UnifierTSL.PluginService;
 
 namespace UnifierTSL.Plugins
 {

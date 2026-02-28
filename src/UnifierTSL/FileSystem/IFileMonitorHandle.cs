@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.FileSystem
+namespace UnifierTSL.FileSystem
 {
     public interface IFileMonitorHandle : IDisposable
     {

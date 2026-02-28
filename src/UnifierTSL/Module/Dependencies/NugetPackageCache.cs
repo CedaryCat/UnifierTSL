@@ -1,4 +1,4 @@
-﻿using NuGet.Common;
+using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Frameworks;
 using NuGet.Packaging;
