@@ -3,6 +3,12 @@
     "UnifierTSL": {
       "commandName": "Project",
       "commandLineArgs": "-port 7777\r\n-password\r\n-joinserver first\r\n-server name:S1 worldname:S1 gamemode:3 size:1 evil:0 seed:for the worthy\r\n-server name:S2 worldname:S2 gamemode:3 size:1 evil:0 seed:for the worthy"
+    },
+    "Executable": {
+      "commandName": "Executable",
+      "executablePath": ".\\UnifierTSL.exe",
+      "commandLineArgs": "-joinserver first\r\n-server name:S1 worldname:S1 gamemode:3 size:1 evil:0 seed:for the worthy\r\n-server name:S2 worldname:S2 gamemode:3 size:1 evil:0 seed:for the worthy",
+      "workingDirectory": "..\\UnifierTSL.Publisher\\bin\\Debug\\net9.0\\utsl-publish"
     }
   }
 }

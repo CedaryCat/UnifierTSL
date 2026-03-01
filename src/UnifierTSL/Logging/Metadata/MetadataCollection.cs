@@ -1,81 +1,152 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace UnifierTSL.Logging.Metadata
 {
     public ref struct MetadataCollection
     {
-        private readonly ref MetadataAllocHandle _metadataAllocHandle;
-        private Span<KeyValueMetadata> _entries;
-        private int _count;
+        public const int InlineCapacity = 8;
+        public const int MaxCapacity = 32;
 
-        internal MetadataCollection(ref MetadataAllocHandle handle) {
-            _metadataAllocHandle = ref handle;
-            _entries = _metadataAllocHandle.Allocate(4);
-            _count = 0;
+        [InlineArray(InlineCapacity)]
+        private struct InlineMetadataChunk
+        {
+            private KeyValueMetadata element0;
         }
 
-        public readonly int Count => _count;
-        public readonly bool Supported {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _metadataAllocHandle.IsValid;
+        private MetadataAllocHandle growthHandle;
+        private Span<KeyValueMetadata> overflowEntries;
+        private int count;
+        private bool overflowed;
+        private InlineMetadataChunk inlineEntries;
+
+        internal MetadataCollection(bool supported) {
+            growthHandle = default;
+            overflowEntries = default;
+            count = supported ? 0 : -1;
+            overflowed = false;
+            inlineEntries = default;
         }
+
+        public readonly int Count => count < 0 ? 0 : count;
+        public readonly bool Overflowed => overflowed;
 
         public void Set(string key, string value) {
-            if (!Supported) {
-                return;
-            }
-            if (_count >= _entries.Length) {
-                Span<KeyValueMetadata> newEntries = _metadataAllocHandle.Allocate(_entries.Length * 2);
-                _entries[.._count].CopyTo(newEntries);
-                _entries = newEntries;
-            }
-
-            int index = BinarySearch(key);
-            if (index >= 0) {
-                _entries[index] = new KeyValueMetadata(key, value);
+            if (count < 0) {
                 return;
             }
 
-            int insertIndex = ~index;
-            ShiftRight(insertIndex);
-            _entries[insertIndex] = new KeyValueMetadata(key, value);
-            _count++;
+            KeyValueMetadata entry = new(key, value);
+            if (TryFindIndex(key, out int existingIndex)) {
+                SetAt(existingIndex, entry);
+                return;
+            }
+
+            if (overflowed || count >= MaxCapacity) {
+                overflowed = true;
+                return;
+            }
+
+            if (!EnsureStorageForAppend()) {
+                overflowed = true;
+                return;
+            }
+
+            SetAt(count, entry);
+            count++;
         }
 
-
-        public readonly bool TryGet(ReadOnlySpan<char> key, [NotNullWhen(true)] out string? value) {
-            if (!Supported) {
+        public bool TryGet(ReadOnlySpan<char> key, [NotNullWhen(true)] out string? value) {
+            int entryCount = count;
+            if (entryCount <= 0) {
                 value = null;
                 return false;
             }
-            int index = BinarySearch(key);
-            if (index >= 0) {
-                value = _entries[index].Value;
-                return true;
+
+            ref KeyValueMetadata baseRef = ref GetBaseRef(ref this);
+            for (int i = 0; i < entryCount; i++) {
+                ref readonly KeyValueMetadata entry = ref Unsafe.Add(ref baseRef, i);
+                if (key.Equals(entry.Key, StringComparison.Ordinal)) {
+                    value = entry.Value;
+                    return true;
+                }
             }
 
-            value = default;
+            value = null;
             return false;
         }
 
-        public readonly ReadOnlySpan<KeyValueMetadata> Metadata => _entries[.._count];
+        public KeyValueMetadata GetAt(int index) {
+            int entryCount = count;
+            if ((uint)index >= (uint)entryCount) {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
 
-        private readonly void ShiftRight(int index) {
-            _entries[index.._count].CopyTo(_entries[(index + 1)..]);
+            ref KeyValueMetadata baseRef = ref GetBaseRef(ref this);
+            return Unsafe.Add(ref baseRef, index);
         }
 
+        public void Dispose() {
+            growthHandle.Free();
+            overflowEntries = default;
+            count = -1;
+            overflowed = false;
+        }
 
-        private readonly int BinarySearch(ReadOnlySpan<char> key) {
-            int low = 0, high = _count - 1;
-            while (low <= high) {
-                int mid = (low + high) / 2;
-                int cmp = key.CompareTo(_entries[mid].Key, StringComparison.Ordinal);
-                if (cmp == 0) return mid;
-                if (cmp < 0) high = mid - 1;
-                else low = mid + 1;
+        private bool EnsureStorageForAppend() {
+            if (overflowEntries.IsEmpty && count < InlineCapacity) {
+                return true;
             }
-            return ~low;
+
+            Span<KeyValueMetadata> currentEntries = GetCurrentStorageSpan();
+            if (!growthHandle.TryEnsureCapacity(ref currentEntries, count, count + 1, MaxCapacity)) {
+                return false;
+            }
+
+            overflowEntries = currentEntries;
+            return true;
+        }
+
+        private bool TryFindIndex(ReadOnlySpan<char> key, out int index) {
+            int entryCount = count;
+            if (entryCount <= 0) {
+                index = -1;
+                return false;
+            }
+
+            ref KeyValueMetadata baseRef = ref GetBaseRef(ref this);
+            for (int i = 0; i < entryCount; i++) {
+                if (key.Equals(Unsafe.Add(ref baseRef, i).Key, StringComparison.Ordinal)) {
+                    index = i;
+                    return true;
+                }
+            }
+
+            index = -1;
+            return false;
+        }
+
+        private void SetAt(int index, KeyValueMetadata entry) {
+            ref KeyValueMetadata baseRef = ref GetBaseRef(ref this);
+            Unsafe.Add(ref baseRef, index) = entry;
+        }
+
+        private Span<KeyValueMetadata> GetCurrentStorageSpan() {
+            if (!overflowEntries.IsEmpty) {
+                return overflowEntries;
+            }
+
+            ref KeyValueMetadata baseRef = ref inlineEntries[0];
+            return MemoryMarshal.CreateSpan(ref baseRef, InlineCapacity);
+        }
+
+        private static ref KeyValueMetadata GetBaseRef(ref MetadataCollection metadata) {
+            if (!metadata.overflowEntries.IsEmpty) {
+                return ref MemoryMarshal.GetReference(metadata.overflowEntries);
+            }
+
+            return ref metadata.inlineEntries[0];
         }
     }
 }

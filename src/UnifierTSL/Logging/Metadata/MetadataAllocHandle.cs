@@ -1,24 +1,49 @@
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Buffers;
 
 namespace UnifierTSL.Logging.Metadata
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal unsafe struct MetadataAllocHandle
+    internal struct MetadataAllocHandle
     {
-        // [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Modified via unsafe code.")]
-        private object? managedData;
-        private nint unmanagedData;
+        private KeyValueMetadata[]? buffer;
 
-        private readonly delegate*<ref MetadataAllocHandle, int, Span<KeyValueMetadata>> allocFunc;
-        private readonly delegate*<ref MetadataAllocHandle, void> freeFunc;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<KeyValueMetadata> Allocate(int capacity) => allocFunc(ref Unsafe.AsRef(ref this), capacity);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Free() => freeFunc(ref this);
-        public readonly bool IsValid {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => allocFunc is not null && freeFunc is not null;
+        public bool TryEnsureCapacity(ref Span<KeyValueMetadata> currentEntries, int usedCount, int requiredCapacity, int maxCapacity) {
+            if (requiredCapacity > maxCapacity) {
+                return false;
+            }
+
+            if (currentEntries.Length >= requiredCapacity) {
+                return true;
+            }
+
+            int nextCapacity = currentEntries.Length == 0
+                ? Math.Max(requiredCapacity, MetadataCollection.InlineCapacity * 2)
+                : Math.Max(currentEntries.Length * 2, requiredCapacity);
+            nextCapacity = Math.Min(nextCapacity, maxCapacity);
+            if (nextCapacity < requiredCapacity) {
+                return false;
+            }
+
+            KeyValueMetadata[] newBuffer = ArrayPool<KeyValueMetadata>.Shared.Rent(nextCapacity);
+            if (!currentEntries.IsEmpty && usedCount > 0) {
+                currentEntries[..usedCount].CopyTo(newBuffer.AsSpan(0, usedCount));
+            }
+
+            if (buffer is not null) {
+                ArrayPool<KeyValueMetadata>.Shared.Return(buffer);
+            }
+
+            buffer = newBuffer;
+            currentEntries = newBuffer.AsSpan(0, nextCapacity);
+            return true;
+        }
+
+        public void Free() {
+            if (buffer is null) {
+                return;
+            }
+
+            ArrayPool<KeyValueMetadata>.Shared.Return(buffer);
+            buffer = null;
         }
     }
 }

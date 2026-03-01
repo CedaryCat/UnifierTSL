@@ -14,6 +14,7 @@ namespace UnifierTSL.Logging
         Error = 5,
         Critical = 6
     }
+
     public ref partial struct LogEntry
     {
         public DateTimeOffset TimestampUtc { get; init; }
@@ -23,28 +24,38 @@ namespace UnifierTSL.Logging
         public string Message { get; init; }
         public string Category { get; init; }
         public Exception? Exception { get; init; }
-
-
         public string? SourceFilePath { get; init; }
         public string? MemberName { get; init; }
         public int? SourceLineNumber { get; init; }
-
         public readonly ref readonly TraceContext TraceContext;
 
         private MetadataCollection metadata;
     }
+
     public ref partial struct LogEntry
     {
         public readonly bool HasTraceContext => !Unsafe.IsNullRef(in TraceContext);
+        public readonly int MetadataCount => metadata.Count;
+        public readonly bool MetadataOverflowed => metadata.Overflowed;
+
         public void SetMetadata(string key, string value) {
             ref MetadataCollection metadata = ref this.metadata;
             metadata.Set(key, value);
         }
+
         public readonly string? GetMetadata(string key) {
             if (metadata.TryGet(key, out string? value)) {
                 return value;
             }
             return null;
+        }
+
+        public readonly KeyValueMetadata GetMetadataAt(int index) => metadata.GetAt(index);
+
+        public readonly TraceContext GetTraceContextOrDefault() => HasTraceContext ? TraceContext : default;
+
+        internal void ReleaseMetadataResources() {
+            metadata.Dispose();
         }
 
         public override readonly string ToString() {
@@ -63,7 +74,7 @@ namespace UnifierTSL.Logging
             string? sourceFilePath,
             string? memberName,
             int? sourceLineNumber,
-            ref MetadataAllocHandle metadataAllocHandle) {
+            bool supportsMetadata) {
 
             TimestampUtc = timestampUtc;
             Level = level;
@@ -72,15 +83,13 @@ namespace UnifierTSL.Logging
             Category = category;
             Message = message;
             Exception = exception;
-
             TraceContext = ref traceContext;
-
             SourceFilePath = sourceFilePath;
             MemberName = memberName;
             SourceLineNumber = sourceLineNumber;
-
-            metadata = new(ref metadataAllocHandle);
+            metadata = new(supported: supportsMetadata);
         }
+
         internal LogEntry(
             DateTimeOffset timestampUtc,
             LogLevel level,
@@ -92,7 +101,7 @@ namespace UnifierTSL.Logging
             string? sourceFilePath,
             string? memberName,
             int? sourceLineNumber,
-            ref MetadataAllocHandle metadataAllocHandle) {
+            bool supportsMetadata) {
 
             TimestampUtc = timestampUtc;
             Level = level;
@@ -101,12 +110,10 @@ namespace UnifierTSL.Logging
             Category = category;
             Message = message;
             Exception = exception;
-
             SourceFilePath = sourceFilePath;
             MemberName = memberName;
             SourceLineNumber = sourceLineNumber;
-
-            metadata = new(ref metadataAllocHandle);
+            metadata = new(supported: supportsMetadata);
         }
 
         /// <summary>
@@ -131,10 +138,10 @@ namespace UnifierTSL.Logging
             Category = category;
             Message = message;
             Exception = exception;
-
             SourceFilePath = sourceFilePath;
             MemberName = memberName;
             SourceLineNumber = sourceLineNumber;
+            metadata = new(supported: false);
         }
 
         /// <summary>
@@ -160,12 +167,11 @@ namespace UnifierTSL.Logging
             Category = category;
             Message = message;
             Exception = exception;
-
             TraceContext = ref traceContext;
-
             SourceFilePath = sourceFilePath;
             MemberName = memberName;
             SourceLineNumber = sourceLineNumber;
+            metadata = new(supported: false);
         }
     }
 }

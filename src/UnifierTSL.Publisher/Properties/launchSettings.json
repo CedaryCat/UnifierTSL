@@ -2,7 +2,7 @@
   "profiles": {
     "UnifierTSL.Publisher": {
       "commandName": "Project",
-      "commandLineArgs": "--rid win-x64"
+      "commandLineArgs": "--use-rid-folder false\r\n--clean-output-dir false\r\n--output-path \"utsl-publish\""
     }
   }
 }

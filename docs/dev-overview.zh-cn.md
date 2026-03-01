@@ -41,12 +41,14 @@
 
 <a id="12-boot-flow"></a>
 ### 1.2 启动流程
-1. `Program.cs` 调用 `UnifierApi.HandleCommandLinePreRun(args)`，通过 `UnifierApi.InitializeCore(args)` 启动核心初始化，并使用 `UnifierApi.CompleteLauncherInitialization()` 完成启动器初始化。
-2. `UnifierApi` 设置全局服务（日志记录、事件中心、模块加载器）并初始化 `PluginOrchestrator`。
+1. `Program.cs` 调用 `UnifierApi.HandleCommandLinePreRun(args)`，随后调用 `UnifierApi.PrepareRuntime(args)` 解析启动器覆盖参数、加载 `config/config.json`、合并启动设置并配置持久日志后端。
+2. `Initializer.Initialize()` 与 `UnifierApi.InitializeCore()` 设置全局服务（日志记录、事件中心、模块加载器）并初始化 `PluginOrchestrator`。
 3. 通过 `ModuleAssemblyLoader` 发现并预加载模块 — 暂存程序集并提取依赖 blob。
 4. 插件宿主（内置 .NET 宿主 + 从已加载模块中发现并通过 `[PluginHost(...)]` 标注的自定义宿主）负责发现、加载和初始化插件。
-5. `UnifiedServerCoordinator` 打开侦听套接字并为每个配置的世界启动 `ServerContext`。
-6. 事件桥（聊天、游戏、协调器、网络游戏、服务器）通过 detour 挂接到 USP/Terraria，并将事件统一送入 `EventHub`。
+5. `UnifierApi.CompleteLauncherInitialization()` 补全缺失的交互式端口/密码输入，同步最终生效的运行时快照，并触发 `EventHub.Launcher.InitializedEvent`。
+6. `UnifiedServerCoordinator` 打开侦听套接字并为每个配置的世界启动 `ServerContext`。
+7. 协调器成功启动后，`UnifierApi.StartRootConfigMonitoring()` 才会启用启动器根配置的热重载监视。
+8. 事件桥（聊天、游戏、协调器、网络游戏、服务器）通过 detour 挂接到 USP/Terraria，并将事件统一送入 `EventHub`。
 
 <a id="13-major-components"></a>
 ### 1.3 主要组件
@@ -1113,7 +1115,7 @@ On.Terraria.NetplaySystemContext.StopBroadCasting = (_, _) => { };
 <a id="25-logging-infrastructure"></a>
 ### 2.5 日志基础设施
 
-日志系统是为了性能而构建的 - `LogEntry` 存在于堆栈中，元数据被池化，所有内容都通过具有服务器范围输出的可插拔写入器进行路由。
+日志系统是为了性能而构建的 - `LogEntry` 存在于堆栈中，元数据被池化，所有内容都通过具有服务器范围输出的可插拔写入器进行路由。`Logger` 实现还维护了一个有界的内存历史环形缓冲区，因此 sink 可以先回放最近日志再接入实时输出；启动器可附加异步持久化写入器，在后台消费并落到 `txt` 或 `sqlite` sink。
 
 <details>
 <summary><strong>展开日志基础设施实现细节深挖</strong></summary>
@@ -1483,6 +1485,9 @@ Output in Server1's console window with server-specific colors
 - `ConfigRegistrar` 实现 `IPluginConfigRegistrar`。在内置 .NET 宿主中，插件配置根目录固定为 `Path.Combine("config", Path.GetFileNameWithoutExtension(container.Location.FilePath))`（例如 `config/TShockAPI`）。
 - `CreateConfigRegistration<T>` 为你提供 `ConfigRegistrationBuilder`，你可以在其中设置默认值、序列化选项、错误策略 (`DeserializationFailureHandling`) 和外部更改触发器。
 - 你得到一个 `ConfigHandle<T>` ，它可以让你 `RequestAsync` 、 `Overwrite` 、 `ModifyInMemory` ，并通过 `OnChangedAsync` 订阅热重载。文件访问由 `FileLockManager` 保护以防止损坏。
+- 启动器根配置与插件配置分离：`LauncherConfigManager` 专门管理 `config/config.json`，文件缺失时会自动创建，并且会明确忽略旧的根目录 `config.json`。
+- 启动器设置的启动优先级是 `config/config.json` -> CLI 覆盖 -> 缺失端口/密码时的交互式补全，并会把启动阶段生效快照回写到 `config/config.json`。启动完成后，对 `config/config.json` 的修改会应用到支持热重载的启动器设置。
+- 根配置热重载会应用 `launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`，以及通过重绑监听器实现的 `launcher.listenPort`。
 
 <a id="3-usp-integration-points"></a>
 ## 3. USP 集成点
@@ -1497,9 +1502,9 @@ Output in Server1's console window with server-specific colors
 
 <a id="41-facade-unifierapi"></a>
 ### 4.1 门面 (`UnifierApi`)
-- 运行时在启动器入口 (`Program.cs`) 中通过 `HandleCommandLinePreRun`、`InitializeCore` 和 `CompleteLauncherInitialization` 完成启动 — 这些是内部启动 API，不是你的插件调用的东西。
+- 运行时在启动器入口 (`Program.cs`) 中通过 `HandleCommandLinePreRun`、`PrepareRuntime`、`InitializeCore` 和 `CompleteLauncherInitialization` 完成启动，并在协调器就绪后再调用 `StartRootConfigMonitoring` — 这些都是内部启动 API，不是给插件直接调用的。
 - `EventHub` 使你可以在初始化完成后访问所有分组的事件提供程序。
-- `EventHub.Launcher.InitializedEvent` 在启动器参数完成时触发，就在协调器启动之前。
+- `EventHub.Launcher.InitializedEvent` 会在启动器参数最终确定（包括交互式补全）后触发，就在协调器启动之前；根配置文件监视则要等 `UnifiedServerCoordinator.Launch(...)` 成功之后才开启。
 - `PluginHosts` 延迟设置 `PluginOrchestrator` 以进行宿主级交互。
 - `CreateLogger(ILoggerHost, Logger? overrideLogCore = null)` 返回作用于插件作用域的 `RoleLogger`，并复用共享 `Logger`。
 - `UpdateTitle(bool empty = false)` 根据协调器状态控制窗口标题。
@@ -1528,6 +1533,7 @@ Output in Server1's console window with server-specific colors
 ### 4.5 日志与诊断
 - `RoleLogger` 扩展方法（参见 `src/UnifierTSL/Logging/LoggerExt.cs`）为你提供严重性帮助：`Debug`、`Info`、`Warning`、`Error`、`Success`、`LogHandledException`。
 - `LogEventIds` 列出用于对日志输出进行分类的标准事件标识符。
+- `Logger.ReplayHistory(...)` 和 `LogCore.AttachHistoryWriter(...)` 允许新的 sink 先从内存历史环回放，再开始接收实时日志。
 - 事件提供程序公开 `HandlerCount`，你可以为诊断仪表板枚举 `EventProvider.AllEvents`。
 
 <a id="5-runtime-lifecycle--operations"></a>
@@ -1535,26 +1541,33 @@ Output in Server1's console window with server-specific colors
 
 <a id="51-startup-sequence"></a>
 ### 5.1 启动顺序
-1. 启动器解析 CLI 参数并设置日志记录。
-2. `ModuleAssemblyLoader.Load` 扫描 `plugins/`、暂存程序集并处理依赖项提取。
-3. 插件宿主找到符合条件的入口点并实例化 `IPlugin` 实现。
-4. `BeforeGlobalInitialize` 在每个插件上同步运行 - 使用它进行跨插件服务连接。
-5. `InitializeAsync` 为每个插件运行；你将获得先前的插件初始化任务，以便你可以等待你的依赖项。
-6. `UnifiedServerCoordinator` 设置服务器上下文，调用 USP 启动世界，并注册事件桥。
+1. `HandleCommandLinePreRun` 应用启动前语言覆盖，并确定当前使用的 Terraria 文化。
+2. `PrepareRuntime` 解析启动器 CLI 覆盖、加载 `config/config.json`、合并启动设置，并配置持久日志后端。
+3. `ModuleAssemblyLoader.Load` 扫描 `plugins/`、暂存程序集并处理依赖项提取。
+4. 插件宿主找到符合条件的入口点并实例化 `IPlugin` 实现。
+5. `BeforeGlobalInitialize` 在每个插件上同步运行 - 使用它进行跨插件服务连接。
+6. `InitializeAsync` 为每个插件运行；你将获得先前的插件初始化任务，以便你可以等待你的依赖项。
+7. `InitializeCore` 接线 `EventHub`、完成插件宿主初始化，并应用已解析的启动器默认值（入服策略 + 待启动世界列表）。
+8. `CompleteLauncherInitialization` 提示输入仍缺失的端口/密码，同步最终运行时快照，并触发 `EventHub.Launcher.InitializedEvent`。
+9. `UnifiedServerCoordinator.Launch(...)` 绑定共享监听器、启动已配置世界，并注册协调器运行循环。
+10. `StartRootConfigMonitoring()` 开始监视 `config/config.json`；随后 `Program.Run()` 会更新标题、记录启动成功日志，并触发 `EventHub.Coordinator.Started`。
 
 **关于启动器参数的一些注意事项**：
 - 语言优先级：`UTSL_LANGUAGE` env var 在 CLI 解析之前应用，并阻止稍后的 `-lang` / `-culture` / `-language` 覆盖。
-- `-server` / `-addserver` / `-autostart` 解析服务器描述符并在核心初始化期间对世界启动进行排队。
-- `-joinserver` 安装低优先级 `SwitchJoinServer` 策略（`random|rnd|r` 或 `first|f`）；第一个有效的策略优先生效。
+- `-server` / `-addserver` / `-autostart` 会在 `PrepareRuntime` 阶段解析服务器描述符；合并行为由 `-servermerge` 控制（默认 `replace`，可选 `overwrite`、`append`），并会持久化本次生效列表。
+- `-joinserver` 会在一个常驻解析器里设置启动器的低优先级默认入服模式（`random|rnd|r` 或 `first|f`）；后续根配置热重载可以直接替换该模式。
+- `-logmode` / `--log-mode` 选择持久日志后端（`txt`、`none` 或 `sqlite`）。
 - `UnifierApi.CompleteLauncherInitialization()` 提示输入任何丢失的端口/密码，然后触发 `EventHub.Launcher.InitializedEvent`。
-- `Program.Run()` 启动协调器，记录成功，然后触发 `EventHub.Coordinator.Started`。
+- `Program.Run()` 启动协调器、启用根配置监视、记录成功，然后触发 `EventHub.Coordinator.Started`。
 
 <a id="52-runtime-operations"></a>
 ### 5.2 运行时操作
 - 事件处理程序处理横切问题——聊天审核、传输控制、数据包过滤等。
 - 配置处理对文件更改的反应，因此你可以调整设置而无需重新启动。
-- 协调器保持窗口标题更新，维护服务器列表，并重放加入/离开序列。
-- 记录元数据使你可以将任何日志条目追溯到其服务器、插件或子系统。
+- 启动器根配置监视会热应用密码变更、入服策略变更、追加式自动启动世界（仅热追加），以及 `launcher.listenPort` 的监听器重绑。
+- 协调器保持窗口标题更新，维护服务器列表，重放加入/离开序列，并且可以在不退出进程的前提下切换当前监听器。
+- 日志元数据和有界历史环使你可以把任何日志条目追溯到其服务器、插件或子系统，并在不丢失最近上下文的前提下挂接新 sink。
+- 持久化后端（`txt` / `sqlite`）现在通过后台消费队列写入；`none` 会完全旁路持久化历史提交以保持热路径最小开销。
 
 <a id="53-shutdown--reload"></a>
 ### 5.3 关机和重新加载
@@ -1580,10 +1593,3 @@ Output in Server1's console window with server-specific colors
 - **围绕事件和协调器流编写测试** - 模拟数据包序列、玩家加入等。USP 上下文可以独立运行，这使得这非常简单。
 - **启动时批量注册** — 事件注册是线程安全的，但不是免费的。使用来自数据包发送方的池化缓冲区，并将分配保留在热路径之外。
 - **使用挂钩构建监控插件** — `PacketSender.SentPacket` 和事件过滤器可让你在不触及核心运行时的情况下观察流量。
-
-
-
-
-
-
-

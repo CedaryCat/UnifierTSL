@@ -8,10 +8,11 @@ namespace UnifierTSL
         private static void Main(string[] args) {
             Initializer.InitializeResolver();
             UnifierApi.HandleCommandLinePreRun(args);
-            Run(args);
+            UnifierApi.PrepareRuntime(args);
+            Run();
         }
 
-        private static void Run(string[] args) {
+        private static void Run() {
             VersionHelper version = UnifierApi.VersionHelper;
 
             Console.Title = "UnifierTSLauncher";
@@ -31,19 +32,20 @@ namespace UnifierTSL
             UnifierApi.Logger.Info(GetString(
 @$"Unifier Terraria-Server-Launcher Running
 Version Info:
-  Terraria v{version.TerrariaVersion} & OTAPI v{version.OTAPIVersion}
-  Unified-Server-Process v{version.USPVersion}
+  Terraria v{version.TerrariaVersion} & Protocol {Terraria.Main.curRelease}
+  Unified-Server-Process v{version.USPVersion} & OTAPI v{version.OTAPIVersion}
   UnifierApi v{version.UnifierApiVersion} & PluginApi v{PluginOrchestrator.ApiVersion}
 Current Process ID: {Environment.ProcessId}"));
 
             WorkRunner.RunTimedWork("Init", GetString("Global initialization started..."), () => {
                 Initializer.Initialize();
-                UnifierApi.InitializeCore(args);
+                UnifierApi.InitializeCore();
             });
 
             UnifierApi.CompleteLauncherInitialization();
 
             UnifiedServerCoordinator.Launch(UnifierApi.ListenPort, UnifierApi.ServerPassword);
+            UnifierApi.StartRootConfigMonitoring();
 
             UnifierApi.UpdateTitle();
 
