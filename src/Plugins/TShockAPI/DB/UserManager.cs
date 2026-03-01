@@ -1,4 +1,4 @@
-﻿extern alias BCrypt;
+extern alias BCrypt;
 using BCrypt::BCrypt.Net;
 using LinqToDB;
 using LinqToDB.Data;

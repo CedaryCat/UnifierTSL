@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Terraria.Net.Sockets;
 using TrProtocol;
 using TrProtocol.Interfaces;

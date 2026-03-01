@@ -1,4 +1,4 @@
-﻿using UnifierTSL.FileSystem;
+using UnifierTSL.FileSystem;
 using UnifierTSL.Plugins;
 
 namespace UnifierTSL.PluginHost

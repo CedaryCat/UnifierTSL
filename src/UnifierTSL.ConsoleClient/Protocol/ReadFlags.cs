@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.ConsoleClient.Protocol
+namespace UnifierTSL.ConsoleClient.Protocol
 {
     public enum ReadFlags : byte
     {

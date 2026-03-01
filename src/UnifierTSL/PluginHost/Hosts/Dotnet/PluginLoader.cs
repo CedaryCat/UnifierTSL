@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;
 using UnifierTSL.Plugins;

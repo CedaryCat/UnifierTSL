@@ -399,3 +399,285 @@ msgid ""
 "strings: random, corruption, crimson"
 msgstr ""
 
+#: ..\..\..\src\UnifierTSL\LauncherConfigManager.cs:28
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "File watcher error occurred for root config '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherConfigManager.cs:46
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "An unexpected error occurred while reloading root config '{0}'. Keeping the current runtime settings."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:264
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is invalid and will be ignored for this run."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:270
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' could not be read and will be ignored for this run."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:283
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is missing. Keeping the current runtime settings."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:293
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is invalid. Keeping the current runtime settings."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:299
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' could not be read. Keeping the current runtime settings."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:314
+#, csharp-format
+msgctxt "{0} is legacy root config path, {1} is active root config path"
+msgid "Legacy root config '{0}' is ignored. Use '{1}' instead."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:334
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Unable to create default root config at '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:391
+msgid "SQLite log persistence is not implemented yet. Falling back to text logs."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:413
+#, csharp-format
+msgctxt "{0} is log directory path"
+msgid "Failed to initialize text log backend at '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:461
+#, csharp-format
+msgctxt "{0} is current logging mode, {1} is desired logging mode"
+msgid "logging.mode changed from '{0}' to '{1}'. The current logging backend will not change until restart."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:468
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port, {2} is active listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}', but the new value is invalid. Keeping port {2}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:476
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}'. The active listener has been rebound."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:481
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port, {2} is active listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}', but rebinding failed. Keeping port {2}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:495
+msgid "launcher.serverPassword changed. New connections will use the updated password policy."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:501
+#, csharp-format
+msgctxt "{0} is current join server mode, {1} is desired join server mode"
+msgid "launcher.joinServer changed from '{0}' to '{1}'. Future joins will use the updated policy."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:519
+msgid "current runtime snapshot"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:520
+msgid "reloaded config snapshot"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:526
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server '{0}' was updated in root config, but existing server definitions are not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:538
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server '{0}' was removed from root config, but server removal is not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:552
+#, csharp-format
+msgctxt "{0} is server name, {1} is config snapshot source"
+msgid "Duplicate autoStartServers entry '{0}' was found in the {1}. Later duplicates are ignored for hot reload diffing."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:817
+#, csharp-format
+msgctxt "{0} is configured joinServer value"
+msgid "Invalid joinServer setting '{0}'. Falling back to 'none'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:849
+#, csharp-format
+msgctxt "{0} is configured logging.mode value"
+msgid "Invalid logging.mode setting '{0}'. Falling back to 'txt'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:87
+msgid "Server"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:103
+msgid "Metadata truncated due to per-entry limit"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:146
+#, csharp-format
+msgctxt "{0} is exception text"
+msgid "[Error][LogCore|TextBackend] File logging disabled after I/O failure: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:33
+#, csharp-format
+msgid ""
+"Unifier Terraria-Server-Launcher Running\n"
+"Version Info:\n"
+"  Terraria v{0} & Protocol {1}\n"
+"  Unified-Server-Process v{2} & OTAPI v{3}\n"
+"  UnifierApi v{4} & PluginApi v{5}\n"
+"Current Process ID: {6}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:94
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Startup CLI overrides were persisted to '{0}' using the effective launcher snapshot."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:242
+msgid "[Warning][LogCore|DurableQueue] Durable log flush timed out during process exit. Some tail records may be lost."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:209
+#, csharp-format
+msgctxt "{0} is log persistence mode, {1} is log directory path"
+msgid "Failed to initialize '{0}' durable log backend at '{1}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherConfigStore.cs:92
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Unable to persist root config to '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:53
+#, csharp-format
+msgctxt "{0} is user input value for server merge mode"
+msgid "Invalid server merge mode: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:56
+msgid "Expected value: replace (default), overwrite, or append."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:72
+#, csharp-format
+msgctxt "{0} is user input value for join server mode"
+msgid "Invalid join server mode: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:84
+#, csharp-format
+msgctxt "{0} is user input value for log mode"
+msgid "Invalid log mode specified: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:129
+msgid "'-servermerge/--server-merge' was provided without any '-server' arguments. The merge mode was ignored."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:160
+#, csharp-format
+msgctxt "{0} is current logging mode, {1} is desired logging mode"
+msgid "logging.mode changed from '{0}' to '{1}'. Restart is required before this setting takes effect."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:368
+#, csharp-format
+msgctxt "{0} is ignored server name, {1} is kept source, {2} is merge mode"
+msgid "Auto-start server '{0}' from {1} was ignored because a higher-priority entry already exists (kept source: {2}, merge mode: {3})."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:379
+#, csharp-format
+msgctxt "{0} is ignored server name, {1} is world name, {2} is kept server name, {3} is merge mode"
+msgid "Auto-start server '{0}' (world: '{1}') was ignored due to world conflict with higher-priority server '{2}' (merge mode: {3})."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:667
+msgid "Expected value: an integer between 1 and 3 (inclusive), or one of the strings: small, medium, large"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:248
+#, csharp-format
+msgctxt "{0} is player name, {1} is player UUID"
+msgid "No available server found for you."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:363
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Cannot initialize listener to invalid port '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:376
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Cannot rebind listener to invalid port '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:387
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Failed to bind listener to port '{0}'. Keeping the current listener."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:395
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Listener rebound to port '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:416
+msgid "Failed to start server loop thread."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:853
+#, csharp-format
+msgctxt "{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Player '{0}' {1} ? {2} transferred."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\AsyncDurableLogWriter.cs:176
+#, csharp-format
+msgctxt "{0} is durable backlog count, {1} is durable backlog warning threshold"
+msgid "[Warning][LogCore|DurableQueue] Durable backlog is {0} entries (threshold: {1})."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\AsyncDurableLogWriter.cs:186
+#, csharp-format
+msgctxt "{0} is exception text"
+msgid "[Error][LogCore|DurableQueue] Durable sink disabled after failure: {0}"
+msgstr ""

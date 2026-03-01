@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Module.Dependencies
+namespace UnifierTSL.Module.Dependencies
 {
     public sealed class DependenciesSetting
     {

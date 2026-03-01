@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Plugins
+namespace UnifierTSL.Plugins
 {
     /// <summary>
     /// Fluent builder used during configuration registration to specify defaults, validation, and reload behavior.

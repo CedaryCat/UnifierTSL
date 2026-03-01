@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Reflection.Metadata;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;

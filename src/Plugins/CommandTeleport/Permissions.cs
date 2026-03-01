@@ -1,4 +1,4 @@
-﻿namespace CommandTeleport
+namespace CommandTeleport
 {
     public static class Permissions {
         public const string ServerTransfer = "serverwarp.transfer";

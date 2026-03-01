@@ -1,1 +1,1 @@
-﻿global using PacketTypes = TrProtocol.MessageID;
+global using PacketTypes = TrProtocol.MessageID;

@@ -243,6 +243,7 @@ jobs:
 
       - name: Create release archives
         run: |
+          RELEASE_TAG="${{ steps.release_meta.outputs.tag_name }}"
           cd artifacts
           for dir in utsl-*-${{ steps.gitversion.outputs.semVer }}; do
             if [ ! -d "$dir" ]; then
@@ -252,9 +253,9 @@ jobs:
             arch=$(echo "$dir" | sed 's/utsl-\(.*\)-${{ steps.gitversion.outputs.semVer }}/\1/')
             cd "$dir"
             if [[ "$arch" == win-* ]]; then
-              zip -r "../utsl-${arch}-v${{ steps.gitversion.outputs.semVer }}.zip" .
+              zip -r "../utsl-${arch}-${RELEASE_TAG}.zip" .
             else
-              tar -czf "../utsl-${arch}-v${{ steps.gitversion.outputs.semVer }}.tar.gz" .
+              tar -czf "../utsl-${arch}-${RELEASE_TAG}.tar.gz" .
             fi
             cd ..
           done
@@ -266,9 +267,9 @@ jobs:
           BASE_TAG=$(git tag --sort=-creatordate | grep -E '^v' | grep -v "^${CURRENT_TAG}$" | head -n 1 || true)
 
           if [ -z "$BASE_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --first-parent -20)
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
           else
-            CHANGELOG=$(git log "${BASE_TAG}..HEAD" --pretty=format:"- %s (%h)" --first-parent)
+            CHANGELOG=$(git log "${BASE_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges)
           fi
 
           if [ -z "$CHANGELOG" ]; then
@@ -422,9 +423,9 @@ jobs:
           fi
 
           if [ -z "$BASE_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --first-parent -20)
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
           else
-            CHANGELOG=$(git log "${BASE_TAG}..HEAD" --pretty=format:"- %s (%h)" --first-parent)
+            CHANGELOG=$(git log "${BASE_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges)
           fi
 
           if [ -z "$CHANGELOG" ]; then

@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Logging
+namespace UnifierTSL.Logging
 {
     public interface ILogMetadataInjector
     {

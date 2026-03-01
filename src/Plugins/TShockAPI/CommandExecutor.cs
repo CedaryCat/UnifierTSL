@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using NuGet.Protocol.Plugins;
 using System;
 using System.Collections;

@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Module
+namespace UnifierTSL.Module
 {
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
     public abstract class ModuleDependenciesAttribute : Attribute

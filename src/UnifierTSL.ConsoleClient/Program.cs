@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.ConsoleClient
+namespace UnifierTSL.ConsoleClient
 {
 
     public class Program

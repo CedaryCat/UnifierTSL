@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using UnifierTSL.FileSystem;
 using UnifierTSL.Module;
 using UnifierTSL.Plugins;

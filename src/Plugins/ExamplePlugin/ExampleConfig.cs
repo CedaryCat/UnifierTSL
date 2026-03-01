@@ -1,4 +1,4 @@
-﻿namespace ExamplePlugin
+namespace ExamplePlugin
 {
     public class ExampleConfig
     {

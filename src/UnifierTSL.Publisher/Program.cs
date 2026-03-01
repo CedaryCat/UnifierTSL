@@ -7,14 +7,7 @@ namespace UnifierTSL.Publisher
     {
         static void Main(string[] args) {
             var options = CLIHelper.ParseArguments(args);
-            string rid;
-            if (!options.TryGetValue("--rid", out var rids)) {
-                throw new ArgumentException("--rid is required.");
-            }
-            if (rids.Count != 1) {
-                throw new ArgumentException("--rid must be specified exactly once.");
-            }
-            rid = rids[0];
+            string rid = ResolveRuntimeIdentifier(options);
             if (options.TryGetValue("--excluded-plugins", out var excludedPlugins)) {
                 excludedPlugins = [.. excludedPlugins
                     .Select(p => p.Split(',' , StringSplitOptions.RemoveEmptyEntries))
@@ -61,6 +54,46 @@ namespace UnifierTSL.Publisher
 
             task.Wait();
             if (task.IsFaulted) throw task.Exception;
+        }
+
+        static string ResolveRuntimeIdentifier(Dictionary<string, List<string>> options) {
+            if (options.TryGetValue("--rid", out var rids)) {
+                if (rids.Count != 1 || string.IsNullOrWhiteSpace(rids[0])) {
+                    throw new ArgumentException("--rid must be specified exactly once.");
+                }
+                return rids[0].Trim();
+            }
+
+            string os = GetPortableRidOsPart();
+            string arch = GetPortableRidArchPart();
+            return $"{os}-{arch}";
+        }
+
+        static string GetPortableRidOsPart() {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                return "win";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                return "linux";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                return "osx";
+            }
+
+            throw new PlatformNotSupportedException(
+                $"Cannot infer RID for OS platform '{RuntimeInformation.OSDescription}'. Please specify --rid explicitly.");
+        }
+
+        static string GetPortableRidArchPart() {
+            return RuntimeInformation.OSArchitecture switch
+            {
+                Architecture.X64 => "x64",
+                Architecture.X86 => "x86",
+                Architecture.Arm => "arm",
+                Architecture.Arm64 => "arm64",
+                _ => throw new PlatformNotSupportedException(
+                    $"Cannot infer RID for architecture '{RuntimeInformation.OSArchitecture}'. Please specify --rid explicitly.")
+            };
         }
 
         static async Task Run(string rid, IReadOnlyList<string> excludedPlugins, string outputPath, bool useRidFolder, bool cleanOutputDir) {

@@ -1,4 +1,4 @@
-﻿using System.Reflection.Metadata;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Terraria;
 using Terraria.Chat.Commands;

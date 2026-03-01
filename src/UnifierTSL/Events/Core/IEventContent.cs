@@ -1,4 +1,4 @@
-﻿using UnifierTSL.Servers;
+using UnifierTSL.Servers;
 
 namespace UnifierTSL.Events.Core
 {

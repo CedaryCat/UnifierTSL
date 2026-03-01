@@ -1,4 +1,4 @@
-﻿using UnifierTSL.Plugins;
+using UnifierTSL.Plugins;
 
 namespace TShockAPI.Configuration
 {

@@ -1,4 +1,4 @@
-﻿using TShockAPI;
+using TShockAPI;
 using UnifierTSL.Module;
 using UnifierTSL.Module.Dependencies;
 [assembly: ModuleDependencies<TShockDependences>]

@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Logging.LogFilters
+namespace UnifierTSL.Logging.LogFilters
 {
     public delegate bool Predicate(in LogEntry item);
     public class ExpressionLogFilter(Predicate predicate) : ILogFilter

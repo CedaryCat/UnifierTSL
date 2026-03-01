@@ -1,4 +1,4 @@
-﻿using System.Reflection.Metadata;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using UnifierTSL.Reflection.Metadata.DecodeProviders;
 
