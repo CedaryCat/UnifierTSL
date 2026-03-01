@@ -1,4 +1,4 @@
-﻿using UnifierTSL.Module.Dependencies;
+using UnifierTSL.Module.Dependencies;
 
 namespace UnifierTSL.Module
 {

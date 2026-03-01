@@ -1,4 +1,4 @@
-﻿using NuGet.Versioning;
+using NuGet.Versioning;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

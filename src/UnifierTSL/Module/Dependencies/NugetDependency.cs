@@ -1,4 +1,4 @@
-﻿using NuGet.Frameworks;
+using NuGet.Frameworks;
 using NuGet.Versioning;
 using System.Collections.Immutable;
 using System.Reflection;

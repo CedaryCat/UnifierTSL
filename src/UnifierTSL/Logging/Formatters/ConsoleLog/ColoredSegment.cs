@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Logging.Formatters.ConsoleLog
+namespace UnifierTSL.Logging.Formatters.ConsoleLog
 {
     public readonly struct ColoredSegment(ReadOnlyMemory<char> text, ConsoleColor fgColor = ConsoleColor.White, ConsoleColor bgColor = ConsoleColor.Black)
     {

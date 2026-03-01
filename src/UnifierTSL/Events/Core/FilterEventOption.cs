@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Events.Core
+namespace UnifierTSL.Events.Core
 {
     public enum FilterEventOption : byte
     {

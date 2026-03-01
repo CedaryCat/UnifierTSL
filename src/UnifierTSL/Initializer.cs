@@ -1,4 +1,4 @@
-﻿using ReLogic.OS;
+using ReLogic.OS;
 using System.Runtime.Loader;
 using Terraria.ID;
 using UnifiedServerProcess;

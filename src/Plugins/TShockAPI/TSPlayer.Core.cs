@@ -1,4 +1,4 @@
-﻿using MySqlX.XDevAPI;
+using MySqlX.XDevAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Timers;

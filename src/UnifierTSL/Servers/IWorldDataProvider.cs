@@ -1,4 +1,4 @@
-﻿using Terraria.IO;
+using Terraria.IO;
 
 namespace UnifierTSL.Servers
 {

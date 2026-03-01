@@ -1,4 +1,4 @@
-﻿# UnifierTSL
+# UnifierTSL
 
 > Languages: [English](./README.md) | [简体中文](./docs/README.zh-cn.md)
 
@@ -127,10 +127,10 @@ Actual runtime startup flow:
 
 1. `Program.Main` initializes assembly resolver, applies pre-run CLI language overrides, and prints runtime version details.
 2. `Initializer.Initialize()` prepares Terraria/USP runtime state and loads core hooks (`UnifiedNetworkPatcher`, `UnifiedServerCoordinator`, `ServerContext` setup).
-3. `UnifierApi.InitializeCore(args)` creates `EventHub`, builds `PluginOrchestrator`, runs `PluginHosts.InitializeAllAsync()`, and parses launcher arguments.
-4. During argument parsing, each `-server` definition is handled by `AutoStartServer`, which creates `ServerContext` instances and schedules world startup tasks.
-5. `UnifierApi.CompleteLauncherInitialization()` resolves interactive listen/password inputs and raises launcher initialized events.
-6. `UnifiedServerCoordinator.Launch(...)` opens the shared listener; then title updates, coordinator started event fires, and chat input loop begins.
+3. `UnifierApi.PrepareRuntime(args)` loads `config/config.json`, merges launcher file settings with CLI overrides, and configures the durable logging backend.
+4. `UnifierApi.InitializeCore()` creates `EventHub`, builds `PluginOrchestrator`, runs `PluginHosts.InitializeAllAsync()`, and applies the resolved launcher defaults (join mode + initial auto-start worlds).
+5. `UnifierApi.CompleteLauncherInitialization()` resolves interactive listen/password inputs, syncs the effective runtime snapshot, and raises launcher initialized events.
+6. `UnifiedServerCoordinator.Launch(...)` opens the shared listener; `UnifierApi.StartRootConfigMonitoring()` then enables root-config hot reload before title updates, coordinator started event, and chat input loop begin.
 
 <details>
 <summary><strong>Runtime responsibilities at a glance</strong></summary>
@@ -256,10 +256,26 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 | `-listen`, `-port` | Coordinator TCP port | Integer | Prompts on STDIN |
 | `-password` | Shared client password | Any string | Prompts on STDIN |
 | `-autostart`, `-addserver`, `-server` | Add server definitions | Repeatable `key:value` pairs | — |
+| `-servermerge`, `--server-merge` | How CLI `-server` entries merge with config | `replace` / `overwrite` / `append` | `replace` |
 | `-joinserver` | Default join strategy | `first` / `f` / `random` / `rnd` / `r` | — |
+| `-logmode`, `--log-mode` | Durable launcher log backend | `txt` / `none` / `sqlite` | `txt` |
 | `-culture`, `-lang`, `-language` | Override Terraria language | Legacy culture ID or name | Host culture |
 
 > **Tip**: If no plugin takes over join behavior through `EventHub.Coordinator.SwitchJoinServer`, use `-joinserver first` or `random`.
+
+### Launcher Config File
+
+The launcher root config is `config/config.json`. It is separate from plugin configs (`config/<PluginName>/...`), and the legacy root-level `config.json` is intentionally ignored.
+
+Startup precedence is:
+
+1. `config/config.json`
+2. CLI overrides (then persisted back to `config/config.json` as the effective startup snapshot)
+3. Interactive prompts for a missing port/password
+
+After `UnifiedServerCoordinator.Launch(...)` succeeds, the launcher begins watching `config/config.json` for safe hot reloads:
+
+- Live-applied: `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (listener rebind)
 
 ### Server Definition Keys
 
@@ -273,6 +289,13 @@ Each `-server` value is whitespace-separated `key:value` pairs parsed by `Unifie
 | `gamemode` / `difficulty` | World difficulty | `0`–`3`, `normal`, `expert`, `master`, `creative` | `2` |
 | `size` | World size | `1`–`3`, `small`, `medium`, `large` | `3` |
 | `evil` | World evil type | `0`–`2`, `random`, `corruption`, `crimson` | `0` |
+
+`-servermerge` behavior:
+
+- `replace` (default): clean replacement; config entries not present in CLI are removed.
+- `overwrite`: keep config entries, but CLI entries with the same `name` replace them.
+- `append`: keep config entries, only add CLI entries whose `name` does not exist.
+- World-name conflicts are resolved by priority (higher-priority entry kept, lower-priority entry ignored with warning).
 
 ---
 
@@ -331,6 +354,7 @@ plugins/
 └── CommandTeleport.dll
 
 config/
+├── config.json
 ├── TShockAPI/
 └── CommandTeleport/
 ```
@@ -448,7 +472,7 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 dotnet test src/UnifierTSL.slnx
 ```
 
-> **Note**: Automated tests are not included in the repository yet.
+> **Note**: Automated tests are not included in the repository.
 
 ### Supported Platforms
 
@@ -478,4 +502,3 @@ dotnet test src/UnifierTSL.slnx
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
-

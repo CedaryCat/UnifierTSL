@@ -417,3 +417,292 @@ msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。已按
 msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
 msgid "Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
 msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。连接已拒绝。"
+
+#: ..\..\..\src\UnifierTSL\LauncherConfigManager.cs:28
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "File watcher error occurred for root config '{0}'."
+msgstr "根配置文件“{0}”的文件监视器发生错误。"
+
+#: ..\..\..\src\UnifierTSL\LauncherConfigManager.cs:46
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "An unexpected error occurred while reloading root config '{0}'. Keeping the current runtime settings."
+msgstr "重新加载根配置文件“{0}”时发生未预期错误。将保留当前运行时设置。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:264
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is invalid and will be ignored for this run."
+msgstr "根配置文件“{0}”无效，本次启动将忽略该文件。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:270
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' could not be read and will be ignored for this run."
+msgstr "无法读取根配置文件“{0}”，本次启动将忽略该文件。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:283
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is missing. Keeping the current runtime settings."
+msgstr "根配置文件“{0}”缺失。将保留当前运行时设置。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:293
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is invalid. Keeping the current runtime settings."
+msgstr "根配置文件“{0}”无效。将保留当前运行时设置。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:299
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' could not be read. Keeping the current runtime settings."
+msgstr "无法读取根配置文件“{0}”。将保留当前运行时设置。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:314
+#, csharp-format
+msgctxt "{0} is legacy root config path, {1} is active root config path"
+msgid "Legacy root config '{0}' is ignored. Use '{1}' instead."
+msgstr "旧的根配置文件“{0}”已被忽略。请改用“{1}”。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:334
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Unable to create default root config at '{0}'."
+msgstr "无法在“{0}”创建默认根配置文件。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:391
+msgid "SQLite log persistence is not implemented yet. Falling back to text logs."
+msgstr "SQLite 日志持久化尚未实现。将回退到文本日志。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:413
+#, csharp-format
+msgctxt "{0} is log directory path"
+msgid "Failed to initialize text log backend at '{0}'."
+msgstr "无法在“{0}”初始化文本日志后端。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:461
+#, csharp-format
+msgctxt "{0} is current logging mode, {1} is desired logging mode"
+msgid "logging.mode changed from '{0}' to '{1}'. The current logging backend will not change until restart."
+msgstr "`logging.mode` 已从“{0}”变更为“{1}”。当前日志后端要到重启后才会切换。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:468
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port, {2} is active listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}', but the new value is invalid. Keeping port {2}."
+msgstr "`launcher.listenPort` 已从“{0}”变更为“{1}”，但新值无效。将保留端口 {2}。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:476
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}'. The active listener has been rebound."
+msgstr "`launcher.listenPort` 已从“{0}”变更为“{1}”。当前监听器已重绑。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:481
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port, {2} is active listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}', but rebinding failed. Keeping port {2}."
+msgstr "`launcher.listenPort` 已从“{0}”变更为“{1}”，但重绑失败。将保留端口 {2}。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:495
+msgid "launcher.serverPassword changed. New connections will use the updated password policy."
+msgstr "`launcher.serverPassword` 已变更。新连接将使用更新后的密码策略。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:501
+#, csharp-format
+msgctxt "{0} is current join server mode, {1} is desired join server mode"
+msgid "launcher.joinServer changed from '{0}' to '{1}'. Future joins will use the updated policy."
+msgstr "`launcher.joinServer` 已从“{0}”变更为“{1}”。后续加入将使用更新后的策略。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:519
+msgid "current runtime snapshot"
+msgstr "当前运行时快照"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:520
+msgid "reloaded config snapshot"
+msgstr "重载后的配置快照"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:526
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server '{0}' was updated in root config, but existing server definitions are not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
+msgstr "服务器“{0}”在根配置中已更新，但 Phase 1 不会热应用已有服务器定义。需要重启或显式生命周期 API。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:538
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server '{0}' was removed from root config, but server removal is not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
+msgstr "服务器“{0}”已从根配置中移除，但 Phase 1 不会热应用服务器移除。需要重启或显式生命周期 API。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:552
+#, csharp-format
+msgctxt "{0} is server name, {1} is config snapshot source"
+msgid "Duplicate autoStartServers entry '{0}' was found in the {1}. Later duplicates are ignored for hot reload diffing."
+msgstr "在{1}中发现重复的 autoStartServers 条目“{0}”。后续重复项在热重载差异比较中会被忽略。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:817
+#, csharp-format
+msgctxt "{0} is configured joinServer value"
+msgid "Invalid joinServer setting '{0}'. Falling back to 'none'."
+msgstr "无效的 joinServer 设置“{0}”。将回退到 none。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:849
+#, csharp-format
+msgctxt "{0} is configured logging.mode value"
+msgid "Invalid logging.mode setting '{0}'. Falling back to 'txt'."
+msgstr "无效的 logging.mode 设置“{0}”。将回退到 txt。"
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:87
+msgid "Server"
+msgstr "服务器"
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:103
+msgid "Metadata truncated due to per-entry limit"
+msgstr "元数据因单条上限已被截断"
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:146
+#, csharp-format
+msgctxt "{0} is exception text"
+msgid "[Error][LogCore|TextBackend] File logging disabled after I/O failure: {0}"
+msgstr "[Error][LogCore|TextBackend] 文件日志在发生 I/O 故障后已禁用: {0}"
+
+#: ..\..\..\src\UnifierTSL\Program.cs:33
+#, csharp-format
+msgid ""
+"Unifier Terraria-Server-Launcher Running\n"
+"Version Info:\n"
+"  Terraria v{0} & Protocol {1}\n"
+"  Unified-Server-Process v{2} & OTAPI v{3}\n"
+"  UnifierApi v{4} & PluginApi v{5}\n"
+"Current Process ID: {6}"
+msgstr ""
+"Unifier Terraria-Server-Launcher 正在运行\n"
+"版本信息：\n"
+"  Terraria v{0} & 协议 {1}\n"
+"  Unified-Server-Process v{2} & OTAPI v{3}\n"
+"  UnifierApi v{4} & PluginApi v{5}\n"
+"当前进程 ID: {6}"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:94
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Startup CLI overrides were persisted to '{0}' using the effective launcher snapshot."
+msgstr "启动 CLI 覆盖项已持久化到“{0}”，使用的是生效后的启动器快照。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:242
+msgid "[Warning][LogCore|DurableQueue] Durable log flush timed out during process exit. Some tail records may be lost."
+msgstr "[Warning][LogCore|DurableQueue] 进程退出时持久化日志刷新超时，尾部部分记录可能丢失。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:209
+#, csharp-format
+msgctxt "{0} is log persistence mode, {1} is log directory path"
+msgid "Failed to initialize '{0}' durable log backend at '{1}'."
+msgstr "无法在“{1}”初始化“{0}”持久化日志后端。"
+
+#: ..\..\..\src\UnifierTSL\LauncherConfigStore.cs:92
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Unable to persist root config to '{0}'."
+msgstr "无法将根配置持久化到“{0}”。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:53
+#, csharp-format
+msgctxt "{0} is user input value for server merge mode"
+msgid "Invalid server merge mode: {0}"
+msgstr "无效的服务器合并模式: {0}"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:56
+msgid "Expected value: replace (default), overwrite, or append."
+msgstr "期望值: replace（默认）、overwrite 或 append。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:72
+#, csharp-format
+msgctxt "{0} is user input value for join server mode"
+msgid "Invalid join server mode: {0}"
+msgstr "无效的加入服务器模式: {0}"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:84
+#, csharp-format
+msgctxt "{0} is user input value for log mode"
+msgid "Invalid log mode specified: {0}"
+msgstr "指定的日志模式无效: {0}"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:129
+msgid "'-servermerge/--server-merge' was provided without any '-server' arguments. The merge mode was ignored."
+msgstr "提供了 '-servermerge/--server-merge'，但没有任何 '-server' 参数。该合并模式已被忽略。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:160
+#, csharp-format
+msgctxt "{0} is current logging mode, {1} is desired logging mode"
+msgid "logging.mode changed from '{0}' to '{1}'. Restart is required before this setting takes effect."
+msgstr "`logging.mode` 已从“{0}”变更为“{1}”。该设置需重启后生效。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:368
+#, csharp-format
+msgctxt "{0} is ignored server name, {1} is kept source, {2} is merge mode"
+msgid "Auto-start server '{0}' from {1} was ignored because a higher-priority entry already exists (kept source: {2}, merge mode: {3})."
+msgstr "来自 {1} 的自动启动服务器“{0}”被忽略，因为已存在更高优先级条目（保留来源: {2}，合并模式: {3}）。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:379
+#, csharp-format
+msgctxt "{0} is ignored server name, {1} is world name, {2} is kept server name, {3} is merge mode"
+msgid "Auto-start server '{0}' (world: '{1}') was ignored due to world conflict with higher-priority server '{2}' (merge mode: {3})."
+msgstr "自动启动服务器“{0}”（世界: “{1}”）因与更高优先级服务器“{2}”发生世界冲突而被忽略（合并模式: {3}）。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:667
+msgid "Expected value: an integer between 1 and 3 (inclusive), or one of the strings: small, medium, large"
+msgstr "期望值: 1 到 3（含）之间的整数，或字符串之一: small、medium、large"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:248
+#, csharp-format
+msgctxt "{0} is player name, {1} is player UUID"
+msgid "No available server found for you."
+msgstr "未找到可用服务器。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:363
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Cannot initialize listener to invalid port '{0}'."
+msgstr "无法将监听器初始化到无效端口“{0}”。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:376
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Cannot rebind listener to invalid port '{0}'."
+msgstr "无法将监听器重绑到无效端口“{0}”。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:387
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Failed to bind listener to port '{0}'. Keeping the current listener."
+msgstr "监听器绑定到端口“{0}”失败。将保留当前监听器。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:395
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Listener rebound to port '{0}'."
+msgstr "监听器已重绑到端口“{0}”。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:416
+msgid "Failed to start server loop thread."
+msgstr "启动服务器循环线程失败。"
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:853
+#, csharp-format
+msgctxt "{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Player '{0}' {1} ? {2} transferred."
+msgstr "玩家“{0}”已从 {1} ? {2} 完成转移。"
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\AsyncDurableLogWriter.cs:176
+#, csharp-format
+msgctxt "{0} is durable backlog count, {1} is durable backlog warning threshold"
+msgid "[Warning][LogCore|DurableQueue] Durable backlog is {0} entries (threshold: {1})."
+msgstr "[Warning][LogCore|DurableQueue] 持久化队列积压为 {0} 条（阈值: {1}）。"
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\AsyncDurableLogWriter.cs:186
+#, csharp-format
+msgctxt "{0} is exception text"
+msgid "[Error][LogCore|DurableQueue] Durable sink disabled after failure: {0}"
+msgstr "[Error][LogCore|DurableQueue] 持久化日志 Sink 发生故障后已禁用: {0}"

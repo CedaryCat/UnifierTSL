@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.PluginHost
+namespace UnifierTSL.PluginHost
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public class PluginHostAttribute(int majorApiVersion, int minorApiVersion) : Attribute

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using UnifiedServerProcess;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Extensions;

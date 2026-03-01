@@ -1,4 +1,4 @@
-﻿using UnifierTSL.ConsoleClient.Protocol;
+using UnifierTSL.ConsoleClient.Protocol;
 using UnifierTSL.ConsoleClient.Protocol.C2S;
 using UnifierTSL.ConsoleClient.Protocol.S2C;
 using System.Threading.Channels;

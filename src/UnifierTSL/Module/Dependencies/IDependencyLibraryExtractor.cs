@@ -1,4 +1,4 @@
-﻿using NuGet.Versioning;
+using NuGet.Versioning;
 using System.Collections.Immutable;
 using UnifierTSL.Logging;
 

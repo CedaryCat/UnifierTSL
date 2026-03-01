@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using TrProtocol.NetPackets;
 
 namespace UnifierTSL.Extensions

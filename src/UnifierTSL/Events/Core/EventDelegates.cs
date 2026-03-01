@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Events.Core
+namespace UnifierTSL.Events.Core
 {
     public delegate void ReferenceEventDelegate<TEvent>(ReferenceEventArgs<TEvent> args) where TEvent : class, IEventContent;
     public delegate void ValueEventDelegate<TEvent>(ref ValueEventArgs<TEvent> args) where TEvent : struct, IEventContent;

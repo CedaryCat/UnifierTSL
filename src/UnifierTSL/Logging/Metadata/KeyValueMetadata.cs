@@ -1,4 +1,8 @@
-﻿namespace UnifierTSL.Logging.Metadata
+namespace UnifierTSL.Logging.Metadata
 {
-    public readonly record struct KeyValueMetadata(string Key, string Value);
+    public readonly struct KeyValueMetadata(string key, string value)
+    {
+        public readonly string Key = key;
+        public readonly string Value = value;
+    }
 }

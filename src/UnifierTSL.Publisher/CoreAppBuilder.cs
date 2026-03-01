@@ -1,4 +1,4 @@
-﻿using Microsoft.NET.HostModel.AppHost;
+using Microsoft.NET.HostModel.AppHost;
 using System;
 using System.Diagnostics;
 using System.IO;

@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL.Collections
+namespace UnifierTSL.Collections
 {
     public class DefaultDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue> where TKey : notnull where TValue : struct
     {

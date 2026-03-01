@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using Terraria.Localization;
 using Terraria.Net.Sockets;
 using TrProtocol.NetPackets;

@@ -289,7 +289,8 @@ namespace UnifierTSL
         private static readonly ILoggerHost LogHost = new LoggerHost();
         private static readonly RoleLogger logger;
         public static RoleLogger Logger => logger;
-        public static int ListenPort { get; private set; }
+        private static readonly ListenerController listenerController = new(7777);
+        public static int ListenPort => listenerController.ListenPort;
         public static string ServerPassword { get; set; } = "";
 
         public static readonly Player[] players = new Player[Netplay.MaxConnections];
@@ -323,14 +324,11 @@ namespace UnifierTSL
         //    return server is null ? pendingConnects[clientIndex].player : players[clientIndex];
         //}
 
-        private static TcpListener listener;
-        private static volatile bool isListening;
         private static readonly UdpClient broadcastClient;
-        private static volatile bool keepBroadcasting;
 
         public static event Action? Started;
 
-        public static IPEndPoint ListeningEndpoint { get; private set; }
+        public static IPEndPoint ListeningEndpoint => listenerController.ListeningEndpoint;
 
         public static void Load() { }
         static UnifiedServerCoordinator() {
@@ -352,25 +350,112 @@ namespace UnifierTSL
                     whoAmI = i
                 };
             }
-            listener = new TcpListener(ListeningEndpoint = new IPEndPoint(IPAddress.Any, 7777));
             broadcastClient = new UdpClient();
         }
         private static Thread? ServerLoopThread;
+        private static int serverLoopStartToken;
         public static void Launch(int listenPort, string password = "") {
-            ListenPort = listenPort;
             ServerPassword = password;
-            listener.Dispose();
-            listener = new TcpListener(ListeningEndpoint = new IPEndPoint(IPAddress.Any, listenPort));
-
             broadcastClient.EnableBroadcast = true;
+            if (!listenerController.TryRebindPort(listenPort, hasListeningWork: false, out ListenerChange change)) {
+                Logger.Warning(
+                    category: "Listener",
+                    message: GetParticularString("{0} is requested listen port", $"Cannot initialize listener to invalid port '{listenPort}'."));
+            }
+            else {
+                ApplySessionChange(change);
+            }
 
-            if (ServerLoopThread is null) {
-                ServerLoopThread = new Thread(ServerLoop) {
+            EnsureServerLoopStarted();
+        }
+
+        public static bool RebindListener(int listenPort) {
+            if (!LauncherPortRules.IsValidListenPort(listenPort)) {
+                Logger.Warning(
+                    category: "Listener",
+                    message: GetParticularString("{0} is requested listen port", $"Cannot rebind listener to invalid port '{listenPort}'."));
+                return false;
+            }
+
+            if (listenPort == ListenPort) {
+                return true;
+            }
+
+            if (!listenerController.TryRebindPort(listenPort, HasListeningWork(), out ListenerChange change)) {
+                Logger.Warning(
+                    category: "Listener",
+                    message: GetParticularString("{0} is requested listen port", $"Failed to bind listener to port '{listenPort}'. Keeping the current listener."));
+                return false;
+            }
+
+            ApplySessionChange(change);
+
+            Logger.Info(
+                category: "Listener",
+                message: GetParticularString("{0} is requested listen port", $"Listener rebound to port '{listenPort}'."));
+            return true;
+        }
+
+        private static void EnsureServerLoopStarted() {
+            if (Interlocked.CompareExchange(ref serverLoopStartToken, 1, 0) != 0) {
+                return;
+            }
+
+            try {
+                Thread thread = new(ServerLoop) {
                     IsBackground = true,
                     Name = "Server Thread"
                 };
-                ServerLoopThread.Start();
+                ServerLoopThread = thread;
+                thread.Start();
             }
+            catch (Exception ex) {
+                Volatile.Write(ref serverLoopStartToken, 0);
+                Logger.Error(
+                    category: "Coordinator",
+                    message: GetString("Failed to start server loop thread."),
+                    ex: ex);
+                throw;
+            }
+        }
+
+        private static void ApplySessionChange(ListenerChange change) {
+            if (!change.Success) {
+                return;
+            }
+
+            if (change.Started is not null) {
+                ListenerSession session = change.Started;
+                Task.Run(() => ListenLoop(session));
+                Task.Run(() => LaunchBroadcast(session));
+            }
+
+            if (change.Stopped is not null) {
+                ReleaseSession(change.Stopped);
+            }
+
+            if (change.PortChanged) {
+                UnifierApi.UpdateTitle(empty: ActiveConnections == 0);
+            }
+        }
+
+        private static void ReleaseSession(ListenerSession session) {
+            try {
+                session.Cts.Cancel();
+            }
+            catch { }
+            try {
+                session.Listener.Stop();
+            }
+            catch { }
+            try {
+                session.Listener.Dispose();
+            }
+            catch { }
+            try {
+                session.Cts.Dispose();
+            }
+            catch { }
         }
 
         private static bool NetMessageSystemContext_CheckCanSend(On.Terraria.NetMessageSystemContext.orig_CheckCanSend orig, NetMessageSystemContext self, int clientIndex) {
@@ -596,45 +681,38 @@ namespace UnifierTSL
         }
 
         private static void StartListeningIfNeeded() {
-            if (isListening || !servers.Any(s => s.IsRunning) || GetClientSpace() <= 0) {
+            if (!listenerController.TryEnsureState(HasListeningWork(), out ListenerChange change)) {
                 return;
             }
-            try {
-                isListening = true;
-                listener.Start();
-            }
-            catch {
-                isListening = false;
-                return;
-            }
-            Task.Run(ListenLoop);
-            Task.Run(LaunchBroadcast);
+
+            ApplySessionChange(change);
         }
-        private static void ListenLoop() {
-            while (servers.Any(s => s.IsRunning) && GetClientSpace() > 0) {
+        private static void ListenLoop(ListenerSession session) {
+            CancellationToken token = session.Cts.Token;
+            while (!token.IsCancellationRequested && listenerController.IsCurrentSession(session.Generation)) {
                 try {
-                    TcpClient client = listener.AcceptTcpClient(); 
+                    TcpClient client = session.Listener.AcceptTcpClient();
                     CreateSocketEvent e = new(client);
                     UnifierApi.EventHub.Coordinator.CreateSocket.Invoke(ref e);
-                    OnConnectionAccepted(e.Socket ?? new TcpSocket(client));
+                    OnConnectionAccepted(e.Socket ?? new TcpSocket(client), session);
                 }
                 catch {
+                    if (token.IsCancellationRequested || !listenerController.IsCurrentSession(session.Generation)) {
+                        break;
+                    }
                 }
             }
-            listener.Stop();
-            isListening = false;
-            keepBroadcasting = false;
         }
-        private static void LaunchBroadcast() {
+        private static void LaunchBroadcast(ListenerSession session) {
             try {
-                keepBroadcasting = true;
+                CancellationToken token = session.Cts.Token;
                 int playerCountPosInStream = 0;
                 byte[] data;
                 using (MemoryStream memoryStream = new()) {
                     using (BinaryWriter bw = new(memoryStream)) {
                         int value = 1010;
                         bw.Write(value);
-                        bw.Write(ListenPort);
+                        bw.Write(session.Port);
                         bw.Write("UnifierTSL-Servers");
                         string text = Dns.GetHostName();
                         if (text == "localhost") {
@@ -665,14 +743,13 @@ namespace UnifierTSL
                     }
                     Thread.Sleep(1000);
                 }
-                while (keepBroadcasting);
+                while (!token.IsCancellationRequested && listenerController.IsCurrentSession(session.Generation));
             }
             catch {
-                keepBroadcasting = false;
             }
         }
 
-        private static void OnConnectionAccepted(ISocket client) {
+        private static void OnConnectionAccepted(ISocket client, ListenerSession session) {
             int id = FindNextEmptyClientSlot();
             if (id != -1) {
                 SetClientCurrentlyServer(id, null);
@@ -690,9 +767,10 @@ namespace UnifierTSL
                     category: "ConnectionAccept",
                     message: GetString("Server is full"));
             }
-            if (FindNextEmptyClientSlot() == -1) {
-                listener.Stop();
-                isListening = false;
+            if (FindNextEmptyClientSlot() == -1 && listenerController.IsCurrentSession(session.Generation)) {
+                if (listenerController.TryEnsureState(HasListeningWork(), out ListenerChange change)) {
+                    ApplySessionChange(change);
+                }
 
                 Logger.Info(
                     category: "ConnectionAccept",
@@ -711,6 +789,10 @@ namespace UnifierTSL
                 }
             }
             return -1;
+        }
+
+        private static bool HasListeningWork() {
+            return servers.Any(s => s.IsRunning) && GetClientSpace() > 0;
         }
 
         public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false) {

@@ -1,4 +1,4 @@
-﻿param(
+param(
     [Parameter(Mandatory = $false)]
     [ValidateSet('apply', 'check')]
     [string]$Mode = 'check'

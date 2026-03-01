@@ -1,4 +1,4 @@
-﻿using UnifierTSL.FileSystem;
+using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
 using UnifierTSL.Plugins;
 using UnifierTSL.PluginService;

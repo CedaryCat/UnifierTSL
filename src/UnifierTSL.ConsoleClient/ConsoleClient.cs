@@ -1,4 +1,4 @@
-﻿using UnifierTSL.ConsoleClient.Protocol;
+using UnifierTSL.ConsoleClient.Protocol;
 using System.IO.Pipes;
 using System.Runtime.CompilerServices;
 

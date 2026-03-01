@@ -1,4 +1,4 @@
-﻿using NuGet.Frameworks;
+using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 using NuGet.Versioning;

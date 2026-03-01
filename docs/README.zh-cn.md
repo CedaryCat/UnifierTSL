@@ -127,10 +127,10 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 
 1. `Program.Main` 初始化程序集解析器，应用启动前 CLI 语言覆盖，并输出运行时版本信息。
 2. `Initializer.Initialize()` 准备 Terraria/USP 运行时状态，加载核心钩子（`UnifiedNetworkPatcher`、`UnifiedServerCoordinator`、`ServerContext` 初始化）。
-3. `UnifierApi.InitializeCore(args)` 创建 `EventHub`、构建 `PluginOrchestrator`、执行 `PluginHosts.InitializeAllAsync()`，并解析启动参数。
-4. 参数解析期间，每个 `-server` 定义由 `AutoStartServer` 处理，创建 `ServerContext` 实例并调度世界启动任务。
-5. `UnifierApi.CompleteLauncherInitialization()` 补全交互式监听端口/密码输入，并触发启动器初始化事件。
-6. `UnifiedServerCoordinator.Launch(...)` 打开共享监听；随后更新标题、触发协调器已启动事件并进入聊天输入循环。
+3. `UnifierApi.PrepareRuntime(args)` 加载 `config/config.json`，把启动器文件配置与 CLI 覆盖合并，并配置持久日志后端。
+4. `UnifierApi.InitializeCore()` 创建 `EventHub`、构建 `PluginOrchestrator`、执行 `PluginHosts.InitializeAllAsync()`，并应用已解析的启动器默认值（入服模式 + 初始自动启动世界）。
+5. `UnifierApi.CompleteLauncherInitialization()` 补全交互式监听端口/密码输入，同步最终生效的运行时快照，并触发启动器初始化事件。
+6. `UnifiedServerCoordinator.Launch(...)` 打开共享监听；随后 `UnifierApi.StartRootConfigMonitoring()` 才会启用根配置热重载，接着更新标题、触发协调器已启动事件并进入聊天输入循环。
 
 <details>
 <summary><strong>运行时组件分工</strong></summary>
@@ -256,10 +256,26 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 | `-listen`, `-port` | 协调器 TCP 端口 | 整数 | 从 STDIN 交互读取 |
 | `-password` | 共享客户端密码 | 任意字符串 | 从 STDIN 交互读取 |
 | `-autostart`, `-addserver`, `-server` | 添加服务器定义 | 可重复 `key:value` 组 | — |
+| `-servermerge`, `--server-merge` | CLI `-server` 与配置的合并策略 | `replace` / `overwrite` / `append` | `replace` |
 | `-joinserver` | 默认入服策略 | `first` / `f` / `random` / `rnd` / `r` | — |
+| `-logmode`, `--log-mode` | 启动器持久日志后端 | `txt` / `none` / `sqlite` | `txt` |
 | `-culture`, `-lang`, `-language` | 覆盖 Terraria 语言 | 旧 culture ID 或名称 | 主机 culture |
 
 > **提示**：如果插件没有通过 `EventHub.Coordinator.SwitchJoinServer` 接管入服，建议直接使用 `-joinserver first` 或 `random`。
+
+### 启动器配置文件
+
+启动器根配置固定为 `config/config.json`。它与插件配置（`config/<PluginName>/...`）分离，旧的根目录 `config.json` 会被明确忽略。
+
+启动时优先级如下：
+
+1. `config/config.json`
+2. CLI 覆盖（并将启动时生效快照回写到 `config/config.json`）
+3. 仅对缺失端口/密码进行交互式补全
+
+在 `UnifiedServerCoordinator.Launch(...)` 成功后，启动器会开始监视 `config/config.json`，只做安全范围内的热重载：
+
+- 立即生效：`launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、`launcher.listenPort`（监听器重绑）
 
 ### 服务器定义键
 
@@ -273,6 +289,13 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 | `gamemode` / `difficulty` | 世界难度 | `0`–`3`, `normal`, `expert`, `master`, `creative` | `2` |
 | `size` | 世界尺寸 | `1`–`3`, `small`, `medium`, `large` | `3` |
 | `evil` | 世界邪恶类型 | `0`–`2`, `random`, `corruption`, `crimson` | `0` |
+
+`-servermerge` 行为：
+
+- `replace`（默认）：干净替换；配置里未在 CLI 出现的项会被移除。
+- `overwrite`：保留配置项，但 CLI 中同名 `name` 会覆盖配置项。
+- `append`：保留配置项，只追加配置中不存在同名 `name` 的 CLI 项。
+- 对 `worldname` 冲突会按优先级保留高优先项，低优先项会 warning 并忽略。
 
 ---
 
@@ -331,6 +354,7 @@ plugins/
 └── CommandTeleport.dll
 
 config/
+├── config.json
 ├── TShockAPI/
 └── CommandTeleport/
 ```
@@ -448,7 +472,7 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 dotnet test src/UnifierTSL.slnx
 ```
 
-> **说明**：仓库目前还没有自动化测试项目。
+> **说明**：仓库未包含自动化测试项目。
 
 ### 支持平台
 
@@ -478,4 +502,3 @@ dotnet test src/UnifierTSL.slnx
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
-

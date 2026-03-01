@@ -1,4 +1,4 @@
-﻿using Terraria.Net.Sockets;
+using Terraria.Net.Sockets;
 
 namespace UnifierTSL.Network
 {

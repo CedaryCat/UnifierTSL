@@ -1,4 +1,4 @@
-﻿using Rests;
+using Rests;
 using System.ComponentModel;
 using System.Text;
 using UnifierTSL.Plugins;

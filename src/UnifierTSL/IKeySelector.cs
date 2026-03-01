@@ -1,4 +1,4 @@
-﻿namespace UnifierTSL
+namespace UnifierTSL
 {
     public interface IKeySelector<TKey> where TKey : notnull
     {

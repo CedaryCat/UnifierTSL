@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using Terraria.Utilities;
 using UnifierTSL.FileSystem;
 

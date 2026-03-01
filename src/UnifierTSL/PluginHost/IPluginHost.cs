@@ -1,4 +1,4 @@
-﻿using UnifierTSL.Logging;
+using UnifierTSL.Logging;
 using UnifierTSL.PluginService;
 
 namespace UnifierTSL.PluginHost

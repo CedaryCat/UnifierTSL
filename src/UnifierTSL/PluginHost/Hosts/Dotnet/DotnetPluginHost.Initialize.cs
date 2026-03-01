@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using UnifierTSL.Logging;
 using UnifierTSL.PluginHost.Configs;
 using UnifierTSL.Plugins;
@@ -87,7 +87,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             }
 
             try {
-                ConfigRegistrar config = new(container, Path.Combine("config", Path.GetFileNameWithoutExtension(container.Location.FilePath)));
+                ConfigRegistrar config = new(container, Path.Combine(LauncherConfigStore.RootConfigRelativeDir, Path.GetFileNameWithoutExtension(container.Location.FilePath)));
                 await container.Plugin.InitializeAsync(config, prior, token);
                 container.LoadStatus = PluginLoadStatus.Loaded;
                 logger.Success(GetParticularString("{0} is plugin name, {1} is plugin version, {2} is plugin author name", $"Plugin '{container.Name}' v{container.Version} (by {container.Author}) initialized."));
