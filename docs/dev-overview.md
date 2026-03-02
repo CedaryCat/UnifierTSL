@@ -785,7 +785,7 @@ public IPluginContainer? LoadPlugin(IPluginInfo pluginInfo)
 - Host admission is version-gated against `PluginOrchestrator.ApiVersion` (currently `1.0.0`): `major` must match exactly, and the host's `minor` must be ≤ the runtime's `minor`. If it doesn't match, the host is skipped with a warning.
 - `.InitializeAllAsync` preloads modules, discovers plugin entry points via `PluginDiscoverer`, and loads them through `PluginLoader`.
 - Plugin containers are sorted by `InitializationOrder`, and `IPlugin.InitializeAsync` is called with `PluginInitInfo` lists so you can await specific dependencies.
-- `ShutdownAllAsync` and `UnloadAllAsync` exist on the orchestrator, but heads up — the built-in `DotnetPluginHost` still has TODO stubs for `ShutdownAsync`/`UnloadPluginsAsync`. For now, disposal is mainly driven by the module unload path.
+- `ShutdownAllAsync` and `UnloadAllAsync` exist on the orchestrator. In the built-in `DotnetPluginHost`, `ShutdownAsync` now runs plugin `ShutdownAsync` callbacks (graceful teardown), and `UnloadPluginsAsync` unloads plugin modules/contexts.
 
 ### 2.4 Networking & Coordinator
 
@@ -1549,7 +1549,7 @@ For more logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/Unifie
 - Durable backends (`txt` / `sqlite`) now run on a background consumer queue; `none` bypasses durable history commits entirely to keep the hot path minimal.
 
 ### 5.3 Shutdown & Reload
-- `PluginOrchestrator` exposes `ShutdownAllAsync` and `UnloadAllAsync`, though the built-in `DotnetPluginHost` still has TODO stubs for `ShutdownAsync`/`UnloadPluginsAsync`.
+- `PluginOrchestrator` exposes `ShutdownAllAsync` and `UnloadAllAsync`. In the built-in `DotnetPluginHost`, `ShutdownAsync` handles graceful plugin shutdown, while `UnloadPluginsAsync` performs module/context unload.
 - Module reload and targeted unload work through loader APIs (`ModuleAssemblyLoader.TryLoadSpecific`, `ForceUnload`) and plugin-loader ops (`TryUnloadPlugin`/`ForceUnloadPlugin`).
 - Plugin `DisposeAsync` hooks into `ModuleLoadContext` unload via registered dispose actions.
 

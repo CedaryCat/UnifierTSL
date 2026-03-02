@@ -22,14 +22,63 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             PluginLoader = new PluginLoader(this);
         }
 
-        public Task ShutdownAsync(CancellationToken cancellationToken = default) {
-#warning TODO
-            return Task.CompletedTask;
+        public async Task ShutdownAsync(CancellationToken cancellationToken = default) {
+            ImmutableArray<IPluginContainer> plugins = SortPlugins();
+
+            for (int i = plugins.Length - 1; i >= 0; i--) {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                PluginContainer container = (PluginContainer)plugins[i];
+                if (container.LoadStatus is not PluginLoadStatus.Loaded) {
+                    continue;
+                }
+
+                try {
+                    await container.Plugin.ShutdownAsync(cancellationToken);
+                    Logger.InfoWithMetadata(
+                        category: "Shutdown",
+                        message: GetParticularString("{0} is plugin name", $"Plugin '{container.Name}' shutdown completed."),
+                        metadata: [new("PluginFile", container.Location.FilePath)]);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+                    throw;
+                }
+                catch (Exception ex) {
+                    Logger.LogHandledExceptionWithMetadata(
+                        category: "Shutdown",
+                        message: GetParticularString("{0} is plugin name, {1} is error message", $"Plugin '{container.Name}' failed to shutdown: {ex.Message}"),
+                        metadata: [new("PluginFile", container.Location.FilePath)],
+                        ex: ex);
+                }
+            }
         }
 
-        public Task UnloadPluginsAsync(CancellationToken cancellationToken = default) {
-#warning TODO
-            return Task.CompletedTask;
+        public async Task UnloadPluginsAsync(CancellationToken cancellationToken = default) {
+            ImmutableArray<IPluginContainer> plugins = SortPlugins();
+
+            for (int i = plugins.Length - 1; i >= 0; i--) {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                PluginContainer container = (PluginContainer)plugins[i];
+                if (container.LoadStatus is PluginLoadStatus.Unloaded || container.Module.Unloaded) {
+                    continue;
+                }
+
+                try {
+                    PluginLoader.ForceUnloadPlugin(container);
+                    Logger.InfoWithMetadata(
+                        category: "Unloading",
+                        message: GetParticularString("{0} is plugin name", $"Plugin '{container.Name}' unload completed."),
+                        metadata: [new("PluginFile", container.Location.FilePath)]);
+                }
+                catch (Exception ex) {
+                    Logger.LogHandledExceptionWithMetadata(
+                        category: "Unloading",
+                        message: GetParticularString("{0} is plugin name, {1} is error message", $"Plugin '{container.Name}' failed to unload: {ex.Message}"),
+                        metadata: [new("PluginFile", container.Location.FilePath)],
+                        ex: ex);
+                }
+            }
         }
     }
 }

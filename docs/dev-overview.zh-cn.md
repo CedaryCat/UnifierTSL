@@ -793,7 +793,7 @@ public IPluginContainer? LoadPlugin(IPluginInfo pluginInfo)
 - 宿主准入由 `PluginOrchestrator.ApiVersion`（当前 `1.0.0`）控制：`major` 必须完全一致，宿主 `minor` 必须 ≤ 运行时 `minor`。不满足条件的宿主会被跳过并记录警告。
 - `.InitializeAllAsync` 预加载模块，通过 `PluginDiscoverer` 发现插件入口点，并通过 `PluginLoader` 加载它们。
 - 插件容器按 `InitializationOrder` 排序，并使用 `PluginInitInfo` 列表调用 `IPlugin.InitializeAsync`，以便你可以等待特定的依赖项。
-- `ShutdownAllAsync` 和 `UnloadAllAsync` 由编排器提供；但内置 `DotnetPluginHost` 在 `ShutdownAsync`/`UnloadPluginsAsync` 上仍是 TODO 占位实现。目前释放流程主要由模块卸载路径驱动。
+- `ShutdownAllAsync` 和 `UnloadAllAsync` 由编排器提供。内置 `DotnetPluginHost` 中，`ShutdownAsync` 会执行插件 `ShutdownAsync` 回调（优雅收尾），`UnloadPluginsAsync` 负责卸载插件模块/上下文。
 
 <a id="24-networking--coordinator"></a>
 ### 2.4 网络和协调器
@@ -1571,7 +1571,7 @@ Output in Server1's console window with server-specific colors
 
 <a id="53-shutdown--reload"></a>
 ### 5.3 关机和重新加载
-- `PluginOrchestrator` 提供 `ShutdownAllAsync` 和 `UnloadAllAsync`，但内置 `DotnetPluginHost` 在 `ShutdownAsync`/`UnloadPluginsAsync` 上仍是 TODO 占位实现。
+- `PluginOrchestrator` 提供 `ShutdownAllAsync` 和 `UnloadAllAsync`。内置 `DotnetPluginHost` 中，`ShutdownAsync` 用于优雅关闭插件，`UnloadPluginsAsync` 用于模块/上下文卸载。
 - 通过加载器 API (`ModuleAssemblyLoader.TryLoadSpecific`、`ForceUnload`) 和插件加载器操作 (`TryUnloadPlugin`/`ForceUnloadPlugin`) 进行模块重新加载和有针对性的卸载工作。
 - 通过注册的处置操作将 `DisposeAsync` 挂钩插入 `ModuleLoadContext` 卸载。
 

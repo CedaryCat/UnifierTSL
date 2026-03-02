@@ -28,6 +28,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             }
             ModuleAssemblyLoader loader = new("plugins");
             loader.ForceUnload(container.Module);
+            RemoveUnloadedContainers();
         }
 
         public bool TryUnloadPlugin(IPluginContainer pluginContainer) {
@@ -49,6 +50,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             }
 
             loader.ForceUnload(container.Module);
+            RemoveUnloadedContainers();
             return true;
         }
 
@@ -114,6 +116,26 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
             ImmutableInterlocked.Update(ref host.Plugins, p => p.Add(container));
             loadDetails = LoadDetails.Success;
             return container;
+        }
+
+        private void RemoveUnloadedContainers() {
+            ImmutableInterlocked.Update(ref host.Plugins, static plugins => {
+                bool changed = false;
+                ImmutableArray<PluginContainer>.Builder kept = ImmutableArray.CreateBuilder<PluginContainer>(plugins.Length);
+
+                foreach (PluginContainer plugin in plugins) {
+                    if (plugin.Module.Unloaded) {
+                        plugin.LoadStatus = PluginLoadStatus.Unloaded;
+                        changed = true;
+                        continue;
+                    }
+                    kept.Add(plugin);
+                }
+
+                return changed
+                    ? [.. kept]
+                    : plugins;
+            });
         }
     }
 }
