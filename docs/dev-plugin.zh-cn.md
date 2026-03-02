@@ -13,6 +13,7 @@
   - [2.1 `IPlugin` 约定](#21-iplugin-contract)
   - [2.2 初始化排序](#22-initialization-ordering)
   - [2.3 自定义宿主准入规则](#23-custom-host-admission-rules)
+  - [2.4 热重载交接（V1）](#24-热重载交接v1)
 - [3. 配置管理](#3-configuration-management)
   - [3.1 注册配置](#31-registering-configs)
   - [3.2 错误处理和重新加载](#32-error-handling--reloads)
@@ -420,6 +421,14 @@ if (tshockInit.InitializationTask is { } task)
 - 运行时会按 `PluginOrchestrator.ApiVersion`（当前 `1.0.0`）校验准入：宿主主版本必须与运行时主版本一致；宿主次版本必须小于或等于运行时次版本。
 - 版本检查失败的宿主会被跳过（记录警告），因此在版本对齐前，面向该宿主的插件不会加载。
 
+### 2.4 热重载交接（V1）
+- V1 通过 `IHotReloadCapablePlugin` 提供**显式声明**的热重载交接能力；未实现该接口的插件，默认拒绝目标热重载。
+- 宿主入口为手动调用：`TryHotReloadAsync(PluginHotReloadRequest, ...)`。本阶段不包含文件监控自动触发。
+- 交接载荷使用 `HotReloadEnvelope`，包含 `SchemaVersion`、`MatchKey`、新旧版本、`JObject` 状态和运行时快照。
+- 建议只在 `JObject` 中放程序集无关数据，避免跨 `AssemblyLoadContext` 传递运行时对象。
+- V1 的提交阶段不启用全局隔离闸门；宿主会记录风险日志，插件需自行保证交接期间的一致性控制。
+- `IPluginBindingScope` 及其子接口已作为预留 API 提供，但当前版本不接入生命周期与卸载流程。
+
 <a id="3-configuration-management"></a>
 ## 3. 配置管理
 
@@ -632,6 +641,5 @@ log.Info("Teleporting player", metadata: stackalloc[]
 - 在无头测试中实例化 `ServerContext`，以验证针对 USP 的迁移，而无需运行完整的启动器。
 - 使用事件提供程序来模拟玩家加入、数据包流或隔离的协调器切换。
 - 一旦根据存储库指南创建了 xUnit 项目，请考虑在 `tests/` 下构建集成测试工具。
-
 
 

@@ -13,6 +13,7 @@ This guide explains how to build plugins for UnifierTSL, how to take advantage o
   - [2.1 `IPlugin` Contract](#21-iplugin-contract)
   - [2.2 Initialization Ordering](#22-initialization-ordering)
   - [2.3 Custom Host Admission Rules](#23-custom-host-admission-rules)
+  - [2.4 Hot Reload Handoff (V1)](#24-hot-reload-handoff-v1)
 - [3. Configuration Management](#3-configuration-management)
   - [3.1 Registering Configs](#31-registering-configs)
   - [3.2 Error Handling & Reloads](#32-error-handling--reloads)
@@ -411,6 +412,14 @@ if (tshockInit.InitializationTask is { } task)
 - Runtime admission is checked against `PluginOrchestrator.ApiVersion` (currently `1.0.0`): host major version must equal runtime major version; host minor version must be less than or equal to runtime minor version.
 - Hosts that fail version checks are skipped (warning logged), so plugins targeting that host will not load until versions are aligned.
 
+### 2.4 Hot Reload Handoff (V1)
+- V1 introduces an **opt-in** handoff contract via `IHotReloadCapablePlugin`. Plugins that do not implement it are rejected by default for targeted hot reload.
+- The host path is manual (`TryHotReloadAsync(PluginHotReloadRequest, ...)`); file-watch auto-trigger is intentionally out of scope for V1.
+- Handoff payload uses `HotReloadEnvelope`, which carries `SchemaVersion`, `MatchKey`, old/new versions, `JObject` state, and a runtime snapshot.
+- Keep handoff state **assembly-agnostic**. Only put neutral data in `JObject` (no cross-ALC runtime objects).
+- V1 currently does not enable a global isolation gate during commit. The host logs this as a risk and relies on plugin-side coordination.
+- Reserved binding-scope interfaces (`IPluginBindingScope` and related sub-scopes) are present as placeholders only, and are not wired into runtime lifecycle yet.
+
 ## 3. Configuration Management
 
 ### 3.1 Registering Configs
@@ -599,4 +608,3 @@ log.Info("Teleporting player", metadata: stackalloc[]
 - Instantiate `ServerContext` in headless tests to validate migrations against USP without running the full launcher.
 - Use event providers to simulate player joins, packet flows, or coordinator switches in isolation.
 - Consider building an integration test harness under `tests/` once the xUnit project is created per the repository guidelines.
-

@@ -681,3 +681,214 @@ msgstr ""
 msgctxt "{0} is exception text"
 msgid "[Error][LogCore|DurableQueue] Durable sink disabled after failure: {0}"
 msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:117
+msgid "Dotnet hot reload host is not available."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:108
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:17
+msgid "Hot reload request is null."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:74
+msgid "Hot reload was blocked by plugin dependency topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:30
+#, csharp-format
+msgctxt "{0} is error message"
+msgid "Invalid hot reload request: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:100
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "Multiple updated plugin candidates were found for key '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:57
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "No loaded plugin matches hot reload key '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:43
+#, csharp-format
+msgctxt "{0} is plugin entry point"
+msgid "Candidate entry point '{0}' was not found."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:29
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Candidate plugin file '{0}' does not exist."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:65
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Failed to load candidate plugin from '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:122
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:215
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' failed during hot reload prepare."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:270
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected activation."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:204
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected hot reload prepare."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:401
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Failed to unload hot reload candidate '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:91
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "No updated candidate was found for plugin '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:175
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' accepted export but returned no state payload."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:65
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:344
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' failed to recover after hot reload commit failure."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:421
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' has dependent modules. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:302
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' hot reloaded successfully."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:416
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is a satellite module and shares a core module context. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:164
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' rejected hot reload export."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:430
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shares its module with other active plugin entry points. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:42
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shutdown completed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:145
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' threw while exporting hot reload state."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:73
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' unload completed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:378
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Rollback failed with an exception for plugin '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:256
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Starting hot reload commit for plugin '{0}'. No global isolation gate is enabled; in-flight events may still hit the transition window."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:220
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Candidate plugin '{0}' failed during hot reload prepare: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:311
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Commit stage '{0}' failed for plugin '{1}': {2}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:51
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to shutdown: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:79
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to unload: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:150
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed while exporting hot reload state: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:383
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Rollback failed for plugin '{0}': {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:111
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is load details"
+msgid "Failed to load hot reload candidate for plugin '{0}'. Result: {1}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:293
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is old version, {2} is new version"
+msgid "Hot reload succeeded for plugin '{0}'. {1} -> {2}."
+msgstr ""

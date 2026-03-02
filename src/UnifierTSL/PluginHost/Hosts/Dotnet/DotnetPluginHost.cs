@@ -4,9 +4,10 @@ using UnifierTSL.PluginService;
 
 namespace UnifierTSL.PluginHost.Hosts.Dotnet
 {
-    public partial class DotnetPluginHost : IPluginHost
+    public partial class DotnetPluginHost : IPluginHost, IHotReloadPluginHost
     {
         public ImmutableArray<PluginContainer> Plugins = [];
+        private readonly PluginLoader dotnetPluginLoader;
         public RoleLogger Logger { get; init; }
 
         public string Name => "UTSL-PluginHost";
@@ -19,7 +20,8 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
         public DotnetPluginHost() {
             Logger = UnifierApi.CreateLogger(this);
             PluginDiscoverer = new PluginDiscoverer(this);
-            PluginLoader = new PluginLoader(this);
+            dotnetPluginLoader = new PluginLoader(this);
+            PluginLoader = dotnetPluginLoader;
         }
 
         public async Task ShutdownAsync(CancellationToken cancellationToken = default) {

@@ -1,4 +1,7 @@
 using System.Collections.Immutable;
+using System.Reflection;
+using UnifierTSL.Extensions;
+using UnifierTSL.FileSystem;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;
 using UnifierTSL.Plugins;
@@ -17,6 +20,68 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
 
         public string Name => "UTSL-PluginLoader";
         public string? CurrentLogCategory => null;
+
+        internal PluginContainer? LoadPluginCandidate(DotnetPluginInfo info, out LoadDetails loadDetails) {
+            FileInfo file = new(info.Location.FilePath);
+            if (!file.Exists) {
+                Logger.WarningWithMetadata(
+                    category: "HotReload",
+                    message: GetParticularString("{0} is plugin file path", $"Candidate plugin file '{info.Location.FilePath}' does not exist."),
+                    metadata: [new("PluginFile", info.Location.FilePath)]);
+                loadDetails = LoadDetails.Failed;
+                return null;
+            }
+
+            ModuleLoadContext context = new(file);
+            Assembly? loadedAssembly = null;
+            try {
+                loadedAssembly = context.LoadFromStream(info.Location.FilePath);
+                Type? type = loadedAssembly.GetType(info.EntryPoint.EntryPointString);
+                if (type is null) {
+                    Logger.WarningWithMetadata(
+                        category: "HotReload",
+                        message: GetParticularString("{0} is plugin entry point", $"Candidate entry point '{info.EntryPoint.EntryPointString}' was not found."),
+                        metadata: [new("PluginFile", info.Location.FilePath)]);
+                    context.Unload();
+                    loadDetails = LoadDetails.Failed;
+                    return null;
+                }
+
+                if (!TryCreatePluginInstance(info, type, out IPlugin instance)) {
+                    context.Unload();
+                    loadDetails = LoadDetails.Failed;
+                    return null;
+                }
+
+                context.AddDisposeAction(async () => await instance.DisposeAsync());
+                LoadedModule module = new(context, loadedAssembly, [], FileSignature.Generate(info.Location.FilePath), null);
+                PluginContainer container = new(info.Metadata, module, instance);
+                loadDetails = LoadDetails.Success;
+                return container;
+            }
+            catch (Exception ex) {
+                Logger.LogHandledExceptionWithMetadata(
+                    category: "HotReload",
+                    message: GetParticularString("{0} is plugin file path", $"Failed to load candidate plugin from '{info.Location.FilePath}'."),
+                    metadata: [new("PluginFile", info.Location.FilePath)],
+                    ex: ex);
+                try {
+                    context.Unload();
+                }
+                catch { }
+                loadDetails = LoadDetails.Failed;
+                return null;
+            }
+        }
+
+        internal void UnloadCandidate(PluginContainer candidate) {
+            try {
+                candidate.Module.Unload();
+            }
+            finally {
+                candidate.LoadStatus = PluginLoadStatus.Unloaded;
+            }
+        }
 
         public void ForceUnloadPlugin(IPluginContainer pluginContainer) {
             if (pluginContainer is not PluginContainer container) {
@@ -85,27 +150,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                 return null;
             }
 
-            IPlugin instance;
-            try {
-                object boxed = Activator.CreateInstance(type) ?? throw new InvalidOperationException("Failed to create instance");
-                if (boxed is not IPlugin) {
-                    Logger.WarningWithMetadata(
-                        category: "Loading",
-                        message: GetParticularString("{0} is plugin name (or type name)", 
-                            $"Type '{info.Name}' does not implement IPlugin. Skipped."),
-                    metadata: [new("PluginFile", info.Location.FilePath)]);
-                    loadDetails = LoadDetails.Failed;
-                    return null;
-                }
-                instance = (IPlugin)boxed;
-            }
-            catch (Exception ex) {
-                Logger.LogHandledExceptionWithMetadata(
-                    category: "Loading",
-                    message: GetParticularString("{0} is plugin name, {1} is type full name", 
-                        $"Failed to create instance of plugin '{info.Name}', type: '{type.FullName}'."),
-                    metadata: [new("PluginFile", info.Location.FilePath)],
-                    ex: ex);
+            if (!TryCreatePluginInstance(info, type, out IPlugin instance)) {
                 loadDetails = LoadDetails.Failed;
                 return null;
             }
@@ -136,6 +181,33 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                     ? [.. kept]
                     : plugins;
             });
+        }
+
+        private bool TryCreatePluginInstance(DotnetPluginInfo info, Type type, out IPlugin instance) {
+            instance = null!;
+            try {
+                object boxed = Activator.CreateInstance(type) ?? throw new InvalidOperationException("Failed to create instance");
+                if (boxed is not IPlugin plugin) {
+                    Logger.WarningWithMetadata(
+                        category: "Loading",
+                        message: GetParticularString("{0} is plugin name (or type name)",
+                            $"Type '{info.Name}' does not implement IPlugin. Skipped."),
+                        metadata: [new("PluginFile", info.Location.FilePath)]);
+                    return false;
+                }
+
+                instance = plugin;
+                return true;
+            }
+            catch (Exception ex) {
+                Logger.LogHandledExceptionWithMetadata(
+                    category: "Loading",
+                    message: GetParticularString("{0} is plugin name, {1} is type full name",
+                        $"Failed to create instance of plugin '{info.Name}', type: '{type.FullName}'."),
+                    metadata: [new("PluginFile", info.Location.FilePath)],
+                    ex: ex);
+                return false;
+            }
         }
     }
 }
