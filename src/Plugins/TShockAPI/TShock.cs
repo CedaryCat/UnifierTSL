@@ -6,6 +6,7 @@ using System.Net;
 using System.Reflection;
 using Terraria;
 using TShockAPI.CLI;
+using TShockAPI.CommandHint;
 using TShockAPI.Configuration;
 using TShockAPI.DB;
 using TShockAPI.Modules;
@@ -161,6 +162,7 @@ namespace TShockAPI
 
             MiscHandler.Attach();
             Commands.InitCommands();
+            AnnotatedConsoleHintProvider.Install();
             GetDataHandlers.InitGetDataHandler();
 
             ModuleManager.Initialise([this]);

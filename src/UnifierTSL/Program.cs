@@ -1,4 +1,6 @@
 using Terraria.Localization;
+using UnifierTSL.CLI;
+using UnifierTSL.ConsoleClient.Shell;
 using UnifierTSL.PluginHost;
 
 namespace UnifierTSL

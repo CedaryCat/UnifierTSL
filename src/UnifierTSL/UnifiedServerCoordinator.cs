@@ -245,7 +245,7 @@ namespace UnifierTSL
                                 ServerContext? joinServer = e.JoinServer;
 
                                 if (joinServer is null) {
-                                    sender.Kick(NetworkText.FromLiteral(GetParticularString("{0} is player name, {1} is player UUID", $"No available server found for you.")));
+                                    sender.Kick(NetworkText.FromLiteral(GetString($"No available server found for you.")));
 
                                     Logger.Warning(
                                         category: "PendingConnection",

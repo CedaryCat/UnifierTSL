@@ -19,10 +19,14 @@ namespace UnifierTSL.ConsoleClient.Protocol.S2C
         }
 
         public static int WriteContent(Span<byte> buffer, PUSH_READLINE packet) {
-            return IPacket.WriteString(buffer, packet.Line);
+            int offset = IPacket.WriteString(buffer, packet.Line);
+            fixed (byte* p = buffer) {
+                *(long*)(p + offset) = packet.Order;
+            }
+            return offset + sizeof(long);
         }
         public readonly int GetBufferSize() {
-            return IPacket.PacketHeaderSize + IPacket.GetStringBufferSize(Line);
+            return IPacket.PacketHeaderSize + IPacket.GetStringBufferSize(Line) + sizeof(long);
         }
         public readonly override string ToString() {
             return nameof(PUSH_READLINE) + $":[{Order}]" + Line;

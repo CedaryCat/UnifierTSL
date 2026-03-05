@@ -434,7 +434,7 @@ namespace UnifierTSL.Events.Handlers
             if (boxedHandlers is null) {
                 return;
             }
-            PriorityItem<TPacket>[] newHandlers = boxedHandlers.Where(x => x.Handler != handler).ToArray();
+            PriorityItem<TPacket>[] newHandlers = [.. boxedHandlers.Where(x => x.Handler != handler)];
             if (newHandlers.Length == 0) {
                 handlers[TPacket.GlobalID] = null;
             }

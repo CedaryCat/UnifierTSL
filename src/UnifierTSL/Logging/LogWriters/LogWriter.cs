@@ -110,7 +110,7 @@ namespace UnifierTSL.Logging.LogWriters
         }
         public unsafe void GetAvailableFormatters(out FormatterSelectionContext availableFormatters) {
             delegate*<LogWriter<TInput>, ILogFormatter<TInput>, void> fptr = &SwitchFormatter;
-            InnerSelectionContext.InnerHandle[] snapshot = this.availableFormatters.Select(x => new InnerSelectionContext.InnerHandle((nint)fptr, this, x)).ToArray();
+            InnerSelectionContext.InnerHandle[] snapshot = [.. this.availableFormatters.Select(x => new InnerSelectionContext.InnerHandle((nint)fptr, this, x))];
             InnerSelectionContext context = new(ref snapshot[0], snapshot.Length);
             availableFormatters = Unsafe.As<InnerSelectionContext, FormatterSelectionContext>(ref context);
         }

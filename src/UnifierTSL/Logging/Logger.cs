@@ -140,13 +140,18 @@ namespace UnifierTSL.Logging
                 return;
             }
 
+            ILogWriter writerSnapshot;
             lock (publishSync) {
                 if (historyEnabled) {
                     CommitToHistory(in entry);
                 }
 
-                writer.Write(in entry);
+                writerSnapshot = writer;
             }
+
+            // Never hold publishSync while calling external writer code.
+            // This prevents lock-order inversion with sink-level locks (for example console UI locks).
+            writerSnapshot.Write(in entry);
         }
 
         private void ClearHistoryBuffers() {

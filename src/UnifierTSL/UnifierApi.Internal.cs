@@ -1,7 +1,13 @@
 using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Collections.Immutable;
 using Terraria.Localization;
 using Terraria.Utilities;
 using UnifierTSL.CLI;
+using UnifierTSL.CLI.Sessions;
+using UnifierTSL.ConsoleClient.Shell;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
 using UnifierTSL.Extensions;
@@ -57,6 +63,7 @@ namespace UnifierTSL
 
         private static bool runtimePrepared;
         private static LauncherRuntimeSettings runtimeSettings = new();
+        private const string ShortPasswordChars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
         private static readonly Lock durableWriterGate = new();
         private static readonly TimeSpan durableShutdownFlushTimeout = TimeSpan.FromSeconds(3);
         private static AsyncDurableLogWriter? durableWriter;
@@ -108,6 +115,10 @@ namespace UnifierTSL
             PluginHosts.InitializeAllAsync()
                 .GetAwaiter()
                 .GetResult();
+
+            ConsoleInput.ConfigureFrontend(
+                EventHub.Launcher.InvokeCreateLauncherConsoleFrontend()
+                ?? new TerminalLauncherConsoleFrontend());
 
             ApplyResolvedLauncherSettings();
         }
@@ -290,14 +301,296 @@ namespace UnifierTSL
                 });
         }
 
-        private static void ReadLauncherArgs() {
-            while (!LauncherPortRules.IsValidListenPort(ListenPort)) {
-                if (int.TryParse(ConsoleInput.ReadLine(GetString("Enter the port to listen on: ")), out int port)) {
-                    ListenPort = port;
+        private static bool IsPortBindable(int port) {
+            TcpListener? probe = null;
+            try {
+                probe = new TcpListener(IPAddress.Loopback, port);
+                probe.Start();
+                return true;
+            }
+            catch {
+                return false;
+            }
+            finally {
+                try {
+                    probe?.Stop();
+                }
+                catch {
                 }
             }
+        }
 
-            serverPassword ??= ConsoleInput.ReadLine(GetString("Enter the server password: "))?.Trim() ?? "";
+        private static List<int> BuildPortCandidates(int preferred = 7777, int maxCount = 8) {
+            List<int> candidates = [];
+
+            void TryAdd(int port) {
+                if (!LauncherPortRules.IsValidListenPort(port)) {
+                    return;
+                }
+
+                if (candidates.Contains(port)) {
+                    return;
+                }
+
+                if (!IsPortBindable(port)) {
+                    return;
+                }
+
+                candidates.Add(port);
+            }
+
+            TryAdd(preferred);
+            if (LauncherPortRules.IsValidListenPort(ListenPort)) {
+                TryAdd(ListenPort);
+            }
+
+            for (int offset = 1; candidates.Count < maxCount && offset < 300; offset++) {
+                TryAdd(preferred + offset);
+                if (candidates.Count >= maxCount) {
+                    break;
+                }
+                TryAdd(preferred - offset);
+            }
+
+            if (candidates.Count == 0) {
+                candidates.Add(preferred);
+            }
+
+            return candidates;
+        }
+
+        private static IReadOnlyList<ReadLineSuggestion> BuildPortSuggestionItems(string input) {
+            string normalizedInput = (input ?? string.Empty).Trim();
+
+            int preferred = 7777;
+            if (int.TryParse(normalizedInput, out int parsed) && LauncherPortRules.IsValidListenPort(parsed)) {
+                preferred = parsed;
+            }
+
+            List<int> candidates = BuildPortCandidates(preferred, maxCount: 10);
+            return candidates
+                .Select(port => new ReadLineSuggestion(
+                    Value: port.ToString(),
+                    Weight: CalculatePortSuggestionWeight(port, normalizedInput, preferred)))
+                .OrderByDescending(static item => item.Weight)
+                .ThenBy(static item => item.Value, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static int CalculatePortSuggestionWeight(int port, string normalizedInput, int preferred) {
+            int weight = 0;
+            string value = port.ToString();
+
+            if (port == preferred) {
+                weight += 200;
+            }
+            if (port == 7777) {
+                weight += 120;
+            }
+
+            if (string.IsNullOrEmpty(normalizedInput)) {
+                weight += 50;
+            }
+            else if (value.StartsWith(normalizedInput, StringComparison.OrdinalIgnoreCase)) {
+                weight += 300;
+            }
+            else {
+                weight -= 100;
+            }
+
+            if (IsPortBindable(port)) {
+                weight += 30;
+            }
+            else {
+                weight -= 500;
+            }
+
+            return weight;
+        }
+
+        private static IReadOnlyList<string> BuildPortReactiveStatus(ReadLineReactiveState state) {
+            string input = (state.InputText ?? string.Empty).Trim();
+
+            if (input.Length == 0) {
+                return [
+                    GetString("input: empty (Enter uses ghost default 7777)"),
+                    GetString("hint : Ctrl+Enter keeps raw empty input"),
+                ];
+            }
+
+            if (!int.TryParse(input, out int port)) {
+                return [
+                    GetParticularString("{0} is current input value", $"input '{input}' is not an integer port."),
+                ];
+            }
+
+            if (!LauncherPortRules.IsValidListenPort(port)) {
+                return [
+                    GetParticularString("{0} is current input value", $"input '{port}' is out of range (0~65535)."),
+                ];
+            }
+
+            if (!IsPortBindable(port)) {
+                return [
+                    GetParticularString("{0} is current input value", $"input '{port}' is occupied."),
+                ];
+            }
+
+            return [
+                GetParticularString("{0} is current input value", $"input '{port}' is available."),
+            ];
+        }
+
+        private static string GenerateShortPassword(int length = 8) {
+            char[] buffer = new char[length];
+            for (int i = 0; i < buffer.Length; i++) {
+                buffer[i] = ShortPasswordChars[rand.Next(ShortPasswordChars.Length)];
+            }
+            return new string(buffer);
+        }
+
+        private static List<string> BuildPasswordCandidates(int count = 5) {
+            HashSet<string> set = new(StringComparer.Ordinal);
+            while (set.Count < count) {
+                set.Add(GenerateShortPassword());
+            }
+            return [.. set];
+        }
+
+        private static IReadOnlyList<ReadLineSuggestion> BuildPasswordSuggestionItems(string input, IReadOnlyList<string> seedCandidates) {
+            string prefix = input ?? string.Empty;
+            List<ReadLineSuggestion> items = [];
+
+            if (string.IsNullOrEmpty(prefix)) {
+                int rank = 0;
+                foreach (string candidate in seedCandidates.Where(static value => !string.IsNullOrWhiteSpace(value))) {
+                    items.Add(new ReadLineSuggestion(
+                        Value: candidate,
+                        Weight: 500 - (rank * 10)));
+                    rank += 1;
+                }
+
+                return items;
+            }
+
+            int targetLength = Math.Clamp(Math.Max(prefix.Length + 4, 8), 8, 16);
+            for (int index = 0; index < 6; index++) {
+                string candidate = BuildDeterministicPasswordVariant(prefix, index, targetLength);
+                items.Add(new ReadLineSuggestion(
+                    Value: candidate,
+                    Weight: 420 - (index * 8)));
+            }
+
+            return items;
+        }
+
+        private static string BuildDeterministicPasswordVariant(string prefix, int variantIndex, int targetLength) {
+            string safePrefix = prefix ?? string.Empty;
+            int length = Math.Max(safePrefix.Length, targetLength);
+            int seed = HashCode.Combine(safePrefix, variantIndex, length);
+            Random random = new(seed);
+            StringBuilder buffer = new(safePrefix);
+
+            while (buffer.Length < length) {
+                buffer.Append(ShortPasswordChars[random.Next(ShortPasswordChars.Length)]);
+            }
+
+            return buffer.ToString();
+        }
+
+        private static IReadOnlyList<string> BuildPasswordReactiveStatus(ReadLineReactiveState state) {
+            int length = (state.InputText ?? string.Empty).Length;
+            string quality = length switch {
+                <= 0 => "empty",
+                <= 5 => "weak",
+                <= 9 => "medium",
+                _ => "strong",
+            };
+
+            return [
+                GetParticularString("{0} is password text length", $"password length: {length}"),
+                GetParticularString("{0} is simple password quality level", $"strength hint : {quality}"),
+                GetString("empty input is allowed for no-password mode"),
+            ];
+        }
+
+        private static void ReadLauncherArgs() {
+            string lastPortError = string.Empty;
+            while (!LauncherPortRules.IsValidListenPort(ListenPort)) {
+                List<int> portCandidates = BuildPortCandidates();
+                List<string> baseStatusLines = [
+                    GetString("Tab/Shift+Tab cycles recommendations."),
+                    GetString("Right accepts the ghost suggestion."),
+                    GetString("Enter on empty uses ghost; Ctrl+Enter keeps raw input."),
+                    GetString("Valid range: 0~65535 and not occupied."),
+                ];
+                if (!string.IsNullOrWhiteSpace(lastPortError)) {
+                    baseStatusLines.Add(GetParticularString("{0} is error reason", $"last error: {lastPortError}"));
+                }
+
+                ReadLineContextSpec context = new() {
+                    Purpose = ConsoleInputPurpose.StartupPort,
+                    Prompt = "listen-port> ",
+                    GhostText = "7777",
+                    EmptySubmitBehavior = EmptySubmitBehavior.AcceptGhostIfAvailable,
+                    EnableCtrlEnterBypassGhostFallback = true,
+                    HelpText = GetString("Select the launcher listen port."),
+                    ParameterHint = "<port>",
+                    BaseStatusLines = [.. baseStatusLines],
+                    StaticCandidates = ImmutableDictionary<ReadLineTargetKey, ImmutableArray<ReadLineSuggestion>>.Empty
+                        .Add(ReadLineTargetKeys.Plain, [.. portCandidates.Select(static p => new ReadLineSuggestion(p.ToString(), 0))]),
+                    DynamicResolver = resolveContext => new ReadLineDynamicPatch {
+                        CandidateOverrides = ImmutableDictionary<ReadLineTargetKey, ImmutableArray<ReadLineSuggestion>>.Empty
+                            .Add(ReadLineTargetKeys.Plain, [.. BuildPortSuggestionItems(resolveContext.State.InputText)]),
+                        AdditionalStatusLines = [.. BuildPortReactiveStatus(resolveContext.State)],
+                    },
+                };
+
+                string input = ConsoleInput.ReadLine(context, trim: true);
+
+                if (!int.TryParse(input, out int port)) {
+                    lastPortError = GetParticularString("{0} is user input value", $"'{input}' is not an integer port.");
+                    continue;
+                }
+                if (!LauncherPortRules.IsValidListenPort(port)) {
+                    lastPortError = GetParticularString("{0} is user input value", $"'{port}' is out of range.");
+                    continue;
+                }
+                if (!IsPortBindable(port)) {
+                    lastPortError = GetParticularString("{0} is user input value", $"'{port}' is not available.");
+                    continue;
+                }
+
+                ListenPort = port;
+            }
+
+            if (serverPassword is null) {
+                List<string> passwordCandidates = BuildPasswordCandidates();
+                ReadLineContextSpec context = new() {
+                    Purpose = ConsoleInputPurpose.StartupPassword,
+                    Prompt = "server-password> ",
+                    GhostText = passwordCandidates[0],
+                    EmptySubmitBehavior = EmptySubmitBehavior.KeepInput,
+                    EnableCtrlEnterBypassGhostFallback = true,
+                    HelpText = GetString("Pick a short startup password (plain input)."),
+                    ParameterHint = "<password>",
+                    BaseStatusLines = [
+                        GetString("Tab/Shift+Tab cycles random suggestions."),
+                        GetString("Right accepts the ghost suggestion."),
+                        GetString("Press Enter to keep your current input (can be empty)."),
+                    ],
+                    StaticCandidates = ImmutableDictionary<ReadLineTargetKey, ImmutableArray<ReadLineSuggestion>>.Empty
+                        .Add(ReadLineTargetKeys.Plain, [.. passwordCandidates.Select(static value => new ReadLineSuggestion(value, 0))]),
+                    DynamicResolver = resolveContext => new ReadLineDynamicPatch {
+                        CandidateOverrides = ImmutableDictionary<ReadLineTargetKey, ImmutableArray<ReadLineSuggestion>>.Empty
+                            .Add(ReadLineTargetKeys.Plain, [.. BuildPasswordSuggestionItems(resolveContext.State.InputText, passwordCandidates)]),
+                        AdditionalStatusLines = [.. BuildPasswordReactiveStatus(resolveContext.State)],
+                    },
+                };
+
+                string input = ConsoleInput.ReadLine(context, trim: true);
+                serverPassword = input;
+            }
         }
     }
 }

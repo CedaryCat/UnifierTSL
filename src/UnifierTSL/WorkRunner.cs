@@ -10,14 +10,15 @@ namespace UnifierTSL
                 category: $"TimedWork:{category}",
                 message: message);
 
-            ConsoleSpinner spinner = new(100);
-            spinner.Start();
             Stopwatch stopwatch = new();
             stopwatch.Start();
-            work();
-            stopwatch.Stop();
-            spinner.Stop();
-            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
+            using IDisposable statusScope = ConsoleInput.BeginTimedWorkStatus(category, message);
+            try {
+                work();
+            }
+            finally {
+                stopwatch.Stop();
+            }
 
             UnifierApi.Logger.Info(
                 category: $"TimedWork:{category}",
@@ -28,14 +29,16 @@ namespace UnifierTSL
                 category: $"TimedWork:{category}",
                 message: message);
 
-            ConsoleSpinner spinner = new(100);
-            spinner.Start();
             Stopwatch stopwatch = new();
             stopwatch.Start();
-            TOut? output = work();
-            stopwatch.Stop();
-            spinner.Stop();
-            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
+            using IDisposable statusScope = ConsoleInput.BeginTimedWorkStatus(category, message);
+            TOut? output;
+            try {
+                output = work();
+            }
+            finally {
+                stopwatch.Stop();
+            }
 
             UnifierApi.Logger.Info(
                 category: $"TimedWork:{category}",
@@ -48,14 +51,15 @@ namespace UnifierTSL
                 category: $"TimedWork:{category}",
                 message: message);
 
-            ConsoleSpinner spinner = new(100);
-            spinner.Start();
             Stopwatch stopwatch = new();
             stopwatch.Start();
-            work().Task.Wait();
-            stopwatch.Stop();
-            spinner.Stop();
-            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
+            using IDisposable statusScope = ConsoleInput.BeginTimedWorkStatus(category, message);
+            try {
+                work().Task.Wait();
+            }
+            finally {
+                stopwatch.Stop();
+            }
 
             UnifierApi.Logger.Info(
                 category: $"TimedWork:{category}",

@@ -948,7 +948,7 @@ namespace TShockAPI
             args.Executor.SendInfoMessage(GetString($"Name: {server.Name}"));
             args.Executor.SendInfoMessage(GetString("Size: {0}x{1}", server.Main.maxTilesX, server.Main.maxTilesY));
             args.Executor.SendInfoMessage(GetString($"ID: {server.Main.worldID}"));
-			args.Executor.SendInfoMessage(GetString($"Seed: {server.Main.ActiveWorldFileData.Seed}"));
+            args.Executor.SendInfoMessage(GetString($"Seed: {server.Main.ActiveWorldFileData.Seed}"));
             args.Executor.SendInfoMessage(GetString($"Mode: {server.Main.GameMode}"));
             args.Executor.SendInfoMessage(GetString($"Path: {server.Main.worldPathName}"));
         }

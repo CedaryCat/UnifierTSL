@@ -1,5 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
+using UnifierTSL.CLI;
+using UnifierTSL.ConsoleClient.Shell;
 using UnifierTSL.Logging.Formatters.ConsoleLog;
 using UnifierTSL.Servers;
 
@@ -8,10 +11,22 @@ namespace UnifierTSL.Logging.LogWriters
     public class ConsoleLogWriter() : LogWriter<ColoredSegment>(new DefConsoleFormatter())
     {
         public static readonly ConsoleLogWriter Instance = new();
-        public sealed override void Write(scoped in LogEntry raw, Span<ColoredSegment> input) {
+        private static string BuildAnsiLine(Span<ColoredSegment> input) {
+            StringBuilder builder = new();
+            ref ColoredSegment element0 = ref MemoryMarshal.GetReference(input);
+            for (int i = 0; i < input.Length; i++) {
+                ColoredSegment element = Unsafe.Add(ref element0, i);
+                builder.Append(AnsiColorCodec.GetSgr(element.ForegroundColor, element.BackgroundColor));
+                builder.Append(AnsiSanitizer.SanitizeEscapes(element.Text.ToString()));
+            }
+            builder.Append(AnsiColorCodec.Reset);
+            return builder.ToString();
+        }
 
+        public sealed override void Write(scoped in LogEntry raw, Span<ColoredSegment> input) {
             int count = input.Length;
             if (count == 0) return;
+            string ansiText = BuildAnsiLine(input);
 
             string? serverName = raw.GetMetadata("ServerContext");
             ServerContext? server;
@@ -23,30 +38,16 @@ namespace UnifierTSL.Logging.LogWriters
             }
 
             if (server is null) {
-                ref ColoredSegment element0 = ref MemoryMarshal.GetReference(input);
-                for (int i = 0; i < count; i++) {
-                    ColoredSegment element = Unsafe.Add(ref element0, i);
-                    lock (SynchronizedGuard.ConsoleLock) {
-                        Console.BackgroundColor = element.BackgroundColor;
-                        Console.ForegroundColor = element.ForegroundColor;
-                        Console.Write(element.Text);
-                        Console.ResetColor();
-                    }
-                }
+                ConsoleInput.WriteAnsi(ansiText);
                 return;
             }
-            else {
-                ref ColoredSegment element0 = ref MemoryMarshal.GetReference(input);
-                for (int i = 0; i < count; i++) {
-                    ColoredSegment element = Unsafe.Add(ref element0, i);
-                    lock (SynchronizedGuard.ConsoleLock) {
-                        server.Console.BackgroundColor = element.BackgroundColor;
-                        server.Console.ForegroundColor = element.ForegroundColor;
-                        server.Console.Write(element.Text);
-                        server.Console.ResetColor();
-                    }
-                }
+
+            if (server.Console is ConsoleClientLauncher launcher) {
+                launcher.WriteAnsi(ansiText);
+                return;
             }
+
+            server.Console.Write(AnsiSanitizer.StripAnsi(ansiText));
         }
     }
 }

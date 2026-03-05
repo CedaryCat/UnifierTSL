@@ -21,6 +21,7 @@ using NuGet.Protocol.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
@@ -105,27 +106,43 @@ namespace TShockAPI
         public void BCMessage(string msg, byte red, byte green, byte blue) {
             SendConsoleMessage(msg, red, green, blue);
             Server.ChatHelper.BroadcastChatMessage(NetworkText.FromLiteral(msg), new Color(red, green, blue));
-        }
+		}
 
-        public void SendConsoleMessage(string msg, byte red, byte green, byte blue)
-		{
-			var snippets = Terraria.UI.Chat.ChatManager.ParseMessage(Server, msg, new Color(red, green, blue));
+		public void SendConsoleMessage(string msg, byte red, byte green, byte blue) {
+			/* var snippets = Terraria.UI.Chat.ChatManager.ParseMessage(Server, msg, new Color(red, green, blue));
 
-			foreach (var snippet in snippets)
+            foreach (var snippet in snippets)
 			{
-				if (snippet.Color != default)
+                if (snippet.Color != default)
 				{
-					Server.Console.ForegroundColor = PickNearbyConsoleColor(snippet.Color);
-				}
-				else
+                    Server.Console.ForegroundColor = PickNearbyConsoleColor(snippet.Color);
+                }
+                else
 				{
                     Server.Console.ForegroundColor = ConsoleColor.Gray;
-				}
+                }
 
                 Server.Console.Write(snippet.Text);
-			}
+            }
             Server.Console.WriteLine();
-			Server.Console.ResetColor();
+            Server.Console.ResetColor(); */
+
+			var snippets = Terraria.UI.Chat.ChatManager.ParseMessage(Server, msg, new Color(red, green, blue));
+
+			var sb = new StringBuilder();
+
+			foreach (var snippet in snippets) {
+				if (!string.IsNullOrEmpty(snippet.Text)) {
+					if (snippet.Color != default) {
+						sb.Append(Utils.ColorTag(snippet.Text, snippet.Color));
+					}
+					else {
+						sb.Append(snippet.Text);
+					}
+				}
+			}
+
+			Server.Log.Info(sb.ToString());
         }
 
 		public void SetFullMoon()
