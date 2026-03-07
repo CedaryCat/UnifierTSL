@@ -3,6 +3,7 @@ using UnifiedServerProcess;
 using UnifierTSL.CLI;
 using UnifierTSL.Extensions;
 using UnifierTSL.Logging;
+using UnifierTSL.Logging.LogWriters;
 using UnifierTSL.Network;
 
 namespace UnifierTSL.Servers
@@ -51,7 +52,8 @@ namespace UnifierTSL.Servers
         public ServerContext(string serverName, IWorldDataProvider worldData, Logger? overrideLogCore = null) : base(serverName) {
             Console = CreateConsoleService();
             PacketReceiver = new ClientPacketReceiver(this);
-            Log = UnifierApi.CreateLogger(this, overrideLogCore);
+            Logger logCore = overrideLogCore ?? UnifierApi.LogCore.CreateSibling(new ServerConsoleLogWriter(this), historyEnabled: false);
+            Log = UnifierApi.CreateLogger(this, logCore);
             Log.AddMetadataInjector(injector: this);
 
             worldDataProvider = worldData;

@@ -209,7 +209,7 @@ namespace UnifierTSL
 
                 AsyncDurableLogWriter writer = new(sink);
                 LogCore.HistoryEnabled = true;
-                LogCore.AttachHistoryWriter(writer, writer);
+                LogCore.AddWriter(writer);
                 lock (durableWriterGate) {
                     durableWriter = writer;
                 }
