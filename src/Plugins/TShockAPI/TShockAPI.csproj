@@ -79,9 +79,7 @@
 		</Reference>
 	</ItemGroup>
 
-	<Target Name="SetTShockPackageVersion"
-			DependsOnTargets="GetVersion"
-			BeforeTargets="GenerateNuspec;_GetOutputItemsFromPack">
+	<Target Name="SetTShockPackageVersion" DependsOnTargets="GetVersion" BeforeTargets="GenerateNuspec;_GetOutputItemsFromPack">
 		<PropertyGroup>
 			<!-- Branch-aware package versioning:
 			     - mainline/stable branches -> MainlineVersion

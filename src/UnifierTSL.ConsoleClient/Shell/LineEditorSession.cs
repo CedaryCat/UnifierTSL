@@ -1,4 +1,5 @@
 using System.Text;
+using UnifierTSL.ConsoleClient.Shared.ConsolePrompting;
 
 namespace UnifierTSL.ConsoleClient.Shell
 {
@@ -393,10 +394,7 @@ namespace UnifierTSL.ConsoleClient.Shell
 
         private List<string> ResolveSuggestions(string currentText)
         {
-            return suggestionProvider(currentText)
-                .Where(static candidate => !string.IsNullOrWhiteSpace(candidate))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            return [.. ConsoleTextSetOps.DistinctPreserveOrder(suggestionProvider(currentText))];
         }
 
         private LineEditorInputAction SubmitCurrentLine(bool forceRawSubmit = false)

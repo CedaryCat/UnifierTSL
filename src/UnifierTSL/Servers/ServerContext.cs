@@ -47,7 +47,7 @@ namespace UnifierTSL.Servers
         }
 
         protected virtual ConsoleSystemContext CreateConsoleService()
-            => UnifierApi.EventHub.Server.InvokeCreateConsoleService(this) ?? new ConsoleClientLauncher(this);
+            => UnifierApi.EventHub.Server.InvokeCreateServerConsoleService(this) ?? new RemoteConsoleService(this);
 
         public ServerContext(string serverName, IWorldDataProvider worldData, Logger? overrideLogCore = null) : base(serverName) {
             Console = CreateConsoleService();

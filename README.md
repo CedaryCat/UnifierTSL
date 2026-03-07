@@ -273,9 +273,25 @@ Startup precedence is:
 2. CLI overrides (then persisted back to `config/config.json` as the effective startup snapshot)
 3. Interactive prompts for a missing port/password
 
+`launcher.statusSummaryThresholds` controls command-line status summary thresholding:
+
+| Key | Default |
+|:--|:--|
+| `targetUps` | `60.0` |
+| `healthyUpsDeviation` | `1.2` |
+| `warningUpsDeviation` | `4.0` |
+| `utilHealthyMax` | `0.50` |
+| `utilWarningMax` | `0.80` |
+| `onlineWarnRemainingSlots` | `5` |
+| `onlineBadRemainingSlots` | `0` |
+| `upWarnKbps` | `65.0` |
+| `upBadKbps` | `75.0` |
+| `downWarnKbps` | `85.0` |
+| `downBadKbps` | `95.0` |
+
 After `UnifiedServerCoordinator.Launch(...)` succeeds, the launcher begins watching `config/config.json` for safe hot reloads:
 
-- Live-applied: `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (listener rebind)
+- Live-applied: `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (listener rebind), `launcher.statusSummaryThresholds`
 
 ### Server Definition Keys
 

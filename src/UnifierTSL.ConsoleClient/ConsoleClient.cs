@@ -1,15 +1,13 @@
 using UnifierTSL.ConsoleClient.Protocol;
 using System.IO.Pipes;
-using System.Runtime.CompilerServices;
 
 namespace UnifierTSL.ConsoleClient
 {
-    public class ConsoleClient : IDisposable
+    public sealed class ConsoleClient : IDisposable
     {
         private readonly NamedPipeClientStream _pipeClient;
-        private readonly byte[] readBuffer = new byte[1024 * 1024];
-        private int bufferWritePosition = 0;
-        private bool _disposed = false; // Track whether Dispose has been called
+        private readonly PacketFrameBuffer packetFrameBuffer = new();
+        private int disposed;
 
         public ConsoleClient(string pipeName) {
             _pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
@@ -22,52 +20,11 @@ namespace UnifierTSL.ConsoleClient
             listenThread.Start();
         }
 
-        unsafe void ListenForCommands() {
+        void ListenForCommands() {
             try {
-                const int packetLenSize = sizeof(int);
-                const int packetIdSize = 1;
-                const int packetHeaderSize = packetLenSize + packetIdSize;
-                const int maxPacketSize = 1024 * 1024;
-
                 while (_pipeClient.IsConnected) {
-                    var count = _pipeClient.Read(readBuffer, bufferWritePosition, readBuffer.Length - bufferWritePosition);
-                    if (count == 0) continue;
-
-                    bufferWritePosition += count;
-                    int currentReadPosition = 0;
-                    int restLen = bufferWritePosition - currentReadPosition;
-
-                    fixed (void* beginPtr = readBuffer) {
-                        while (restLen >= packetLenSize) {
-                            var packetLen = Unsafe.Read<int>((byte*)beginPtr + currentReadPosition);
-
-                            // length check
-                            if (packetLen < packetHeaderSize || packetLen > maxPacketSize) {
-                                throw new InvalidDataException($"Invalid packet length: {packetLen}");
-                            }
-
-                            if (restLen < packetLen) {
-                                break;
-                            }
-
-                            ConsoleClientLogic.ProcessData(
-                                this,
-                                readBuffer[currentReadPosition + packetLenSize],
-                                new Span<byte>((byte*)beginPtr + currentReadPosition + packetHeaderSize, packetLen - packetHeaderSize)
-                            );
-
-                            currentReadPosition += packetLen;
-                            restLen -= packetLen;
-                        }
-                    }
-
-                    // copy remaining data
-                    if (restLen > 0) {
-                        for (int i = 0; i < restLen; i++) {
-                            readBuffer[i] = readBuffer[currentReadPosition + i];
-                        }
-                    }
-                    bufferWritePosition = restLen;
+                    packetFrameBuffer.Read(_pipeClient, (packetId, buffer, offset, length) =>
+                        ConsoleClientLogic.ProcessData(this, packetId, new Span<byte>(buffer, offset, length)));
                 }
             }
             catch (Exception ex) {
@@ -78,33 +35,20 @@ namespace UnifierTSL.ConsoleClient
             }
         }
 
-        public unsafe void Send<TPacket>(TPacket packet) where TPacket : unmanaged, IPacket<TPacket> {
+        public void Send<TPacket>(TPacket packet) where TPacket : unmanaged, IPacket<TPacket> {
             IPacket.Write(_pipeClient, packet);
         }
-        public unsafe void SendManaged<TPacket>(TPacket packet) where TPacket : struct, IPacket<TPacket> {
+        public void SendManaged<TPacket>(TPacket packet) where TPacket : struct, IPacket<TPacket> {
             IPacket.WriteManaged(_pipeClient, packet);
         }
 
         public void Dispose() {
-            Dispose(true);
-            GC.SuppressFinalize(this); // Suppress finalization
-        }
-
-        protected virtual void Dispose(bool disposing) {
-            if (!_disposed) {
-                if (disposing) {
-                    // Dispose managed resources
-                    _pipeClient?.Dispose();
-                }
-
-                // Dispose unmanaged resources if any
-
-                _disposed = true;
+            if (Interlocked.Exchange(ref disposed, 1) != 0) {
+                return;
             }
-        }
 
-        ~ConsoleClient() {
-            Dispose(false); // Finalizer calls Dispose with false
+            _pipeClient.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

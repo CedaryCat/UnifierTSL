@@ -1,65 +1,66 @@
-using UnifierTSL.ConsoleClient.Protocol;
-using UnifierTSL.ConsoleClient.Protocol.C2S;
-using UnifierTSL.ConsoleClient.Protocol.S2C;
-using UnifierTSL.ConsoleClient.Shell;
-using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Threading.Channels;
+using UnifierTSL.ConsoleClient.Protocol;
+using UnifierTSL.ConsoleClient.Protocol.HostToClient;
+using UnifierTSL.ConsoleClient.Protocol.ClientToHost;
+using UnifierTSL.ConsoleClient.Shared.ConsolePrompting;
+using UnifierTSL.ConsoleClient.Shell;
 
 namespace UnifierTSL.ConsoleClient
 {
     public static class ConsoleClientLogic
     {
-        static readonly Channel<SEND_READ_FLAG> readFlagsChannel = Channel.CreateUnbounded<SEND_READ_FLAG>();
-        static readonly ConcurrentDictionary<long, ReadLineRenderSnapshot> readlineRenders = new();
-        static readonly ConcurrentDictionary<long, byte> pendingReadOrders = new();
-        static readonly ConsoleShell shell = new();
-        static long activeReadLineOrder = -1;
-        static ConsoleColor legacyForegroundColor = ConsoleColor.Gray;
-        static ConsoleColor legacyBackgroundColor = ConsoleColor.Black;
+        private readonly record struct PendingReadRequest(
+            BEGIN_READ BeginRead,
+            ConsoleRenderSnapshot InitialRender);
 
-        private static void WriteLegacyText(string text, bool appendLine) {
-            if (string.IsNullOrEmpty(text) && appendLine) {
-                shell.AppendLog(Environment.NewLine, isAnsi: false);
-                return;
-            }
-            string sanitized = AnsiSanitizer.SanitizeEscapes(text);
-            string ansi = AnsiColorCodec.Wrap(sanitized, legacyForegroundColor, legacyBackgroundColor);
-            if (appendLine) {
-                ansi += Environment.NewLine;
-            }
-            shell.AppendLog(ansi, isAnsi: true);
-        }
+        private static readonly Channel<PendingReadRequest> readRequests = Channel.CreateUnbounded<PendingReadRequest>();
+        private static readonly ConsoleShell shell = new();
+        private static long queuedReadOrder = -1;
+        private static long activeReadOrder = -1;
+        private static long latestStatusSequence = -1;
 
-        private static ReadLineRenderSnapshot ParseRenderJson(string json) {
+        private static ConsoleRenderSnapshot ParseRenderJson(string json)
+        {
             if (string.IsNullOrWhiteSpace(json)) {
-                return ReadLineRenderSnapshot.CreateCommandLine();
+                return ConsoleRenderSnapshot.CreateCommandLine();
             }
 
             try {
-                return JsonSerializer.Deserialize<ReadLineRenderSnapshot>(json) ?? ReadLineRenderSnapshot.CreateCommandLine();
+                return JsonSerializer.Deserialize<ConsoleRenderSnapshot>(json) ?? ConsoleRenderSnapshot.CreateCommandLine();
             }
             catch {
-                return ReadLineRenderSnapshot.CreateCommandLine();
+                return ConsoleRenderSnapshot.CreateCommandLine();
             }
         }
 
-        public static unsafe void ProcessData(ConsoleClient client, byte id, Span<byte> content) {
+        private static ConsolePromptTheme ParseThemeJson(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json)) {
+                return ConsolePromptTheme.Default;
+            }
+
+            try {
+                return JsonSerializer.Deserialize<ConsolePromptTheme>(json) ?? ConsolePromptTheme.Default;
+            }
+            catch {
+                return ConsolePromptTheme.Default;
+            }
+        }
+
+        public static unsafe void ProcessData(ConsoleClient client, byte id, Span<byte> content)
+        {
             switch (id) {
-                case SET_BG_COLOR.id:
-                    legacyBackgroundColor = IPacket.ReadUnmanaged<SET_BG_COLOR>(content).Color;
-                    break;
-                case SET_FG_COLOR.id:
-                    legacyForegroundColor = IPacket.ReadUnmanaged<SET_FG_COLOR>(content).Color;
-                    break;
                 case SET_INPUT_ENCODING.id:
                     Console.InputEncoding = IPacket.ReadUnmanaged<SET_INPUT_ENCODING>(content).Encoding;
                     break;
+
                 case SET_OUTPUT_ENCODING.id:
                     Console.OutputEncoding = IPacket.ReadUnmanaged<SET_OUTPUT_ENCODING>(content).Encoding;
                     break;
+
                 case SET_WINDOW_SIZE.id:
-                    var size = IPacket.ReadUnmanaged<SET_WINDOW_SIZE>(content);
+                    SET_WINDOW_SIZE size = IPacket.ReadUnmanaged<SET_WINDOW_SIZE>(content);
                     if (size.Width != 0) {
                         Console.WindowWidth = size.Width;
                     }
@@ -67,8 +68,9 @@ namespace UnifierTSL.ConsoleClient
                         Console.WindowHeight = size.Height;
                     }
                     break;
+
                 case SET_WINDOW_POS.id:
-                    var pos = IPacket.ReadUnmanaged<SET_WINDOW_POS>(content);
+                    SET_WINDOW_POS pos = IPacket.ReadUnmanaged<SET_WINDOW_POS>(content);
                     if (pos.Left != 0) {
                         Console.WindowLeft = pos.Left;
                     }
@@ -76,80 +78,106 @@ namespace UnifierTSL.ConsoleClient
                         Console.WindowTop = pos.Top;
                     }
                     break;
+
                 case SET_TITLE.id:
                     Console.Title = IPacket.Read<SET_TITLE>(content).Title;
                     break;
+
                 case CLEAR.id:
                     shell.Clear();
                     break;
-                case SEND_WRITE.id:
-                    WriteLegacyText(IPacket.Read<SEND_WRITE>(content).Text, appendLine: false);
-                    break;
-                case SEND_WRITE_LINE.id:
-                    WriteLegacyText(IPacket.Read<SEND_WRITE_LINE>(content).Text, appendLine: true);
-                    break;
+
                 case SEND_WRITE_ANSI.id:
                     shell.AppendLog(IPacket.Read<SEND_WRITE_ANSI>(content).Text, isAnsi: true);
                     break;
+
                 case SEND_WRITE_LINE_ANSI.id:
                     shell.AppendLog(IPacket.Read<SEND_WRITE_LINE_ANSI>(content).Text + Environment.NewLine, isAnsi: true);
                     break;
-                case SET_READLINE_RENDER.id:
-                    var renderPacket = IPacket.Read<SET_READLINE_RENDER>(content);
-                    ReadLineRenderSnapshot snapshot = ParseRenderJson(renderPacket.RenderJson);
-                    readlineRenders[renderPacket.Order] = snapshot;
-                    if (Interlocked.Read(ref activeReadLineOrder) == renderPacket.Order) {
-                        shell.UpdateReadLineContext(snapshot);
+
+                case SET_CONSOLE_THEME.id:
+                    shell.UpdateTheme(ParseThemeJson(IPacket.Read<SET_CONSOLE_THEME>(content).ThemeJson));
+                    break;
+
+                case UPDATE_RENDER.id:
+                    UPDATE_RENDER renderPacket = IPacket.Read<UPDATE_RENDER>(content);
+                    if (Interlocked.Read(ref activeReadOrder) == renderPacket.Order) {
+                        shell.UpdateReadLineContext(ParseRenderJson(renderPacket.RenderJson));
                     }
                     break;
-                case SEND_READ_FLAG.id:
-                    var flag = IPacket.ReadUnmanaged<SEND_READ_FLAG>(content);
-                    client.Send(new CONFIRM_READ_FLAG(flag.Flags, flag.Order));
-                    if (pendingReadOrders.TryAdd(flag.Order, 0)) {
-                        readFlagsChannel.Writer.TryWrite(flag);
+
+                case SET_STATUS_BAR.id:
+                    SET_STATUS_BAR statusFramePacket = IPacket.Read<SET_STATUS_BAR>(content);
+                    if (statusFramePacket.Sequence <= Interlocked.Read(ref latestStatusSequence)) {
+                        break;
                     }
+
+                    Interlocked.Exchange(ref latestStatusSequence, statusFramePacket.Sequence);
+                    if (string.IsNullOrWhiteSpace(statusFramePacket.Text)) {
+                        shell.ClearStatusFrame();
+                    }
+                    else {
+                        shell.UpdateStatusFrame(
+                            statusFramePacket.Sequence,
+                            statusFramePacket.Text,
+                            statusFramePacket.IndicatorFrameIntervalMs,
+                            statusFramePacket.IndicatorStylePrefix,
+                            statusFramePacket.IndicatorFrames);
+                    }
+                    break;
+
+                case BEGIN_READ.id:
+                    BEGIN_READ beginRead = IPacket.Read<BEGIN_READ>(content);
+                    client.Send(new CONFIRM_BEGIN_READ(beginRead.Flags, beginRead.Order));
+                    if (beginRead.Order == Interlocked.Read(ref activeReadOrder)
+                        || beginRead.Order == Interlocked.Read(ref queuedReadOrder)) {
+                        break;
+                    }
+
+                    Interlocked.Exchange(ref queuedReadOrder, beginRead.Order);
+                    readRequests.Writer.TryWrite(new PendingReadRequest(
+                        beginRead,
+                        ParseRenderJson(beginRead.InitialRenderJson)));
                     break;
             }
         }
-        public static async Task Run(ConsoleClient client) {
-            await foreach (var item in readFlagsChannel.Reader.ReadAllAsync()) {
+
+        public static async Task Run(ConsoleClient client)
+        {
+            await foreach (PendingReadRequest item in readRequests.Reader.ReadAllAsync()) {
                 try {
-                    switch (item.Flags) {
+                    Interlocked.Exchange(ref queuedReadOrder, -1);
+                    Interlocked.Exchange(ref activeReadOrder, item.BeginRead.Order);
+
+                    switch (item.BeginRead.Flags) {
                         case ReadFlags.Read:
-                            client.Send(new PUSH_READ(Console.Read(), item.Order));
+                            client.Send(new PUSH_READ(Console.Read(), item.BeginRead.Order));
                             break;
+
                         case ReadFlags.ReadLine:
-                            ReadLineRenderSnapshot render = readlineRenders.TryGetValue(item.Order, out var snapshot)
-                                ? snapshot
-                                : ReadLineRenderSnapshot.CreateCommandLine();
-                            Interlocked.Exchange(ref activeReadLineOrder, item.Order);
-                            try {
-                                string line = shell.ReadLine(
-                                    render,
-                                    onInputStateChanged: state => client.SendManaged(new PUSH_READLINE_INPUT(
-                                        item.Order,
-                                        state.InputText,
-                                        state.CursorIndex,
-                                        state.CompletionIndex,
-                                        state.CompletionCount,
-                                        state.CandidateWindowOffset)));
-                                client.SendManaged(new PUSH_READLINE(line, item.Order));
-                            }
-                            finally {
-                                Interlocked.Exchange(ref activeReadLineOrder, -1);
-                                readlineRenders.TryRemove(item.Order, out _);
-                            }
+                            string line = shell.ReadLine(
+                                item.InitialRender,
+                                onInputStateChanged: state => client.SendManaged(new PUSH_READLINE_INPUT(
+                                    item.BeginRead.Order,
+                                    state.InputText,
+                                    state.CursorIndex,
+                                    state.CompletionIndex,
+                                    state.CompletionCount,
+                                    state.CandidateWindowOffset)));
+                            client.SendManaged(new PUSH_READLINE(line, item.BeginRead.Order));
                             break;
+
                         case ReadFlags.ReadKey:
-                            client.SendManaged(new PUSH_READKEY(Console.ReadKey(), item.Order));
+                            client.SendManaged(new PUSH_READKEY(Console.ReadKey(), item.BeginRead.Order));
                             break;
+
                         case ReadFlags.ReadKeyIntercept:
-                            client.SendManaged(new PUSH_READKEY(Console.ReadKey(true), item.Order));
+                            client.SendManaged(new PUSH_READKEY(Console.ReadKey(true), item.BeginRead.Order));
                             break;
                     }
                 }
                 finally {
-                    pendingReadOrders.TryRemove(item.Order, out _);
+                    Interlocked.Exchange(ref activeReadOrder, -1);
                 }
             }
         }

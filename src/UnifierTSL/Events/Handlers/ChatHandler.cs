@@ -62,7 +62,9 @@ namespace UnifierTSL.Events.Handlers
             }
 
             while (true) {
-                string input = ConsoleInput.ReadCommandLine();
+                string input = ConsoleInput.ReadLine(
+                    ConsolePromptRegistry.CreateDefaultCommandPromptSpec(server: null),
+                    trim: true);
                 if (string.IsNullOrWhiteSpace(input)) {
                     continue;
                 }
@@ -74,6 +76,7 @@ namespace UnifierTSL.Events.Handlers
                 }
             }
         }
+
         public ChatHandler() {
             NetPacketHandler.Register<NetTextModule>(OnChat, HandlerPriority.VeryHigh + 1);
             On.Terraria.Chat.Commands.SayChatCommand.ProcessIncomingMessage += ProcessIncomingMessage;

@@ -1,66 +1,61 @@
+using System.Runtime.InteropServices;
+using UnifierTSL.ConsoleClient.Shared.ConsolePrompting;
+
 namespace UnifierTSL.ConsoleClient.Shell
 {
-    public sealed class ConsoleShell : IInteractiveFrontend
+    public sealed partial class ConsoleShell : IDisposable
     {
         private readonly object sync = new();
         private readonly LineEditorSession lineEditorSession = new();
         private readonly TerminalCapabilities terminalCapabilities;
         private readonly TerminalRenderer renderer = new();
+        private readonly Timer statusAnimationTimer;
+        private readonly int virtualCaretBlinkIntervalMs = ResolveVirtualCaretBlinkIntervalMs();
 
         private bool disposed;
         private bool readInProgress;
+        private bool nativeBlinkSuppressed;
         private int statusScrollOffset;
         private bool hasOutputCursor;
         private bool outputLineContinuation;
         private int outputCursorLeft;
         private int outputCursorTop;
+        private bool virtualCaretVisible = true;
+        private long virtualCaretAnchorTick = Environment.TickCount64;
 
-        private ReadLineRenderSnapshot currentContext = ReadLineRenderSnapshot.CreatePlain();
-        private LineEditorTransientStatus? transientStatus;
+        private ConsoleRenderSnapshot currentContext = ConsoleRenderSnapshot.CreatePlain();
+        private ConsolePromptTheme activeTheme = ConsolePromptTheme.Default;
+        private StatusBarSurface? statusBar;
+        private const int MaxStatusBodyLines = 5;
 
-        public ConsoleShell()
-        {
+        public ConsoleShell() {
             terminalCapabilities = TerminalCapabilities.Detect();
             lineEditorSession.SetSuggestionProvider(ResolveSuggestions);
-        }
-
-        public ReadLineViewModel BuildViewModel(ReadLineRenderSnapshot render, ReadLineReactiveState state)
-        {
-            ArgumentNullException.ThrowIfNull(render);
-            ArgumentNullException.ThrowIfNull(state);
-
-            string input = state.InputText ?? string.Empty;
-            IReadOnlyList<string> suggestions = ResolveSuggestions(render, input);
-            List<string> statusLines = BuildDisplayStatusLines(render, transientStatus: null);
-
-            List<ReadLineCandidateView> candidates = suggestions.Select((value, index) => new ReadLineCandidateView {
-                Value = value,
-                Weight = 0,
-                IsSelected = state.CompletionCount > 0 && state.CompletionIndex > 0 && index == state.CompletionIndex - 1,
-            }).ToList();
-
-            return new ReadLineViewModel {
-                Purpose = render.Payload.Purpose,
-                Prompt = render.Payload.Prompt,
-                InputText = input,
-                GhostText = string.Empty,
-                CursorIndex = state.CursorIndex,
-                CompletionIndex = state.CompletionIndex,
-                CompletionCount = state.CompletionCount,
-                StatusLines = statusLines.Select((text, index) => new ReadLineStatusView {
-                    Text = text,
-                    IsHeader = index == 0 && text.StartsWith("STATUS", StringComparison.OrdinalIgnoreCase),
-                }).ToList(),
-                Candidates = candidates,
-            };
+            statusAnimationTimer = new Timer(
+                static state => ((ConsoleShell)state!).TickStatusAnimation(),
+                this,
+                50,
+                50);
         }
 
         public bool IsInteractive => terminalCapabilities.IsInteractive;
 
         public bool SupportsVirtualTerminal => terminalCapabilities.SupportsVirtualTerminal;
 
-        public void AppendLog(string text, bool isAnsi)
-        {
+        public void UpdateTheme(ConsolePromptTheme theme) {
+            lock (sync) {
+                ThrowIfDisposed();
+                activeTheme = (theme ?? ConsolePromptTheme.Default) with { };
+
+                if (!IsInteractive || !renderer.FooterDrawn) {
+                    return;
+                }
+
+                DrawFooter();
+            }
+        }
+
+        public void AppendLog(string text, bool isAnsi) {
             if (string.IsNullOrEmpty(text)) {
                 return;
             }
@@ -71,8 +66,15 @@ namespace UnifierTSL.ConsoleClient.Shell
                 if (IsInteractive && renderer.FooterDrawn) {
                     renderer.ClearFooterArea();
                     if (hasOutputCursor) {
-                        int clearedTop = ClampRow(Console.CursorTop);
-                        if (outputCursorTop > clearedTop) {
+                        int clearedTop = TerminalRenderer.ClampRow(Console.CursorTop);
+                        if (!outputLineContinuation) {
+                            // When previous output ended with a line terminator, the next write should
+                            // always restart from the cleared footer top row at column 0. This prevents
+                            // stale cached anchors from drifting into old footer rows.
+                            outputCursorTop = clearedTop;
+                            outputCursorLeft = 0;
+                        }
+                        else if (outputCursorTop > clearedTop) {
                             // Footer reservation near buffer bottom can trigger an implicit scroll.
                             // Keep output anchor at/above the cleared row to avoid downward jumps
                             // and phantom blank lines.
@@ -83,60 +85,72 @@ namespace UnifierTSL.ConsoleClient.Shell
 
                 if (IsInteractive) {
                     MoveToOutputCursorIfNeeded();
+                    ClearOutputRowForFreshLineWrite();
                 }
 
                 string output = WriteText(text, isAnsi);
                 CaptureOutputCursor(output);
 
-                if (IsInteractive && (readInProgress || transientStatus is not null)) {
+                if (IsInteractive && (readInProgress || statusBar is not null)) {
                     int? anchorTopRow = hasOutputCursor ? ResolveFooterAnchorRow() : null;
                     DrawFooter(anchorTopRow);
                 }
             }
         }
 
-        public void SetTransientStatus(
-            string summary,
-            IReadOnlyList<string>? detailLines = null,
-            string spinner = "|",
-            int panelHeight = 3)
-        {
+        public void UpdateStatusFrame(
+            long sequence,
+            string text,
+            int indicatorFrameIntervalMs = 0,
+            string indicatorStylePrefix = "",
+            string indicatorFrames = "") {
             lock (sync) {
                 ThrowIfDisposed();
 
-                string normalizedSpinner = string.IsNullOrWhiteSpace(spinner) ? "|" : spinner;
-                string normalizedSummary = string.IsNullOrWhiteSpace(summary) ? "busy" : summary;
-                List<string> normalizedDetails = detailLines?
-                    .Where(static line => !string.IsNullOrWhiteSpace(line))
-                    .ToList() ?? [];
+                long nowTick = Environment.TickCount64;
+                string normalizedText = text ?? string.Empty;
+                string normalizedStylePrefix = indicatorStylePrefix ?? string.Empty;
+                string normalizedIndicatorFrames = indicatorFrames ?? string.Empty;
+                string[] decodedIndicatorFrames = ConsoleStatusIndicatorFramesCodec.Deserialize(normalizedIndicatorFrames);
+                int normalizedFrameIntervalMs = Math.Max(0, indicatorFrameIntervalMs);
 
-                transientStatus = new LineEditorTransientStatus(
-                    Spinner: normalizedSpinner,
-                    Summary: normalizedSummary,
-                    DetailLines: normalizedDetails,
-                    PanelHeight: Math.Clamp(panelHeight, 1, 8));
+                if (decodedIndicatorFrames.Length == 0 || normalizedFrameIntervalMs <= 0) {
+                    normalizedFrameIntervalMs = 0;
+                }
+
+                long frameAnchorTick = nowTick;
+                if (statusBar is StatusBarSurface previous
+                    && previous.FrameIntervalMs == normalizedFrameIntervalMs
+                    && string.Equals(previous.StylePrefix, normalizedStylePrefix, StringComparison.Ordinal)
+                    && previous.Frames.AsSpan().SequenceEqual(decodedIndicatorFrames)) {
+                    frameAnchorTick = previous.FrameAnchorTick;
+                }
+
+                statusBar = new StatusBarSurface(
+                    sequence: sequence,
+                    text: normalizedText,
+                    frameIntervalMs: normalizedFrameIntervalMs,
+                    stylePrefix: normalizedStylePrefix,
+                    frames: decodedIndicatorFrames,
+                    frameAnchorTick: frameAnchorTick);
+                RefreshRenderedIndicatorLocked(statusBar, nowTick);
 
                 if (!IsInteractive) {
                     return;
-                }
-
-                if (renderer.FooterDrawn) {
-                    renderer.ClearFooterArea();
                 }
 
                 DrawFooter();
             }
         }
 
-        public void ClearTransientStatus()
-        {
+        public void ClearStatusFrame() {
             lock (sync) {
                 ThrowIfDisposed();
-                if (transientStatus is null) {
+                if (statusBar is null) {
                     return;
                 }
 
-                transientStatus = null;
+                statusBar = null;
                 if (!IsInteractive) {
                     return;
                 }
@@ -146,17 +160,22 @@ namespace UnifierTSL.ConsoleClient.Shell
                 }
 
                 if (readInProgress) {
-                    renderer.ClearFooterArea();
                     DrawFooter();
                 }
                 else {
                     renderer.ClearFooterArea();
+                    // Footer-only teardown should leave output at a clean fresh-line anchor.
+                    // Without resetting this state, the next log line may reuse a stale cursor
+                    // snapshot and leave right-side status remnants.
+                    outputCursorTop = TerminalRenderer.ClampRow(Console.CursorTop);
+                    outputCursorLeft = 0;
+                    outputLineContinuation = false;
+                    hasOutputCursor = true;
                 }
             }
         }
 
-        public void Clear()
-        {
+        public void Clear() {
             lock (sync) {
                 ThrowIfDisposed();
                 Console.Clear();
@@ -169,12 +188,11 @@ namespace UnifierTSL.ConsoleClient.Shell
         }
 
         public string ReadLine(
-            ReadLineRenderSnapshot? render = null,
+            ConsoleRenderSnapshot? render = null,
             bool trim = false,
             CancellationToken cancellationToken = default,
-            Action<ReadLineReactiveState>? onInputStateChanged = null)
-        {
-            render ??= ReadLineRenderSnapshot.CreatePlain();
+            Action<ConsoleInputState>? onInputStateChanged = null) {
+            render ??= ConsoleRenderSnapshot.CreatePlain();
 
             if (!IsInteractive) {
                 string fallbackLine = ReadLineFallback(render, cancellationToken);
@@ -184,67 +202,83 @@ namespace UnifierTSL.ConsoleClient.Shell
             lock (sync) {
                 ThrowIfDisposed();
                 readInProgress = true;
+                SetNativeBlinkSuppressedLocked(true);
                 currentContext = render;
                 statusScrollOffset = 0;
+                ResetVirtualCaretBlinkLocked();
                 lineEditorSession.BeginNewLine(render.Payload.GhostText, render.Payload.EnableCtrlEnterBypassGhostFallback);
                 DrawFooter();
                 NotifyInputStateChanged(onInputStateChanged);
             }
 
-            while (true) {
-                cancellationToken.ThrowIfCancellationRequested();
+            try {
+                while (true) {
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                ConsoleKeyInfo keyInfo;
-                try {
-                    keyInfo = Console.ReadKey(intercept: true);
-                }
-                catch (Exception) {
-                    string fallbackLine = ReadLineFallback(render, cancellationToken);
-                    return trim ? fallbackLine.Trim() : fallbackLine;
-                }
-
-                lock (sync) {
-                    LineEditorInputAction action = lineEditorSession.ApplyKey(keyInfo);
-
-                    switch (action.Kind) {
-                        case LineEditorInputActionKind.None:
-                            break;
-
-                        case LineEditorInputActionKind.Redraw:
-                        case LineEditorInputActionKind.Autocomplete:
-                            DrawFooter();
-                            NotifyInputStateChanged(onInputStateChanged);
-                            break;
-
-                        case LineEditorInputActionKind.ScrollStatus:
-                            UpdateStatusScroll(action.Delta);
-                            DrawFooter();
-                            break;
-
-                        case LineEditorInputActionKind.Cancel:
-                            readInProgress = false;
-                            renderer.ClearFooterArea();
-                            currentContext = ReadLineRenderSnapshot.CreatePlain();
-                            return string.Empty;
-
-                        case LineEditorInputActionKind.Submit:
-                            string line = action.Payload ?? string.Empty;
-                            line = ResolveSubmitLine(render, line, action.ForceRawSubmit);
-
-                            readInProgress = false;
-                            renderer.ClearFooterArea();
-                            currentContext = ReadLineRenderSnapshot.CreatePlain();
-                            return trim ? line.Trim() : line;
+                    ConsoleKeyInfo keyInfo;
+                    try {
+                        keyInfo = Console.ReadKey(intercept: true);
                     }
+                    catch (Exception) {
+                        string fallbackLine = ReadLineFallback(render, cancellationToken);
+                        return trim ? fallbackLine.Trim() : fallbackLine;
+                    }
+
+                    lock (sync) {
+                        LineEditorInputAction action = lineEditorSession.ApplyKey(keyInfo);
+
+                        switch (action.Kind) {
+                            case LineEditorInputActionKind.None:
+                                break;
+
+                            case LineEditorInputActionKind.Redraw:
+                            case LineEditorInputActionKind.Autocomplete:
+                                ResetVirtualCaretBlinkLocked();
+                                DrawFooter();
+                                NotifyInputStateChanged(onInputStateChanged);
+                                break;
+
+                            case LineEditorInputActionKind.ScrollStatus:
+                                UpdateStatusScroll(action.Delta);
+                                ResetVirtualCaretBlinkLocked();
+                                DrawFooter();
+                                break;
+
+                            case LineEditorInputActionKind.Cancel:
+                                readInProgress = false;
+                                renderer.ClearFooterArea();
+                                currentContext = ConsoleRenderSnapshot.CreatePlain();
+                                if (statusBar is not null) {
+                                    DrawFooter();
+                                }
+                                return string.Empty;
+
+                            case LineEditorInputActionKind.Submit:
+                                string line = action.Payload ?? string.Empty;
+                                line = ResolveSubmitLine(render, line, action.ForceRawSubmit);
+
+                                readInProgress = false;
+                                renderer.ClearFooterArea();
+                                currentContext = ConsoleRenderSnapshot.CreatePlain();
+                                if (statusBar is not null) {
+                                    DrawFooter();
+                                }
+                                return trim ? line.Trim() : line;
+                        }
+                    }
+                }
+            }
+            finally {
+                lock (sync) {
+                    SetNativeBlinkSuppressedLocked(false);
                 }
             }
         }
 
-        public void UpdateReadLineContext(ReadLineRenderSnapshot render)
-        {
+        public void UpdateReadLineContext(ConsoleRenderSnapshot render) {
             lock (sync) {
                 ThrowIfDisposed();
-                currentContext = render ?? ReadLineRenderSnapshot.CreatePlain();
+                currentContext = render ?? ConsoleRenderSnapshot.CreatePlain();
 
                 if (!readInProgress || !IsInteractive) {
                     return;
@@ -254,15 +288,12 @@ namespace UnifierTSL.ConsoleClient.Shell
                     lineEditorSession.SyncPagedCompletionWindow(currentContext.Paging.SelectedWindowIndex);
                 }
 
-                if (renderer.FooterDrawn) {
-                    renderer.ClearFooterArea();
-                }
                 DrawFooter();
             }
         }
 
-        public void Dispose()
-        {
+        public void Dispose() {
+            bool disposeTimer = false;
             lock (sync) {
                 if (disposed) {
                     return;
@@ -270,26 +301,36 @@ namespace UnifierTSL.ConsoleClient.Shell
 
                 disposed = true;
                 readInProgress = false;
+                SetNativeBlinkSuppressedLocked(false);
                 renderer.Reset();
+                disposeTimer = true;
+            }
+
+            if (!disposeTimer) {
+                return;
+            }
+
+            try {
+                statusAnimationTimer.Dispose();
+            }
+            catch {
             }
         }
 
-        private void ThrowIfDisposed()
-        {
+        private void ThrowIfDisposed() {
             ObjectDisposedException.ThrowIf(disposed, this);
         }
 
-        private string ReadLineFallback(ReadLineRenderSnapshot render, CancellationToken cancellationToken)
-        {
+        private string ReadLineFallback(ConsoleRenderSnapshot render, CancellationToken cancellationToken) {
             ThrowIfDisposed();
             cancellationToken.ThrowIfCancellationRequested();
 
-            List<string> fallbackStatusLines = BuildDisplayStatusLines(render, transientStatus: null);
-            if (fallbackStatusLines.Count > 0) {
-                foreach (string statusLine in fallbackStatusLines) {
-                    string output = render.Payload.AllowAnsiStatusEscapes && !SupportsVirtualTerminal
-                        ? AnsiSanitizer.StripAnsi(statusLine)
-                        : statusLine;
+            if (HasStatusContent(render)) {
+                StatusFrame frame = BuildStatusFrame(render, 0);
+                foreach (string statusLine in frame.Lines) {
+                    string output = SupportsVirtualTerminal
+                        ? statusLine
+                        : AnsiSanitizer.StripAnsi(statusLine);
                     Console.WriteLine($"[status] {output}");
                 }
             }
@@ -301,8 +342,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return line;
         }
 
-        private static string ResolveSubmitLine(ReadLineRenderSnapshot render, string input, bool forceRawSubmit)
-        {
+        private static string ResolveSubmitLine(ConsoleRenderSnapshot render, string input, bool forceRawSubmit) {
             if (forceRawSubmit) {
                 return input;
             }
@@ -322,8 +362,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return render.Payload.GhostText;
         }
 
-        private string WriteText(string text, bool isAnsi)
-        {
+        private string WriteText(string text, bool isAnsi) {
             string output = isAnsi ? text : AnsiSanitizer.SanitizeEscapes(text);
             if (!SupportsVirtualTerminal) {
                 output = AnsiSanitizer.StripAnsi(output);
@@ -333,97 +372,98 @@ namespace UnifierTSL.ConsoleClient.Shell
             return output;
         }
 
-        private void DrawFooter(int? anchorTopRow = null)
-        {
+        private void DrawFooter(int? anchorTopRow = null) {
             LineEditorRenderState inputState = lineEditorSession.GetRenderState();
-            StatusViewport viewport = BuildStatusViewport(currentContext);
+            StatusFrame frame = BuildStatusFrame(currentContext, statusScrollOffset);
+            statusScrollOffset = frame.ScrollOffset;
             // Normalize once here so all downstream row math uses the same bounded coordinate space.
             int? normalizedAnchor = anchorTopRow is int requestedAnchor
-                ? ClampRow(requestedAnchor)
+                ? TerminalRenderer.ClampRow(requestedAnchor)
                 : null;
             renderer.Draw(
                 currentContext,
                 inputState,
-                viewport.Lines,
+                frame.Lines,
                 readInProgress,
+                readInProgress && virtualCaretVisible,
                 SupportsVirtualTerminal,
-                normalizedAnchor);
+                normalizedAnchor,
+                frame.HeaderTheme);
 
             if (normalizedAnchor is int anchorRow && hasOutputCursor) {
                 int actualFooterTop = renderer.FooterTopRow;
                 int footerShift = anchorRow - actualFooterTop;
                 if (footerShift > 0) {
-                    // If footer reservation triggered a scroll, actual footer top is higher than requested.
-                    // We intentionally mirror that shift onto outputCursorTop so future writes stay glued
-                    // to the real visible output line.
-                    outputCursorTop = ClampRow(outputCursorTop - footerShift);
+                    outputCursorTop = TerminalRenderer.ClampRow(outputCursorTop - footerShift);
                 }
             }
         }
 
-        private StatusViewport BuildStatusViewport(ReadLineRenderSnapshot render)
-        {
-            List<string> details = BuildDisplayStatusLines(render, transientStatus);
-            int panelHeight = Math.Clamp(render.Payload.StatusPanelHeight, 1, 8);
-            if (transientStatus is LineEditorTransientStatus transient) {
-                panelHeight = Math.Clamp(Math.Max(panelHeight, transient.PanelHeight), 1, 8);
-            }
-
-            int totalLines = 1 + details.Count;
-            int maxScroll = Math.Max(0, totalLines - panelHeight);
-            statusScrollOffset = Math.Clamp(statusScrollOffset, 0, maxScroll);
-
-            int startLine = Math.Min(totalLines, statusScrollOffset + 1);
-            int endLine = Math.Min(totalLines, statusScrollOffset + panelHeight);
-            string summary = transientStatus is LineEditorTransientStatus transientSummary
-                ? $"STATUS {transientSummary.Spinner} purpose:{render.Payload.Purpose} task:{AnsiSanitizer.SanitizeEscapes(transientSummary.Summary)} view:{startLine}-{endLine}/{totalLines}"
-                : $"STATUS purpose:{render.Payload.Purpose} view:{startLine}-{endLine}/{totalLines}";
-
-            List<string> allLines = [summary, .. details];
-            List<string> visible = allLines
-                .Skip(statusScrollOffset)
-                .Take(panelHeight)
+        private StatusFrame BuildStatusFrame(ConsoleRenderSnapshot render, int requestedScrollOffset) {
+            List<string> bodyLines = [.. render.Payload.StatusBodyLines
+                .Where(static line => !string.IsNullOrWhiteSpace(line))];
+            int totalBodyLines = bodyLines.Count;
+            int maxScroll = Math.Max(0, totalBodyLines - MaxStatusBodyLines);
+            int scrollOffset = Math.Clamp(requestedScrollOffset, 0, maxScroll);
+            List<string> visibleBodyLines = bodyLines
+                .Skip(scrollOffset)
+                .Take(MaxStatusBodyLines)
                 .ToList();
 
-            while (visible.Count < panelHeight) {
-                visible.Add(string.Empty);
-            }
-
-            return new StatusViewport(visible);
+            int startLine = totalBodyLines == 0 ? 0 : scrollOffset + 1;
+            int endLine = totalBodyLines == 0 ? 0 : scrollOffset + visibleBodyLines.Count;
+            string headerLine = FormatStatusHeaderLine(
+                render.Payload.InputSummary ?? string.Empty,
+                statusBar,
+                startLine, endLine, totalBodyLines);
+            List<string> lines = [headerLine, .. visibleBodyLines];
+            return new StatusFrame(lines, scrollOffset, activeTheme);
         }
 
-        private static List<string> BuildDisplayStatusLines(ReadLineRenderSnapshot render, LineEditorTransientStatus? transientStatus)
-        {
-            List<string> lines = [];
-            foreach (string statusLine in render.Payload.StatusLines.Where(static s => !string.IsNullOrWhiteSpace(s))) {
-                lines.Add(render.Payload.AllowAnsiStatusEscapes
-                    ? statusLine
-                    : AnsiSanitizer.SanitizeEscapes(statusLine));
+        private static string FormatStatusHeaderLine(
+            string inputSummary,
+            StatusBarSurface? statusBarSurface,
+            int startLine,
+            int endLine,
+            int totalBodyLines) {
+            bool hasSummary = !string.IsNullOrWhiteSpace(inputSummary);
+            bool hasStatusBar = statusBarSurface is not null
+                && !string.IsNullOrWhiteSpace(statusBarSurface.Text);
+
+            string core;
+            if (!hasStatusBar && !hasSummary) {
+                core = "STATUS";
             }
-
-            if (transientStatus is LineEditorTransientStatus transient) {
-                lines.Add("work: " + AnsiSanitizer.SanitizeEscapes(transient.Summary));
-                foreach (string detail in transient.DetailLines) {
-                    if (string.IsNullOrWhiteSpace(detail)) {
-                        continue;
-                    }
-
-                    lines.Add(AnsiSanitizer.SanitizeEscapes(detail));
+            else if (!hasStatusBar) {
+                core = $"STATUS {inputSummary}";
+            }
+            else {
+                string indicator = statusBarSurface!.RenderedIndicator ?? string.Empty;
+                string indicatorPart = string.IsNullOrWhiteSpace(indicator)
+                    ? string.Empty
+                    : string.IsNullOrWhiteSpace(statusBarSurface.StylePrefix)
+                        ? $" [{indicator}]"
+                        : $" {statusBarSurface.StylePrefix}[{indicator}]{AnsiColorCodec.Reset}";
+                core = $"STATUS{indicatorPart} {statusBarSurface.Text}";
+                if (hasSummary) {
+                    core += $" | {inputSummary}";
                 }
             }
 
-            return lines;
+            string resetBoundary = AnsiSanitizer.ContainsEscape(core)
+                ? AnsiColorCodec.Reset
+                : string.Empty;
+            return $"{core}{resetBoundary}[{startLine}~{endLine}/{totalBodyLines}]";
         }
 
-        private void NotifyInputStateChanged(Action<ReadLineReactiveState>? onInputStateChanged)
-        {
+        private void NotifyInputStateChanged(Action<ConsoleInputState>? onInputStateChanged) {
             if (onInputStateChanged is null) {
                 return;
             }
 
             try {
                 LineEditorRenderState inputState = lineEditorSession.GetRenderState();
-                ReadLineReactiveState state = new() {
+                ConsoleInputState state = new() {
                     Purpose = currentContext.Payload.Purpose,
                     InputText = inputState.Text ?? string.Empty,
                     CursorIndex = inputState.CursorIndex,
@@ -437,26 +477,113 @@ namespace UnifierTSL.ConsoleClient.Shell
             }
         }
 
-        private void UpdateStatusScroll(int delta)
-        {
+        private void TickStatusAnimation() {
+            lock (sync) {
+                if (disposed || !IsInteractive || !renderer.FooterDrawn) {
+                    return;
+                }
+
+                long nowTick = Environment.TickCount64;
+                bool shouldRedraw = false;
+                if (statusBar is not null && RefreshRenderedIndicatorLocked(statusBar, nowTick)) {
+                    shouldRedraw = true;
+                }
+
+                if (readInProgress && RefreshVirtualCaretLocked(nowTick)) {
+                    shouldRedraw = true;
+                }
+
+                if (!shouldRedraw) {
+                    return;
+                }
+
+                DrawFooter();
+            }
+        }
+
+        private bool RefreshVirtualCaretLocked(long nowTick) {
+            bool visible = ResolveVirtualCaretVisible(nowTick);
+            if (visible == virtualCaretVisible) {
+                return false;
+            }
+
+            virtualCaretVisible = visible;
+            return true;
+        }
+
+        private bool ResolveVirtualCaretVisible(long nowTick) {
+            if (virtualCaretBlinkIntervalMs <= 0) {
+                return true;
+            }
+
+            long elapsed = Math.Max(0, nowTick - virtualCaretAnchorTick);
+            long step = elapsed / virtualCaretBlinkIntervalMs;
+            return (step & 1) == 0;
+        }
+
+        private void ResetVirtualCaretBlinkLocked() {
+            virtualCaretAnchorTick = Environment.TickCount64;
+            virtualCaretVisible = true;
+        }
+
+        private static bool RefreshRenderedIndicatorLocked(StatusBarSurface surface, long nowTick) {
+            string rendered = ResolveRenderedIndicator(surface, nowTick, out int step);
+            bool changed = step != surface.LastFrameStep
+                || !string.Equals(rendered, surface.RenderedIndicator, StringComparison.Ordinal);
+            surface.LastFrameStep = step;
+            surface.RenderedIndicator = rendered;
+            return changed;
+        }
+
+        private static string ResolveRenderedIndicator(
+            StatusBarSurface surface,
+            long nowTick,
+            out int step) {
+            string[] frames = surface.Frames;
+            if (frames.Length == 0) {
+                step = 0;
+                return string.Empty;
+            }
+
+            if (surface.FrameIntervalMs <= 0) {
+                step = 0;
+                return frames[0];
+            }
+
+            long elapsed = Math.Max(0, nowTick - surface.FrameAnchorTick);
+            long ticks = elapsed / surface.FrameIntervalMs;
+            step = (int)(ticks % frames.Length);
+            return frames[step];
+        }
+
+        private void UpdateStatusScroll(int delta) {
             if (delta == 0) {
                 return;
             }
 
-            List<string> lines = BuildDisplayStatusLines(currentContext, transientStatus);
-            int panelHeight = Math.Clamp(currentContext.Payload.StatusPanelHeight, 1, 8);
-            int totalLines = 1 + lines.Count;
-            int maxScroll = Math.Max(0, totalLines - panelHeight);
+            int totalBodyLines = currentContext.Payload.StatusBodyLines
+                .Count(static line => !string.IsNullOrWhiteSpace(line));
+            int maxScroll = Math.Max(0, totalBodyLines - MaxStatusBodyLines);
             statusScrollOffset = Math.Clamp(statusScrollOffset + delta, 0, maxScroll);
         }
 
-        private IReadOnlyList<string> ResolveSuggestions(string input)
-        {
+        private bool HasStatusContent(ConsoleRenderSnapshot render) {
+            if (statusBar is not null) {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(render.Payload.InputSummary)) {
+                return true;
+            }
+
+            return render.Payload.StatusBodyLines.Any(static line => !string.IsNullOrWhiteSpace(line));
+        }
+
+        private IReadOnlyList<string> ResolveSuggestions(string input) {
             return ResolveSuggestions(currentContext, input);
         }
 
-        private static IReadOnlyList<string> ResolveSuggestions(ReadLineRenderSnapshot render, string input)
-        {
+        private static IReadOnlyList<string> ResolveSuggestions(ConsoleRenderSnapshot render, string input) {
             List<string> orderedValues = [];
             if (!string.IsNullOrWhiteSpace(render.Payload.GhostText)) {
                 orderedValues.Add(render.Payload.GhostText);
@@ -466,7 +593,7 @@ namespace UnifierTSL.ConsoleClient.Shell
                 .Where(static item => item is not null && !string.IsNullOrWhiteSpace(item.Value))
                 .Select(static item => item.Value));
 
-            IReadOnlyList<string> ordered = DistinctPreserveOrder(orderedValues);
+            IReadOnlyList<string> ordered = ConsoleTextSetOps.DistinctPreserveOrder(orderedValues);
             if (string.IsNullOrEmpty(input)) {
                 return ordered;
             }
@@ -480,36 +607,15 @@ namespace UnifierTSL.ConsoleClient.Shell
                 .ToList();
         }
 
-        private static IReadOnlyList<string> DistinctPreserveOrder(IEnumerable<string> values)
-        {
-            HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);
-            List<string> output = [];
-
-            foreach (string value in values) {
-                if (string.IsNullOrWhiteSpace(value)) {
-                    continue;
-                }
-
-                if (!seen.Add(value)) {
-                    continue;
-                }
-
-                output.Add(value);
-            }
-
-            return output;
-        }
-
-        private void MoveToOutputCursorIfNeeded()
-        {
+        private void MoveToOutputCursorIfNeeded() {
             if (!hasOutputCursor) {
                 return;
             }
 
             try {
-                int safeLeft = ClampColumn(outputCursorLeft);
-                int safeTop = ClampRow(outputCursorTop);
-                int currentTop = ClampRow(Console.CursorTop);
+                int safeLeft = TerminalRenderer.ClampColumn(outputCursorLeft);
+                int safeTop = TerminalRenderer.ClampRow(outputCursorTop);
+                int currentTop = TerminalRenderer.ClampRow(Console.CursorTop);
                 if (safeTop > currentTop) {
                     // After clear/scroll, cached anchor can be stale and lower than current visible position.
                     // Clamp to currentTop to avoid jumping downward into empty-looking space.
@@ -528,17 +634,19 @@ namespace UnifierTSL.ConsoleClient.Shell
             }
         }
 
-        private void CaptureOutputCursor(string output)
-        {
+        private void CaptureOutputCursor(string output) {
             if (string.IsNullOrEmpty(output) || !IsInteractive) {
                 return;
             }
 
             try {
-                outputCursorLeft = ClampColumn(Console.CursorLeft);
-                outputCursorTop = ClampRow(Console.CursorTop);
+                int left = TerminalRenderer.ClampColumn(Console.CursorLeft);
+                int top = TerminalRenderer.ClampRow(Console.CursorTop);
+                outputCursorLeft = left;
+                outputCursorTop = top;
                 hasOutputCursor = true;
-                outputLineContinuation = !EndsWithLineTerminator(output);
+                bool endedWithLineTerminator = EndsWithLineTerminator(output);
+                outputLineContinuation = left != 0 && !endedWithLineTerminator;
             }
             catch {
                 hasOutputCursor = false;
@@ -546,14 +654,31 @@ namespace UnifierTSL.ConsoleClient.Shell
             }
         }
 
-        private int ResolveFooterAnchorRow()
-        {
-            int anchorRow = outputCursorTop + (outputLineContinuation ? 1 : 0);
-            return ClampRow(anchorRow);
+        private void ClearOutputRowForFreshLineWrite() {
+            if (outputLineContinuation) {
+                return;
+            }
+
+            try {
+                int row = TerminalRenderer.ClampRow(Console.CursorTop);
+                int width = TerminalRenderer.GetWritableWidth();
+                Console.SetCursorPosition(0, row);
+                Console.Write(new string(' ', width));
+                Console.SetCursorPosition(0, row);
+                outputCursorTop = row;
+                outputCursorLeft = 0;
+                hasOutputCursor = true;
+            }
+            catch {
+            }
         }
 
-        private static bool EndsWithLineTerminator(string output)
-        {
+        private int ResolveFooterAnchorRow() {
+            int anchorRow = outputCursorTop + (outputLineContinuation ? 1 : 0);
+            return TerminalRenderer.ClampRow(anchorRow);
+        }
+
+        private static bool EndsWithLineTerminator(string output) {
             // Many log lines end with ANSI reset after CRLF.
             // Reading raw last char ("m") would wrongly treat the line as unterminated.
             // We strip ANSI first, then check the real text ending.
@@ -566,26 +691,63 @@ namespace UnifierTSL.ConsoleClient.Shell
             return lastChar == '\n' || lastChar == '\r';
         }
 
-        private static int ClampRow(int row)
-        {
+        private void SetNativeBlinkSuppressedLocked(bool suppress) {
+            if (!IsInteractive || !SupportsVirtualTerminal || nativeBlinkSuppressed == suppress) {
+                return;
+            }
+
             try {
-                return Math.Clamp(row, 0, Math.Max(0, Console.BufferHeight - 1));
+                Console.Write(suppress ? "\u001b[?12l" : "\u001b[?12h");
+                nativeBlinkSuppressed = suppress;
             }
             catch {
-                return Math.Max(0, row);
             }
         }
 
-        private static int ClampColumn(int column)
-        {
+        private static int ResolveVirtualCaretBlinkIntervalMs() {
+            if (!OperatingSystem.IsWindows()) {
+                return 530;
+            }
+
             try {
-                return Math.Clamp(column, 0, Math.Max(0, Console.BufferWidth - 1));
+                uint blinkInterval = GetCaretBlinkTime();
+                if (blinkInterval == uint.MaxValue) {
+                    return 0;
+                }
+
+                if (blinkInterval == 0) {
+                    return 530;
+                }
+
+                return (int)Math.Min(blinkInterval, int.MaxValue);
             }
             catch {
-                return Math.Max(0, column);
+                return 530;
             }
         }
 
-        private readonly record struct StatusViewport(IReadOnlyList<string> Lines);
+        [LibraryImport("user32.dll")]
+        private static partial uint GetCaretBlinkTime();
+
+
+        private sealed class StatusBarSurface(
+            long sequence,
+            string text,
+            int frameIntervalMs,
+            string stylePrefix,
+            string[] frames,
+            long frameAnchorTick)
+        {
+            public readonly long Sequence = sequence;
+            public readonly string Text = text;
+            public readonly int FrameIntervalMs = frameIntervalMs;
+            public readonly string StylePrefix = stylePrefix;
+            public readonly string[] Frames = frames;
+            public readonly long FrameAnchorTick = frameAnchorTick;
+            public int LastFrameStep = -1;
+            public string RenderedIndicator = string.Empty;
+        }
+
+        private readonly record struct StatusFrame(IReadOnlyList<string> Lines, int ScrollOffset, ConsolePromptTheme HeaderTheme);
     }
 }

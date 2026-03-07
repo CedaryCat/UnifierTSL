@@ -1,44 +1,44 @@
-using UnifierTSL.CLI.Sessions;
-using UnifierTSL.Servers;
+using UnifierTSL.CLI.Prompting;
 
 namespace UnifierTSL.CLI;
 
 internal static class ConsoleInput
 {
-    private static readonly Lock frontendSync = new();
+    private static readonly Lock hostSync = new();
     private static readonly SemaphoreSlim readSync = new(1, 1);
-    private static ILauncherConsoleFrontend frontend = new TerminalLauncherConsoleFrontend();
+    private static ILauncherConsoleHost host = new TerminalLauncherConsoleHost();
 
     public static bool IsInteractive {
         get {
-            lock (frontendSync) {
-                return frontend.IsInteractive;
+            lock (hostSync) {
+                return host.IsInteractive;
             }
         }
     }
 
-    public static void ConfigureFrontend(ILauncherConsoleFrontend value) {
+    public static void ConfigureHost(ILauncherConsoleHost value) {
         ArgumentNullException.ThrowIfNull(value);
 
         readSync.Wait();
         try {
-            ILauncherConsoleFrontend previous = frontend;
-            lock (frontendSync) {
-                frontend = value;
+            ILauncherConsoleHost previous = host;
+            lock (hostSync) {
+                host = value;
             }
             if (!ReferenceEquals(previous, value)) {
                 previous.Dispose();
             }
+            RefreshAppearanceSettings();
         }
         finally {
             readSync.Release();
         }
     }
 
-    public static string ReadLine(ReadLineContextSpec contextSpec, bool trim = false) {
+    public static string ReadLine(ConsolePromptSpec contextSpec, bool trim = false) {
         readSync.Wait();
         try {
-            return GetFrontend().ReadLine(contextSpec, trim: trim);
+            return GetHost().ReadLine(contextSpec, trim: trim);
         }
         finally {
             readSync.Release();
@@ -46,35 +46,25 @@ internal static class ConsoleInput
     }
 
     public static string ReadLine(string? prompt = null, bool trim = false) {
-        ReadLineContextSpec contextSpec = ReadLineContextSpec.CreatePlain(prompt);
+        ConsolePromptSpec contextSpec = ConsolePromptSpec.CreatePlain(prompt);
         return ReadLine(contextSpec, trim);
     }
 
-    public static string ReadCommandLine(ServerContext? server = null) {
-        readSync.Wait();
-        try {
-            return GetFrontend().ReadCommandLine(server);
-        }
-        finally {
-            readSync.Release();
-        }
-    }
-
     public static void WriteAnsi(string text) {
-        GetFrontend().WriteAnsi(text);
+        GetHost().WriteAnsi(text);
     }
 
-    public static void WritePlain(string text) {
-        GetFrontend().WritePlain(text);
+    public static IDisposable BeginConsoleActivityStatus(string category, string message) {
+        return GetHost().BeginConsoleActivityStatus(category, message);
     }
 
-    public static IDisposable BeginTimedWorkStatus(string category, string message) {
-        return GetFrontend().BeginTimedWorkStatus(category, message);
+    internal static void RefreshAppearanceSettings() {
+        GetHost().RefreshAppearanceSettings();
     }
 
-    private static ILauncherConsoleFrontend GetFrontend() {
-        lock (frontendSync) {
-            return frontend;
+    private static ILauncherConsoleHost GetHost() {
+        lock (hostSync) {
+            return host;
         }
     }
 }

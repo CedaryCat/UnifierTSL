@@ -273,9 +273,25 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 2. CLI 覆盖（并将启动时生效快照回写到 `config/config.json`）
 3. 仅对缺失端口/密码进行交互式补全
 
+`launcher.statusHeaderThresholds` 用于控制命令行状态头阈值：
+
+| 键 | 默认值 |
+|:--|:--|
+| `targetUps` | `60.0` |
+| `healthyUpsDeviation` | `1.2` |
+| `warningUpsDeviation` | `4.0` |
+| `utilHealthyMax` | `0.50` |
+| `utilWarningMax` | `0.80` |
+| `onlineWarnRemainingSlots` | `5` |
+| `onlineBadRemainingSlots` | `0` |
+| `upWarnKbps` | `65.0` |
+| `upBadKbps` | `75.0` |
+| `downWarnKbps` | `85.0` |
+| `downBadKbps` | `95.0` |
+
 在 `UnifiedServerCoordinator.Launch(...)` 成功后，启动器会开始监视 `config/config.json`，只做安全范围内的热重载：
 
-- 立即生效：`launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、`launcher.listenPort`（监听器重绑）
+- 立即生效：`launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、`launcher.listenPort`（监听器重绑）、`launcher.statusHeaderThresholds`
 
 ### 服务器定义键
 

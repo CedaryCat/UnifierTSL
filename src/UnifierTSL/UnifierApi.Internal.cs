@@ -6,8 +6,9 @@ using System.Collections.Immutable;
 using Terraria.Localization;
 using Terraria.Utilities;
 using UnifierTSL.CLI;
-using UnifierTSL.CLI.Sessions;
-using UnifierTSL.ConsoleClient.Shell;
+using UnifierTSL.CLI.Prompting;
+using UnifierTSL.CLI.Prompting.Startup;
+using UnifierTSL.ConsoleClient.Shared.ConsolePrompting;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
 using UnifierTSL.Extensions;
@@ -72,6 +73,7 @@ namespace UnifierTSL
         private static readonly LauncherConfigStore rootConfigStore = new();
         private static readonly LauncherRuntimeOps runtimeOps = new();
         private static readonly LauncherConfigManager rootConfigManager = new(rootConfigStore, ReloadRootConfigFromWatch);
+        internal static event Action? ConsoleAppearanceChanged;
 
         static UnifierApi() {
             logCore = new();
@@ -116,9 +118,9 @@ namespace UnifierTSL
                 .GetAwaiter()
                 .GetResult();
 
-            ConsoleInput.ConfigureFrontend(
-                EventHub.Launcher.InvokeCreateLauncherConsoleFrontend()
-                ?? new TerminalLauncherConsoleFrontend());
+            ConsoleInput.ConfigureHost(
+                EventHub.Launcher.InvokeCreateLauncherConsoleHost()
+                ?? new TerminalLauncherConsoleHost());
 
             ApplyResolvedLauncherSettings();
         }
@@ -127,6 +129,20 @@ namespace UnifierTSL
             ReadLauncherArgs();
             SyncRuntimeSettingsFromInteractiveInput();
             EventHub.Launcher.InitializedEvent.Invoke(new());
+        }
+
+        internal static ConsoleStatusThresholds GetConsoleStatusThresholds() {
+            return runtimeSettings.ConsoleStatusThresholds;
+        }
+
+        internal static bool UseColorfulConsoleStatus() {
+            return runtimeSettings.ColorfulConsoleStatus;
+        }
+
+        internal static ConsolePromptTheme GetConsolePromptTheme() {
+            return ConsolePromptTheme.Default with {
+                UseVividStatusBar = runtimeSettings.ColorfulConsoleStatus,
+            };
         }
 
         internal static void StartRootConfigMonitoring() {
@@ -299,6 +315,8 @@ namespace UnifierTSL
                     serverPassword = password;
                     UnifiedServerCoordinator.ServerPassword = password;
                 });
+            ConsoleInput.RefreshAppearanceSettings();
+            ConsoleAppearanceChanged?.Invoke();
         }
 
         private static bool IsPortBindable(int port) {
@@ -359,7 +377,7 @@ namespace UnifierTSL
             return candidates;
         }
 
-        private static IReadOnlyList<ReadLineSuggestion> BuildPortSuggestionItems(string input) {
+        private static IReadOnlyList<ConsoleSuggestion> BuildPortSuggestionItems(string input) {
             string normalizedInput = (input ?? string.Empty).Trim();
 
             int preferred = 7777;
@@ -369,7 +387,7 @@ namespace UnifierTSL
 
             List<int> candidates = BuildPortCandidates(preferred, maxCount: 10);
             return candidates
-                .Select(port => new ReadLineSuggestion(
+                .Select(port => new ConsoleSuggestion(
                     Value: port.ToString(),
                     Weight: CalculatePortSuggestionWeight(port, normalizedInput, preferred)))
                 .OrderByDescending(static item => item.Weight)
@@ -408,14 +426,11 @@ namespace UnifierTSL
             return weight;
         }
 
-        private static IReadOnlyList<string> BuildPortReactiveStatus(ReadLineReactiveState state) {
+        private static IReadOnlyList<string> BuildPortReactiveStatus(ConsoleInputState state) {
             string input = (state.InputText ?? string.Empty).Trim();
 
-            if (input.Length == 0) {
-                return [
-                    GetString("input: empty (Enter uses ghost default 7777)"),
-                    GetString("hint : Ctrl+Enter keeps raw empty input"),
-                ];
+            if (string.IsNullOrEmpty(input)) {
+                return [];
             }
 
             if (!int.TryParse(input, out int port)) {
@@ -457,14 +472,14 @@ namespace UnifierTSL
             return [.. set];
         }
 
-        private static IReadOnlyList<ReadLineSuggestion> BuildPasswordSuggestionItems(string input, IReadOnlyList<string> seedCandidates) {
+        private static IReadOnlyList<ConsoleSuggestion> BuildPasswordSuggestionItems(string input, IReadOnlyList<string> seedCandidates) {
             string prefix = input ?? string.Empty;
-            List<ReadLineSuggestion> items = [];
+            List<ConsoleSuggestion> items = [];
 
             if (string.IsNullOrEmpty(prefix)) {
                 int rank = 0;
                 foreach (string candidate in seedCandidates.Where(static value => !string.IsNullOrWhiteSpace(value))) {
-                    items.Add(new ReadLineSuggestion(
+                    items.Add(new ConsoleSuggestion(
                         Value: candidate,
                         Weight: 500 - (rank * 10)));
                     rank += 1;
@@ -476,7 +491,7 @@ namespace UnifierTSL
             int targetLength = Math.Clamp(Math.Max(prefix.Length + 4, 8), 8, 16);
             for (int index = 0; index < 6; index++) {
                 string candidate = BuildDeterministicPasswordVariant(prefix, index, targetLength);
-                items.Add(new ReadLineSuggestion(
+                items.Add(new ConsoleSuggestion(
                     Value: candidate,
                     Weight: 420 - (index * 8)));
             }
@@ -498,7 +513,7 @@ namespace UnifierTSL
             return buffer.ToString();
         }
 
-        private static IReadOnlyList<string> BuildPasswordReactiveStatus(ReadLineReactiveState state) {
+        private static IReadOnlyList<string> BuildPasswordReactiveStatus(ConsoleInputState state) {
             int length = (state.InputText ?? string.Empty).Length;
             string quality = length switch {
                 <= 0 => "empty",
@@ -518,33 +533,11 @@ namespace UnifierTSL
             string lastPortError = string.Empty;
             while (!LauncherPortRules.IsValidListenPort(ListenPort)) {
                 List<int> portCandidates = BuildPortCandidates();
-                List<string> baseStatusLines = [
-                    GetString("Tab/Shift+Tab cycles recommendations."),
-                    GetString("Right accepts the ghost suggestion."),
-                    GetString("Enter on empty uses ghost; Ctrl+Enter keeps raw input."),
-                    GetString("Valid range: 0~65535 and not occupied."),
-                ];
-                if (!string.IsNullOrWhiteSpace(lastPortError)) {
-                    baseStatusLines.Add(GetParticularString("{0} is error reason", $"last error: {lastPortError}"));
-                }
-
-                ReadLineContextSpec context = new() {
-                    Purpose = ConsoleInputPurpose.StartupPort,
-                    Prompt = "listen-port> ",
-                    GhostText = "7777",
-                    EmptySubmitBehavior = EmptySubmitBehavior.AcceptGhostIfAvailable,
-                    EnableCtrlEnterBypassGhostFallback = true,
-                    HelpText = GetString("Select the launcher listen port."),
-                    ParameterHint = "<port>",
-                    BaseStatusLines = [.. baseStatusLines],
-                    StaticCandidates = ImmutableDictionary<ReadLineTargetKey, ImmutableArray<ReadLineSuggestion>>.Empty
-                        .Add(ReadLineTargetKeys.Plain, [.. portCandidates.Select(static p => new ReadLineSuggestion(p.ToString(), 0))]),
-                    DynamicResolver = resolveContext => new ReadLineDynamicPatch {
-                        CandidateOverrides = ImmutableDictionary<ReadLineTargetKey, ImmutableArray<ReadLineSuggestion>>.Empty
-                            .Add(ReadLineTargetKeys.Plain, [.. BuildPortSuggestionItems(resolveContext.State.InputText)]),
-                        AdditionalStatusLines = [.. BuildPortReactiveStatus(resolveContext.State)],
-                    },
-                };
+                ConsolePromptSpec context = LauncherStartupPromptFactory.CreateListenPortPrompt(
+                    lastPortError,
+                    portCandidates,
+                    state => BuildPortSuggestionItems(state.InputText),
+                    BuildPortReactiveStatus);
 
                 string input = ConsoleInput.ReadLine(context, trim: true);
 
@@ -566,27 +559,10 @@ namespace UnifierTSL
 
             if (serverPassword is null) {
                 List<string> passwordCandidates = BuildPasswordCandidates();
-                ReadLineContextSpec context = new() {
-                    Purpose = ConsoleInputPurpose.StartupPassword,
-                    Prompt = "server-password> ",
-                    GhostText = passwordCandidates[0],
-                    EmptySubmitBehavior = EmptySubmitBehavior.KeepInput,
-                    EnableCtrlEnterBypassGhostFallback = true,
-                    HelpText = GetString("Pick a short startup password (plain input)."),
-                    ParameterHint = "<password>",
-                    BaseStatusLines = [
-                        GetString("Tab/Shift+Tab cycles random suggestions."),
-                        GetString("Right accepts the ghost suggestion."),
-                        GetString("Press Enter to keep your current input (can be empty)."),
-                    ],
-                    StaticCandidates = ImmutableDictionary<ReadLineTargetKey, ImmutableArray<ReadLineSuggestion>>.Empty
-                        .Add(ReadLineTargetKeys.Plain, [.. passwordCandidates.Select(static value => new ReadLineSuggestion(value, 0))]),
-                    DynamicResolver = resolveContext => new ReadLineDynamicPatch {
-                        CandidateOverrides = ImmutableDictionary<ReadLineTargetKey, ImmutableArray<ReadLineSuggestion>>.Empty
-                            .Add(ReadLineTargetKeys.Plain, [.. BuildPasswordSuggestionItems(resolveContext.State.InputText, passwordCandidates)]),
-                        AdditionalStatusLines = [.. BuildPasswordReactiveStatus(resolveContext.State)],
-                    },
-                };
+                ConsolePromptSpec context = LauncherStartupPromptFactory.CreateServerPasswordPrompt(
+                    passwordCandidates,
+                    state => BuildPasswordSuggestionItems(state.InputText, passwordCandidates),
+                    BuildPasswordReactiveStatus);
 
                 string input = ConsoleInput.ReadLine(context, trim: true);
                 serverPassword = input;

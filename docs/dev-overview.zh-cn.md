@@ -1487,7 +1487,7 @@ Output in Server1's console window with server-specific colors
 - 你得到一个 `ConfigHandle<T>` ，它可以让你 `RequestAsync` 、 `Overwrite` 、 `ModifyInMemory` ，并通过 `OnChangedAsync` 订阅热重载。文件访问由 `FileLockManager` 保护以防止损坏。
 - 启动器根配置与插件配置分离：`LauncherConfigManager` 专门管理 `config/config.json`，文件缺失时会自动创建，并且会明确忽略旧的根目录 `config.json`。
 - 启动器设置的启动优先级是 `config/config.json` -> CLI 覆盖 -> 缺失端口/密码时的交互式补全，并会把启动阶段生效快照回写到 `config/config.json`。启动完成后，对 `config/config.json` 的修改会应用到支持热重载的启动器设置。
-- 根配置热重载会应用 `launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`，以及通过重绑监听器实现的 `launcher.listenPort`。
+- 根配置热重载会应用 `launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、通过重绑监听器实现的 `launcher.listenPort`，以及 `launcher.statusHeaderThresholds`。
 
 <a id="3-usp-integration-points"></a>
 ## 3. USP 集成点
@@ -1564,7 +1564,7 @@ Output in Server1's console window with server-specific colors
 ### 5.2 运行时操作
 - 事件处理程序处理横切问题——聊天审核、传输控制、数据包过滤等。
 - 配置处理对文件更改的反应，因此你可以调整设置而无需重新启动。
-- 启动器根配置监视会热应用密码变更、入服策略变更、追加式自动启动世界（仅热追加），以及 `launcher.listenPort` 的监听器重绑。
+- 启动器根配置监视会热应用密码变更、入服策略变更、追加式自动启动世界（仅热追加）、`launcher.listenPort` 的监听器重绑，以及 `launcher.statusHeaderThresholds`。
 - 协调器保持窗口标题更新，维护服务器列表，重放加入/离开序列，并且可以在不退出进程的前提下切换当前监听器。
 - 日志元数据和有界历史环使你可以把任何日志条目追溯到其服务器、插件或子系统，并在不丢失最近上下文的前提下挂接新 sink。
 - 持久化后端（`txt` / `sqlite`）现在通过后台消费队列写入；`none` 会完全旁路持久化历史提交以保持热路径最小开销。

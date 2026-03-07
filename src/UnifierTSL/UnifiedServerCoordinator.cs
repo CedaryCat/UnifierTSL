@@ -354,6 +354,8 @@ namespace UnifierTSL
         }
         private static Thread? ServerLoopThread;
         private static int serverLoopStartToken;
+
+        public static bool Running { get; private set; }
         public static void Launch(int listenPort, string password = "") {
             ServerPassword = password;
             broadcastClient.EnableBroadcast = true;
@@ -367,6 +369,8 @@ namespace UnifierTSL
             }
 
             EnsureServerLoopStarted();
+
+            Running = true;
         }
 
         public static bool RebindListener(int listenPort) {
