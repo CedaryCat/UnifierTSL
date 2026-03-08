@@ -633,6 +633,10 @@ namespace TShockAPI
                     }
 
                     tsPlayer.PlayerData = TShock.CharacterDB.GetPlayerData(tsPlayer, account.ID);
+                    if (server.Main.ServerSideCharacter && TShock.CharacterDB.IsSeededAppearanceMissing(tsPlayer.PlayerData)) {
+                        TShock.CharacterDB.SyncSeededAppearance(account, tsPlayer);
+                        tsPlayer.PlayerData = TShock.CharacterDB.GetPlayerData(tsPlayer, account.ID);
+                    }
 
                     tsPlayer.Group = group;
                     tsPlayer.tempGroup = null;
@@ -4766,7 +4770,7 @@ namespace TShockAPI
             if (TShock.SetupToken == 0) {
                 args.Executor.SendWarningMessage(GetString("The initial setup system is disabled. This incident has been logged."));
                 args.Executor.SendWarningMessage(GetString("If you are locked out of all admin accounts, ask for help on https://tshock.co/"));
-                args.Executor.LogWarning("{0} attempted to use the initial setup system even though it's disabled.", args.Executor.IP);
+                args.Executor.LogWarning(GetString("{0} attempted to use the initial setup system even though it's disabled.", args.Executor.IP));
                 return;
             }
 
@@ -4789,7 +4793,7 @@ namespace TShockAPI
             int givenCode;
             if (!Int32.TryParse(args.Parameters[0], out givenCode) || givenCode != TShock.SetupToken) {
                 args.Executor.SendErrorMessage(GetString("Incorrect setup code. This incident has been logged."));
-                args.Executor.LogWarning(args.Executor.IP + " attempted to use an incorrect setup code.");
+                args.Executor.LogWarning(GetString("{0} attempted to use an incorrect setup code.", args.Executor.IP));
                 return;
             }
 
@@ -5511,7 +5515,9 @@ namespace TShockAPI
         private static void Give(CommandArgs args) {
             if (args.Parameters.Count < 2) {
                 args.Executor.SendErrorMessage(
-                    "Invalid syntax. Proper syntax: {0}give <item type/id> <player> [item amount] [prefix id/name]", Specifier);
+                    GetString(
+                        "Invalid syntax. Proper syntax: {0}give <item type/id> <player> [item amount] [prefix id/name]",
+                        Specifier));
                 return;
             }
             if (args.Parameters[0].Length == 0) {

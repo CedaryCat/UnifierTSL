@@ -157,10 +157,17 @@ namespace UnifierTSL
                     return true;
                 }
 
-                culture = GameCulture._legacyCultures.Values.SingleOrDefault(c => c.Name == langArg);
-                if (culture is not null) {
-                    SetLang(culture);
-                    return true;
+                try {
+                    culture = Utilities.Culture.FindBestMatch(
+                        GameCulture._legacyCultures.Values,
+                        CultureInfo.GetCultureInfo(langArg),
+                        gc => gc.CultureInfo);
+                    if (culture is not null) {
+                        SetLang(culture);
+                        return true;
+                    }
+                }
+                catch (CultureNotFoundException) {
                 }
 
                 return false;
@@ -170,6 +177,7 @@ namespace UnifierTSL
                 GameCulture.DefaultCulture = culture;
                 LanguageManager.Instance.SetLanguage(culture);
                 CultureInfo.CurrentCulture = culture.RedirectedCultureInfo();
+                CultureInfo.CurrentUICulture = culture.RedirectedCultureInfo();
             }
 
             bool languageSet = false;

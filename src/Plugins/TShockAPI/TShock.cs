@@ -21,7 +21,7 @@ using UnifierTSL.Servers;
 namespace TShockAPI
 {
     // PluginMetadata version is intentionally maintained separately from AssemblyVersion/FileVersion.
-    [PluginMetadata("TShock", "5.9.9", "The TShock Team", "The administration modification of the future.")]
+    [PluginMetadata("TShock", "6.0.0", "The TShock Team", "The administration modification of the future.")]
     public class TShock : BasePlugin
     {
         class LogHost : ILoggerHost {
@@ -35,7 +35,7 @@ namespace TShockAPI
         /// <summary>VersionNum - The version number the TerrariaAPI will return back to the API. We just use the Assembly info.</summary>
         public static readonly Version VersionNum = Assembly.GetExecutingAssembly().GetName().Version;
         /// <summary>VersionCodename - The version codename is displayed when the server starts. Inspired by software codenames conventions.</summary>
-        public static readonly string VersionCodename = "Hopefully SSC works somewhat correctly now edition";
+        public static readonly string VersionCodename = "Profoundly Collaborative";
         public static string SavePath { get; private set; } = null!;
         #endregion
 

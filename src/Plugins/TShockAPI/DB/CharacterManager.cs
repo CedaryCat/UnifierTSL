@@ -193,6 +193,68 @@ namespace TShockAPI.DB
 
             return playerData;
         }
+
+        /// <summary>
+        /// Checks whether an SSC row appears to be seeded without appearance fields.
+        /// </summary>
+        /// <param name="playerData">Loaded SSC data for an account.</param>
+        /// <returns>true when appearance fields are still missing.</returns>
+        public bool IsSeededAppearanceMissing(PlayerData playerData) {
+            if (playerData == null || !playerData.exists) {
+                return false;
+            }
+
+            return playerData.skinVariant == null
+                && playerData.hair == null
+                && playerData.hairColor == null
+                && playerData.pantsColor == null
+                && playerData.shirtColor == null
+                && playerData.underShirtColor == null
+                && playerData.shoeColor == null
+                && playerData.skinColor == null
+                && playerData.eyeColor == null
+                && playerData.hideVisuals == null
+                && playerData.voiceVariant == null
+                && playerData.voicePitchOffset == null;
+        }
+
+        /// <summary>
+        /// Updates appearance-related SSC fields for accounts with seeded rows missing appearance data.
+        /// </summary>
+        /// <param name="account">The account owning the SSC row.</param>
+        /// <param name="player">The currently connected player whose appearance should seed the row.</param>
+        /// <returns>true if an update was applied.</returns>
+        public bool SyncSeededAppearance(UserAccount account, TSPlayer player) {
+            if (account == null || player == null) {
+                return false;
+            }
+
+            try {
+                return database.GetTable<Character>()
+                    .Where(c => c.AccountId == account.ID)
+                    .Set(c => c.skinVariant, player.TPlayer.skinVariant)
+                    .Set(c => c.hair, player.TPlayer.hair)
+                    .Set(c => c.hairDye, player.TPlayer.hairDye)
+                    .Set(c => c.hairColor, Utils.EncodeColor(player.TPlayer.hairColor))
+                    .Set(c => c.pantsColor, Utils.EncodeColor(player.TPlayer.pantsColor))
+                    .Set(c => c.shirtColor, Utils.EncodeColor(player.TPlayer.shirtColor))
+                    .Set(c => c.underShirtColor, Utils.EncodeColor(player.TPlayer.underShirtColor))
+                    .Set(c => c.shoeColor, Utils.EncodeColor(player.TPlayer.shoeColor))
+                    .Set(c => c.hideVisuals, Utils.EncodeBoolArray(player.TPlayer.hideVisibleAccessory))
+                    .Set(c => c.skinColor, Utils.EncodeColor(player.TPlayer.skinColor))
+                    .Set(c => c.eyeColor, Utils.EncodeColor(player.TPlayer.eyeColor))
+                    .Set(c => c.voiceVariant, player.TPlayer.voiceVariant)
+                    .Set(c => c.voicePitchOffset, player.TPlayer.voicePitchOffset)
+                    .Set(c => c.team, player.TPlayer.team)
+                    .Update() > 0;
+            }
+            catch (Exception ex) {
+                TShock.Log.Error(ex.ToString());
+            }
+
+            return false;
+        }
+
         public bool SeedInitialData(UserAccount account) {
             var items = new List<NetItem>(TShock.ServerSideCharacterConfig.Settings.StartingInventory);
             if (items.Count < NetItem.MaxInventory)

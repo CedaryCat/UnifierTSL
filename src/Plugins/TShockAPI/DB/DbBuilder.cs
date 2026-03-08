@@ -30,7 +30,7 @@ namespace TShockAPI.DB
                 "sqlite" => BuildSqliteConnection(),
                 "mysql" => BuildMySqlConnection(),
                 "postgres" => BuildPostgresConnection(),
-                _ => throw new("Invalid storage type")
+                _ => throw new(GetString("Invalid storage type"))
             };
         }
         private DataConnection BuildSqliteConnection() {

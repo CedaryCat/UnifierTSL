@@ -141,6 +141,30 @@ namespace TShockAPI.Handlers
 			/// <returns><see langword="true"/>, if the rect matches this operation and the changes have been applied, otherwise <see langword="false"/>.</returns>
 			public MatchResult Matches(ServerContext server, TSPlayer player, SquareData rect)
 			{
+				// DeadCellsDisplayJar is a 1x2 rect, but the client sends a 2x2 tile rect; only the first column is relevant.
+				if (TileType == TileID.DeadCellsDisplayJar)
+				{
+					if (rect.Width != 2)
+					{
+						return MatchResult.NotMatched;
+					}
+
+					var newTiles = new SimpleTileData[1, rect.Height];
+					for (int y = 0; y < rect.Height; y++)
+					{
+						newTiles[0, y] = rect.Tiles[0, y];
+					}
+
+					rect = new SquareData
+					{
+						TilePosX = rect.TilePosX,
+						TilePosY = rect.TilePosY,
+						Width = 1,
+						Height = rect.Height,
+						Tiles = newTiles,
+					};
+				}
+
 				if (rect.Width != Width || rect.Height != Height)
 				{
 					return MatchResult.NotMatched;
@@ -331,6 +355,7 @@ namespace TShockAPI.Handlers
 			TileRectMatch.Placement(1, 1, TileID.LogicSensor, 18, 108, 18, 18),
 			TileRectMatch.Placement(1, 1, TileID.KiteAnchor, 72, 0, 18, 18),
 			TileRectMatch.Placement(1, 1, TileID.CritterAnchor, 72, 72, 18, 18),
+			TileRectMatch.Placement(1, 2, TileID.DeadCellsDisplayJar, 36, 18, 18, 18),
 
 			TileRectMatch.StateChangeY(3, 2, TileID.Campfire, 54, 18),
 			TileRectMatch.StateChangeY(4, 3, TileID.Cannon, 468, 18),
@@ -1148,9 +1173,9 @@ namespace TShockAPI.Handlers
 					}
 					break;
 				case 7:
-					if ((WallID.Sets.Conversion.Stone[wall] || WallID.Sets.Conversion.Ice[wall] || WallID.Sets.Conversion.Sandstone[wall]) && wall != 1)
+					if ((WallID.Sets.Conversion.Stone[wall] || WallID.Sets.Conversion.Ice[wall] || WallID.Sets.Conversion.Sandstone[wall]) && wall != WallID.StoneUnsafe)
 					{
-						tile.wall = 1;
+						tile.wall = WallID.StoneUnsafe;
 					}
 					else if ((WallID.Sets.Conversion.HardenedSand[wall] || WallID.Sets.Conversion.Snow[wall] || WallID.Sets.Conversion.Dirt[wall]) && wall != 2)
 					{
@@ -1207,9 +1232,9 @@ namespace TShockAPI.Handlers
 					tile.wall = 64;
 				}
 			}
-			else if (WallID.Sets.Conversion.Stone[wall] && wall != 1 && wall != 262 && wall != 274 && wall != 61 && wall != 185)
+			else if (WallID.Sets.Conversion.Stone[wall] && wall != WallID.StoneUnsafe && wall != 262 && wall != 274 && wall != 61 && wall != 185)
 			{
-				tile.wall = 1;
+				tile.wall = WallID.StoneUnsafe;
 			}
 			else if (WallID.Sets.Conversion.Stone[wall] && wall == 262)
 			{

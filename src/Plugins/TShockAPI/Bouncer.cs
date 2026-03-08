@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 using Microsoft.Xna.Framework;
-using OTAPI;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.GameContent.Tile_Entities;
@@ -28,6 +27,7 @@ using TrProtocol.NetPackets;
 using TrProtocol.NetPackets.Modules;
 using TShockAPI.Extension;
 using TShockAPI.Localization;
+using UnifiedServerProcess;
 using UnifierTSL;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
@@ -291,8 +291,14 @@ namespace TShockAPI
             NetPacketHandler.Register<PlayerDeathV2>(OnKillMe, HandlerPriority.High);
             NetPacketHandler.Register<FishOutNPC>(OnFishOutNPC, HandlerPriority.High);
             NetPacketHandler.Register<FoodPlatterTryPlacing>(OnFoodPlatterTryPlacing, HandlerPriority.High);
+            NetPacketHandler.Register<DeadCellsDisplayJarTryPlacing>(OnDisplayJarTryPlacing, HandlerPriority.High);
 
             On.OTAPI.HooksSystemContext.ChestSystemContext.InvokeQuickStack += OnQuickStack;
+			On.Terraria.Projectile.Kill_DirtAndFluidProjectiles_RunDelegateMethodPushUpForHalfBricks += OnProjectileDirtFluidKill;
+            On.Terraria.GameContent.CraftingRequestsSystemContext.CanCraftFromChest += OnChestCraftRequest;
+
+            //HookEvents.Terraria.Projectile.Kill_DirtAndFluidProjectiles_RunDelegateMethodPushUpForHalfBricks += OnProjectileDirtFluidKill;
+            //HookEvents.Terraria.GameContent.CraftingRequests.CanCraftFromChest += OnChestCraftRequest;
 
 			// The following section is based off Player.PlaceThing_Tiles_PlaceIt and Player.PlaceThing_Tiles_PlaceIt_GetLegacyTileStyle.
 			// Multi-block tiles are intentionally ignored because they don't pass through OnTileEdit.
@@ -723,9 +729,8 @@ namespace TShockAPI
 
 			if (tsPlayer.LastNetPosition == Vector2.Zero)
 			{
-				server.Log.Info(GetString("Bouncer / OnPlayerUpdate *would have rejected* from (last network position zero) {0}", tsPlayer.Name));
-				// args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
-				// return;
+				tsPlayer.LastNetPosition = pos;
+				return;
 			}
 
 			if (!pos.Equals(tsPlayer.LastNetPosition))
@@ -838,6 +843,14 @@ namespace TShockAPI
                             server.NetMessage.SendData((int)PacketTypes.UpdateTileEntity, -1, -1, NetworkText.Empty, itemFrameId, 0, 1);
 						}
 					}
+					else if (tile.type == TileID.DeadCellsDisplayJar)
+					{
+						int displayJarId = TEDeadCellsDisplayJar.Find(server, tileX - tile.frameX % 18 / 18, tileY - tile.frameY % 32 / 18);
+						if (displayJarId != -1)
+						{
+							server.NetMessage.SendData((int)PacketTypes.UpdateTileEntity, -1, -1, NetworkText.Empty, displayJarId, 0, 1);
+						}
+					}
 
 					GetRollbackRectSize(server, tileX, tileY, out byte width, out byte length, out int offsetY);
 					tsPlayer.SendTileRect((short)(tileX - width), (short)(tileY + offsetY), (byte)(width * 2), (byte)(length + 1));
@@ -859,6 +872,21 @@ namespace TShockAPI
 				{
 					server.Log.Debug(GetString("Bouncer / OnTileEdit super accepted from (ice block) {0} {1} {2}", tsPlayer.Name, action, editData));
 					return;
+				}
+
+				if (action == TileEditAction.KillTile)
+				{
+					bool isPlanteraBulb = server.Main.tile[tileX, tileY].active() && server.Main.tile[tileX, tileY].type == TileID.PlanteraBulb;
+					bool isSupportTile = tileY - 1 >= 0 && server.Main.tile[tileX, tileY - 1].active() && server.Main.tile[tileX, tileY - 1].type == TileID.PlanteraBulb;
+
+					if ((isPlanteraBulb || isSupportTile) && !tsPlayer.HasPermission(Permissions.summonboss))
+					{
+						server.Log.Debug(GetString("Bouncer / OnTileEdit rejected Plantera bulb destroy from {0}", tsPlayer.Name));
+						tsPlayer.SendErrorMessage(GetString("You do not have permission to summon Plantera."));
+						tsPlayer.SendTileSquareCentered(tileX, tileY, 4);
+						args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+						return;
+					}
 				}
 
 				if (tsPlayer.Dead && setting.PreventDeadModification)
@@ -940,7 +968,7 @@ namespace TShockAPI
 					// Item frames can be modified without pickaxe tile.
 					// also add an exception for snake coils, they can be removed when the player places a new one or after x amount of time
 					// If the tile is part of the breakable when placing set, it might be getting broken by a placement.
-					else if (tile.type != TileID.ItemFrame && tile.type != TileID.MysticSnakeRope
+					else if (tile.type != TileID.ItemFrame && tile.type != TileID.DeadCellsDisplayJar && tile.type != TileID.MysticSnakeRope
 														   && !ItemID.Sets.Explosives[selectedItem.type]
 														   && !TileID.Sets.BreakableWhenPlacing[tile.type]
 														   && !Main.tileAxe[tile.type] && !Main.tileHammer[tile.type] && tile.wall == 0
@@ -1448,6 +1476,15 @@ namespace TShockAPI
 			if (tsPlayer.IsBeingDisabled())
 			{
 				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected from disabled from {0}", tsPlayer.Name));
+				tsPlayer.SendData(PacketTypes.SyncItemDespawn, "", id);
+				handleMode = PacketHandleMode.Cancel;
+				return;
+			}
+
+			if (type == ItemID.GuideVoodooDoll && tsPlayer.TPlayer.ZoneUnderworldHeight && !tsPlayer.HasPermission(Permissions.summonboss))
+			{
+				server.Log.Debug(GetString("Bouncer / OnItemDrop rejected Guide Voodoo Doll drop from {0}", tsPlayer.Name));
+				tsPlayer.SendErrorMessage(GetString("You do not have permission to summon the Wall of Flesh."));
 				tsPlayer.SendData(PacketTypes.SyncItemDespawn, "", id);
 				handleMode = PacketHandleMode.Cancel;
 				return;
@@ -2577,21 +2614,7 @@ namespace TShockAPI
 				// Explosive Bunny projectile.
 				if (type == NPCID.ExplosiveBunny)
 				{
-					bool areAnyBunnyProjectilesInRange;
-
-					lock (tsPlayer.RecentlyCreatedProjectiles)
-					{
-						areAnyBunnyProjectilesInRange = tsPlayer.RecentlyCreatedProjectiles.Any(projectile =>
-						{
-							if (projectile.Type != ProjectileID.ExplosiveBunny)
-								return false;
-
-							var projectileInstance = server.Main.projectile[projectile.Index];
-							return projectileInstance.active && projectileInstance.WithinRange(new Vector2(x, y), 32.0f);
-						});
-					}
-
-					if (!areAnyBunnyProjectilesInRange)
+					if (tsPlayer.TPlayer.ownedProjectileCounts[ProjectileID.ExplosiveBunny] == 0)
 					{
 						rejectForCritterNotReleasedFromItem(ref args);
 						return;
@@ -3333,7 +3356,7 @@ namespace TShockAPI
 				return;
 			}
 
-			if (!tsPlayer.IsInRange(pos.X, pos.Y, range: 13)) // To my knowledge, max legit tile reach with accessories.
+			if (!tsPlayer.IsInRange(pos.X, pos.Y))
 			{
 				server.Log.Debug(GetString("Bouncer / OnFoodPlatterTryPlacing rejected range checks from {0}", tsPlayer.Name));
 				tsPlayer.SendTileSquareCentered(pos.X, pos.Y, 1);
@@ -3342,7 +3365,151 @@ namespace TShockAPI
 			}
 		}
 
-		internal void OnSecondUpdate()
+		/// <summary>
+		/// Called when a player is trying to place an item into a display jar.
+		/// </summary>
+		/// <param name="args"></param>
+		internal void OnDisplayJarTryPlacing(ref ReceivePacketEvent<DeadCellsDisplayJarTryPlacing> args) {
+            var server = args.LocalReceiver.Server;
+            var tsPlayer = args.GetTSPlayer();
+
+			var itemId = args.Packet.ItemType;
+			var x = args.Packet.X;
+			var y = args.Packet.Y;
+
+            if (!Utils.TilePlacementValid(server, x, y))
+			{
+				server.Log.Debug(GetString("Bouncer / OnDisplayJarTryPlacing rejected tile placement valid from {0}", tsPlayer.Name));
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+				return;
+			}
+
+			if (tsPlayer.SelectedItem.type != itemId && tsPlayer.ItemInHand.type != itemId)
+			{
+				server.Log.Debug(GetString("Bouncer / OnDisplayJarTryPlacing rejected item not placed by hand from {0}", tsPlayer.Name));
+				tsPlayer.SendTileSquareCentered(x, y, 1);
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+				return;
+			}
+
+			if (tsPlayer.IsBeingDisabled())
+			{
+				server.Log.Debug(GetString("Bouncer / OnDisplayJarTryPlacing rejected disabled from {0}", tsPlayer.Name));
+				Item item = new Item();
+				item.netDefaults(server, itemId);
+				tsPlayer.GiveItemCheck(itemId, item.Name, args.Packet.Stack, args.Packet.Prefix);
+				tsPlayer.SendTileSquareCentered(x, y, 1);
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+				return;
+			}
+
+			if (!tsPlayer.HasBuildPermission(x, y))
+			{
+				server.Log.Debug(GetString("Bouncer / OnDisplayJarTryPlacing rejected permissions from {0}", tsPlayer.Name));
+				Item item = new Item();
+				item.netDefaults(server, itemId);
+				tsPlayer.GiveItemCheck(itemId, item.Name, args.Packet.Stack, args.Packet.Prefix);
+				tsPlayer.SendTileSquareCentered(x, y, 1);
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+				return;
+			}
+
+			if (!tsPlayer.IsInRange(x, y))
+			{
+				server.Log.Debug(GetString("Bouncer / OnDisplayJarTryPlacing rejected range checks from {0}", tsPlayer.Name));
+				tsPlayer.SendTileSquareCentered(x, y, 1);
+				args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
+				return;
+			}
+        }
+
+        //      /// <summary>
+        //      /// Called when dirt/fluid projectiles are killed and attempt to place tiles or liquids.
+        //      /// </summary>
+        //      /// <param name="sender"></param>
+        //      /// <param name="args"></param>
+        //      internal void OnProjectileDirtFluidKill(Terraria.Projectile sender, HookEvents.Terraria.Projectile.Kill_DirtAndFluidProjectiles_RunDelegateMethodPushUpForHalfBricksEventArgs args)
+        //{
+        //	if (sender.owner < 0 || sender.owner >= Main.maxPlayers)
+        //		return;
+
+        //	var player = TShock.Players[sender.owner];
+        //	if (player is not { Active: true })
+        //		return;
+
+        //	var originalPlot = args.plot;
+        //	args.plot = (x, y) => player.HasBuildPermission(x, y) && originalPlot(x, y);
+        //}
+
+        ///// <summary>
+        ///// Called when a player is trying to use items of a chest to craft something.
+        ///// </summary>
+        ///// <param name="sender"></param>
+        ///// <param name="args"></param>
+        //private static void OnChestCraftRequest(object? sender, HookEvents.Terraria.GameContent.CraftingRequests.CanCraftFromChestEventArgs args)
+        //{
+        //	var player = TShock.Players[args.whoAmI];
+        //	if (player is not { Active: true })
+        //	{
+        //		args.ContinueExecution = false;
+        //		return;
+        //	}
+
+        //	if (player.IsBeingDisabled())
+        //	{
+        //		player.GetCurrentServer().Log.Debug(GetString("Bouncer / OnChestCraftRequest rejected from disable from {0}", player.Name));
+        //		args.ContinueExecution = false;
+        //		return;
+        //	}
+
+        //	if (!player.HasBuildPermission(args.chest.x, args.chest.y) && TShock.Config.GetServerSettings(player.GetCurrentServer().Name).RegionProtectChests)
+        //	{
+        //		player.GetCurrentServer().Log.Debug(GetString("Bouncer / OnChestCraftRequest rejected from region protection? from {0}", player.Name));
+        //		args.ContinueExecution = false;
+        //	}
+        //      }
+
+
+        /// <summary>
+        /// Called when dirt/fluid projectiles are killed and attempt to place tiles or liquids.
+        /// </summary>
+        private void OnProjectileDirtFluidKill(On.Terraria.Projectile.orig_Kill_DirtAndFluidProjectiles_RunDelegateMethodPushUpForHalfBricks orig, Projectile self, RootContext root, Point pt, float size, Terraria.Utils.TileActionAttempt plot) {
+
+            if (self.owner < 0 || self.owner >= Main.maxPlayers) {
+                orig(self, root, pt, size, plot);
+                return;
+            }
+
+            var player = TShock.Players[self.owner];
+            if (player is not { Active: true }) {
+                orig(self, root, pt, size, plot);
+                return;
+            }
+
+            orig(self, root, pt, size, (x, y) => player.HasBuildPermission(x, y) && plot(x, y));
+        }
+
+        private bool OnChestCraftRequest(On.Terraria.GameContent.CraftingRequestsSystemContext.orig_CanCraftFromChest orig, Terraria.GameContent.CraftingRequestsSystemContext self, Chest chest, int whoAmI) {
+
+            var player = TShock.Players[whoAmI];
+            if (player is not { Active: true }) {
+                return false;
+            }
+
+            if (player.IsBeingDisabled()) {
+                player.GetCurrentServer().Log.Debug(GetString("Bouncer / OnChestCraftRequest rejected from disable from {0}", player.Name));
+                return false;
+            }
+
+            if (!player.HasBuildPermission(chest.x, chest.y) && TShock.Config.GetServerSettings(player.GetCurrentServer().Name).RegionProtectChests) {
+                player.GetCurrentServer().Log.Debug(GetString("Bouncer / OnChestCraftRequest rejected from region protection? from {0}", player.Name));
+                return false;
+            }
+
+			return orig(self, chest, whoAmI);
+        }
+
+        internal void OnSecondUpdate()
 		{
 			Task.Run(() =>
 			{

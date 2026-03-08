@@ -384,6 +384,9 @@ namespace TShockAPI
         /// <summary>Determines if the player has finished the handshake (Sent all necessary packets for connection, such as Request World Data, Spawn Player, etc). A normal client would do all of this no problem.</summary>
         public bool FinishedHandshake = false;
 
+        /// <summary>Determines if the player will be sending a team change packet right after the initial spawn.</summary>
+        public bool InitialTeamChangePending = false;
+
         /// <summary>Server-side character tracked total deaths (PVE + PVP).</summary>
         public int sscDeathsPVE = 0;
 

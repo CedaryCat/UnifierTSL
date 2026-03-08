@@ -21,6 +21,7 @@ using Terraria;
 using Terraria.Localization;
 using Terraria.GameContent.NetModules;
 using Terraria.ID;
+using TShockAPI.Configuration;
 
 namespace TShockAPI
 {
@@ -304,7 +305,8 @@ namespace TShockAPI
 			tplayer.statManaMax = this.maxMana;
 			tplayer.SpawnX = this.spawnX;
 			tplayer.SpawnY = this.spawnY;
-			tplayer.hairDye = this.hairDye;
+			if (!TShock.ServerSideCharacterConfig.Settings.KeepPlayerAppearance)
+				tplayer.hairDye = this.hairDye;
 			tplayer.anglerQuestsFinished = this.questsCompleted;
 			tplayer.UsingBiomeTorches = this.usingBiomeTorches == 1;
 			tplayer.happyFunTorchTime = this.happyFunTorchTime == 1;
@@ -326,33 +328,36 @@ namespace TShockAPI
 			tplayer.team = this.team;
 
 			string pvpMode = TShock.Config.GetServerSettings(server.Name).PvPMode.ToLowerInvariant();
-			if (pvpMode == "pvpwithnoteam")
-				tplayer.team = 0;
+			if (pvpMode == PvPModes.PvPWithNoTeam)
+				tplayer.team = PlayerTeamID.None;
 
 			tplayer.extraAccessory = extraSlot.HasValue && extraSlot.Value == 1;
 
-			if (this.voiceVariant != null)
-				tplayer.voiceVariant = this.voiceVariant.Value;
-			if (this.voicePitchOffset != null)
-				tplayer.voicePitchOffset = this.voicePitchOffset.Value;
-			if (this.skinVariant != null)
-				tplayer.skinVariant = this.skinVariant.Value;
-			if (this.hair != null)
-				tplayer.hair = this.hair.Value;
-			if (this.hairColor != null)
-				tplayer.hairColor = this.hairColor.Value;
-			if (this.pantsColor != null)
-				tplayer.pantsColor = this.pantsColor.Value;
-			if (this.shirtColor != null)
-				tplayer.shirtColor = this.shirtColor.Value;
-			if (this.underShirtColor != null)
-				tplayer.underShirtColor = this.underShirtColor.Value;
-			if (this.shoeColor != null)
-				tplayer.shoeColor = this.shoeColor.Value;
-			if (this.skinColor != null)
-				tplayer.skinColor = this.skinColor.Value;
-			if (this.eyeColor != null)
-				tplayer.eyeColor = this.eyeColor.Value;
+			if (!TShock.ServerSideCharacterConfig.Settings.KeepPlayerAppearance)
+			{
+				if (this.voiceVariant != null)
+					tplayer.voiceVariant = this.voiceVariant.Value;
+				if (this.voicePitchOffset != null)
+					tplayer.voicePitchOffset = this.voicePitchOffset.Value;
+				if (this.skinVariant != null)
+					tplayer.skinVariant = this.skinVariant.Value;
+				if (this.hair != null)
+					tplayer.hair = this.hair.Value;
+				if (this.hairColor != null)
+					tplayer.hairColor = this.hairColor.Value;
+				if (this.pantsColor != null)
+					tplayer.pantsColor = this.pantsColor.Value;
+				if (this.shirtColor != null)
+					tplayer.shirtColor = this.shirtColor.Value;
+				if (this.underShirtColor != null)
+					tplayer.underShirtColor = this.underShirtColor.Value;
+				if (this.shoeColor != null)
+					tplayer.shoeColor = this.shoeColor.Value;
+				if (this.skinColor != null)
+					tplayer.skinColor = this.skinColor.Value;
+				if (this.eyeColor != null)
+					tplayer.eyeColor = this.eyeColor.Value;
+			}
 
 			if (this.hideVisuals != null)
 				tplayer.hideVisibleAccessory = this.hideVisuals;
