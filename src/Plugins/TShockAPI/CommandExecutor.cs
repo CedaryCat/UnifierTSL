@@ -33,8 +33,8 @@ namespace TShockAPI
         [MemberNotNullWhen(true, nameof(SourceServer))]
         [MemberNotNullWhen(true, nameof(Player))]
         public readonly bool IsClient => SourceServer is not null && UserId != byte.MaxValue;
-        public readonly TSPlayer? Player => SourceServer is null
-            ? RestPlayer
+        public readonly TSPlayer Player => SourceServer is null
+            ? RestPlayer ?? (TSPlayer)TShock.TSLauncherPlr
             : IsClient
                 ? TShock.Players[UserId]
                 : SourceServer.GetExtension<TSServerPlayer>();

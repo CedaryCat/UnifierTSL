@@ -47,6 +47,7 @@ namespace TShockAPI
 
         public static void Attach() {
             TShock.Config.OnConfigRead += Config_OnConfigRead;
+            Config_OnConfigRead(TShock.Config);
             UnifierApi.EventHub.Server.AddServer.Register(OnServerListAdded, HandlerPriority.Normal);
             UnifierApi.EventHub.Coordinator.Started.Register(OnPostInit, HandlerPriority.Normal);
             UnifierApi.EventHub.Coordinator.ServerCheckPlayerCanJoinIn.Register(OnCheckJoinIn, HandlerPriority.Higher + 1);
@@ -80,9 +81,7 @@ namespace TShockAPI
 
         private static void OnServerListAdded(ref ReadonlyNoCancelEventArgs<AddServer> args) {
             var server = args.Content.Server;
-            var settings = TShock.Config.GetServerSettings(server.Name);
-            server.NPC.defaultMaxSpawns = settings.DefaultMaximumSpawns;
-            server.NPC.defaultSpawnRate = settings.DefaultSpawnRate;
+            TShock.ApplyConfig(Config, server);
             server.Main.ServerSideCharacter = TShock.ServerSideCharacterConfig.Settings.Enabled;
         }
 

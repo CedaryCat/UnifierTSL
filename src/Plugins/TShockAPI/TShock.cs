@@ -30,6 +30,7 @@ namespace TShockAPI
         }
 
         public static RoleLogger Log = UnifierApi.CreateLogger(new LogHost());
+        public static TSLauncherPlayer TSLauncherPlr;
 
         #region Fields
         /// <summary>VersionNum - The version number the TerrariaAPI will return back to the API. We just use the Assembly info.</summary>
@@ -121,6 +122,8 @@ namespace TShockAPI
             ImmutableArray<PluginInitInfo> priorInitializations, 
             CancellationToken cancellationToken = default) {
 
+            Log ??= UnifierApi.CreateLogger(new LogHost());
+
             configRegistrar.DefaultOption
                 .WithFormat(ConfigFormat.NewtonsoftJson)
                 .OnSerializationFailure(SerializationFailureHandling.ThrowException)
@@ -129,9 +132,11 @@ namespace TShockAPI
             SavePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), configRegistrar.Directory);
             Config = new TShockConfig(configRegistrar, "config");
             ServerSideCharacterConfig = new ServerSideConfig(configRegistrar, "sscconfig", ServerSideConfig.Default);
+
             FileTools.SetupMiscFiles();
 
-            Log ??= UnifierApi.CreateLogger(new LogHost());
+            TSLauncherPlr = new();
+
             MiscInit();
             CliParser.Reset();
             HandleCommandLinePostConfigLoad(Environment.GetCommandLineArgs());
@@ -172,6 +177,7 @@ namespace TShockAPI
 
             return Task.CompletedTask;
         }
+
         class DebugLogFilter : ILogFilter
         {
             public bool ShouldLog(in LogEntry entry) => entry.Level > LogLevel.Debug || TShock.Config.GlobalSettings.DebugLogs;
@@ -197,10 +203,7 @@ namespace TShockAPI
             var config = Config;
 
             foreach (var server in UnifiedServerCoordinator.Servers.Where(s => s.IsRunning)) {
-                var settings = config.GetServerSettings(server.Name);
-
-                server.NPC.defaultMaxSpawns = settings.DefaultMaximumSpawns;
-                server.NPC.defaultSpawnRate = settings.DefaultSpawnRate;
+                ApplyConfig(config, server);
             }
 
             Main.autoSave = config.GlobalSettings.AutoSave;
@@ -209,6 +212,16 @@ namespace TShockAPI
                 config.GlobalSettings.MaxSlots = Main.maxPlayers - config.GlobalSettings.ReservedSlots;
 
             Netplay.SpamCheck = false;
+        }
+        public static void ApplyConfig(TShockConfig config, ServerContext server) {
+            var settings = config.GetServerSettings(server.Name);
+
+            server.NPC.defaultMaxSpawns = settings.DefaultMaximumSpawns;
+            server.NPC.defaultSpawnRate = settings.DefaultSpawnRate;
+
+            if (settings.MaxSlots > Main.maxPlayers - settings.ReservedSlots)
+                settings.MaxSlots = Main.maxPlayers - settings.ReservedSlots;
+            server.Main.maxNetPlayers = settings.MaxSlots + settings.ReservedSlots;
         }
         public static void HandleCommandLinePostConfigLoad(string[] parms) {
             var playerSet = new FlagSet("-maxplayers", "-players");

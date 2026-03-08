@@ -89,10 +89,16 @@ namespace UnifierTSL.CLI.Status
             double upKbps = perfData.SentBytesCount / 1000d;
             double downKbps = perfData.ReceivedBytesCount / 1000d;
 
-            int online = Math.Max(0, server.ActivePlayerCount);
+            int online = server.ActivePlayerCount;
 
             int upsL = UpsLevel(ups, thresholds);
             int utilL = UtilLevel(util, thresholds);
+
+            if (online == 0) {
+                upsL = utilL = -1;
+            }
+
+
             int onlineL = OnlineLevel(online, server.Main.maxNetPlayers, thresholds);
             int upL = BandwidthLevel(upKbps, thresholds.UpWarnKbps, thresholds.UpBadKbps);
             int downL = BandwidthLevel(downKbps, thresholds.DownWarnKbps, thresholds.DownBadKbps);
@@ -137,7 +143,7 @@ namespace UnifierTSL.CLI.Status
             double upKbps = perfData.SentBytesCount / 1000d;
             double downKbps = perfData.ReceivedBytesCount / 1000d;
 
-            int online = Math.Max(0, server.ActivePlayerCount);
+            int online = server.ActivePlayerCount;
 
             return $"[online:{online}/{server.Main.maxNetPlayers}] "
                 + $"[tps:{ups:0.0}|util:{FormatUtil(util)}] "
@@ -160,7 +166,7 @@ namespace UnifierTSL.CLI.Status
             double upKbps = bandwidth.UpKbps;
             double downKbps = bandwidth.DownKbps;
 
-            int online = Math.Max(0, UnifiedServerCoordinator.ActiveConnections);
+            int online = UnifiedServerCoordinator.ActiveConnections;
             int onlineL = OnlineLevel(online, Terraria.Main.maxPlayers, thresholds);
             int upL = BandwidthLevel(upKbps, thresholds.UpWarnKbps, thresholds.UpBadKbps);
             int downL = BandwidthLevel(downKbps, thresholds.DownWarnKbps, thresholds.DownBadKbps);
@@ -187,7 +193,7 @@ namespace UnifierTSL.CLI.Status
             double upKbps = bandwidth.UpKbps;
             double downKbps = bandwidth.DownKbps;
 
-            int online = Math.Max(0, UnifiedServerCoordinator.ActiveConnections);
+            int online = UnifiedServerCoordinator.ActiveConnections;
 
             return $"[online:{online}/{Terraria.Main.maxPlayers}] "
                 + $"[↑{upKbps:0.0}kb/s ↓{downKbps:0.0}kb/s]";
@@ -253,8 +259,9 @@ namespace UnifierTSL.CLI.Status
             return util >= 1 ? "1.00" : $"{util:0.0%}";
         }
 
-        private static string LColor(int x, int y = 0, bool healthyDefault = false) {
+        private static string LColor(int x, int y = -1, bool healthyDefault = false) {
             return Math.Max(x, y) switch {
+                -1 => Reset,
                 1 => healthyDefault ? Reset : HealthyStatusColor,
                 2 => WarnStatusColor,
                 _ => BadStatusColor,
