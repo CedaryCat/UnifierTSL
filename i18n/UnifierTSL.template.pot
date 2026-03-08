@@ -892,3 +892,123 @@ msgstr ""
 msgctxt "{0} is plugin name, {1} is old version, {2} is new version"
 msgid "Hot reload succeeded for plugin '{0}'. {1} -> {2}."
 msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\AnnotatedConsolePromptProvider.cs:39
+msgid "use Tab/Shift+Tab to rotate, Right to accept"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:18
+msgid "use Tab/Shift+Tab to rotate; Right to accept"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:19
+msgid "Enter on empty uses ghost; Ctrl+Enter keeps raw input."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:31
+msgid "Setup Listen Port"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:32
+msgid "Select the launcher listen port"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:58
+msgid "Setup Server Password"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:59
+msgid "Pick a short startup password (plain input)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:62
+msgid "Press Enter to keep your current input (can be empty)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:22
+#, csharp-format
+msgctxt "{0} is error reason"
+msgid "last error: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\TerminalLauncherConsoleHost.cs:159
+msgid "launcher.colorfulConsoleStatus is enabled, but the current terminal does not support vivid ANSI status rendering. Falling back to the plain status bar palette."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:226
+#, csharp-format
+msgctxt "{0} is current colorfulConsoleStatus value, {1} is desired colorfulConsoleStatus value"
+msgid "launcher.colorfulConsoleStatus changed from '{0}' to '{1}'. Status bar appearance has been refreshed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:232
+msgid "launcher.consoleStatusThresholds changed. Command-line status thresholds are now using the reloaded values."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:975
+#, csharp-format
+msgctxt "{0} is user input value for colorful console status"
+msgid "Invalid colorful console status value: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:978
+msgid "Expected value: true/false, on/off, 1/0, or use '--no-colorful' to disable."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:446
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is not an integer port."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:452
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is out of range (0~65535)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:458
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is occupied."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:463
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is available."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:534
+#, csharp-format
+msgctxt "{0} is password text length"
+msgid "password length: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:535
+#, csharp-format
+msgctxt "{0} is simple password quality level"
+msgid "strength hint : {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:536
+msgid "empty input is allowed for no-password mode"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:553
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not an integer port."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:557
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is out of range."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:561
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not available."
+msgstr ""

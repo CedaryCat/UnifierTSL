@@ -37,12 +37,12 @@
 - **USP (OTAPI.UnifiedServerProcess)** – 这是从 OTAPI 补丁演进而来的服务端运行时层。它提供按服务器实例隔离的上下文（`RootContext`），并暴露 TrProtocol 数据包模型、可 detour 的挂钩等运行时契约。Unifier 对 Terraria 状态的运行时访问都应经过这一层。
 - **UnifierTSL Core** – 启动器本身，加上编排、多服务器协调、日志记录、配置、模块加载和 `Plugin Host（插件宿主）`。
 - **模块和插件** – 你的程序集，暂存于 `plugins/` 下。它们可以是核心宿主或功能卫星，并且可以嵌入依赖项（托管、本机、NuGet）以便加载程序自动提取。
-- **控制台客户端/发布者** – 与运行时并存并共享相同子系统的工具项目。
+- **控制台客户端/发布者** – 与运行时并存并共享相同子系统的工具项目。控制台客户端现在会通过宿主协议渲染 ANSI 安全日志、语义化 readline 提示与实时状态栏。
 
 <a id="12-boot-flow"></a>
 ### 1.2 启动流程
 1. `Program.cs` 调用 `UnifierApi.HandleCommandLinePreRun(args)`，随后调用 `UnifierApi.PrepareRuntime(args)` 解析启动器覆盖参数、加载 `config/config.json`、合并启动设置并配置持久日志后端。
-2. `Initializer.Initialize()` 与 `UnifierApi.InitializeCore()` 设置全局服务（日志记录、事件中心、模块加载器）并初始化 `PluginOrchestrator`。
+2. `Initializer.Initialize()` 与 `UnifierApi.InitializeCore()` 设置全局服务（日志记录、事件中心、启动器控制台宿主、模块加载器）并初始化 `PluginOrchestrator`。
 3. 通过 `ModuleAssemblyLoader` 发现并预加载模块 — 暂存程序集并提取依赖 blob。
 4. 插件宿主（内置 .NET 宿主 + 从已加载模块中发现并通过 `[PluginHost(...)]` 标注的自定义宿主）负责发现、加载和初始化插件。
 5. `UnifierApi.CompleteLauncherInitialization()` 补全缺失的交互式端口/密码输入，同步最终生效的运行时快照，并触发 `EventHub.Launcher.InitializedEvent`。
@@ -77,18 +77,19 @@
 ```csharp
 public class EventHub
 {
-    public readonly LauncherEventHandler Launcher = new();
+    public readonly ConsoleLifecycleEventHandler Launcher = new();
     public readonly ChatHandler Chat = new();
     public readonly CoordinatorEventBridge Coordinator = new();
     public readonly GameEventBridge Game = new();
     public readonly NetplayEventBridge Netplay = new();
-    public readonly ServerEventBridge Server = new();
+    public readonly ServerConsoleEventBridge Server = new();
 }
 ```
 
 你可以访问如下事件：`UnifierApi.EventHub.Game.PreUpdate`、`UnifierApi.EventHub.Chat.MessageEvent` 等。
 
 一旦启动器参数最终确定（包括交互式提示），`UnifierApi.EventHub.Launcher.InitializedEvent` 就会从 `UnifierApi.CompleteLauncherInitialization()` 触发——就在 `UnifiedServerCoordinator.Launch(...)` 开始接受客户端之前。
+现在这个 `Launcher` 域也承担控制台生命周期职责：插件可以在启动输入开始前替换启动器控制台宿主，并为提示/状态 UI 注入内容。
 
 #### 事件提供者类型
 
@@ -249,6 +250,12 @@ public class ChatHandler
 }
 ```
 
+**ConsoleLifecycleEventHandler** (src/UnifierTSL/Events/Handlers/ConsoleLifecycleEventHandler.cs)：
+- `CreateLauncherConsoleHost`（可变）- 在交互式启动开始前替换启动器级控制台宿主
+- `BuildConsolePromptSummary`（可变）- 为语义化 readline 提示贡献摘要文本
+- `BuildConsoleStatusFrame`（可变）- 为启动器/服务器状态栏贡献内容
+- `InitializedEvent`（信息性）- 在交互式启动输入完成后触发
+
 **NetplayEventBridge** (src/UnifierTSL/Events/Handlers/NetplayEventBridge.cs)：
 - `ConnectEvent` (可取消) - 在客户端握手期间触发
 - `ReceiveFullClientInfoEvent`（可取消）- 收到客户端元数据后
@@ -266,8 +273,8 @@ public class ChatHandler
 - `Started`（信息性） - 协调器启动和启动日志记录完成后触发
 - `LastPlayerLeftEvent`（信息性） - 从 `ActiveConnections > 0` 过渡到 `0` 时触发
 
-**ServerEventBridge** (src/UnifierTSL/Events/Handlers/ServerEventBridge.cs)：
-- `CreateConsoleService` (可变) - 提供自定义控制台实现
+**ServerConsoleEventBridge** (src/UnifierTSL/Events/Handlers/ServerConsoleEventBridge.cs)：
+- `CreateServerConsoleService` (可变) - 提供自定义的每服务器控制台实现
 - `AddServer` / `RemoveServer`（信息性） - 服务器生命周期通知
 - `ServerListChanged`（信息性） - 聚合服务器列表更改
 
@@ -1115,7 +1122,7 @@ On.Terraria.NetplaySystemContext.StopBroadCasting = (_, _) => { };
 <a id="25-logging-infrastructure"></a>
 ### 2.5 日志基础设施
 
-日志系统是为了性能而构建的 - `LogEntry` 存在于堆栈中，元数据被池化，所有内容都通过具有服务器范围输出的可插拔写入器进行路由。`Logger` 实现还维护了一个有界的内存历史环形缓冲区，因此 sink 可以先回放最近日志再接入实时输出；启动器可附加异步持久化写入器，在后台消费并落到 `txt` 或 `sqlite` sink。
+日志系统是为了性能而构建的 - `LogEntry` 存在于堆栈中，元数据被池化，而写入器/过滤器/注入器组合则保存在不可变的 `LoggerPipeline` 快照里。`Logger` 还维护了一个有界的内存历史环形缓冲区，因此 sink 可以先回放最近日志再接入实时输出；启动器可附加异步持久化写入器，在后台消费并落到 `txt` 或 `sqlite` sink。历史缓存簿记仅在 `publishSync` 下进行，外部写入器 I/O 会在释放锁后执行，因此控制台或 sink 写入不会阻塞日志核心。
 
 <details>
 <summary><strong>展开日志基础设施实现细节深挖</strong></summary>
@@ -1127,25 +1134,35 @@ On.Terraria.NetplaySystemContext.StopBroadCasting = (_, _) => { };
 ```csharp
 public class Logger
 {
-    public ILogFilter Filter { get; set; } = EmptyLogFilter.Instance;
-    public ILogWriter Writer { get; set; } = ConsoleLogWriter.Instance;
-    private ImmutableArray<ILogMetadataInjector> MetadataInjectors = [];
+    private readonly LoggerPipeline pipeline;
+    private readonly ILogWriter localWriter;
+    private readonly Lock publishSync = new();
 
     public void Log(ref LogEntry entry)
     {
-        // 1. 应用元数据注入器
-        foreach (var injector in MetadataInjectors) {
+        LoggerPipelineSnapshot pipelineSnapshot = pipeline.Snapshot;
+
+        // 1. 从当前快照应用元数据注入器
+        foreach (var injector in pipelineSnapshot.MetadataInjectors) {
             injector.InjectMetadata(ref entry);
         }
 
         // 2. 过滤检查
-        if (!Filter.ShouldLog(in entry)) return;
+        if (!pipelineSnapshot.Filter.ShouldLog(in entry)) return;
 
-        // 3. 写入
-        Writer.Write(in entry);
+        // 3. 仅提交历史簿记
+        lock (publishSync) {
+            CommitToHistory(in entry);
+        }
+
+        // 4. 在释放历史锁后写入
+        localWriter.Write(in entry);
+        pipelineSnapshot.Writer.Write(in entry);
     }
 }
 ```
+
+`LoggerPipeline` 通过无锁快照替换来处理过滤器/写入器/注入器变更。`ServerConsoleLogWriter` 会在存在 `RemoteConsoleService` 时把服务器日志绑定到远程控制台，仅在必须回退到非远程控制台时才剥离 ANSI。
 
 **LogEntry** (src/UnifierTSL/Logging/LogEntry.cs) - 结构化日志事件：
 ```csharp
@@ -1487,7 +1504,7 @@ Output in Server1's console window with server-specific colors
 - 你得到一个 `ConfigHandle<T>` ，它可以让你 `RequestAsync` 、 `Overwrite` 、 `ModifyInMemory` ，并通过 `OnChangedAsync` 订阅热重载。文件访问由 `FileLockManager` 保护以防止损坏。
 - 启动器根配置与插件配置分离：`LauncherConfigManager` 专门管理 `config/config.json`，文件缺失时会自动创建，并且会明确忽略旧的根目录 `config.json`。
 - 启动器设置的启动优先级是 `config/config.json` -> CLI 覆盖 -> 缺失端口/密码时的交互式补全，并会把启动阶段生效快照回写到 `config/config.json`。启动完成后，对 `config/config.json` 的修改会应用到支持热重载的启动器设置。
-- 根配置热重载会应用 `launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、通过重绑监听器实现的 `launcher.listenPort`，以及 `launcher.statusHeaderThresholds`。
+- 根配置热重载会应用 `launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、通过重绑监听器实现的 `launcher.listenPort`、`launcher.colorfulConsoleStatus`，以及 `launcher.consoleStatusThresholds`。
 
 <a id="3-usp-integration-points"></a>
 ## 3. USP 集成点
@@ -1547,25 +1564,27 @@ Output in Server1's console window with server-specific colors
 4. 插件宿主找到符合条件的入口点并实例化 `IPlugin` 实现。
 5. `BeforeGlobalInitialize` 在每个插件上同步运行 - 使用它进行跨插件服务连接。
 6. `InitializeAsync` 为每个插件运行；你将获得先前的插件初始化任务，以便你可以等待你的依赖项。
-7. `InitializeCore` 接线 `EventHub`、完成插件宿主初始化，并应用已解析的启动器默认值（入服策略 + 待启动世界列表）。
-8. `CompleteLauncherInitialization` 提示输入仍缺失的端口/密码，同步最终运行时快照，并触发 `EventHub.Launcher.InitializedEvent`。
+7. `InitializeCore` 接线 `EventHub`、完成插件宿主初始化、安装启动器控制台宿主（默认是 `TerminalLauncherConsoleHost`），并应用已解析的启动器默认值（入服策略 + 待启动世界列表）。
+8. `CompleteLauncherInitialization` 通过启动器控制台宿主提示输入仍缺失的端口/密码，同步最终运行时快照，并触发 `EventHub.Launcher.InitializedEvent`。
 9. `UnifiedServerCoordinator.Launch(...)` 绑定共享监听器、启动已配置世界，并注册协调器运行循环。
 10. `StartRootConfigMonitoring()` 开始监视 `config/config.json`；随后 `Program.Run()` 会更新标题、记录启动成功日志，并触发 `EventHub.Coordinator.Started`。
 
 **关于启动器参数的一些注意事项**：
 - 语言优先级：`UTSL_LANGUAGE` env var 在 CLI 解析之前应用，并阻止稍后的 `-lang` / `-culture` / `-language` 覆盖。
-- `-server` / `-addserver` / `-autostart` 会在 `PrepareRuntime` 阶段解析服务器描述符；合并行为由 `-servermerge` 控制（默认 `replace`，可选 `overwrite`、`append`），并会持久化本次生效列表。
+- `-server` / `-addserver` / `-autostart` 会在 `PrepareRuntime` 阶段解析服务器描述符；合并行为由 `-servermerge` / `--server-merge` / `--auto-start-merge` 控制（默认 `replace`，可选 `overwrite`、`append`），并会持久化本次生效列表。
 - `-joinserver` 会在一个常驻解析器里设置启动器的低优先级默认入服模式（`random|rnd|r` 或 `first|f`）；后续根配置热重载可以直接替换该模式。
 - `-logmode` / `--log-mode` 选择持久日志后端（`txt`、`none` 或 `sqlite`）。
-- `UnifierApi.CompleteLauncherInitialization()` 提示输入任何丢失的端口/密码，然后触发 `EventHub.Launcher.InitializedEvent`。
+- `-colorful` / `--colorful` / `--no-colorful` 控制交互式启动器终端中的鲜艳 ANSI 状态渲染；不支持的终端会自动回退到朴素配色。
+- `UnifierApi.CompleteLauncherInitialization()` 会在宿主支持交互时通过语义化 readline 规格（ghost 文本、候选轮换、实时状态行）提示输入任何丢失的端口/密码，然后触发 `EventHub.Launcher.InitializedEvent`。
 - `Program.Run()` 启动协调器、启用根配置监视、记录成功，然后触发 `EventHub.Coordinator.Started`。
 
 <a id="52-runtime-operations"></a>
 ### 5.2 运行时操作
 - 事件处理程序处理横切问题——聊天审核、传输控制、数据包过滤等。
 - 配置处理对文件更改的反应，因此你可以调整设置而无需重新启动。
-- 启动器根配置监视会热应用密码变更、入服策略变更、追加式自动启动世界（仅热追加）、`launcher.listenPort` 的监听器重绑，以及 `launcher.statusHeaderThresholds`。
+- 启动器根配置监视会热应用密码变更、入服策略变更、追加式自动启动世界（仅热追加）、`launcher.listenPort` 的监听器重绑、`launcher.colorfulConsoleStatus`，以及 `launcher.consoleStatusThresholds`。
 - 协调器保持窗口标题更新，维护服务器列表，重放加入/离开序列，并且可以在不退出进程的前提下切换当前监听器。
+- 启动器和每服务器控制台现在会通过 `TerminalLauncherConsoleHost`、`RemoteConsoleService` 与控制台客户端协议交换语义化提示/渲染/状态帧，因此重连时可以回放缓存状态，而不必退回纯文本。
 - 日志元数据和有界历史环使你可以把任何日志条目追溯到其服务器、插件或子系统，并在不丢失最近上下文的前提下挂接新 sink。
 - 持久化后端（`txt` / `sqlite`）现在通过后台消费队列写入；`none` 会完全旁路持久化历史提交以保持热路径最小开销。
 

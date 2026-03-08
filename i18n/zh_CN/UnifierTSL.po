@@ -917,3 +917,123 @@ msgstr "无法为插件 '{0}' 加载热重载候选项。结果: {1}。"
 msgctxt "{0} is plugin name, {1} is old version, {2} is new version"
 msgid "Hot reload succeeded for plugin '{0}'. {1} -> {2}."
 msgstr "插件 '{0}' 热重载成功。{1} -> {2}。"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\AnnotatedConsolePromptProvider.cs:39
+msgid "use Tab/Shift+Tab to rotate, Right to accept"
+msgstr "使用 Tab/Shift+Tab 轮换，按右方向键接受"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:18
+msgid "use Tab/Shift+Tab to rotate; Right to accept"
+msgstr "使用 Tab/Shift+Tab 轮换；按右方向键接受"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:19
+msgid "Enter on empty uses ghost; Ctrl+Enter keeps raw input."
+msgstr "空输入时按 Enter 接受 ghost 提示；Ctrl+Enter 保留原始输入。"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:31
+msgid "Setup Listen Port"
+msgstr "设置监听端口"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:32
+msgid "Select the launcher listen port"
+msgstr "选择启动器监听端口"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:58
+msgid "Setup Server Password"
+msgstr "设置服务器密码"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:59
+msgid "Pick a short startup password (plain input)."
+msgstr "设置一个简短的启动密码（明文输入）。"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:62
+msgid "Press Enter to keep your current input (can be empty)."
+msgstr "按 Enter 保持当前输入（可以为空）。"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:22
+#, csharp-format
+msgctxt "{0} is error reason"
+msgid "last error: {0}"
+msgstr "上次错误：{0}"
+
+#: ..\..\..\src\UnifierTSL\CLI\TerminalLauncherConsoleHost.cs:159
+msgid "launcher.colorfulConsoleStatus is enabled, but the current terminal does not support vivid ANSI status rendering. Falling back to the plain status bar palette."
+msgstr "launcher.colorfulConsoleStatus 已启用，但当前终端不支持鲜艳 ANSI 状态渲染。将回退到纯色状态栏配色。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:226
+#, csharp-format
+msgctxt "{0} is current colorfulConsoleStatus value, {1} is desired colorfulConsoleStatus value"
+msgid "launcher.colorfulConsoleStatus changed from '{0}' to '{1}'. Status bar appearance has been refreshed."
+msgstr "launcher.colorfulConsoleStatus 已从 '{0}' 更改为 '{1}'。状态栏外观已刷新。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:232
+msgid "launcher.consoleStatusThresholds changed. Command-line status thresholds are now using the reloaded values."
+msgstr "launcher.consoleStatusThresholds 已更改。命令行状态阈值现已使用重载后的值。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:975
+#, csharp-format
+msgctxt "{0} is user input value for colorful console status"
+msgid "Invalid colorful console status value: {0}"
+msgstr "无效的 colorful console status 值：{0}"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:978
+msgid "Expected value: true/false, on/off, 1/0, or use '--no-colorful' to disable."
+msgstr "期望值：true/false、on/off、1/0，或使用 '--no-colorful' 禁用。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:446
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is not an integer port."
+msgstr "输入 '{0}' 不是整数端口。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:452
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is out of range (0~65535)."
+msgstr "输入 '{0}' 超出范围（0~65535）。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:458
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is occupied."
+msgstr "输入 '{0}' 已被占用。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:463
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is available."
+msgstr "输入 '{0}' 可用。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:534
+#, csharp-format
+msgctxt "{0} is password text length"
+msgid "password length: {0}"
+msgstr "密码长度：{0}"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:535
+#, csharp-format
+msgctxt "{0} is simple password quality level"
+msgid "strength hint : {0}"
+msgstr "强度提示：{0}"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:536
+msgid "empty input is allowed for no-password mode"
+msgstr "允许空输入以启用无密码模式"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:553
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not an integer port."
+msgstr "'{0}' 不是整数端口。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:557
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is out of range."
+msgstr "'{0}' 超出范围。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:561
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not available."
+msgstr "'{0}' 不可用。"
