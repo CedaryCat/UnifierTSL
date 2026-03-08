@@ -4,6 +4,7 @@ using Terraria.ID;
 using UnifiedServerProcess;
 using UnifierTSL.Localization.Terraria;
 using UnifierTSL.Network;
+using UnifierTSL.Performance;
 using UnifierTSL.Servers;
 
 namespace UnifierTSL
@@ -34,6 +35,7 @@ namespace UnifierTSL
             UnifiedNetworkPatcher.Load();
             UnifiedServerCoordinator.Load();
             ServerContext.Initialize();
+            PerformanceData.Initializer.Load();
 
             InitSets();
         }

@@ -423,9 +423,17 @@ namespace TShockAPI
 
             var tsPlayer = args.GetTSPlayer();
             var server = args.LocalReceiver.Server;
-            var setting = TShock.Config.GetServerSettings(server.Name);
 
+            var setting = TShock.Config.GlobalSettings;
             if (Utils.GetActivePlayerCount() + 1 > setting.MaxSlots &&
+                !tsPlayer.HasPermission(Permissions.reservedslot)) {
+                server.Log.Debug(GetString("GetDataHandlers / HandleGetSection rejected reserve slot"));
+                tsPlayer.Kick(setting.ServerFullReason, true, true);
+                args.HandleMode = PacketHandleMode.Cancel;
+            }
+
+            setting = TShock.Config.GetServerSettings(server.Name);
+            if (Utils.GetActivePlayerCount(server) + 1 > setting.MaxSlots &&
                 !tsPlayer.HasPermission(Permissions.reservedslot)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleGetSection rejected reserve slot"));
                 tsPlayer.Kick(setting.ServerFullReason, true, true);

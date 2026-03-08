@@ -265,13 +265,6 @@ namespace UnifierTSL.ConsoleClient.Shell
             int baseCompletionCount = inputState.CompletionCount;
             int displayCompletionIndex = inputState.CompletionIndex;
             int displayCompletionCount = inputState.CompletionCount;
-            if (render.Paging.Enabled && baseCompletionCount > 0) {
-                displayCompletionCount = render.Paging.TotalCandidateCount;
-                if (displayCompletionIndex > 0) {
-                    displayCompletionIndex = render.Paging.WindowOffset + displayCompletionIndex;
-                }
-            }
-
             if (baseCompletionCount > 0) {
                 string badge = $" [{displayCompletionIndex}/{displayCompletionCount}]";
                 int badgeWidth = TerminalCellWidth.Measure(badge);

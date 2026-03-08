@@ -4,7 +4,7 @@ using Terraria.Net.Sockets;
 
 namespace UnifierTSL.Network
 {
-    public sealed class LocalClientSender(int clientId) : SocketSender()
+    public sealed class LocalClientSender(int clientId) : SocketSender(clientId)
     {
         public readonly int ID = clientId;
         public RemoteClient Client => UnifiedServerCoordinator.globalClients[ID];

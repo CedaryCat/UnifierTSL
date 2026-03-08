@@ -7,8 +7,8 @@ namespace UnifierTSL.ConsoleClient.Shared.ConsolePrompting
     {
         public static readonly ConsoleRenderMapOptions Unpaged = new(
             EnablePaging: false,
-            PageSize: 30,
-            PrefetchThreshold: 5);
+            PageSize: 80,
+            PrefetchThreshold: 20);
     }
 
     public static class ConsoleRenderMapper
@@ -78,11 +78,11 @@ namespace UnifierTSL.ConsoleClient.Shared.ConsolePrompting
 
             int selectedGlobal = -1;
             int offset;
-            if (state.CompletionIndex <= 0 || state.CompletionCount <= 0) {
+            if (state.CompletionIndex <= 0) {
                 offset = 0;
             }
             else {
-                selectedGlobal = Math.Clamp(requestedOffset + state.CompletionIndex - 1, 0, total - 1);
+                selectedGlobal = Math.Clamp(state.CompletionIndex - 1, 0, total - 1);
                 int local = selectedGlobal - requestedOffset;
                 if (local <= threshold && requestedOffset > 0) {
                     offset = Math.Max(0, selectedGlobal - threshold);

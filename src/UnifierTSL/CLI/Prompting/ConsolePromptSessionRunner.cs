@@ -11,8 +11,8 @@ namespace UnifierTSL.CLI.Prompting
         public static readonly ConsoleRenderMapOptions LocalRenderOptions = ConsoleRenderMapOptions.Unpaged;
         public static readonly ConsoleRenderMapOptions PagedRenderOptions = new(
             EnablePaging: true,
-            PageSize: 30,
-            PrefetchThreshold: 5);
+            PageSize: 80,
+            PrefetchThreshold: 20);
 
         private readonly ConsolePromptCompiler compiler;
         private readonly ConsoleRenderMapOptions renderOptions;

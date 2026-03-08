@@ -207,6 +207,9 @@ namespace UnifierTSL.ConsoleClient.Shell
                 statusScrollOffset = 0;
                 ResetVirtualCaretBlinkLocked();
                 lineEditorSession.BeginNewLine(render.Payload.GhostText, render.Payload.EnableCtrlEnterBypassGhostFallback);
+                if (render.Paging.Enabled) {
+                    lineEditorSession.SyncPagedCompletionWindow(render.Paging);
+                }
                 DrawFooter();
                 NotifyInputStateChanged(onInputStateChanged);
             }
@@ -285,7 +288,7 @@ namespace UnifierTSL.ConsoleClient.Shell
                 }
 
                 if (currentContext.Paging.Enabled) {
-                    lineEditorSession.SyncPagedCompletionWindow(currentContext.Paging.SelectedWindowIndex);
+                    lineEditorSession.SyncPagedCompletionWindow(currentContext.Paging);
                 }
 
                 DrawFooter();
@@ -462,15 +465,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             }
 
             try {
-                LineEditorRenderState inputState = lineEditorSession.GetRenderState();
-                ConsoleInputState state = new() {
-                    Purpose = currentContext.Payload.Purpose,
-                    InputText = inputState.Text ?? string.Empty,
-                    CursorIndex = inputState.CursorIndex,
-                    CompletionIndex = inputState.CompletionIndex,
-                    CompletionCount = inputState.CompletionCount,
-                    CandidateWindowOffset = currentContext.Paging.WindowOffset,
-                };
+                ConsoleInputState state = lineEditorSession.BuildInputState(currentContext.Payload.Purpose);
                 onInputStateChanged(state);
             }
             catch {
@@ -584,6 +579,12 @@ namespace UnifierTSL.ConsoleClient.Shell
         }
 
         private static IReadOnlyList<string> ResolveSuggestions(ConsoleRenderSnapshot render, string input) {
+            if (render.Paging.Enabled) {
+                return ConsoleTextSetOps.DistinctPreserveOrder(render.Payload.Candidates
+                    .Where(static item => item is not null && !string.IsNullOrWhiteSpace(item.Value))
+                    .Select(static item => item.Value));
+            }
+
             List<string> orderedValues = [];
             if (!string.IsNullOrWhiteSpace(render.Payload.GhostText)) {
                 orderedValues.Add(render.Payload.GhostText);
@@ -595,10 +596,6 @@ namespace UnifierTSL.ConsoleClient.Shell
 
             IReadOnlyList<string> ordered = ConsoleTextSetOps.DistinctPreserveOrder(orderedValues);
             if (string.IsNullOrEmpty(input)) {
-                return ordered;
-            }
-
-            if (render.Paging.Enabled) {
                 return ordered;
             }
 

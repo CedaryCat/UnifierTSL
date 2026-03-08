@@ -1,7 +1,7 @@
-using Microsoft.Xna.Framework;
-using NuGet.Protocol.Plugins;
+using System.Collections.Concurrent;
 using UnifierTSL.ConsoleClient.Shared.ConsolePrompting;
 using UnifierTSL.Events.Handlers;
+using UnifierTSL.Performance;
 using UnifierTSL.Servers;
 using static UnifierTSL.ConsoleClient.Shell.AnsiColorCodec;
 
@@ -12,7 +12,19 @@ namespace UnifierTSL.CLI.Status
         private const string HealthyStatusColor = "\u001b[42m";
         private const string WarnStatusColor = "\u001b[48;5;208m";
         private const string BadStatusColor = "\u001b[101m";
+        private static readonly TimeSpan LauncherBandwidthWindow = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan LauncherBandwidthRetention = TimeSpan.FromSeconds(2);
+        private static readonly ConcurrentQueue<LauncherNetworkSample> LauncherNetworkSamples = new();
         private static readonly string BreathIndicatorFramesSerialized = ConsoleStatusIndicatorFramesCodec.Serialize(["◉", "◎", "◉", "○"]);
+
+        private readonly record struct LauncherNetworkSample(
+            DateTimeOffset TimestampUtc,
+            ulong ReceivedBytesCount,
+            ulong SentBytesCount);
+
+        private readonly record struct LauncherBandwidthSnapshot(
+            double UpKbps,
+            double DownKbps);
 
         public static Func<ConsoleStatusResolveContext, ConsoleStatusFrame?> CreateBaseline(ServerContext? server) {
             return context => Compose(server, context);
@@ -33,7 +45,7 @@ namespace UnifierTSL.CLI.Status
             bool useColorfulStatus = UnifierApi.UseColorfulConsoleStatus();
 
             string text = server is null
-                ? ComposeLauncherMonitor(frameNumber, thresholds, useColorfulStatus)
+                ? ComposeLauncherMonitor(context.SampleUtc, thresholds, useColorfulStatus)
                 : ComposeServerMonitor(server, frameNumber, thresholds, useColorfulStatus);
 
             ConsoleStatusFrame frame = new(
@@ -69,20 +81,15 @@ namespace UnifierTSL.CLI.Status
             ServerContext server,
             long frame,
             ConsoleStatusThresholds thresholds) {
-            int seed = Math.Abs(server.Name.GetHashCode(StringComparison.Ordinal));
-            double phase = (frame * 0.17) + (seed * 0.01);
-            phase /= 10;
 
-            double ups = thresholds.TargetUps
-                + (Math.Sin(phase) * 8.5)
-                + (Math.Sin((phase * 2.3) + 0.6) * 4.0);
-            double upsOffset = ups - thresholds.TargetUps;
-            double util = upsOffset > 2
-                ? 1
-                : Math.Min(1, MathHelper.Lerp(0.3f, 1f, (float)Math.Clamp(upsOffset, -2, 2) / 4f + 0.5f) + Math.Sin(phase) * 0.05);
-            double upKbps = 48 + Math.Abs(Math.Sin(phase * 0.73)) * 30;
-            double downKbps = 64 + Math.Abs(Math.Cos(phase * 0.81)) * 42;
-            int online = Math.Max(0, server.ActivePlayers);
+            var perfData = PerformanceData.Queries.GetSnapshot(server, TimeSpan.FromSeconds(1));
+            var ups = perfData.TicksPerSecond;
+            var util = perfData.BusyUtilization;
+
+            double upKbps = perfData.SentBytesCount / 1000d;
+            double downKbps = perfData.ReceivedBytesCount / 1000d;
+
+            int online = Math.Max(0, server.ActivePlayerCount);
 
             int upsL = UpsLevel(ups, thresholds);
             int utilL = UtilLevel(util, thresholds);
@@ -122,41 +129,36 @@ namespace UnifierTSL.CLI.Status
             ServerContext server,
             long frame,
             ConsoleStatusThresholds thresholds) {
-            int seed = Math.Abs(server.Name.GetHashCode(StringComparison.Ordinal));
-            double phase = (frame * 0.17) + (seed * 0.01);
-            phase /= 10;
 
-            double ups = thresholds.TargetUps
-                + (Math.Sin(phase) * 8.5)
-                + (Math.Sin((phase * 2.3) + 0.6) * 4.0);
-            double upsOffset = ups - thresholds.TargetUps;
-            double util = upsOffset > 2
-                ? 1
-                : Math.Min(1, MathHelper.Lerp(0.3f, 1f, (float)Math.Clamp(upsOffset, -2, 2) / 4f + 0.5f) + Math.Sin(phase) * 0.05);
-            double upKbps = 48 + Math.Abs(Math.Sin(phase * 0.73)) * 30;
-            double downKbps = 64 + Math.Abs(Math.Cos(phase * 0.81)) * 42;
-            int online = Math.Max(0, server.ActivePlayers);
+            var perfData = PerformanceData.Queries.GetSnapshot(server, TimeSpan.FromSeconds(1));
+            var ups = perfData.TicksPerSecond;
+            var util = perfData.BusyUtilization;
+
+            double upKbps = perfData.SentBytesCount / 1000d;
+            double downKbps = perfData.ReceivedBytesCount / 1000d;
+
+            int online = Math.Max(0, server.ActivePlayerCount);
 
             return $"[online:{online}/{server.Main.maxNetPlayers}] "
                 + $"[tps:{ups:0.0}|util:{FormatUtil(util)}] "
-                + $"[up:{upKbps:0.0}kb/s down:{downKbps:0.0}kb/s]";
+                + $"[↑{upKbps:0.0}kb/s ↓{downKbps:0.0}kb/s]";
         }
 
         private static string ComposeLauncherMonitor(
-            long frame,
+            DateTimeOffset sampleUtc,
             ConsoleStatusThresholds thresholds,
             bool useColorfulStatus) {
             return useColorfulStatus
-                ? ComposeColorfulLauncherMonitor(frame, thresholds)
-                : ComposePlainLauncherMonitor(frame, thresholds);
+                ? ComposeColorfulLauncherMonitor(sampleUtc, thresholds)
+                : ComposePlainLauncherMonitor(sampleUtc, thresholds);
         }
 
         private static string ComposeColorfulLauncherMonitor(
-            long frame,
+            DateTimeOffset sampleUtc,
             ConsoleStatusThresholds thresholds) {
-            double phase = frame * 0.14;
-            double upKbps = 40 + Math.Abs(Math.Sin(phase * 0.71)) * 32;
-            double downKbps = 52 + Math.Abs(Math.Cos(phase * 0.88)) * 45;
+            LauncherBandwidthSnapshot bandwidth = SampleLauncherBandwidth(sampleUtc);
+            double upKbps = bandwidth.UpKbps;
+            double downKbps = bandwidth.DownKbps;
 
             int online = Math.Max(0, UnifiedServerCoordinator.ActiveConnections);
             int onlineL = OnlineLevel(online, Terraria.Main.maxPlayers, thresholds);
@@ -179,16 +181,73 @@ namespace UnifierTSL.CLI.Status
         }
 
         private static string ComposePlainLauncherMonitor(
-            long frame,
+            DateTimeOffset sampleUtc,
             ConsoleStatusThresholds thresholds) {
-            double phase = frame * 0.14;
-            double upKbps = 40 + Math.Abs(Math.Sin(phase * 0.71)) * 32;
-            double downKbps = 52 + Math.Abs(Math.Cos(phase * 0.88)) * 45;
+            LauncherBandwidthSnapshot bandwidth = SampleLauncherBandwidth(sampleUtc);
+            double upKbps = bandwidth.UpKbps;
+            double downKbps = bandwidth.DownKbps;
+
             int online = Math.Max(0, UnifiedServerCoordinator.ActiveConnections);
 
             return $"[online:{online}/{Terraria.Main.maxPlayers}] "
-                + $"[up:{upKbps:0.0}kb/s down:{downKbps:0.0}kb/s]";
+                + $"[↑{upKbps:0.0}kb/s ↓{downKbps:0.0}kb/s]";
         }
+
+        private static LauncherBandwidthSnapshot SampleLauncherBandwidth(DateTimeOffset sampleUtc) {
+            LauncherNetworkSample currentSample = new(
+                TimestampUtc: sampleUtc,
+                ReceivedBytesCount: PerformanceData.Network.ReceivedBytesCount,
+                SentBytesCount: PerformanceData.Network.SentBytesCount);
+
+            LauncherNetworkSamples.Enqueue(currentSample);
+            PruneLauncherNetworkSamples(sampleUtc - LauncherBandwidthRetention);
+
+            DateTimeOffset windowStart = sampleUtc - LauncherBandwidthWindow;
+            bool hasWindowSample = false;
+            LauncherNetworkSample oldestWindowSample = default;
+            LauncherNetworkSample latestWindowSample = default;
+
+            foreach (LauncherNetworkSample sample in LauncherNetworkSamples) {
+                if (sample.TimestampUtc < windowStart) {
+                    continue;
+                }
+
+                if (!hasWindowSample) {
+                    oldestWindowSample = sample;
+                    latestWindowSample = sample;
+                    hasWindowSample = true;
+                    continue;
+                }
+
+                latestWindowSample = sample;
+            }
+
+            if (!hasWindowSample || latestWindowSample.TimestampUtc <= oldestWindowSample.TimestampUtc) {
+                return default;
+            }
+
+            double elapsedSeconds = (latestWindowSample.TimestampUtc - oldestWindowSample.TimestampUtc).TotalSeconds;
+            if (elapsedSeconds <= 0d) {
+                return default;
+            }
+
+            ulong sentBytesDelta = SaturatingSubtract(latestWindowSample.SentBytesCount, oldestWindowSample.SentBytesCount);
+            ulong receivedBytesDelta = SaturatingSubtract(latestWindowSample.ReceivedBytesCount, oldestWindowSample.ReceivedBytesCount);
+
+            return new(
+                UpKbps: sentBytesDelta / elapsedSeconds / 1000d,
+                DownKbps: receivedBytesDelta / elapsedSeconds / 1000d);
+        }
+
+        private static void PruneLauncherNetworkSamples(DateTimeOffset retentionCutoffUtc) {
+            while (LauncherNetworkSamples.TryPeek(out LauncherNetworkSample sample) &&
+                sample.TimestampUtc < retentionCutoffUtc) {
+                LauncherNetworkSamples.TryDequeue(out _);
+            }
+        }
+
+        private static ulong SaturatingSubtract(ulong latest, ulong oldest)
+            => latest >= oldest ? latest - oldest : 0;
 
         private static string FormatUtil(double util) {
             return util >= 1 ? "1.00" : $"{util:0.0%}";

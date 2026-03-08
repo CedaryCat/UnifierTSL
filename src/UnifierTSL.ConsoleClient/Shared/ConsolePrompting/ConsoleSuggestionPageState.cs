@@ -8,9 +8,9 @@ namespace UnifierTSL.ConsoleClient.Shared.ConsolePrompting
 
         public int WindowOffset { get; init; }
 
-        public int PageSize { get; init; } = 30;
+        public int PageSize { get; init; } = 80;
 
-        public int PrefetchThreshold { get; init; } = 5;
+        public int PrefetchThreshold { get; init; } = 20;
 
         public int SelectedWindowIndex { get; init; }
     }

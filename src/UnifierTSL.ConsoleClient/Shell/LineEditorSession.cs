@@ -48,58 +48,94 @@ namespace UnifierTSL.ConsoleClient.Shell
         private bool completionActive;
         private List<string> completionCandidates = [];
         private int completionIndex = -1;
+        private bool pagingActive;
+        private int pagedTotalCandidateCount;
+        private int pagedPageSize = 1;
+        private int pagedPrefetchThreshold;
+        private int pagedActualWindowOffset;
+        private int pagedRequestedWindowOffset;
+        private int pagedGlobalCompletionIndex;
 
         private string staticGhostText = string.Empty;
         private bool enableCtrlEnterBypassGhostFallback = true;
         private Func<string, IReadOnlyList<string>> suggestionProvider = _ => Array.Empty<string>();
 
-        public void SetSuggestionProvider(Func<string, IReadOnlyList<string>> provider)
-        {
+        public void SetSuggestionProvider(Func<string, IReadOnlyList<string>> provider) {
             suggestionProvider = provider ?? (_ => Array.Empty<string>());
         }
 
-        public void BeginNewLine(string? ghostText, bool ctrlEnterBypassGhostFallback = true)
-        {
+        public void BeginNewLine(string? ghostText, bool ctrlEnterBypassGhostFallback = true) {
             buffer.Clear();
             cursorIndex = 0;
             staticGhostText = ghostText ?? string.Empty;
             enableCtrlEnterBypassGhostFallback = ctrlEnterBypassGhostFallback;
+            ResetPagingState();
             ResetCompletion();
             ResetHistoryNavigation();
         }
 
-        public void SyncPagedCompletionWindow(int selectedWindowIndex)
-        {
-            if (selectedWindowIndex <= 0) {
-                ResetCompletion();
+        public void SyncPagedCompletionWindow(ConsoleSuggestionPageState pagingState) {
+            ArgumentNullException.ThrowIfNull(pagingState);
+
+            if (!pagingState.Enabled) {
+                ClearPagedCompletionWindow();
                 return;
             }
+
+            pagingActive = true;
+            pagedTotalCandidateCount = Math.Max(0, pagingState.TotalCandidateCount);
+            pagedPageSize = Math.Max(1, pagingState.PageSize);
+            pagedPrefetchThreshold = Math.Clamp(pagingState.PrefetchThreshold, 0, pagedPageSize - 1);
+            int maxOffset = ResolveMaxPagedWindowOffset(pagedTotalCandidateCount, pagedPageSize);
+            pagedActualWindowOffset = Math.Clamp(pagingState.WindowOffset, 0, maxOffset);
+            pagedRequestedWindowOffset = pagedActualWindowOffset;
 
             string currentText = buffer.ToString();
-            List<string> suggestions = ResolveSuggestions(currentText);
-            if (suggestions.Count == 0) {
-                ResetCompletion();
+            completionCandidates = ResolveSuggestions(currentText);
+
+            if (pagingState.SelectedWindowIndex <= 0 || pagedTotalCandidateCount == 0) {
+                completionActive = false;
+                completionIndex = -1;
+                pagedGlobalCompletionIndex = 0;
                 return;
             }
 
-            completionCandidates = suggestions;
-            completionIndex = Math.Clamp(selectedWindowIndex - 1, 0, completionCandidates.Count - 1);
             completionActive = true;
+            pagedGlobalCompletionIndex = Math.Clamp(
+                pagedActualWindowOffset + pagingState.SelectedWindowIndex,
+                1,
+                pagedTotalCandidateCount);
+            SyncLocalCompletionIndex();
         }
 
-        public LineEditorRenderState GetRenderState()
-        {
+        public LineEditorRenderState GetRenderState() {
             string text = buffer.ToString();
+            int completionSelectionCount = completionActive ? GetCompletionSelectionCount() : 0;
             return new LineEditorRenderState(
                 Text: text,
                 CursorIndex: cursorIndex,
                 GhostSuffix: BuildGhostSuffix(text),
-                CompletionIndex: completionIndex >= 0 ? completionIndex + 1 : 0,
-                CompletionCount: completionCandidates.Count);
+                CompletionIndex: completionSelectionCount > 0 ? GetSelectedCompletionOrdinal() : 0,
+                CompletionCount: completionSelectionCount);
         }
 
-        public LineEditorInputAction ApplyKey(ConsoleKeyInfo key)
-        {
+        public ConsoleInputState BuildInputState(ConsoleInputPurpose purpose) {
+            string text = buffer.ToString();
+            int completionSelectionCount = completionActive ? GetCompletionSelectionCount() : 0;
+            int completionSelectionIndex = completionSelectionCount > 0 ? GetSelectedCompletionOrdinal() : 0;
+            return new ConsoleInputState {
+                Purpose = purpose,
+                InputText = text,
+                CursorIndex = cursorIndex,
+                CompletionIndex = completionSelectionIndex,
+                CompletionCount = completionSelectionCount,
+                CandidateWindowOffset = pagingActive && completionSelectionIndex > 0
+                    ? pagedRequestedWindowOffset
+                    : 0,
+            };
+        }
+
+        public LineEditorInputAction ApplyKey(ConsoleKeyInfo key) {
             if ((key.Modifiers & ConsoleModifiers.Control) != 0) {
                 return HandleControlKey(key.Key);
             }
@@ -120,8 +156,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             };
         }
 
-        private LineEditorInputAction HandleControlKey(ConsoleKey key)
-        {
+        private LineEditorInputAction HandleControlKey(ConsoleKey key) {
             return key switch {
                 ConsoleKey.Enter => SubmitCurrentLine(forceRawSubmit: enableCtrlEnterBypassGhostFallback),
                 ConsoleKey.A => MoveCursorTo(0),
@@ -134,8 +169,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             };
         }
 
-        private LineEditorInputAction ClearLine()
-        {
+        private LineEditorInputAction ClearLine() {
             if (buffer.Length == 0) {
                 return LineEditorInputAction.None;
             }
@@ -147,8 +181,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private LineEditorInputAction HandlePrintableKey(ConsoleKeyInfo key)
-        {
+        private LineEditorInputAction HandlePrintableKey(ConsoleKeyInfo key) {
             if (char.IsControl(key.KeyChar) || (key.Modifiers & ConsoleModifiers.Alt) != 0) {
                 return LineEditorInputAction.None;
             }
@@ -160,8 +193,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private LineEditorInputAction HandleBackspace()
-        {
+        private LineEditorInputAction HandleBackspace() {
             if (cursorIndex == 0 || buffer.Length == 0) {
                 return LineEditorInputAction.None;
             }
@@ -173,8 +205,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private LineEditorInputAction HandleDelete()
-        {
+        private LineEditorInputAction HandleDelete() {
             if (cursorIndex >= buffer.Length) {
                 return LineEditorInputAction.None;
             }
@@ -185,8 +216,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private LineEditorInputAction HandleRightArrow()
-        {
+        private LineEditorInputAction HandleRightArrow() {
             if (cursorIndex == buffer.Length && TryAcceptCompletionCandidate()) {
                 return LineEditorInputAction.Redraw;
             }
@@ -194,8 +224,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return MoveCursor(1);
         }
 
-        private LineEditorInputAction MoveCursor(int delta)
-        {
+        private LineEditorInputAction MoveCursor(int delta) {
             int target = Math.Clamp(cursorIndex + delta, 0, buffer.Length);
             if (target == cursorIndex) {
                 return LineEditorInputAction.None;
@@ -206,8 +235,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private LineEditorInputAction MoveCursorTo(int target)
-        {
+        private LineEditorInputAction MoveCursorTo(int target) {
             int bounded = Math.Clamp(target, 0, buffer.Length);
             if (bounded == cursorIndex) {
                 return LineEditorInputAction.None;
@@ -218,8 +246,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private LineEditorInputAction HandleHistoryUp()
-        {
+        private LineEditorInputAction HandleHistoryUp() {
             if (history.Count == 0) {
                 return LineEditorInputAction.None;
             }
@@ -241,8 +268,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private LineEditorInputAction HandleHistoryDown()
-        {
+        private LineEditorInputAction HandleHistoryDown() {
             if (history.Count == 0 || historyIndex == -1) {
                 return LineEditorInputAction.None;
             }
@@ -261,8 +287,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private LineEditorInputAction HandleAutocomplete(bool reverse)
-        {
+        private LineEditorInputAction HandleAutocomplete(bool reverse) {
             if (cursorIndex != buffer.Length) {
                 return LineEditorInputAction.None;
             }
@@ -271,35 +296,46 @@ namespace UnifierTSL.ConsoleClient.Shell
                 return LineEditorInputAction.None;
             }
 
-            if (completionIndex < 0 || completionIndex >= completionCandidates.Count) {
-                completionIndex = reverse ? completionCandidates.Count - 1 : 0;
-            }
-            else {
-                completionIndex = reverse
-                    ? (completionIndex - 1 + completionCandidates.Count) % completionCandidates.Count
-                    : (completionIndex + 1) % completionCandidates.Count;
-            }
-
-            completionActive = true;
-            return LineEditorInputAction.Autocomplete;
-        }
-
-        private LineEditorInputAction CycleCompletion(bool reverse)
-        {
-            if (!completionActive || completionCandidates.Count == 0) {
+            int completionCount = GetCompletionSelectionCount();
+            if (completionCount <= 0) {
                 ResetCompletion();
                 return LineEditorInputAction.None;
             }
 
-            completionIndex = reverse
-                ? (completionIndex - 1 + completionCandidates.Count) % completionCandidates.Count
-                : (completionIndex + 1) % completionCandidates.Count;
+            int currentSelection = GetSelectedCompletionOrdinal();
+            int nextSelection = currentSelection <= 0 || currentSelection > completionCount
+                ? reverse ? completionCount : 1
+                : reverse
+                    ? (currentSelection - 2 + completionCount) % completionCount + 1
+                    : currentSelection % completionCount + 1;
 
+            SetSelectedCompletionOrdinal(nextSelection);
             return LineEditorInputAction.Autocomplete;
         }
 
-        private LineEditorInputAction CancelCompletion()
-        {
+        private LineEditorInputAction CycleCompletion(bool reverse) {
+            if (!completionActive) {
+                return LineEditorInputAction.None;
+            }
+
+            int completionCount = GetCompletionSelectionCount();
+            if (completionCount <= 0) {
+                ResetCompletion();
+                return LineEditorInputAction.None;
+            }
+
+            int currentSelection = GetSelectedCompletionOrdinal();
+            int nextSelection = currentSelection <= 0 || currentSelection > completionCount
+                ? reverse ? completionCount : 1
+                : reverse
+                    ? (currentSelection - 2 + completionCount) % completionCount + 1
+                    : currentSelection % completionCount + 1;
+
+            SetSelectedCompletionOrdinal(nextSelection);
+            return LineEditorInputAction.Autocomplete;
+        }
+
+        private LineEditorInputAction CancelCompletion() {
             if (!completionActive) {
                 return LineEditorInputAction.None;
             }
@@ -308,8 +344,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Redraw;
         }
 
-        private bool EnsureCompletionCandidates()
-        {
+        private bool EnsureCompletionCandidates() {
             string currentText = buffer.ToString();
             List<string> suggestions = ResolveSuggestions(currentText);
 
@@ -319,19 +354,19 @@ namespace UnifierTSL.ConsoleClient.Shell
             }
 
             if (completionActive && suggestions.SequenceEqual(completionCandidates, StringComparer.OrdinalIgnoreCase)) {
-                if (completionIndex >= 0 && completionIndex < completionCandidates.Count) {
+                SyncLocalCompletionIndex();
+                if ((pagingActive && pagedGlobalCompletionIndex > 0)
+                    || completionIndex >= 0 && completionIndex < completionCandidates.Count) {
                     return true;
                 }
             }
 
             completionCandidates = suggestions;
-            completionIndex = -1;
-            completionActive = true;
+            SyncLocalCompletionIndex();
             return true;
         }
 
-        private bool TryAcceptCompletionCandidate()
-        {
+        private bool TryAcceptCompletionCandidate() {
             string currentText = buffer.ToString();
             string? candidate = GetCandidateForDisplay(currentText, includePreviewCandidate: true);
             if (string.IsNullOrEmpty(candidate)) {
@@ -348,8 +383,7 @@ namespace UnifierTSL.ConsoleClient.Shell
             return true;
         }
 
-        private string BuildGhostSuffix(string currentText)
-        {
+        private string BuildGhostSuffix(string currentText) {
             if (cursorIndex != buffer.Length) {
                 return string.Empty;
             }
@@ -370,14 +404,17 @@ namespace UnifierTSL.ConsoleClient.Shell
             return candidate[currentText.Length..];
         }
 
-        private string? GetCandidateForDisplay(string currentText, bool includePreviewCandidate)
-        {
-            if (string.IsNullOrEmpty(currentText) && !string.IsNullOrWhiteSpace(staticGhostText)) {
-                return staticGhostText;
-            }
-
+        private string? GetCandidateForDisplay(string currentText, bool includePreviewCandidate) {
             if (completionActive && completionIndex >= 0 && completionIndex < completionCandidates.Count) {
                 return completionCandidates[completionIndex];
+            }
+
+            if (completionActive && pagingActive && pagedGlobalCompletionIndex > 0) {
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(currentText) && !string.IsNullOrWhiteSpace(staticGhostText)) {
+                return staticGhostText;
             }
 
             if (!includePreviewCandidate) {
@@ -392,13 +429,129 @@ namespace UnifierTSL.ConsoleClient.Shell
             return preview[0];
         }
 
-        private List<string> ResolveSuggestions(string currentText)
-        {
+        private List<string> ResolveSuggestions(string currentText) {
             return [.. ConsoleTextSetOps.DistinctPreserveOrder(suggestionProvider(currentText))];
         }
 
-        private LineEditorInputAction SubmitCurrentLine(bool forceRawSubmit = false)
-        {
+        private void ClearPagedCompletionWindow() {
+            if (!pagingActive) {
+                return;
+            }
+
+            bool hadResolvedSelection = completionActive
+                && completionIndex >= 0
+                && completionIndex < completionCandidates.Count;
+            ResetPagingState();
+            if (!hadResolvedSelection) {
+                completionActive = false;
+                completionIndex = -1;
+            }
+        }
+
+        private int GetCompletionSelectionCount() {
+            return pagingActive
+                ? pagedTotalCandidateCount
+                : completionCandidates.Count;
+        }
+
+        private int GetSelectedCompletionOrdinal() {
+            if (!completionActive) {
+                return 0;
+            }
+
+            return pagingActive
+                ? pagedGlobalCompletionIndex
+                : completionIndex >= 0
+                    ? completionIndex + 1
+                    : 0;
+        }
+
+        private void SetSelectedCompletionOrdinal(int selectionOrdinal) {
+            int completionCount = GetCompletionSelectionCount();
+            if (completionCount <= 0) {
+                ResetCompletion();
+                return;
+            }
+
+            int normalizedSelection = Math.Clamp(selectionOrdinal, 1, completionCount);
+            completionActive = true;
+            if (pagingActive) {
+                pagedGlobalCompletionIndex = normalizedSelection;
+                pagedRequestedWindowOffset = ResolvePagedWindowOffset(
+                    selectionGlobalIndex: normalizedSelection - 1,
+                    requestedOffset: pagedRequestedWindowOffset,
+                    totalCandidateCount: pagedTotalCandidateCount,
+                    pageSize: pagedPageSize,
+                    prefetchThreshold: pagedPrefetchThreshold);
+            }
+
+            completionIndex = pagingActive
+                ? ResolvePagedLocalCompletionIndex(normalizedSelection)
+                : normalizedSelection - 1;
+        }
+
+        private void SyncLocalCompletionIndex() {
+            if (!completionActive) {
+                completionIndex = -1;
+                return;
+            }
+
+            if (pagingActive) {
+                completionIndex = ResolvePagedLocalCompletionIndex(pagedGlobalCompletionIndex);
+                return;
+            }
+
+            if (completionIndex >= 0 && completionIndex < completionCandidates.Count) {
+                return;
+            }
+
+            completionIndex = -1;
+        }
+
+        private int ResolvePagedLocalCompletionIndex(int selectionOrdinal) {
+            if (!pagingActive || selectionOrdinal <= 0) {
+                return -1;
+            }
+
+            int localIndex = selectionOrdinal - pagedActualWindowOffset - 1;
+            return localIndex >= 0 && localIndex < completionCandidates.Count
+                ? localIndex
+                : -1;
+        }
+
+        private static int ResolveMaxPagedWindowOffset(int totalCandidateCount, int pageSize) {
+            return Math.Max(0, totalCandidateCount - Math.Max(1, pageSize));
+        }
+
+        private static int ResolvePagedWindowOffset(
+            int selectionGlobalIndex,
+            int requestedOffset,
+            int totalCandidateCount,
+            int pageSize,
+            int prefetchThreshold) {
+            if (selectionGlobalIndex < 0 || totalCandidateCount <= 0) {
+                return 0;
+            }
+
+            int boundedPageSize = Math.Max(1, pageSize);
+            int threshold = Math.Clamp(prefetchThreshold, 0, boundedPageSize - 1);
+            int maxOffset = ResolveMaxPagedWindowOffset(totalCandidateCount, boundedPageSize);
+            int boundedRequestedOffset = Math.Clamp(requestedOffset, 0, maxOffset);
+            int boundedSelection = Math.Clamp(selectionGlobalIndex, 0, totalCandidateCount - 1);
+            int local = boundedSelection - boundedRequestedOffset;
+            if (local <= threshold && boundedRequestedOffset > 0) {
+                return Math.Max(0, boundedSelection - threshold);
+            }
+
+            int forwardThreshold = boundedPageSize - threshold - 1;
+            if (local >= forwardThreshold && boundedRequestedOffset < maxOffset) {
+                return Math.Min(maxOffset, boundedSelection - forwardThreshold);
+            }
+
+            return boundedRequestedOffset;
+        }
+
+        private LineEditorInputAction SubmitCurrentLine(bool forceRawSubmit = false) {
             string line = buffer.ToString();
             if (!string.IsNullOrWhiteSpace(line)) {
                 if (history.Count == 0 || !string.Equals(history[^1], line, StringComparison.Ordinal)) {
@@ -416,23 +569,32 @@ namespace UnifierTSL.ConsoleClient.Shell
             return LineEditorInputAction.Submit(line, forceRawSubmit);
         }
 
-        private void ReplaceText(string text)
-        {
+        private void ReplaceText(string text) {
             buffer.Clear();
             buffer.Append(text);
             cursorIndex = buffer.Length;
         }
 
-        private void ResetHistoryNavigation()
-        {
+        private void ResetHistoryNavigation() {
             historyIndex = -1;
         }
 
-        private void ResetCompletion()
-        {
+        private void ResetCompletion() {
             completionActive = false;
             completionCandidates = [];
             completionIndex = -1;
+            pagedGlobalCompletionIndex = 0;
+            pagedRequestedWindowOffset = pagedActualWindowOffset;
+        }
+
+        private void ResetPagingState() {
+            pagingActive = false;
+            pagedTotalCandidateCount = 0;
+            pagedPageSize = 1;
+            pagedPrefetchThreshold = 0;
+            pagedActualWindowOffset = 0;
+            pagedRequestedWindowOffset = 0;
+            pagedGlobalCompletionIndex = 0;
         }
     }
 }

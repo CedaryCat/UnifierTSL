@@ -638,11 +638,7 @@ namespace UnifierTSL.CLI.Prompting
         }
 
         private static int ResolveGlobalCompletionIndex(ConsoleInputState state) {
-            if (state.CompletionIndex <= 0) {
-                return 0;
-            }
-
-            return Math.Max(0, state.CandidateWindowOffset) + state.CompletionIndex;
+            return Math.Max(0, state.CompletionIndex);
         }
 
         private readonly record struct ArgumentDisplayToken(
