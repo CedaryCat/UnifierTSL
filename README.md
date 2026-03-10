@@ -52,6 +52,7 @@
 UnifierTSL wraps [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) into a runtime you can run directly to host **multiple Terraria worlds in one launcher process**.
 
 The launcher handles world lifecycle, player join routing, and spins up a dedicated console client per world context so each world's I/O stays separate.
+Those console sessions now use an ANSI-safe prompt/status protocol, so launcher and per-world consoles can keep semantic readline state, replay status frames, and recover cleanly after reconnects instead of acting like plain text pipes.
 Compared with classic single-world servers or packet-routed multi-process world stacks, Unifier keeps join routing, world handoff, and extension hooks in one runtime surface instead of scattering that logic across process boundaries.
 `UnifiedServerCoordinator` handles coordination, `UnifierApi.EventHub` carries event traffic, and `PluginHost.PluginOrchestrator` runs plugin hosting.
 With shared connection and state surfaces, you can operate worlds together and build tighter cross-world interactions, while policy-based routing and transfer hooks still leave room for world-level fallback behavior.
@@ -74,7 +75,7 @@ Some heavier implementations may stay outside launcher core, but you can expect 
 | 📦 **Collectible module contexts** | `ModuleLoadContext` gives you unloadable plugin domains and staged dependency handling |
 | 📝 **Shared logging pipeline** | `UnifierApi.LogCore` supports custom filters, writers, and metadata injectors |
 | 🛡 **Bundled TShock port** | Ships with a USP-adapted TShock baseline ready for use |
-| 💻 **Per-context console isolation** | Console client processes spawned via named pipe protocol |
+| 💻 **Per-context console isolation** | Named-pipe console sessions with ANSI-safe logs, semantic readline prompts, and live status bars per world context |
 | 🚀 **RID-targeted publishing** | Publisher produces reproducible, runtime-specific directory trees |
 
 ---
@@ -89,16 +90,16 @@ The baseline values below come straight from project files and runtime version h
 |:--|:--|:--|
 | Target framework | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
 | Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs` (assembly file version from OTAPI/Terraria runtime) |
-| OTAPI USP | `1.1.0-pre-release-upstream.25` | `src/UnifierTSL/UnifierTSL.csproj` |
+| OTAPI USP | `1.1.0-pre-release-upstream.26` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock and dependency details</strong></summary>
 
 | Item | Value |
 |:--|:--|
-| Bundled TShock version | `5.9.9` |
+| Bundled TShock version | `6.0.0` |
 | Sync branch | `general-devel` |
-| Sync commit | `dab27acb4bf827924803f57918a7023231e43ab3` |
+| Sync commit | `0dbb07854cf9cb4e47e315d6160d785d51a27788` |
 | Source | `src/Plugins/TShockAPI/TShockAPI.csproj` |
 
 Additional dependency baselines:
@@ -128,7 +129,7 @@ Actual runtime startup flow:
 1. `Program.Main` initializes assembly resolver, applies pre-run CLI language overrides, and prints runtime version details.
 2. `Initializer.Initialize()` prepares Terraria/USP runtime state and loads core hooks (`UnifiedNetworkPatcher`, `UnifiedServerCoordinator`, `ServerContext` setup).
 3. `UnifierApi.PrepareRuntime(args)` loads `config/config.json`, merges launcher file settings with CLI overrides, and configures the durable logging backend.
-4. `UnifierApi.InitializeCore()` creates `EventHub`, builds `PluginOrchestrator`, runs `PluginHosts.InitializeAllAsync()`, and applies the resolved launcher defaults (join mode + initial auto-start worlds).
+4. `UnifierApi.InitializeCore()` creates `EventHub`, builds `PluginOrchestrator`, runs `PluginHosts.InitializeAllAsync()`, installs the launcher console host (`TerminalLauncherConsoleHost` by default), and applies the resolved launcher defaults (join mode + initial auto-start worlds).
 5. `UnifierApi.CompleteLauncherInitialization()` resolves interactive listen/password inputs, syncs the effective runtime snapshot, and raises launcher initialized events.
 6. `UnifiedServerCoordinator.Launch(...)` opens the shared listener; `UnifierApi.StartRootConfigMonitoring()` then enables root-config hot reload before title updates, coordinator started event, and chat input loop begin.
 
@@ -228,9 +229,10 @@ dotnet build src/UnifierTSL.slnx -c Debug
 
 ```bash
 dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
-  --rid win-x64 \
   --excluded-plugins ExamplePlugin,ExamplePlugin.Features
 ```
+
+If `--rid` is omitted, Publisher infers the current host RID automatically. For reproducible packaging or cross-host instructions, passing `--rid` explicitly is still recommended, for example `--rid win-x64`.
 
 **4.** Run a launcher smoke test:
 
@@ -244,6 +246,13 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 > **Note**: Default Publisher output directory is `src/UnifierTSL.Publisher/bin/<Configuration>/net9.0/utsl-<rid>/`.
 > `UnifierTSL.ConsoleClient` should only be launched by the launcher; pipe arguments are injected automatically.
 
+**5.** *(Optional, simplest Visual Studio debug flow)* Use the bundled launch profiles:
+
+1. Set startup project to `UnifierTSL.Publisher` and run it once.
+2. The bundled Publisher profile writes to `src/UnifierTSL.Publisher/bin/Debug/net9.0/utsl-publish/` because it uses `--use-rid-folder false --clean-output-dir false --output-path "utsl-publish"`.
+3. Switch startup project to `UnifierTSL`, choose the `Executable` launch profile, and start debugging.
+4. That profile runs the published launcher from `utsl-publish` and debugs the published program directly.
+
 ---
 
 <a id="launcher-reference"></a>
@@ -256,9 +265,10 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 | `-listen`, `-port` | Coordinator TCP port | Integer | Prompts on STDIN |
 | `-password` | Shared client password | Any string | Prompts on STDIN |
 | `-autostart`, `-addserver`, `-server` | Add server definitions | Repeatable `key:value` pairs | — |
-| `-servermerge`, `--server-merge` | How CLI `-server` entries merge with config | `replace` / `overwrite` / `append` | `replace` |
+| `-servermerge`, `--server-merge`, `--auto-start-merge` | How CLI `-server` entries merge with config | `replace` / `overwrite` / `append` | `replace` |
 | `-joinserver` | Default join strategy | `first` / `f` / `random` / `rnd` / `r` | — |
 | `-logmode`, `--log-mode` | Durable launcher log backend | `txt` / `none` / `sqlite` | `txt` |
+| `-colorful`, `--colorful`, `--no-colorful` | Toggle vivid ANSI status-bar rendering on interactive terminals | `true` / `false`, `on` / `off`, `1` / `0`; `--no-colorful` disables | `true` |
 | `-culture`, `-lang`, `-language` | Override Terraria language | Legacy culture ID or name | Host culture |
 
 > **Tip**: If no plugin takes over join behavior through `EventHub.Coordinator.SwitchJoinServer`, use `-joinserver first` or `random`.
@@ -273,22 +283,45 @@ Startup precedence is:
 2. CLI overrides (then persisted back to `config/config.json` as the effective startup snapshot)
 3. Interactive prompts for a missing port/password
 
+On interactive terminals, missing port/password prompts use semantic readline with ghost text, rotating suggestions, and live validation/status lines; non-interactive hosts fall back automatically.
+
+`launcher.consoleStatusThresholds` controls command-line status bar thresholding, and `launcher.colorfulConsoleStatus` toggles the vivid ANSI palette when the terminal supports it:
+
+<details>
+<summary><strong>Default status-threshold values</strong></summary>
+
+| Key | Unit | Default | Description |
+|:--|:--|:--|:--|
+| `targetUps` | UPS | `60.0` | Target update rate used as the baseline for TPS health checks |
+| `healthyUpsDeviation` | UPS delta | `1.2` | Maximum absolute deviation from `targetUps` that still counts as healthy |
+| `warningUpsDeviation` | UPS delta | `4.0` | Maximum absolute deviation from `targetUps` that still counts as warning before turning bad |
+| `utilHealthyMax` | ratio (`0.0`-`1.0`) | `0.50` | Highest busy-utilization value that still counts as healthy |
+| `utilWarningMax` | ratio (`0.0`-`1.0`) | `0.80` | Highest busy-utilization value that still counts as warning before turning bad |
+| `onlineWarnRemainingSlots` | slots | `5` | Remaining player slots at or below this value turn the online indicator to warning |
+| `onlineBadRemainingSlots` | slots | `0` | Remaining player slots at or below this value turn the online indicator to bad/full |
+| `upWarnKbps` | KB/s | `65.0` | Upstream bandwidth threshold that turns the network indicator to warning |
+| `upBadKbps` | KB/s | `75.0` | Upstream bandwidth threshold that turns the network indicator to bad |
+| `downWarnKbps` | KB/s | `85.0` | Downstream bandwidth threshold that turns the network indicator to warning |
+| `downBadKbps` | KB/s | `95.0` | Downstream bandwidth threshold that turns the network indicator to bad |
+
+</details>
+
 After `UnifiedServerCoordinator.Launch(...)` succeeds, the launcher begins watching `config/config.json` for safe hot reloads:
 
-- Live-applied: `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (listener rebind)
+- Live-applied: `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (listener rebind), `launcher.colorfulConsoleStatus`, `launcher.consoleStatusThresholds`
 
 ### Server Definition Keys
 
-Each `-server` value is whitespace-separated `key:value` pairs parsed by `UnifierApi.AutoStartServer`:
+Each `-server` value is whitespace-separated `key:value` pairs parsed by `LauncherRuntimeOps` during startup config merge:
 
 | Key | Purpose | Accepted Values | Default |
 |:--|:--|:--|:--|
 | `name` | Friendly server identifier | Unique string | *Required* |
 | `worldname` | World name to load/generate | Unique string | *Required* |
 | `seed` | Generation seed | Any string | — |
-| `gamemode` / `difficulty` | World difficulty | `0`–`3`, `normal`, `expert`, `master`, `creative` | `2` |
-| `size` | World size | `1`–`3`, `small`, `medium`, `large` | `3` |
-| `evil` | World evil type | `0`–`2`, `random`, `corruption`, `crimson` | `0` |
+| `gamemode` / `difficulty` | World difficulty | `0`–`3`, `normal`, `expert`, `master`, `creative` | `master` |
+| `size` | World size | `1`–`3`, `small`, `medium`, `large` | `large` |
+| `evil` | World evil type | `0`–`2`, `random`, `corruption`, `crimson` | `random` |
 
 `-servermerge` behavior:
 
@@ -306,7 +339,7 @@ Each `-server` value is whitespace-separated `key:value` pairs parsed by `Unifie
 
 | Flag | Description | Values | Default |
 |:--|:--|:--|:--|
-| `--rid` | Target runtime identifier | e.g. `win-x64`, `linux-x64`, `osx-x64` | *Required* |
+| `--rid` | Target runtime identifier. If omitted, Publisher infers the current host RID; explicit input is still recommended | e.g. `win-x64`, `linux-x64`, `osx-x64` | Auto-detected from current host |
 | `--excluded-plugins` | Plugin projects to skip | Comma-separated or repeated | — |
 | `--output-path` | Base output directory | Absolute or relative path | `src/.../bin/<Config>/net9.0` |
 | `--use-rid-folder` | Append `utsl-<rid>` folder | `true` / `false` | `true` |
@@ -464,24 +497,25 @@ dotnet build src/UnifierTSL.slnx -c Debug
 dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
   -port 7777 -password changeme -joinserver first
 
-# Produce publisher output for Windows x64
+# Produce publisher output for the current host (RID auto-detected)
+dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
+  --excluded-plugins ExamplePlugin,ExamplePlugin.Features
+
+# Produce publisher output for a specific RID (recommended for reproducible packaging)
 dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
   --rid win-x64
-
-# Run tests (when available)
-dotnet test src/UnifierTSL.slnx
 ```
 
-> **Note**: Automated tests are not included in the repository.
-
 ### Supported Platforms
+
+This table reflects the currently maintained/documented packaging targets, not every RID Publisher can attempt to infer.
 
 | RID | Status |
 |:--|:--|
 | `win-x64` | ✅ Supported |
 | `linux-x64` | ✅ Supported |
-| `linux-arm64` | ✅ Supported |
-| `linux-arm` | ✅ Supported |
+| `linux-arm64` | ❌ Not supported yet |
+| `linux-arm` | ⚠️ Partial support / needs manual verification |
 | `osx-x64` | ✅ Supported |
 
 ---

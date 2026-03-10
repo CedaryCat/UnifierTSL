@@ -16,11 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using HttpServer;
 using Microsoft.Xna.Framework;
 using NuGet.Protocol.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
@@ -32,7 +34,7 @@ using UnifierTSL.Servers;
 
 namespace TShockAPI
 {
-	public class TSServerPlayer : TSPlayer, IExtensionData
+    public class TSServerPlayer : TSPlayer, IExtensionData
 	{
         public static string AccountName = GetParticularString("The account name of server console.", "ServerConsole");
 		public readonly ServerContext Server;
@@ -105,27 +107,43 @@ namespace TShockAPI
         public void BCMessage(string msg, byte red, byte green, byte blue) {
             SendConsoleMessage(msg, red, green, blue);
             Server.ChatHelper.BroadcastChatMessage(NetworkText.FromLiteral(msg), new Color(red, green, blue));
-        }
+		}
 
-        public void SendConsoleMessage(string msg, byte red, byte green, byte blue)
-		{
-			var snippets = Terraria.UI.Chat.ChatManager.ParseMessage(Server, msg, new Color(red, green, blue));
+		public void SendConsoleMessage(string msg, byte red, byte green, byte blue) {
+			/* var snippets = Terraria.UI.Chat.ChatManager.ParseMessage(Server, msg, new Color(red, green, blue));
 
-			foreach (var snippet in snippets)
+            foreach (var snippet in snippets)
 			{
-				if (snippet.Color != default)
+                if (snippet.Color != default)
 				{
-					Server.Console.ForegroundColor = PickNearbyConsoleColor(snippet.Color);
-				}
-				else
+                    Server.Console.ForegroundColor = PickNearbyConsoleColor(snippet.Color);
+                }
+                else
 				{
                     Server.Console.ForegroundColor = ConsoleColor.Gray;
-				}
+                }
 
                 Server.Console.Write(snippet.Text);
-			}
+            }
             Server.Console.WriteLine();
-			Server.Console.ResetColor();
+            Server.Console.ResetColor(); */
+
+			var snippets = Terraria.UI.Chat.ChatManager.ParseMessage(Server, msg, new Color(red, green, blue));
+
+			var sb = new StringBuilder();
+
+			foreach (var snippet in snippets) {
+				if (!string.IsNullOrEmpty(snippet.Text)) {
+					if (snippet.Color != default) {
+						sb.Append(Utils.ColorTag(snippet.Text, snippet.Color));
+					}
+					else {
+						sb.Append(snippet.Text);
+					}
+				}
+			}
+
+			Server.Log.Info(sb.ToString());
         }
 
 		public void SetFullMoon()
@@ -228,46 +246,46 @@ namespace TShockAPI
 		}
 
 
-		private readonly Dictionary<Color, ConsoleColor> _consoleColorMap = new Dictionary<Color, ConsoleColor>
-		{
-			{ Color.Red,                    ConsoleColor.Red },
-			{ Color.Green,                  ConsoleColor.Green },
-			{ Color.Blue,                   ConsoleColor.Cyan },
-			{ new Color(255, 250, 170),     ConsoleColor.Yellow },
-			{ new Color(170, 170, 255),     ConsoleColor.Cyan },
-			{ new Color(255, 170, 255),     ConsoleColor.Magenta },
-			{ new Color(170, 255, 170),     ConsoleColor.Green },
-			{ new Color(255, 170, 170),     ConsoleColor.Red },
-			{ new Color(139, 0, 0),         ConsoleColor.DarkRed }, // This is the console warning color
-			{ Color.PaleVioletRed,          ConsoleColor.Magenta }, // This is the command logging color
-			{ Color.White,                  ConsoleColor.White }
-		};
+		//private readonly Dictionary<Color, ConsoleColor> _consoleColorMap = new Dictionary<Color, ConsoleColor>
+		//{
+		//	{ Color.Red,                    ConsoleColor.Red },
+		//	{ Color.Green,                  ConsoleColor.Green },
+		//	{ Color.Blue,                   ConsoleColor.Cyan },
+		//	{ new Color(255, 250, 170),     ConsoleColor.Yellow },
+		//	{ new Color(170, 170, 255),     ConsoleColor.Cyan },
+		//	{ new Color(255, 170, 255),     ConsoleColor.Magenta },
+		//	{ new Color(170, 255, 170),     ConsoleColor.Green },
+		//	{ new Color(255, 170, 170),     ConsoleColor.Red },
+		//	{ new Color(139, 0, 0),         ConsoleColor.DarkRed }, // This is the console warning color
+		//	{ Color.PaleVioletRed,          ConsoleColor.Magenta }, // This is the command logging color
+		//	{ Color.White,                  ConsoleColor.White }
+		//};
 
-		private ConsoleColor PickNearbyConsoleColor(Color color)
-		{
-			//Grabs an integer difference between two colors in euclidean space
-			int ColorDiff(Color c1, Color c2)
-			{
-				return (int)Math.Sqrt((c1.R - c2.R) * (c1.R - c2.R)
-									   + (c1.G - c2.G) * (c1.G - c2.G)
-									   + (c1.B - c2.B) * (c1.B - c2.B));
-			}
+		//private ConsoleColor PickNearbyConsoleColor(Color color)
+		//{
+		//	//Grabs an integer difference between two colors in euclidean space
+		//	int ColorDiff(Color c1, Color c2)
+		//	{
+		//		return (int)Math.Sqrt((c1.R - c2.R) * (c1.R - c2.R)
+		//							   + (c1.G - c2.G) * (c1.G - c2.G)
+		//							   + (c1.B - c2.B) * (c1.B - c2.B));
+		//	}
 
-			var diffs = _consoleColorMap.Select(kvp => ColorDiff(kvp.Key, color));
-			int index = 0;
-			int min = int.MaxValue;
+		//	var diffs = _consoleColorMap.Select(kvp => ColorDiff(kvp.Key, color));
+		//	int index = 0;
+		//	int min = int.MaxValue;
 
-			for (int i = 0; i < _consoleColorMap.Count; i++)
-			{
-				if (diffs.ElementAt(i) < min)
-				{
-					index = i;
-					min = diffs.ElementAt(i);
-				}
-			}
+		//	for (int i = 0; i < _consoleColorMap.Count; i++)
+		//	{
+		//		if (diffs.ElementAt(i) < min)
+		//		{
+		//			index = i;
+		//			min = diffs.ElementAt(i);
+		//		}
+		//	}
 
-			return _consoleColorMap.Values.ElementAt(index);
-		}
+		//	return _consoleColorMap.Values.ElementAt(index);
+		//}
 
         public void Dispose() { 
 			GC.SuppressFinalize(this);

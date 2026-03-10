@@ -539,7 +539,7 @@ namespace TShockAPI
 
         private static void AttemptLogin(CommandArgs args) {
             var server = args.Executor.SourceServer!;
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             if (tsPlayer.LoginAttempts > TShock.Config.GlobalSettings.MaximumLoginAttempts && (TShock.Config.GlobalSettings.MaximumLoginAttempts != -1)) {
                 args.Executor.LogWarning(GetString("{0} ({1}) had {2} or more invalid login attempts and was kicked automatically.",
@@ -633,6 +633,10 @@ namespace TShockAPI
                     }
 
                     tsPlayer.PlayerData = TShock.CharacterDB.GetPlayerData(tsPlayer, account.ID);
+                    if (server.Main.ServerSideCharacter && TShock.CharacterDB.IsSeededAppearanceMissing(tsPlayer.PlayerData)) {
+                        TShock.CharacterDB.SyncSeededAppearance(account, tsPlayer);
+                        tsPlayer.PlayerData = TShock.CharacterDB.GetPlayerData(tsPlayer, account.ID);
+                    }
 
                     tsPlayer.Group = group;
                     tsPlayer.tempGroup = null;
@@ -690,7 +694,7 @@ namespace TShockAPI
 
         private static void Logout(CommandArgs args) {
             var server = args.Executor.SourceServer!;
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             if (!tsPlayer.IsLoggedIn) {
                 args.Executor.SendErrorMessage(GetString("You are not logged-in. Therefore, you cannot logout."));
@@ -712,7 +716,7 @@ namespace TShockAPI
         private static void PasswordUser(CommandArgs args) {
             try {
                 var server = args.Executor.SourceServer!;
-                var tsPlayer = args.Player!;
+                var tsPlayer = args.Player;
 
                 if (tsPlayer.IsLoggedIn && args.Parameters.Count == 2) {
                     string password = args.Parameters[0];
@@ -744,7 +748,7 @@ namespace TShockAPI
         private static void RegisterUser(CommandArgs args) {
             try {
                 var server = args.Executor.SourceServer!;
-                var tsPlayer = args.Player!;
+                var tsPlayer = args.Player;
 
                 var account = new UserAccount();
                 string echoPassword = "";
@@ -814,7 +818,7 @@ namespace TShockAPI
             }
 
             var server = args.Executor.SourceServer!;
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             string subcmd = args.Parameters[0];
 
@@ -948,7 +952,7 @@ namespace TShockAPI
             args.Executor.SendInfoMessage(GetString($"Name: {server.Name}"));
             args.Executor.SendInfoMessage(GetString("Size: {0}x{1}", server.Main.maxTilesX, server.Main.maxTilesY));
             args.Executor.SendInfoMessage(GetString($"ID: {server.Main.worldID}"));
-			args.Executor.SendInfoMessage(GetString($"Seed: {server.Main.ActiveWorldFileData.Seed}"));
+            args.Executor.SendInfoMessage(GetString($"Seed: {server.Main.ActiveWorldFileData.Seed}"));
             args.Executor.SendInfoMessage(GetString($"Mode: {server.Main.GameMode}"));
             args.Executor.SendInfoMessage(GetString($"Path: {server.Main.worldPathName}"));
         }
@@ -981,7 +985,7 @@ namespace TShockAPI
                 args.Executor.SendErrorMessage(GetString("Invalid syntax. Proper syntax: {0}accountinfo <username>.", Specifier));
                 return;
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             string username = String.Join(" ", args.Parameters);
             if (!string.IsNullOrWhiteSpace(username)) {
@@ -1021,7 +1025,7 @@ namespace TShockAPI
                 args.Executor.SendErrorMessage(GetString("A player name must be provided to kick a player. Please provide one."));
                 return;
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             string plStr = args.Parameters[0];
             var players = TSPlayer.FindByNameOrID(plStr);
@@ -1402,7 +1406,7 @@ namespace TShockAPI
         }
 
         private static void DisplayLogs(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             tsPlayer.DisplayLogs = (!tsPlayer.DisplayLogs);
             if (tsPlayer.DisplayLogs) {
                 args.Executor.SendSuccessMessage(GetString("Log display enabled."));
@@ -1611,7 +1615,7 @@ namespace TShockAPI
         }
 
         private static void SubstituteUser(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             if (tsPlayer.tempGroup != null) {
                 tsPlayer.tempGroup = null;
@@ -1635,7 +1639,7 @@ namespace TShockAPI
 
         // Executes a command as a superuser if you have sudo rights.
         private static void SubstituteUserDo(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             if (args.Parameters.Count == 0) {
                 args.Executor.SendErrorMessage(GetString("Usage: /sudo [command]."));
@@ -2263,7 +2267,7 @@ namespace TShockAPI
 
             var server = args.Server!;
             var serverPlr = server.GetExtension<TSServerPlayer>();
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             string spawnName;
             NPC npc = new NPC();
@@ -2499,7 +2503,7 @@ namespace TShockAPI
 
             var server = args.Server!;
             var serverPlr = server.GetExtension<TSServerPlayer>();
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             amount = Math.Min(amount, Main.maxNPCs);
 
@@ -2545,7 +2549,7 @@ namespace TShockAPI
         #region Teleport Commands
 
         private static void Home(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             if (tsPlayer.Dead) {
                 args.Executor.SendErrorMessage(GetString("You are dead. Dead players can't go home."));
                 return;
@@ -2555,7 +2559,7 @@ namespace TShockAPI
         }
 
         private static void Spawn(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             if (tsPlayer.TeleportToWorldSpawn())
                 args.Executor.SendSuccessMessage(GetString("Teleported to the map's spawn point."));
         }
@@ -2568,7 +2572,7 @@ namespace TShockAPI
                     args.Executor.SendErrorMessage(GetString("Invalid syntax. Proper syntax: {0}tp <player>.", Specifier));
                 return;
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             if (args.Parameters.Count == 1) {
                 var players = TSPlayer.FindByNameOrID(args.Parameters[0]);
@@ -2673,7 +2677,7 @@ namespace TShockAPI
                     args.Executor.SendErrorMessage(GetString("Invalid syntax. Proper syntax: {0}tphere <player>.", Specifier));
                 return;
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             string playerName = String.Join(" ", args.Parameters);
             var players = TSPlayer.FindByNameOrID(playerName);
@@ -2710,7 +2714,7 @@ namespace TShockAPI
                 args.Executor.SendErrorMessage(GetString("Invalid syntax. Proper syntax: {0}tpnpc <NPC>.", Specifier));
                 return;
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
 
             var npcStr = string.Join(" ", args.Parameters);
@@ -2771,7 +2775,7 @@ namespace TShockAPI
                 args.Executor.SendErrorMessage(GetString("The destination coordinates provided don't look like valid numbers."));
                 return;
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
 
             x = Math.Max(0, x);
@@ -2784,7 +2788,7 @@ namespace TShockAPI
         }
 
         private static void TPAllow(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
 
             if (!tsPlayer.TPAllow)
@@ -2811,7 +2815,7 @@ namespace TShockAPI
                 }
             }
 
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
             var worldID = server.Main.worldID.ToString();
 
@@ -3829,7 +3833,7 @@ namespace TShockAPI
         #region Server Config Commands
 
         private static void SetSpawn(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
 
             server.Main.spawnTileX = tsPlayer.TileX + 1;
@@ -3839,7 +3843,7 @@ namespace TShockAPI
         }
 
         private static void SetDungeon(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
 
             server.Main.dungeonX = tsPlayer.TileX + 1;
@@ -4125,7 +4129,7 @@ namespace TShockAPI
             if (args.Parameters.Count > 0) {
                 cmd = args.Parameters[0].ToLower();
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
             var worldId = server.Main.worldID.ToString();
             switch (cmd) {
@@ -4761,12 +4765,12 @@ namespace TShockAPI
         }
 
         private static void SetupToken(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             if (TShock.SetupToken == 0) {
                 args.Executor.SendWarningMessage(GetString("The initial setup system is disabled. This incident has been logged."));
                 args.Executor.SendWarningMessage(GetString("If you are locked out of all admin accounts, ask for help on https://tshock.co/"));
-                args.Executor.LogWarning("{0} attempted to use the initial setup system even though it's disabled.", args.Executor.IP);
+                args.Executor.LogWarning(GetString("{0} attempted to use the initial setup system even though it's disabled.", args.Executor.IP));
                 return;
             }
 
@@ -4789,7 +4793,7 @@ namespace TShockAPI
             int givenCode;
             if (!Int32.TryParse(args.Parameters[0], out givenCode) || givenCode != TShock.SetupToken) {
                 args.Executor.SendErrorMessage(GetString("Incorrect setup code. This incident has been logged."));
-                args.Executor.LogWarning(args.Executor.IP + " attempted to use an incorrect setup code.");
+                args.Executor.LogWarning(GetString("{0} attempted to use an incorrect setup code.", args.Executor.IP));
                 return;
             }
 
@@ -4810,7 +4814,7 @@ namespace TShockAPI
                 args.Executor.SendErrorMessage(GetString("Invalid syntax. Proper syntax: {0}me <text>", Specifier));
                 return;
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var serverPlr = args.Server!.GetExtension<TSServerPlayer>();
             if (tsPlayer.mute)
                 args.Executor.SendErrorMessage(GetString("You are muted."));
@@ -4824,7 +4828,7 @@ namespace TShockAPI
                 return;
             }
 
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
 
             int playerTeam = tsPlayer.Team;
@@ -4899,7 +4903,7 @@ namespace TShockAPI
                 args.Executor.SendMessage(GetString($"Example usage: {"w".Color(Utils.BoldHighlight)} {args.Executor.Name.Color(Utils.RedHighlight)} {"We're no strangers to love, you know the rules, and so do I.".Color(Utils.PinkHighlight)}"), Color.White);
                 return;
             }
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var players = TSPlayer.FindByNameOrID(args.Parameters[0]);
             if (players.Count == 0) {
                 args.Executor.SendErrorMessage(GetString($"Could not find any player named \"{args.Parameters[0]}\""));
@@ -4930,7 +4934,7 @@ namespace TShockAPI
         }
 
         private static void Wallow(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             tsPlayer.AcceptingWhispers = !tsPlayer.AcceptingWhispers;
             if (tsPlayer.AcceptingWhispers)
                 args.Executor.SendInfoMessage(GetString("You may now receive whispers from other players."));
@@ -4940,7 +4944,7 @@ namespace TShockAPI
         }
 
         private static void Reply(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             if (tsPlayer.mute) {
                 args.Executor.SendErrorMessage(GetString("You are muted."));
             }
@@ -5149,7 +5153,7 @@ namespace TShockAPI
         }
 
         private static void SyncLocalArea(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             tsPlayer.SendTileSquareCentered(tsPlayer.TileX, tsPlayer.TileY, 32);
             args.Executor.SendWarningMessage(GetString("Sync'd!"));
             return;
@@ -5160,7 +5164,7 @@ namespace TShockAPI
         #region Game Commands
 
         private static void Clear(CommandArgs args) {
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
             var serverPlr = server.GetExtension<TSServerPlayer>();
             int radius = 50;
@@ -5273,7 +5277,7 @@ namespace TShockAPI
                 args.Executor.SendMultipleMatchError(players.Select(p => p.Name));
             else {
                 var target = players[0];
-                var tsPlayer = args.Player!;
+                var tsPlayer = args.Player;
 
                 if (target.Dead) {
                     if (target == tsPlayer)
@@ -5316,7 +5320,7 @@ namespace TShockAPI
                 playerToRespawn = players[0];
             }
             else
-                playerToRespawn = args.Player!;
+                playerToRespawn = args.Player;
 
             var tsPlayer = args.Player;
 
@@ -5446,7 +5450,7 @@ namespace TShockAPI
                 }
             }
 
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
 
             if (tsPlayer.InventorySlotAvailable || (item.type > 70 && item.type < 75) || item.ammo > 0 || item.type == 58 || item.type == 184) {
                 if (itemAmount == 0 || itemAmount > item.maxStack)
@@ -5511,7 +5515,9 @@ namespace TShockAPI
         private static void Give(CommandArgs args) {
             if (args.Parameters.Count < 2) {
                 args.Executor.SendErrorMessage(
-                    "Invalid syntax. Proper syntax: {0}give <item type/id> <player> [item amount] [prefix id/name]", Specifier);
+                    GetString(
+                        "Invalid syntax. Proper syntax: {0}give <item type/id> <player> [item amount] [prefix id/name]",
+                        Specifier));
                 return;
             }
             if (args.Parameters[0].Length == 0) {
@@ -5622,7 +5628,7 @@ namespace TShockAPI
                 }
                 target.Heal(amount);
 
-                var tsPlayer = args.Player!;
+                var tsPlayer = args.Player;
                 if (args.Silent)
                     if (target == tsPlayer)
                         args.Executor.SendSuccessMessage(GetString($"You healed yourself for {amount} HP."));
@@ -5674,7 +5680,7 @@ namespace TShockAPI
 
             if (args.Parameters.Count == 2)
                 int.TryParse(args.Parameters[1], out time);
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             if (id > 0 && id < Terraria.ID.BuffID.Count) {
                 // Max possible buff duration as of Terraria 1.4.2.3 is 35791393 seconds (415 days).
                 if (time < 0 || time > timeLimit)
@@ -5743,7 +5749,7 @@ namespace TShockAPI
             bool canGrowEvil = args.Executor.HasPermission(Permissions.growevil);
             string subcmd = args.Parameters.Count == 0 ? "help" : args.Parameters[0].ToLower();
 
-            var tsPlayer = args.Player!;
+            var tsPlayer = args.Player;
             var server = args.Server!;
 
             var name = "Fail"; // assigned value never used
@@ -5983,7 +5989,7 @@ namespace TShockAPI
                 return;
             }
             else {
-                playerToGod = args.Player!;
+                playerToGod = args.Player;
             }
 
             var tsPlayer = args.Player;
@@ -6003,11 +6009,11 @@ namespace TShockAPI
         }
 
         private static void ShowDeath(CommandArgs args) {
-            args.Player!.SendInfoMessage(GetString("*You were slain {0} times.", args.Player.DeathsPVE));
+            args.Player.SendInfoMessage(GetString("*You were slain {0} times.", args.Player.DeathsPVE));
         }
 
         private static void ShowPVPDeath(CommandArgs args) {
-            args.Player!.SendInfoMessage(GetString("*You were slain by other players {0} times.", args.Player.DeathsPVP));
+            args.Player.SendInfoMessage(GetString("*You were slain by other players {0} times.", args.Player.DeathsPVP));
         }
 
         private static void ShowAllDeath(CommandArgs args) {

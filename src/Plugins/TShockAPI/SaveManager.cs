@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 using Microsoft.Xna.Framework;
-using NuGet.Protocol.Plugins;
 using System.Threading.Channels;
 using UnifierTSL.Servers;
 
@@ -28,6 +27,7 @@ namespace TShockAPI
 
         private static readonly Channel<SaveTask?> _channel;
         private static readonly Task _saveWorkerTask;
+        private static volatile bool _isSaving;
 
         static SaveManager() {
             _channel = Channel.CreateUnbounded<SaveTask?>();
@@ -62,7 +62,7 @@ namespace TShockAPI
                     Utils.Broadcast(server, GetString("Saving world..."), Color.Yellow);
                 }
                 catch (Exception ex) {
-                    server.Log.Error("World saved notification failed");
+                    server.Log.Error(GetString("World saved notification failed"));
                     server.Log.Error(ex.ToString());
                 }
             }
@@ -73,8 +73,8 @@ namespace TShockAPI
             _channel.Writer.TryWrite(task);
 
             if (wait) {
-                while (_channel.Reader.Count > 0) {
-                    Task.Delay(50).Wait();
+                while (_channel.Reader.Count > 0 || _isSaving) {
+                    Thread.Sleep(50);
                 }
             }
         }
@@ -86,6 +86,7 @@ namespace TShockAPI
 
                 var server = task.Server;
                 try {
+                    _isSaving = true;
 
                     if (task.Direct) {
                         OnSaveWorld(server);
@@ -103,8 +104,11 @@ namespace TShockAPI
                     server.Log.Info(GetString("World saved at ({0})", server.Main.worldPathName));
                 }
                 catch (Exception e) {
-                    server.Log.Error("World saved failed");
+                    server.Log.Error(GetString("World save failed"));
                     server.Log.Error(e.ToString());
+                }
+                finally {
+                    _isSaving = false;
                 }
             }
         }

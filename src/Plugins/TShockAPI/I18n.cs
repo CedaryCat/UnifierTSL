@@ -22,9 +22,10 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using GetText;
-using Terraria.Initializers;
 using Terraria.Localization;
+using UnifierTSL;
 
 namespace TShockAPI
 {
@@ -52,16 +53,34 @@ namespace TShockAPI
                 }
 
                 if (Terraria.Program.LaunchParameters.TryGetValue("-language", out var languageArg)) {
-                    var culture = GameCulture._legacyCultures.Values.SingleOrDefault(c => c.Name == languageArg);
-                    if (culture != null) {
-                        return Redirect(culture.CultureInfo);
+                    try {
+                        var culture = Utilities.Culture.FindBestMatch(
+                            GameCulture._legacyCultures.Values,
+                            CultureInfo.GetCultureInfo(languageArg),
+                            gc => gc.CultureInfo);
+                        if (culture != null) {
+                            return Redirect(culture.CultureInfo);
+                        }
+                    }
+                    catch (CultureNotFoundException) {
                     }
                 }
 
                 if (LanguageManager.Instance.ActiveCulture == GameCulture.DefaultCulture) {
-                    var bf = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+                    const BindingFlags bf = BindingFlags.NonPublic | BindingFlags.Static;
                     // LanguageManager.SetLanguage will change this so we need to reset it back to null
-                    typeof(CultureInfo).GetField("s_currentThreadUICulture", bf)?.SetValue(null, null);
+                    var currentThreadUICultureField = typeof(CultureInfo).GetField("s_currentThreadUICulture", bf);
+                    currentThreadUICultureField?.SetValue(null, null);
+
+                    var legacyCulture = Utilities.Culture.FindBestMatch(
+                        GameCulture._legacyCultures.Values,
+                        CultureInfo.CurrentUICulture,
+                        gc => gc.CultureInfo);
+
+                    if (legacyCulture != null) {
+                        LanguageManager.Instance.SetLanguage(legacyCulture);
+                        currentThreadUICultureField?.SetValue(null, null);
+                    }
                 }
                 return CultureInfo.CurrentUICulture;
             }
@@ -214,4 +233,3 @@ namespace TShockAPI
         #endregion
     }
 }
-

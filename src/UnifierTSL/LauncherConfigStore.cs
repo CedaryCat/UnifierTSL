@@ -136,6 +136,7 @@ namespace UnifierTSL
             normalized.Logging ??= new LoggingConfiguration();
             normalized.Launcher ??= new LauncherConfiguration();
             normalized.Launcher.AutoStartServers ??= [];
+            normalized.Launcher.ConsoleStatusThresholds ??= new ConsoleStatusThresholdsConfiguration();
             return normalized;
         }
 

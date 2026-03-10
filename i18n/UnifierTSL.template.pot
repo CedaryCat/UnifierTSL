@@ -681,3 +681,334 @@ msgstr ""
 msgctxt "{0} is exception text"
 msgid "[Error][LogCore|DurableQueue] Durable sink disabled after failure: {0}"
 msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:117
+msgid "Dotnet hot reload host is not available."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:108
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:17
+msgid "Hot reload request is null."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:74
+msgid "Hot reload was blocked by plugin dependency topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:30
+#, csharp-format
+msgctxt "{0} is error message"
+msgid "Invalid hot reload request: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:100
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "Multiple updated plugin candidates were found for key '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:57
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "No loaded plugin matches hot reload key '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:43
+#, csharp-format
+msgctxt "{0} is plugin entry point"
+msgid "Candidate entry point '{0}' was not found."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:29
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Candidate plugin file '{0}' does not exist."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:65
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Failed to load candidate plugin from '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:122
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:215
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' failed during hot reload prepare."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:270
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected activation."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:204
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected hot reload prepare."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:401
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Failed to unload hot reload candidate '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:91
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "No updated candidate was found for plugin '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:175
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' accepted export but returned no state payload."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:65
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:344
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' failed to recover after hot reload commit failure."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:421
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' has dependent modules. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:302
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' hot reloaded successfully."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:416
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is a satellite module and shares a core module context. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:164
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' rejected hot reload export."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:430
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shares its module with other active plugin entry points. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:42
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shutdown completed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:145
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' threw while exporting hot reload state."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:73
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' unload completed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:378
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Rollback failed with an exception for plugin '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:256
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Starting hot reload commit for plugin '{0}'. No global isolation gate is enabled; in-flight events may still hit the transition window."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:220
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Candidate plugin '{0}' failed during hot reload prepare: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:311
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Commit stage '{0}' failed for plugin '{1}': {2}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:51
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to shutdown: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:79
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to unload: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:150
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed while exporting hot reload state: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:383
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Rollback failed for plugin '{0}': {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:111
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is load details"
+msgid "Failed to load hot reload candidate for plugin '{0}'. Result: {1}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:293
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is old version, {2} is new version"
+msgid "Hot reload succeeded for plugin '{0}'. {1} -> {2}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\AnnotatedConsolePromptProvider.cs:39
+msgid "use Tab/Shift+Tab to rotate, Right to accept"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:18
+msgid "use Tab/Shift+Tab to rotate; Right to accept"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:19
+msgid "Enter on empty uses ghost; Ctrl+Enter keeps raw input."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:31
+msgid "Setup Listen Port"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:32
+msgid "Select the launcher listen port"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:58
+msgid "Setup Server Password"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:59
+msgid "Pick a short startup password (plain input)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:62
+msgid "Press Enter to keep your current input (can be empty)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:22
+#, csharp-format
+msgctxt "{0} is error reason"
+msgid "last error: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\TerminalLauncherConsoleHost.cs:159
+msgid "launcher.colorfulConsoleStatus is enabled, but the current terminal does not support vivid ANSI status rendering. Falling back to the plain status bar palette."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:226
+#, csharp-format
+msgctxt "{0} is current colorfulConsoleStatus value, {1} is desired colorfulConsoleStatus value"
+msgid "launcher.colorfulConsoleStatus changed from '{0}' to '{1}'. Status bar appearance has been refreshed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:232
+msgid "launcher.consoleStatusThresholds changed. Command-line status thresholds are now using the reloaded values."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:975
+#, csharp-format
+msgctxt "{0} is user input value for colorful console status"
+msgid "Invalid colorful console status value: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:978
+msgid "Expected value: true/false, on/off, 1/0, or use '--no-colorful' to disable."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:446
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is not an integer port."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:452
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is out of range (0~65535)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:458
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is occupied."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:463
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is available."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:534
+#, csharp-format
+msgctxt "{0} is password text length"
+msgid "password length: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:535
+#, csharp-format
+msgctxt "{0} is simple password quality level"
+msgid "strength hint : {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:536
+msgid "empty input is allowed for no-password mode"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:553
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not an integer port."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:557
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is out of range."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:561
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not available."
+msgstr ""

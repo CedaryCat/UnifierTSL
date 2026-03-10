@@ -27,7 +27,6 @@ namespace UnifierTSL.ConsoleClient.Protocol
             len += PacketHeaderSize;
             *((int*)bufferPtr) = len;
 
-            var data = buffer[..len].ToArray();
 
             stream.Write(buffer[..len]);
         }
@@ -42,7 +41,6 @@ namespace UnifierTSL.ConsoleClient.Protocol
                     len += PacketHeaderSize;
                     *((int*)bufferPtr) = len;
 
-                    var data = buffer[..len].ToArray();
 
                     stream.Write(buffer, 0, len);
                 }

@@ -8,8 +8,8 @@
 		<!-- Parallel mainline sync baseline tracking -->
 		<MainlineSyncRepo>https://github.com/Pryaxis/TShock.git</MainlineSyncRepo>
 		<MainlineSyncBranch>general-devel</MainlineSyncBranch>
-		<MainlineSyncCommit>dab27acb4bf827924803f57918a7023231e43ab3</MainlineSyncCommit>
-		<MainlineVersion>5.9.9</MainlineVersion>
+		<MainlineSyncCommit>0dbb07854cf9cb4e47e315d6160d785d51a27788</MainlineSyncCommit>
+		<MainlineVersion>6.0.0</MainlineVersion>
 
 		<!-- Packaging and identity: this is the UnifierTSL migration package, not upstream's official package -->
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -79,9 +79,7 @@
 		</Reference>
 	</ItemGroup>
 
-	<Target Name="SetTShockPackageVersion"
-			DependsOnTargets="GetVersion"
-			BeforeTargets="GenerateNuspec;_GetOutputItemsFromPack">
+	<Target Name="SetTShockPackageVersion" DependsOnTargets="GetVersion" BeforeTargets="GenerateNuspec;_GetOutputItemsFromPack">
 		<PropertyGroup>
 			<!-- Branch-aware package versioning:
 			     - mainline/stable branches -> MainlineVersion

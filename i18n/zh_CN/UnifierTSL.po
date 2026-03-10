@@ -706,3 +706,334 @@ msgstr "[Warning][LogCore|DurableQueue] 持久化队列积压为 {0} 条（阈�
 msgctxt "{0} is exception text"
 msgid "[Error][LogCore|DurableQueue] Durable sink disabled after failure: {0}"
 msgstr "[Error][LogCore|DurableQueue] 持久化日志 Sink 发生故障后已禁用: {0}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:117
+msgid "Dotnet hot reload host is not available."
+msgstr "Dotnet 热重载宿主不可用。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:108
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:17
+msgid "Hot reload request is null."
+msgstr "热重载请求为空。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:74
+msgid "Hot reload was blocked by plugin dependency topology."
+msgstr "热重载被插件依赖拓扑阻止。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:30
+#, csharp-format
+msgctxt "{0} is error message"
+msgid "Invalid hot reload request: {0}"
+msgstr "无效的热重载请求: {0}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:100
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "Multiple updated plugin candidates were found for key '{0}'."
+msgstr "键 '{0}' 匹配到多个已更新的插件候选项。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:57
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "No loaded plugin matches hot reload key '{0}'."
+msgstr "没有已加载插件匹配热重载键 '{0}'。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:43
+#, csharp-format
+msgctxt "{0} is plugin entry point"
+msgid "Candidate entry point '{0}' was not found."
+msgstr "未找到候选入口点 '{0}'。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:29
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Candidate plugin file '{0}' does not exist."
+msgstr "候选插件文件 '{0}' 不存在。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:65
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Failed to load candidate plugin from '{0}'."
+msgstr "无法从 '{0}' 加载候选插件。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:122
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr "候选插件 '{0}' 未实现 IHotReloadCapablePlugin。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:215
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' failed during hot reload prepare."
+msgstr "候选插件 '{0}' 在热重载准备阶段失败。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:270
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected activation."
+msgstr "候选插件 '{0}' 拒绝激活。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:204
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected hot reload prepare."
+msgstr "候选插件 '{0}' 拒绝热重载准备。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:401
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Failed to unload hot reload candidate '{0}'."
+msgstr "无法卸载热重载候选插件 '{0}'。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:91
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "No updated candidate was found for plugin '{0}'."
+msgstr "未找到插件 '{0}' 的已更新候选项。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:175
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' accepted export but returned no state payload."
+msgstr "插件 '{0}' 接受了导出但未返回状态负载。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:65
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr "插件 '{0}' 未实现 IHotReloadCapablePlugin。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:344
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' failed to recover after hot reload commit failure."
+msgstr "插件 '{0}' 在热重载提交失败后恢复失败。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:421
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' has dependent modules. V1 hot reload refuses this topology."
+msgstr "插件 '{0}' 存在依赖它的模块。V1 热重载拒绝该拓扑。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:302
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' hot reloaded successfully."
+msgstr "插件 '{0}' 热重载成功。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:416
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is a satellite module and shares a core module context. V1 hot reload refuses this topology."
+msgstr "插件 '{0}' 是卫星模块并共享核心模块上下文。V1 热重载拒绝该拓扑。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:164
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' rejected hot reload export."
+msgstr "插件 '{0}' 拒绝热重载导出。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:430
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shares its module with other active plugin entry points. V1 hot reload refuses this topology."
+msgstr "插件 '{0}' 与其他活动插件入口点共享同一模块。V1 热重载拒绝该拓扑。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:42
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shutdown completed."
+msgstr "插件 '{0}' 已完成关闭。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:145
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' threw while exporting hot reload state."
+msgstr "插件 '{0}' 在导出热重载状态时抛出异常。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:73
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' unload completed."
+msgstr "插件 '{0}' 已完成卸载。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:378
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Rollback failed with an exception for plugin '{0}'."
+msgstr "插件 '{0}' 回滚失败并抛出异常。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:256
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Starting hot reload commit for plugin '{0}'. No global isolation gate is enabled; in-flight events may still hit the transition window."
+msgstr "开始为插件 '{0}' 提交热重载。当前未启用全局隔离门，飞行中的事件仍可能命中切换窗口。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:220
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Candidate plugin '{0}' failed during hot reload prepare: {1}"
+msgstr "候选插件 '{0}' 在热重载准备阶段失败: {1}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:311
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Commit stage '{0}' failed for plugin '{1}': {2}"
+msgstr "插件 '{1}' 的提交阶段 '{0}' 失败: {2}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:51
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to shutdown: {1}"
+msgstr "插件 '{0}' 关闭失败: {1}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:79
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to unload: {1}"
+msgstr "插件 '{0}' 卸载失败: {1}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:150
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed while exporting hot reload state: {1}"
+msgstr "插件 '{0}' 在导出热重载状态时失败: {1}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:383
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Rollback failed for plugin '{0}': {1}"
+msgstr "插件 '{0}' 回滚失败: {1}"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:111
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is load details"
+msgid "Failed to load hot reload candidate for plugin '{0}'. Result: {1}."
+msgstr "无法为插件 '{0}' 加载热重载候选项。结果: {1}。"
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:293
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is old version, {2} is new version"
+msgid "Hot reload succeeded for plugin '{0}'. {1} -> {2}."
+msgstr "插件 '{0}' 热重载成功。{1} -> {2}。"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\AnnotatedConsolePromptProvider.cs:39
+msgid "use Tab/Shift+Tab to rotate, Right to accept"
+msgstr "使用 Tab/Shift+Tab 轮换，按右方向键接受"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:18
+msgid "use Tab/Shift+Tab to rotate; Right to accept"
+msgstr "使用 Tab/Shift+Tab 轮换；按右方向键接受"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:19
+msgid "Enter on empty uses ghost; Ctrl+Enter keeps raw input."
+msgstr "空输入时按 Enter 接受 ghost 提示；Ctrl+Enter 保留原始输入。"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:31
+msgid "Setup Listen Port"
+msgstr "设置监听端口"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:32
+msgid "Select the launcher listen port"
+msgstr "选择启动器监听端口"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:58
+msgid "Setup Server Password"
+msgstr "设置服务器密码"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:59
+msgid "Pick a short startup password (plain input)."
+msgstr "设置一个简短的启动密码（明文输入）。"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:62
+msgid "Press Enter to keep your current input (can be empty)."
+msgstr "按 Enter 保持当前输入（可以为空）。"
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:22
+#, csharp-format
+msgctxt "{0} is error reason"
+msgid "last error: {0}"
+msgstr "上次错误：{0}"
+
+#: ..\..\..\src\UnifierTSL\CLI\TerminalLauncherConsoleHost.cs:159
+msgid "launcher.colorfulConsoleStatus is enabled, but the current terminal does not support vivid ANSI status rendering. Falling back to the plain status bar palette."
+msgstr "launcher.colorfulConsoleStatus 已启用，但当前终端不支持鲜艳 ANSI 状态渲染。将回退到纯色状态栏配色。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:226
+#, csharp-format
+msgctxt "{0} is current colorfulConsoleStatus value, {1} is desired colorfulConsoleStatus value"
+msgid "launcher.colorfulConsoleStatus changed from '{0}' to '{1}'. Status bar appearance has been refreshed."
+msgstr "launcher.colorfulConsoleStatus 已从 '{0}' 更改为 '{1}'。状态栏外观已刷新。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:232
+msgid "launcher.consoleStatusThresholds changed. Command-line status thresholds are now using the reloaded values."
+msgstr "launcher.consoleStatusThresholds 已更改。命令行状态阈值现已使用重载后的值。"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:975
+#, csharp-format
+msgctxt "{0} is user input value for colorful console status"
+msgid "Invalid colorful console status value: {0}"
+msgstr "无效的 colorful console status 值：{0}"
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:978
+msgid "Expected value: true/false, on/off, 1/0, or use '--no-colorful' to disable."
+msgstr "期望值：true/false、on/off、1/0，或使用 '--no-colorful' 禁用。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:446
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is not an integer port."
+msgstr "输入 '{0}' 不是整数端口。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:452
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is out of range (0~65535)."
+msgstr "输入 '{0}' 超出范围（0~65535）。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:458
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is occupied."
+msgstr "输入 '{0}' 已被占用。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:463
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is available."
+msgstr "输入 '{0}' 可用。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:534
+#, csharp-format
+msgctxt "{0} is password text length"
+msgid "password length: {0}"
+msgstr "密码长度：{0}"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:535
+#, csharp-format
+msgctxt "{0} is simple password quality level"
+msgid "strength hint : {0}"
+msgstr "强度提示：{0}"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:536
+msgid "empty input is allowed for no-password mode"
+msgstr "允许空输入以启用无密码模式"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:553
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not an integer port."
+msgstr "'{0}' 不是整数端口。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:557
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is out of range."
+msgstr "'{0}' 超出范围。"
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:561
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not available."
+msgstr "'{0}' 不可用。"

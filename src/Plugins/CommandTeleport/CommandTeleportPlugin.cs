@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
-using System.Diagnostics.Metrics;
 using System.Text;
 using TShockAPI;
 using UnifierTSL;
+using UnifierTSL.CLI;
 using UnifierTSL.Plugins;
 using UnifierTSL.Servers;
 
@@ -11,6 +11,10 @@ namespace CommandTeleport
     [PluginMetadata("CommandTeleport", "1.0.0", "Anonymous", "A example plugin to show how to reference another plugin")]
     public class CommandTeleportPlugin : BasePlugin
     {
+        private Command? transferCommand;
+        private Command? serversCommand;
+        private IDisposable? promptSpecRegistration;
+
         public override int InitializationOrder => TShock.Order + 1; // after tshock
         public override async Task InitializeAsync(IPluginConfigRegistrar configRegistrar, ImmutableArray<PluginInitInfo> priorInitializations, CancellationToken cancellationToken = default) {
             foreach (var initInfo in priorInitializations) {
@@ -19,8 +23,17 @@ namespace CommandTeleport
                 }
             }
 
-            Commands.ChatCommands.Add(new Command([Permissions.ServerTransfer], Command_Transfer, "transfer", "connect", "tr", "worldwarp", "ww"));
-            Commands.ChatCommands.Add(new Command([Permissions.ListServers], Command_ListServers, "servers", "serverlist"));
+            transferCommand = new Command([Permissions.ServerTransfer], Command_Transfer, "transfer", "connect", "tr", "worldwarp", "ww") {
+                AllowServer = false,
+                HelpText = "Transfers you to another running server."
+            };
+            serversCommand = new Command([Permissions.ListServers], Command_ListServers, "servers", "serverlist") {
+                HelpText = "Lists available running servers."
+            };
+
+            Commands.ChatCommands.Add(transferCommand);
+            Commands.ChatCommands.Add(serversCommand);
+            promptSpecRegistration = ConsolePromptRegistry.RegisterCommandSpecProvider(static () => CommandTeleportConsoleCommandSpecs.All);
 
             Directory.CreateDirectory(configRegistrar.Directory);
             string setupCheckFile = Path.Combine(configRegistrar.Directory, "complete.permissions.setup");
@@ -28,6 +41,16 @@ namespace CommandTeleport
                 TShock.Groups.AddPermissions("default", [Permissions.ServerTransfer, Permissions.ListServers]);
                 File.Create(setupCheckFile).Close();
             }
+        }
+
+        public override Task ShutdownAsync(CancellationToken cancellationToken = default) {
+            UnregisterRuntimeBindings();
+            return Task.CompletedTask;
+        }
+
+        public override ValueTask DisposeAsync(bool isDisposing) {
+            UnregisterRuntimeBindings();
+            return base.DisposeAsync(isDisposing);
         }
 
         private void Command_ListServers(CommandArgs args) {
@@ -117,6 +140,21 @@ namespace CommandTeleport
                 }
             }
             return null;
+        }
+
+        private void UnregisterRuntimeBindings() {
+            promptSpecRegistration?.Dispose();
+            promptSpecRegistration = null;
+
+            if (transferCommand is not null) {
+                Commands.ChatCommands.Remove(transferCommand);
+                transferCommand = null;
+            }
+
+            if (serversCommand is not null) {
+                Commands.ChatCommands.Remove(serversCommand);
+                serversCommand = null;
+            }
         }
     }
 }

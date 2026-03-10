@@ -1,3 +1,4 @@
+using NuGet.Protocol.Plugins;
 using System.Collections.Immutable;
 using System.Net;
 using System.Net.Sockets;
@@ -13,6 +14,7 @@ using UnifierTSL.Events.Handlers;
 using UnifierTSL.Extensions;
 using UnifierTSL.Logging;
 using UnifierTSL.Network;
+using UnifierTSL.Performance;
 using UnifierTSL.Servers;
 using static UnifierTSL.Utilities;
 
@@ -105,6 +107,8 @@ namespace UnifierTSL
                         }
 
                         if (unreadLength >= packetLength && packetLength != 0) {
+
+                            CountReceivedData(client.Id, (uint)packetLength, null);
 
                             ProcessPacket(readPosition + 2, packetLength - 2);
 
@@ -245,7 +249,7 @@ namespace UnifierTSL
                                 ServerContext? joinServer = e.JoinServer;
 
                                 if (joinServer is null) {
-                                    sender.Kick(NetworkText.FromLiteral(GetParticularString("{0} is player name, {1} is player UUID", $"No available server found for you.")));
+                                    sender.Kick(NetworkText.FromLiteral(GetString($"No available server found for you.")));
 
                                     Logger.Warning(
                                         category: "PendingConnection",
@@ -354,6 +358,8 @@ namespace UnifierTSL
         }
         private static Thread? ServerLoopThread;
         private static int serverLoopStartToken;
+
+        public static bool Running { get; private set; }
         public static void Launch(int listenPort, string password = "") {
             ServerPassword = password;
             broadcastClient.EnableBroadcast = true;
@@ -367,6 +373,8 @@ namespace UnifierTSL
             }
 
             EnsureServerLoopStarted();
+
+            Running = true;
         }
 
         public static bool RebindListener(int listenPort) {
@@ -474,6 +482,18 @@ namespace UnifierTSL
             }
         }
 
+        static void CountReceivedData(int who, uint size, ServerContext? server) {
+            PerformanceData.Network.ReceivedPacket();
+            PerformanceData.Network.ReceivedBytes(size);
+            if (server?.Performance is { } perf) {
+                perf.CurrentFrameData.ReceivedPacketCount += 1;
+                perf.CurrentFrameData.ReceivedBytesCount += size;
+            }
+            var client = clientSenders[who];
+            client.ReceivedBytesCount += size;
+            client.ReceivedPacketCount += 1;
+        }
+
         private static void ProcessBytes(On.Terraria.NetMessageSystemContext.orig_CheckBytes orig, NetMessageSystemContext netMsg, int clientIndex) {
             ServerContext server = netMsg.root.ToServer();
             MessageBuffer buffer = globalMsgBuffers[clientIndex];
@@ -495,6 +515,7 @@ namespace UnifierTSL
                         }
 
                         if (unreadLength >= packetLength && packetLength != 0) {
+                            CountReceivedData(clientIndex, (uint)packetLength, server);
 
                             // buffer.GetData(server, readPosition + 2, packetLength - 2, out var _);
                             NetPacketHandler.ProcessBytes(server, buffer, readPosition + 2, packetLength - 2);
@@ -527,7 +548,9 @@ namespace UnifierTSL
                 }
                 catch (Exception exception) {
                     if (server.Main.dedServ && readPosition < globalMsgBuffers.Length - 100) {
-                        server.Console.WriteLine(Language.GetTextValue("Error.NetMessageError", globalMsgBuffers[readPosition + 2]));
+                        server.Log.Error(
+                            Language.GetTextValue("Error.NetMessageError", globalMsgBuffers[readPosition + 2]),
+                            exception);
                     }
                     unreadLength = 0;
                     readPosition = 0;
@@ -567,7 +590,7 @@ namespace UnifierTSL
 
                 foreach (ServerContext server in servers) {
                     if (server.IsRunning) {
-                        server.ActivePlayers = 0;
+                        server.playerCountAccumulator = 0;
                     }
                 }
 
@@ -595,7 +618,7 @@ namespace UnifierTSL
                             activeConnections += 1;
                             lock (client) {
                                 client.Update(server);
-                                server.ActivePlayers += 1;
+                                server.playerCountAccumulator += 1;
                             }
                             continue;
                         }
@@ -624,7 +647,8 @@ namespace UnifierTSL
 
                 foreach (ServerContext server in servers) {
                     if (server.IsRunning) {
-                        server.Netplay.HasClients = server.ActivePlayers > 0;
+                        server.Netplay.HasClients = server.playerCountAccumulator > 0;
+                        server.ActivePlayerCount = server.playerCountAccumulator;
                     }
                 }
 
@@ -752,6 +776,7 @@ namespace UnifierTSL
         private static void OnConnectionAccepted(ISocket client, ListenerSession session) {
             int id = FindNextEmptyClientSlot();
             if (id != -1) {
+                clientSenders[id].ResetDataForNewClient();
                 SetClientCurrentlyServer(id, null);
                 pendingConnects[id].Reset(client);
 

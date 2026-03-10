@@ -1,4 +1,7 @@
 using Microsoft.Xna.Framework;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using OTAPI;
 using System.Diagnostics.CodeAnalysis;
 using Terraria.Chat;
@@ -7,6 +10,8 @@ using Terraria.Localization;
 using Terraria.UI.Chat;
 using TrProtocol.NetPackets.Modules;
 using UnifiedServerProcess;
+using UnifierTSL.CLI;
+using UnifierTSL.ConsoleClient.Shell;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Extensions;
 using UnifierTSL.Localization.Terraria;
@@ -27,9 +32,9 @@ namespace UnifierTSL.Events.Handlers
         public readonly bool IsClient => SourceServer is not null && UserId != byte.MaxValue;
         public readonly void Chat(string message, Color color) {
             if (SourceServer is null) {
-                Console.ForegroundColor = color.ToConsoleColor();
-                Console.WriteLine(message);
-                Console.ResetColor();
+                string safe = AnsiSanitizer.SanitizeEscapes(message) + Environment.NewLine;
+                string ansi = AnsiColorCodec.Wrap(safe, color.ToConsoleColor(), ConsoleColor.Black);
+                ConsoleInput.WriteAnsi(ansi);
             }
             else if (UserId == byte.MaxValue) {
                 SourceServer.Console.ForegroundColor = color.ToConsoleColor();
@@ -57,7 +62,12 @@ namespace UnifierTSL.Events.Handlers
             }
 
             while (true) {
-                string input = Console.ReadLine() ?? "";
+                string input = ConsoleInput.ReadLine(
+                    ConsolePromptRegistry.CreateDefaultCommandPromptSpec(server: null),
+                    trim: true);
+                if (string.IsNullOrWhiteSpace(input)) {
+                    continue;
+                }
                 try {
                     MessageEvent.Invoke(new MessageEvent(new(null, byte.MaxValue), input, input), out _);
                 }
@@ -66,11 +76,27 @@ namespace UnifierTSL.Events.Handlers
                 }
             }
         }
+
         public ChatHandler() {
             NetPacketHandler.Register<NetTextModule>(OnChat, HandlerPriority.VeryHigh + 1);
             On.Terraria.Chat.Commands.SayChatCommand.ProcessIncomingMessage += ProcessIncomingMessage;
             On.Terraria.Chat.ChatCommandProcessor.ProcessIncomingMessage += ProcessIncomingMessage;
             On.OTAPI.HooksSystemContext.MainSystemContext.InvokeCommandProcess_string += ProcessConsoleMessage;
+            IL.Terraria.MainSystemContext.mfwh_startDedInputCallBack += ILHook_startDedInputCallBack;
+        }
+
+        private void ILHook_startDedInputCallBack(ILContext il) {
+            var inst = il.Instrs.First(i =>
+                i.OpCode.Code is Code.Ldloc_0 &&
+                i.Next is { OpCode.Code: Code.Ldfld, Operand: FieldReference { Name: nameof(RootContext.Console) } } &&
+                i.Next.Next is { OpCode.Code: Code.Ldstr, Operand: ": " } &&
+                i.Next.Next.Next is { OpCode.Code: Code.Callvirt, Operand: MethodReference { Name: nameof(ConsoleSystemContext.Write) } }
+            );
+            for (int i = 0; i < 4; i++) {
+                inst.OpCode = OpCodes.Nop;
+                inst.Operand = null;
+                inst = inst.Next;
+            }
         }
 
         private void OnChat(ref ReceivePacketEvent<NetTextModule> args) {

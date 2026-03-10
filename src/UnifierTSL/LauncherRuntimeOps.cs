@@ -85,6 +85,20 @@ namespace UnifierTSL
                                 category: "Logging");
                         }
                         break;
+
+                    case "-colorful":
+                    case "--colorful":
+                        if (TryParseColorfulConsoleStatus(firstValue, emptyValue: true, out bool colorfulConsoleStatus)) {
+                            overrides.ColorfulConsoleStatus = colorfulConsoleStatus;
+                        }
+                        else {
+                            WarnInvalidColorfulConsoleStatus(firstValue, "Launcher");
+                        }
+                        break;
+
+                    case "--no-colorful":
+                        overrides.ColorfulConsoleStatus = false;
+                        break;
                 }
             }
 
@@ -117,6 +131,10 @@ namespace UnifierTSL
                 effective.Logging.Mode = DescribeLogMode(overrides.LogMode.Value);
             }
 
+            if (overrides.ColorfulConsoleStatus.HasValue) {
+                effective.Launcher.ColorfulConsoleStatus = overrides.ColorfulConsoleStatus.Value;
+            }
+
             if (overrides.HasAutoStartServers) {
                 AutoStartServerMergeMode mergeMode = overrides.AutoStartServersMergeMode ?? AutoStartServerMergeMode.ReplaceAll;
                 effective.Launcher.AutoStartServers = MergeAutoStartServers(
@@ -140,7 +158,9 @@ namespace UnifierTSL
                 ListenPort = config.Launcher.ListenPort,
                 ServerPassword = config.Launcher.ServerPassword,
                 JoinServer = ResolveConfiguredJoinServerMode(config.Launcher.JoinServer),
+                ColorfulConsoleStatus = config.Launcher.ColorfulConsoleStatus,
                 AutoStartServers = CloneAutoStartServers(config.Launcher.AutoStartServers),
+                ConsoleStatusThresholds = ResolveConsoleStatusThresholds(config.Launcher.ConsoleStatusThresholds),
             };
         }
 
@@ -200,13 +220,28 @@ namespace UnifierTSL
                     category: "Config");
             }
 
+            if (current.ColorfulConsoleStatus != desired.ColorfulConsoleStatus) {
+                UnifierApi.Logger.Info(
+                    GetParticularString("{0} is current colorfulConsoleStatus value, {1} is desired colorfulConsoleStatus value",
+                        $"launcher.colorfulConsoleStatus changed from '{DescribeColorfulConsoleStatus(current.ColorfulConsoleStatus)}' to '{DescribeColorfulConsoleStatus(desired.ColorfulConsoleStatus)}'. Status bar appearance has been refreshed."),
+                    category: "Config");
+            }
+
+            if (current.ConsoleStatusThresholds != desired.ConsoleStatusThresholds) {
+                UnifierApi.Logger.Info(
+                    GetString("launcher.consoleStatusThresholds changed. Command-line status thresholds are now using the reloaded values."),
+                    category: "Config");
+            }
+
             ApplyAutoStartServerDiffs(current.AutoStartServers, desired.AutoStartServers);
             return new LauncherRuntimeSettings {
                 LogMode = current.LogMode,
                 ListenPort = appliedListenPort,
                 ServerPassword = desiredPassword,
                 JoinServer = desired.JoinServer,
+                ColorfulConsoleStatus = desired.ColorfulConsoleStatus,
                 AutoStartServers = CloneAutoStartServers(desired.AutoStartServers),
+                ConsoleStatusThresholds = desired.ConsoleStatusThresholds,
             };
         }
 
@@ -226,7 +261,9 @@ namespace UnifierTSL
                 ListenPort = listenPort,
                 ServerPassword = serverPassword,
                 JoinServer = current.JoinServer,
+                ColorfulConsoleStatus = current.ColorfulConsoleStatus,
                 AutoStartServers = CloneAutoStartServers(current.AutoStartServers),
+                ConsoleStatusThresholds = current.ConsoleStatusThresholds,
             };
         }
 
@@ -400,7 +437,9 @@ namespace UnifierTSL
                     ListenPort = source.Launcher?.ListenPort ?? -1,
                     ServerPassword = source.Launcher?.ServerPassword,
                     JoinServer = source.Launcher?.JoinServer ?? "none",
+                    ColorfulConsoleStatus = source.Launcher?.ColorfulConsoleStatus ?? true,
                     AutoStartServers = CloneAutoStartServers(source.Launcher?.AutoStartServers),
+                    ConsoleStatusThresholds = CloneConsoleStatusThresholdsConfiguration(source.Launcher?.ConsoleStatusThresholds),
                 },
             };
         }
@@ -413,6 +452,23 @@ namespace UnifierTSL
                 Difficulty = source.Difficulty ?? "master",
                 Size = source.Size ?? "large",
                 Evil = source.Evil ?? "random",
+            };
+        }
+
+        private static ConsoleStatusThresholdsConfiguration CloneConsoleStatusThresholdsConfiguration(ConsoleStatusThresholdsConfiguration? source) {
+            ConsoleStatusThresholdsConfiguration threshold = source ?? new ConsoleStatusThresholdsConfiguration();
+            return new ConsoleStatusThresholdsConfiguration {
+                TargetUps = threshold.TargetUps,
+                HealthyUpsDeviation = threshold.HealthyUpsDeviation,
+                WarningUpsDeviation = threshold.WarningUpsDeviation,
+                UtilHealthyMax = threshold.UtilHealthyMax,
+                UtilWarningMax = threshold.UtilWarningMax,
+                OnlineWarnRemainingSlots = threshold.OnlineWarnRemainingSlots,
+                OnlineBadRemainingSlots = threshold.OnlineBadRemainingSlots,
+                UpWarnKbps = threshold.UpWarnKbps,
+                UpBadKbps = threshold.UpBadKbps,
+                DownWarnKbps = threshold.DownWarnKbps,
+                DownBadKbps = threshold.DownBadKbps,
             };
         }
 
@@ -439,7 +495,37 @@ namespace UnifierTSL
                 return false;
             }
 
-            return AutoStartServerListEquivalent(leftLauncher.AutoStartServers, rightLauncher.AutoStartServers);
+            if (leftLauncher.ColorfulConsoleStatus != rightLauncher.ColorfulConsoleStatus) {
+                return false;
+            }
+
+            if (!AutoStartServerListEquivalent(leftLauncher.AutoStartServers, rightLauncher.AutoStartServers)) {
+                return false;
+            }
+
+            return ConsoleStatusThresholdsConfigurationEquivalent(
+                leftLauncher.ConsoleStatusThresholds,
+                rightLauncher.ConsoleStatusThresholds);
+        }
+
+        private static bool ConsoleStatusThresholdsConfigurationEquivalent(
+            ConsoleStatusThresholdsConfiguration? left,
+            ConsoleStatusThresholdsConfiguration? right) {
+
+            ConsoleStatusThresholdsConfiguration leftThresholds = left ?? new ConsoleStatusThresholdsConfiguration();
+            ConsoleStatusThresholdsConfiguration rightThresholds = right ?? new ConsoleStatusThresholdsConfiguration();
+
+            return leftThresholds.TargetUps == rightThresholds.TargetUps
+                && leftThresholds.HealthyUpsDeviation == rightThresholds.HealthyUpsDeviation
+                && leftThresholds.WarningUpsDeviation == rightThresholds.WarningUpsDeviation
+                && leftThresholds.UtilHealthyMax == rightThresholds.UtilHealthyMax
+                && leftThresholds.UtilWarningMax == rightThresholds.UtilWarningMax
+                && leftThresholds.OnlineWarnRemainingSlots == rightThresholds.OnlineWarnRemainingSlots
+                && leftThresholds.OnlineBadRemainingSlots == rightThresholds.OnlineBadRemainingSlots
+                && leftThresholds.UpWarnKbps == rightThresholds.UpWarnKbps
+                && leftThresholds.UpBadKbps == rightThresholds.UpBadKbps
+                && leftThresholds.DownWarnKbps == rightThresholds.DownWarnKbps
+                && leftThresholds.DownBadKbps == rightThresholds.DownBadKbps;
         }
 
         private static bool AutoStartServerListEquivalent(
@@ -847,6 +933,72 @@ namespace UnifierTSL
                 GetParticularString("{0} is configured logging.mode value", $"Invalid logging.mode setting '{value}'. Falling back to 'txt'."),
                 category: "Config");
             return LogPersistenceMode.Txt;
+        }
+
+        private static bool TryParseColorfulConsoleStatus(string? value, bool emptyValue, out bool enabled) {
+            string text = value?.Trim() ?? string.Empty;
+            if (text.Length == 0) {
+                enabled = emptyValue;
+                return true;
+            }
+
+            if (text is "1" or "+") {
+                enabled = true;
+                return true;
+            }
+
+            if (text is "0" or "-") {
+                enabled = false;
+                return true;
+            }
+
+            if (bool.TryParse(text, out enabled)) {
+                return true;
+            }
+
+            if (OrdinalIgnoreCaseEquals(text, "on") || OrdinalIgnoreCaseEquals(text, "enable") || OrdinalIgnoreCaseEquals(text, "enabled")) {
+                enabled = true;
+                return true;
+            }
+
+            if (OrdinalIgnoreCaseEquals(text, "off") || OrdinalIgnoreCaseEquals(text, "disable") || OrdinalIgnoreCaseEquals(text, "disabled")) {
+                enabled = false;
+                return true;
+            }
+
+            enabled = true;
+            return false;
+        }
+
+        private static void WarnInvalidColorfulConsoleStatus(string? value, string category) {
+            UnifierApi.Logger.Warning(
+                GetParticularString("{0} is user input value for colorful console status", $"Invalid colorful console status value: {value}"),
+                category: category);
+            UnifierApi.Logger.Warning(
+                GetString("Expected value: true/false, on/off, 1/0, or use '--no-colorful' to disable."),
+                category: category);
+        }
+
+        private static string DescribeColorfulConsoleStatus(bool enabled) {
+            return enabled ? "true" : "false";
+        }
+
+        private static ConsoleStatusThresholds ResolveConsoleStatusThresholds(ConsoleStatusThresholdsConfiguration? configured) {
+            ConsoleStatusThresholdsConfiguration source = configured ?? new ConsoleStatusThresholdsConfiguration();
+
+            return new ConsoleStatusThresholds {
+                TargetUps = source.TargetUps,
+                HealthyUpsDeviation = source.HealthyUpsDeviation,
+                WarningUpsDeviation = source.WarningUpsDeviation,
+                UtilHealthyMax = source.UtilHealthyMax,
+                UtilWarningMax = source.UtilWarningMax,
+                OnlineWarnRemainingSlots = source.OnlineWarnRemainingSlots,
+                OnlineBadRemainingSlots = source.OnlineBadRemainingSlots,
+                UpWarnKbps = source.UpWarnKbps,
+                UpBadKbps = source.UpBadKbps,
+                DownWarnKbps = source.DownWarnKbps,
+                DownBadKbps = source.DownBadKbps,
+            };
         }
 
         private readonly record struct AutoStartMergeCandidate(

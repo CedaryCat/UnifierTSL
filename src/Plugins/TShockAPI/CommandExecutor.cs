@@ -33,8 +33,8 @@ namespace TShockAPI
         [MemberNotNullWhen(true, nameof(SourceServer))]
         [MemberNotNullWhen(true, nameof(Player))]
         public readonly bool IsClient => SourceServer is not null && UserId != byte.MaxValue;
-        public readonly TSPlayer? Player => SourceServer is null
-            ? RestPlayer
+        public readonly TSPlayer Player => SourceServer is null
+            ? RestPlayer ?? (TSPlayer)TShock.TSLauncherPlr
             : IsClient
                 ? TShock.Players[UserId]
                 : SourceServer.GetExtension<TSServerPlayer>();
@@ -47,6 +47,8 @@ namespace TShockAPI
         }
         static readonly SuperAdminGroup superAdminGroup = new SuperAdminGroup();
         static readonly UserAccount CoordAccount;
+
+        private readonly IStandardLogger CurrentLogger => SourceServer?.Log ?? Log;
 
         public bool HasPermission(string permission) {
             if (RestPlayer is not null) {
@@ -70,17 +72,12 @@ namespace TShockAPI
                     RestPlayer.SendMessage(message, color);
                 }
                 else {
-                    Log.Info(message, file: file, member: member, line: line);
+                    CurrentLogger.Info(message, file: file, member: member, line: line);
                 }
             }
             else {
                 if (UserId == byte.MaxValue) {
-                    Log.InfoWithMetadata(
-                        message,
-                        metadata: [new("ServerContext", SourceServer.Name)],
-                        file: file,
-                        member: member,
-                        line: line);
+                    CurrentLogger.Info(message, file: file, member: member, line: line);
                 }
                 else {
                     TShock.Players[UserId].SendMessage(message, color);
@@ -97,17 +94,12 @@ namespace TShockAPI
                     RestPlayer.SendMessage(message, new Color(r, g, b));
                 }
                 else {
-                    Log.Info(message, file: file, member: member, line: line);
+                    CurrentLogger.Info(message, file: file, member: member, line: line);
                 }
             }
             else {
                 if (UserId == byte.MaxValue) {
-                    Log.InfoWithMetadata(
-                        message,
-                        metadata: [new("ServerContext", SourceServer.Name)],
-                        file: file,
-                        member: member,
-                        line: line);
+                    CurrentLogger.Info(message, file: file, member: member, line: line);
                 }
                 else {
                     TShock.Players[UserId].SendMessage(message, new Color(r, g, b));
@@ -124,17 +116,12 @@ namespace TShockAPI
                     RestPlayer.SendErrorMessage(message);
                 }
                 else {
-                    Log.Error(message, file: file, member: member, line: line);
+                    CurrentLogger.Error(message, file: file, member: member, line: line);
                 }
             }
             else {
                 if (UserId == byte.MaxValue) {
-                    Log.ErrorWithMetadata(
-                        message,
-                        metadata: [new("ServerContext", SourceServer.Name)],
-                        file: file,
-                        member: member,
-                        line: line);
+                    CurrentLogger.Error(message, file: file, member: member, line: line);
                 }
                 else {
                     TShock.Players[UserId].SendErrorMessage(message);
@@ -152,17 +139,12 @@ namespace TShockAPI
                     RestPlayer.SendInfoMessage(message);
                 }
                 else {
-                    Log.Info(message, file: file, member: member, line: line);
+                    CurrentLogger.Info(message, file: file, member: member, line: line);
                 }
             }
             else {
                 if (UserId == byte.MaxValue) {
-                    Log.InfoWithMetadata(
-                        message,
-                        metadata: [new("ServerContext", SourceServer.Name)],
-                        file: file,
-                        member: member,
-                        line: line);
+                    CurrentLogger.Info(message, file: file, member: member, line: line);
                 }
                 else {
                     TShock.Players[UserId].SendInfoMessage(message);
@@ -180,17 +162,12 @@ namespace TShockAPI
                     RestPlayer.SendWarningMessage(message);
                 }
                 else {
-                    Log.Warning(message, file: file, member: member, line: line);
+                    CurrentLogger.Warning(message, file: file, member: member, line: line);
                 }
             }
             else {
                 if (UserId == byte.MaxValue) {
-                    Log.WarningWithMetadata(
-                        message,
-                        metadata: [new("ServerContext", SourceServer.Name)],
-                        file: file,
-                        member: member,
-                        line: line);
+                    CurrentLogger.Warning(message, file: file, member: member, line: line);
                 }
                 else {
                     TShock.Players[UserId].SendWarningMessage(message);
@@ -207,17 +184,12 @@ namespace TShockAPI
                     RestPlayer.SendSuccessMessage(message);
                 }
                 else {
-                    Log.Success(message, file: file, member: member, line: line);
+                    CurrentLogger.Success(message, file: file, member: member, line: line);
                 }
             }
             else {
                 if (UserId == byte.MaxValue) {
-                    Log.SuccessWithMetadata(
-                        message,
-                        metadata: [new("ServerContext", SourceServer.Name)],
-                        file: file,
-                        member: member,
-                        line: line);
+                    CurrentLogger.Success(message, file: file, member: member, line: line);
                 }
                 else {
                     TShock.Players[UserId].SendSuccessMessage(message);
@@ -229,68 +201,28 @@ namespace TShockAPI
             [CallerMemberName] string? member = null,
             [CallerLineNumber] int line = 0) {
 
-            if (SourceServer is null) {
-                Log.Error(message, file: file, member: member, line: line);
-            }
-            else {
-                Log.ErrorWithMetadata(
-                    message,
-                    metadata: [new("ServerContext", SourceServer.Name)],
-                    file: file,
-                    member: member,
-                    line: line);
-            }
+            CurrentLogger.Error(message, file: file, member: member, line: line);
         }
         public void LogWarning(string message,
             [CallerFilePath] string? file = null,
             [CallerMemberName] string? member = null,
             [CallerLineNumber] int line = 0) {
 
-            if (SourceServer is null) {
-                Log.Warning(message, file: file, member: member, line: line);
-            }
-            else {
-                Log.WarningWithMetadata(
-                    message,
-                    metadata: [new("ServerContext", SourceServer.Name)],
-                    file: file,
-                    member: member,
-                    line: line);
-            }
+            CurrentLogger.Warning(message, file: file, member: member, line: line);
         }
         public void LogInfo(string message,
             [CallerFilePath] string? file = null,
             [CallerMemberName] string? member = null,
             [CallerLineNumber] int line = 0) {
 
-            if (SourceServer is null) {
-                Log.Info(message, file: file, member: member, line: line);
-            }
-            else {
-                Log.InfoWithMetadata(
-                    message,
-                    metadata: [new("ServerContext", SourceServer.Name)],
-                    file: file,
-                    member: member,
-                    line: line);
-            }
+            CurrentLogger.Info(message, file: file, member: member, line: line);
         }
         public void LogSuccess(string message,
             [CallerFilePath] string? file = null,
             [CallerMemberName] string? member = null,
             [CallerLineNumber] int line = 0) {
 
-            if (SourceServer is null) {
-                Log.Success(message, file: file, member: member, line: line);
-            }
-            else {
-                Log.SuccessWithMetadata(
-                    message,
-                    metadata: [new("ServerContext", SourceServer.Name)],
-                    file: file,
-                    member: member,
-                    line: line);
-            }
+            CurrentLogger.Success(message, file: file, member: member, line: line);
         }
         public void SendLogs(string log, Color color, TSPlayer? excludedPlayer = null,
             [CallerFilePath] string? file = null,

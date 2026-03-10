@@ -55,6 +55,12 @@ namespace TShockAPI.Configuration
         /// </summary>
         [Description("Warns players and the console if a player has the tshock.ignore.ssc permission with data in the SSC table.")]
         public bool WarnPlayersAboutBypassPermission = true;
+
+        /// <summary>
+        /// If players should keep their local character appearance in SSC.
+        /// </summary>
+        [Description("If players should keep their local character appearance in SSC.")]
+        public bool KeepPlayerAppearance = false;
     }
 
     public class ServerSideConfig(IPluginConfigRegistrar configRegistrar, string fileNameWithoutExtension, Func<SscSettings> defaultSettingFactory) : ConfigFile<SscSettings>(configRegistrar, fileNameWithoutExtension, defaultSettingFactory)

@@ -1,4 +1,5 @@
 using Terraria.Localization;
+using UnifierTSL.CLI;
 using UnifierTSL.PluginHost;
 
 namespace UnifierTSL
@@ -37,7 +38,7 @@ Version Info:
   UnifierApi v{version.UnifierApiVersion} & PluginApi v{PluginOrchestrator.ApiVersion}
 Current Process ID: {Environment.ProcessId}"));
 
-            WorkRunner.RunTimedWork("Init", GetString("Global initialization started..."), () => {
+            WorkRunner.RunConsoleActivity("Init", GetString("Global initialization started..."), () => {
                 Initializer.Initialize();
                 UnifierApi.InitializeCore();
             });
