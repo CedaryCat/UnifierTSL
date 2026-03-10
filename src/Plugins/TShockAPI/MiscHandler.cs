@@ -47,6 +47,7 @@ namespace TShockAPI
 
         public static void Attach() {
             TShock.Config.OnConfigRead += Config_OnConfigRead;
+            Config_OnConfigRead(TShock.Config);
             UnifierApi.EventHub.Server.AddServer.Register(OnServerListAdded, HandlerPriority.Normal);
             UnifierApi.EventHub.Coordinator.Started.Register(OnPostInit, HandlerPriority.Normal);
             UnifierApi.EventHub.Coordinator.ServerCheckPlayerCanJoinIn.Register(OnCheckJoinIn, HandlerPriority.Higher + 1);
@@ -80,9 +81,7 @@ namespace TShockAPI
 
         private static void OnServerListAdded(ref ReadonlyNoCancelEventArgs<AddServer> args) {
             var server = args.Content.Server;
-            var settings = TShock.Config.GetServerSettings(server.Name);
-            server.NPC.defaultMaxSpawns = settings.DefaultMaximumSpawns;
-            server.NPC.defaultSpawnRate = settings.DefaultSpawnRate;
+            TShock.ApplyConfig(Config, server);
             server.Main.ServerSideCharacter = TShock.ServerSideCharacterConfig.Settings.Enabled;
         }
 
@@ -290,6 +289,8 @@ namespace TShockAPI
                     }
                     if (player.TilePlaceThreshold > 0) {
                         player.TilePlaceThreshold = 0;
+                        lock (player.TilesCreated)
+                            player.TilesCreated.Clear();
                     }
 
                     if (player.RecentFuse > 0)
@@ -304,6 +305,30 @@ namespace TShockAPI
 
                         player.TeleportSpawnpoint();
                         TShock.Log.Debug(GetString("OnSecondUpdate / initial ssc spawn for {0} at ({1}, {2})", player.Name, player.TPlayer.SpawnX, player.TPlayer.SpawnY));
+                    }
+
+                    if (player.InitialTeamChangePending && (DateTime.UtcNow - player.LastPvPTeamChange).TotalSeconds >= 5) {
+                        player.InitialTeamChangePending = false;
+                    }
+
+                    string pvpMode = setting.PvPMode.ToLowerInvariant();
+                    if (pvpMode != PvPModes.Normal) {
+                        if (pvpMode == PvPModes.Disabled && player.TPlayer.hostile) {
+                            player.TPlayer.hostile = false;
+                            player.SendData(PacketTypes.TogglePvp, "", player.Index);
+                            server.NetMessage.SendData((int)PacketTypes.TogglePvp, -1, -1, null, player.Index);
+                        }
+
+                        if ((pvpMode == PvPModes.Always || pvpMode == PvPModes.PvPWithNoTeam) && !player.TPlayer.hostile) {
+                            player.TPlayer.hostile = true;
+                            player.SendData(PacketTypes.TogglePvp, "", player.Index);
+                            server.NetMessage.SendData((int)PacketTypes.TogglePvp, -1, -1, null, player.Index);
+                        }
+
+                        if (pvpMode == PvPModes.PvPWithNoTeam && player.Team != PlayerTeamID.None) {
+                            player.TPlayer.team = PlayerTeamID.None;
+                            player.SendData(PacketTypes.PlayerTeam, "", player.Index);
+                        }
                     }
 
                     if (player.RPPending > 0) {
@@ -753,7 +778,7 @@ namespace TShockAPI
             player.SendFileTextAsMessage(FileTools.MotdPath);
 
             string pvpMode = setting.PvPMode.ToLowerInvariant();
-            if (pvpMode == "always" || pvpMode == "pvpwithnoteam") {
+            if (pvpMode is PvPModes.Always or PvPModes.PvPWithNoTeam) {
                 player.TPlayer.hostile = true;
                 player.SendData(PacketTypes.TogglePvp, "", player.Index);
                 server.NetMessage.SendData((int)PacketTypes.TogglePvp, -1, -1, null, player.Index);

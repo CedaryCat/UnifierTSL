@@ -35,11 +35,11 @@ Welcome! This doc walks you through how the UnifierTSL runtime is put together o
 - **USP (OTAPI.UnifiedServerProcess)** – the patched server runtime layer (evolved from OTAPI) that provides per-server context isolation (`RootContext`) and runtime contracts such as TrProtocol packet models and detourable hook surfaces. Unifier runtime code reaches Terraria state through this layer.
 - **UnifierTSL Core** – the launcher itself, plus orchestration, multi-server coordination, logging, config, module loading, and the plugin host.
 - **Modules & Plugins** – your assemblies, staged under `plugins/`. They can be core hosts or feature satellites, and they can embed dependencies (managed, native, NuGet) for the loader to pull out automatically.
-- **Console Client / Publisher** – tooling projects that sit alongside the runtime and share the same subsystems.
+- **Console Client / Publisher** – tooling projects that sit alongside the runtime and share the same subsystems. The console client now renders ANSI-safe logs, semantic readline prompts, and live status frames over the host protocol.
 
 ### 1.2 Boot Flow
 1. `Program.cs` calls `UnifierApi.HandleCommandLinePreRun(args)`, then `UnifierApi.PrepareRuntime(args)` to parse launcher overrides, load `config/config.json`, merge startup settings, and configure durable logging.
-2. `Initializer.Initialize()` and `UnifierApi.InitializeCore()` set up global services (logging, event hub, module loader) and initialize a `PluginOrchestrator`.
+2. `Initializer.Initialize()` and `UnifierApi.InitializeCore()` set up global services (logging, event hub, launcher console host, module loader) and initialize a `PluginOrchestrator`.
 3. Modules get discovered and preloaded through `ModuleAssemblyLoader` — assemblies are staged and dependency blobs extracted.
 4. Plugin hosts (the built-in .NET host plus custom `[PluginHost(...)]` hosts discovered from loaded modules) discover, load, and initialize plugins.
 5. `UnifierApi.CompleteLauncherInitialization()` resolves any missing interactive port/password inputs, syncs the effective runtime snapshot, and raises `EventHub.Launcher.InitializedEvent`.
@@ -71,18 +71,19 @@ The event system is the heart of UnifierTSL's pub/sub — a fast, priority-sorte
 ```csharp
 public class EventHub
 {
-    public readonly LauncherEventHandler Launcher = new();
+    public readonly ConsoleLifecycleEventHandler Launcher = new();
     public readonly ChatHandler Chat = new();
     public readonly CoordinatorEventBridge Coordinator = new();
     public readonly GameEventBridge Game = new();
     public readonly NetplayEventBridge Netplay = new();
-    public readonly ServerEventBridge Server = new();
+    public readonly ServerConsoleEventBridge Server = new();
 }
 ```
 
 You access events like this: `UnifierApi.EventHub.Game.PreUpdate`, `UnifierApi.EventHub.Chat.MessageEvent`, etc.
 
 `UnifierApi.EventHub.Launcher.InitializedEvent` fires from `UnifierApi.CompleteLauncherInitialization()` once launcher arguments are finalized (including interactive prompts) — right before `UnifiedServerCoordinator.Launch(...)` starts accepting clients.
+That `Launcher` domain is now the console-lifecycle surface as well: plugins can replace the launcher console host and contribute prompt/status UI content before startup input begins.
 
 #### Event Provider Types
 
@@ -243,6 +244,12 @@ public class ChatHandler
 }
 ```
 
+**ConsoleLifecycleEventHandler** (src/UnifierTSL/Events/Handlers/ConsoleLifecycleEventHandler.cs):
+- `CreateLauncherConsoleHost` (mutable) - Swap the launcher-level console host before interactive startup begins
+- `BuildConsolePromptSummary` (mutable) - Contribute summary text for semantic readline prompts
+- `BuildConsoleStatusFrame` (mutable) - Contribute launcher/server status-bar content
+- `InitializedEvent` (informational) - Fired after interactive launcher inputs are resolved
+
 **NetplayEventBridge** (src/UnifierTSL/Events/Handlers/NetplayEventBridge.cs):
 - `ConnectEvent` (cancellable) - Fires during client handshake
 - `ReceiveFullClientInfoEvent` (cancellable) - After client metadata received
@@ -260,8 +267,8 @@ public class ChatHandler
 - `Started` (informational) - Fired after coordinator launch and startup logging completes
 - `LastPlayerLeftEvent` (informational) - Fired on transition from `ActiveConnections > 0` to `0`
 
-**ServerEventBridge** (src/UnifierTSL/Events/Handlers/ServerEventBridge.cs):
-- `CreateConsoleService` (mutable) - Provide custom console implementation
+**ServerConsoleEventBridge** (src/UnifierTSL/Events/Handlers/ServerConsoleEventBridge.cs):
+- `CreateServerConsoleService` (mutable) - Provide a custom per-server console implementation
 - `AddServer` / `RemoveServer` (informational) - Server lifecycle notifications
 - `ServerListChanged` (informational) - Aggregated server list changes
 
@@ -785,7 +792,7 @@ public IPluginContainer? LoadPlugin(IPluginInfo pluginInfo)
 - Host admission is version-gated against `PluginOrchestrator.ApiVersion` (currently `1.0.0`): `major` must match exactly, and the host's `minor` must be ≤ the runtime's `minor`. If it doesn't match, the host is skipped with a warning.
 - `.InitializeAllAsync` preloads modules, discovers plugin entry points via `PluginDiscoverer`, and loads them through `PluginLoader`.
 - Plugin containers are sorted by `InitializationOrder`, and `IPlugin.InitializeAsync` is called with `PluginInitInfo` lists so you can await specific dependencies.
-- `ShutdownAllAsync` and `UnloadAllAsync` exist on the orchestrator, but heads up — the built-in `DotnetPluginHost` still has TODO stubs for `ShutdownAsync`/`UnloadPluginsAsync`. For now, disposal is mainly driven by the module unload path.
+- `ShutdownAllAsync` and `UnloadAllAsync` exist on the orchestrator. In the built-in `DotnetPluginHost`, `ShutdownAsync` now runs plugin `ShutdownAsync` callbacks (graceful teardown), and `UnloadPluginsAsync` unloads plugin modules/contexts.
 
 ### 2.4 Networking & Coordinator
 
@@ -1105,7 +1112,7 @@ On.Terraria.NetplaySystemContext.StopBroadCasting = (_, _) => { };
 
 ### 2.5 Logging Infrastructure
 
-The logging system is built for performance — `LogEntry` lives on the stack, metadata is pooled, and everything routes through pluggable writers with server-scoped output. The `Logger` implementation also keeps a bounded in-memory history ring so sinks can replay recent entries before joining live writes, and the launcher can attach an async durable writer that drains to `txt` or `sqlite` sinks in the background.
+The logging system is built for performance — `LogEntry` lives on the stack, metadata is pooled, and writer/filter/injector composition is held in immutable `LoggerPipeline` snapshots. `Logger` also keeps a bounded in-memory history ring so sinks can replay recent entries before joining live writes, while the launcher can attach an async durable writer that drains to `txt` or `sqlite` sinks in the background. History bookkeeping stays under `publishSync`, but external writer I/O happens after the lock is released so console and sink writes do not block the logger core.
 
 <details>
 <summary><strong>Expand Logging Infrastructure implementation deep dive</strong></summary>
@@ -1117,25 +1124,35 @@ The logging system is built for performance — `LogEntry` lives on the stack, m
 ```csharp
 public class Logger
 {
-    public ILogFilter Filter { get; set; } = EmptyLogFilter.Instance;
-    public ILogWriter Writer { get; set; } = ConsoleLogWriter.Instance;
-    private ImmutableArray<ILogMetadataInjector> MetadataInjectors = [];
+    private readonly LoggerPipeline pipeline;
+    private readonly ILogWriter localWriter;
+    private readonly Lock publishSync = new();
 
     public void Log(ref LogEntry entry)
     {
-        // 1. Apply metadata injectors
-        foreach (var injector in MetadataInjectors) {
+        LoggerPipelineSnapshot pipelineSnapshot = pipeline.Snapshot;
+
+        // 1. Apply metadata injectors from the current snapshot
+        foreach (var injector in pipelineSnapshot.MetadataInjectors) {
             injector.InjectMetadata(ref entry);
         }
 
         // 2. Filter check
-        if (!Filter.ShouldLog(in entry)) return;
+        if (!pipelineSnapshot.Filter.ShouldLog(in entry)) return;
 
-        // 3. Write
-        Writer.Write(in entry);
+        // 3. Commit history bookkeeping only
+        lock (publishSync) {
+            CommitToHistory(in entry);
+        }
+
+        // 4. Write after releasing the history lock
+        localWriter.Write(in entry);
+        pipelineSnapshot.Writer.Write(in entry);
     }
 }
 ```
+
+`LoggerPipeline` uses lock-free snapshot replacement for filter/writer/injector changes. `ServerConsoleLogWriter` binds server loggers to `RemoteConsoleService` when present, and only strips ANSI when it must fall back to a non-remote console writer.
 
 **LogEntry** (src/UnifierTSL/Logging/LogEntry.cs) - Structured log event:
 ```csharp
@@ -1476,7 +1493,7 @@ For more logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/Unifie
 - You get back a `ConfigHandle<T>` that lets you `RequestAsync`, `Overwrite`, `ModifyInMemory`, and subscribe via `OnChangedAsync` for hot reload. File access is guarded by `FileLockManager` to prevent corruption.
 - Launcher root config is separate from plugin config: `LauncherConfigManager` owns `config/config.json`, creates it when missing, and intentionally ignores the legacy root-level `config.json`.
 - Startup precedence for launcher settings is `config/config.json` -> CLI overrides -> interactive fallback for missing port/password, and the effective startup snapshot is persisted back to `config/config.json`. After startup, edits to `config/config.json` apply to the launcher settings that support reload.
-- Root-config hot reload applies `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, and `launcher.listenPort` (via listener rebind).
+- Root-config hot reload applies `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (via listener rebind), `launcher.colorfulConsoleStatus`, and `launcher.consoleStatusThresholds`.
 
 ## 3. USP Integration Points
 
@@ -1527,29 +1544,31 @@ For more logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/Unifie
 4. Plugin hosts find eligible entry points and instantiate `IPlugin` implementations.
 5. `BeforeGlobalInitialize` runs synchronously on every plugin — use it for cross-plugin service wiring.
 6. `InitializeAsync` runs for each plugin; you get prior plugin init tasks so you can await your dependencies.
-7. `InitializeCore` wires `EventHub`, finishes plugin host initialization, and applies the resolved launcher defaults (join policy + queued auto-start worlds).
-8. `CompleteLauncherInitialization` prompts for any still-missing port/password, syncs the effective runtime snapshot, and fires `EventHub.Launcher.InitializedEvent`.
+7. `InitializeCore` wires `EventHub`, finishes plugin host initialization, installs the launcher console host (`TerminalLauncherConsoleHost` by default), and applies the resolved launcher defaults (join policy + queued auto-start worlds).
+8. `CompleteLauncherInitialization` prompts for any still-missing port/password through the launcher console host, syncs the effective runtime snapshot, and fires `EventHub.Launcher.InitializedEvent`.
 9. `UnifiedServerCoordinator.Launch(...)` binds the shared listener, starts the configured worlds, and registers the live coordinator loops.
 10. `StartRootConfigMonitoring()` begins watching `config/config.json`; then `Program.Run()` updates the title, logs startup success, and fires `EventHub.Coordinator.Started`.
 
 **A few notes on launcher args**:
 - Language precedence: `UTSL_LANGUAGE` env var is applied before CLI parsing and blocks later `-lang` / `-culture` / `-language` overrides.
-- `-server` / `-addserver` / `-autostart` parse server descriptors during `PrepareRuntime`; merge behavior is controlled by `-servermerge` (`replace` default, `overwrite`, `append`) and the effective startup list is persisted.
+- `-server` / `-addserver` / `-autostart` parse server descriptors during `PrepareRuntime`; merge behavior is controlled by `-servermerge` / `--server-merge` / `--auto-start-merge` (`replace` default, `overwrite`, `append`) and the effective startup list is persisted.
 - `-joinserver` sets the launcher's low-priority default join mode (`random|rnd|r` or `first|f`) inside a permanent resolver; later root-config reloads can replace that mode without re-registering handlers.
 - `-logmode` / `--log-mode` selects the durable log backend (`txt`, `none`, or `sqlite`).
-- `UnifierApi.CompleteLauncherInitialization()` prompts for any missing port/password, then fires `EventHub.Launcher.InitializedEvent`.
+- `-colorful` / `--colorful` / `--no-colorful` control vivid ANSI status rendering for interactive launcher terminals; unsupported terminals automatically fall back to the plain palette.
+- `UnifierApi.CompleteLauncherInitialization()` prompts for any missing port/password through semantic readline specs (ghost text, rotating suggestions, live status lines) when the host is interactive, then fires `EventHub.Launcher.InitializedEvent`.
 - `Program.Run()` launches the coordinator, enables root config monitoring, logs success, then fires `EventHub.Coordinator.Started`.
 
 ### 5.2 Runtime Operations
 - Event handlers handle cross-cutting concerns — chat moderation, transfer control, packet filtering, etc.
 - Config handles react to file changes, so you can tweak settings without restarting.
-- The launcher root config watcher applies password changes, join-policy changes, additive auto-start worlds (hot-add only), and `launcher.listenPort` listener rebinding.
+- The launcher root config watcher applies password changes, join-policy changes, additive auto-start worlds (hot-add only), `launcher.listenPort` listener rebinding, `launcher.colorfulConsoleStatus`, and `launcher.consoleStatusThresholds`.
 - The coordinator keeps window titles updated, maintains server lists, replays join/leave sequences, and can swap the active listener without tearing down the process.
+- Launcher and per-server consoles now exchange semantic prompt/render/status frames through `TerminalLauncherConsoleHost`, `RemoteConsoleService`, and the console-client protocol, so reconnects can replay cached state instead of dropping back to plain text.
 - Logging metadata and the bounded history ring let you trace any log entry back to its server, plugin, or subsystem, and attach new sinks without losing recent context.
 - Durable backends (`txt` / `sqlite`) now run on a background consumer queue; `none` bypasses durable history commits entirely to keep the hot path minimal.
 
 ### 5.3 Shutdown & Reload
-- `PluginOrchestrator` exposes `ShutdownAllAsync` and `UnloadAllAsync`, though the built-in `DotnetPluginHost` still has TODO stubs for `ShutdownAsync`/`UnloadPluginsAsync`.
+- `PluginOrchestrator` exposes `ShutdownAllAsync` and `UnloadAllAsync`. In the built-in `DotnetPluginHost`, `ShutdownAsync` handles graceful plugin shutdown, while `UnloadPluginsAsync` performs module/context unload.
 - Module reload and targeted unload work through loader APIs (`ModuleAssemblyLoader.TryLoadSpecific`, `ForceUnload`) and plugin-loader ops (`TryUnloadPlugin`/`ForceUnloadPlugin`).
 - Plugin `DisposeAsync` hooks into `ModuleLoadContext` unload via registered dispose actions.
 

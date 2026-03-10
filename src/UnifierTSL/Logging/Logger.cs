@@ -1,7 +1,7 @@
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using UnifierTSL.Logging.LogFilters;
 using UnifierTSL.Logging.LogWriters;
 using UnifierTSL.Logging.Metadata;
@@ -13,6 +13,8 @@ namespace UnifierTSL.Logging
         public const int RecordCapacity = 1024;
         public const int MetadataArenaCapacity = 8192;
 
+        private readonly LoggerPipeline pipeline;
+        private readonly ILogWriter localWriter;
         private readonly Lock publishSync = new();
         private readonly BufferedLogRecord[] records = new BufferedLogRecord[RecordCapacity];
         private readonly KeyValueMetadata[] metadataArena = new KeyValueMetadata[MetadataArenaCapacity];
@@ -24,26 +26,31 @@ namespace UnifierTSL.Logging
         private int metadataTailIndex;
         private int metadataUsed;
         private ulong nextSequence = 1;
-        private bool historyEnabled = true;
+        private int historyEnabled;
 
-        private ILogFilter filter = EmptyLogFilter.Instance;
-        public ILogFilter? Filter {
-            [return: NotNull]
-            get => filter;
-            set {
-                filter = value ?? EmptyLogFilter.Instance;
-            }
+        public Logger() : this(new LoggerPipeline(), ConsoleLogWriter.Instance, historyEnabled: true) {
         }
 
-        private ILogWriter writer = ConsoleLogWriter.Instance;
+        internal Logger(LoggerPipeline pipeline, ILogWriter? localWriter = null, bool historyEnabled = true) {
+            this.pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
+            this.localWriter = localWriter ?? EmptyLogWriter.Instance;
+            this.historyEnabled = historyEnabled ? 1 : 0;
+        }
+
+        internal Logger CreateSibling(ILogWriter? localWriter = null, bool historyEnabled = false) {
+            return new Logger(pipeline, localWriter, historyEnabled);
+        }
+
+        public ILogFilter? Filter {
+            [return: NotNull]
+            get => pipeline.Filter;
+            set => pipeline.Filter = value ?? EmptyLogFilter.Instance;
+        }
+
         public ILogWriter? Writer {
             [return: NotNull]
-            get => writer;
-            set {
-                lock (publishSync) {
-                    writer = value ?? ConsoleLogWriter.Instance;
-                }
-            }
+            get => pipeline.Writer;
+            set => pipeline.Writer = value ?? EmptyLogWriter.Instance;
         }
 
         public ulong LatestSequence {
@@ -55,50 +62,38 @@ namespace UnifierTSL.Logging
         }
 
         internal bool HistoryEnabled {
-            get {
-                lock (publishSync) {
-                    return historyEnabled;
-                }
-            }
+            get => Volatile.Read(ref historyEnabled) != 0;
             set {
                 lock (publishSync) {
-                    if (historyEnabled == value) {
+                    int desired = value ? 1 : 0;
+                    if (historyEnabled == desired) {
                         return;
                     }
 
-                    historyEnabled = value;
-                    if (!value) {
+                    historyEnabled = desired;
+                    if (desired == 0) {
                         ClearHistoryBuffers();
                     }
                 }
             }
         }
 
-        private ImmutableArray<ILogMetadataInjector> _injectors = ImmutableArray<ILogMetadataInjector>.Empty;
-        public IReadOnlyList<ILogMetadataInjector> MetadataInjectors => _injectors;
+        public IReadOnlyList<ILogMetadataInjector> MetadataInjectors => pipeline.MetadataInjectors;
 
         public void AddMetadataInjector(ILogMetadataInjector injector) {
-            ArgumentNullException.ThrowIfNull(injector);
-            ImmutableInterlocked.Update(ref _injectors, arr => arr.Contains(injector) ? arr : arr.Add(injector));
+            pipeline.AddMetadataInjector(injector);
         }
 
         public void RemoveMetadataInjector(ILogMetadataInjector injector) {
-            ArgumentNullException.ThrowIfNull(injector);
-            ImmutableInterlocked.Update(ref _injectors, arr => arr.Remove(injector));
+            pipeline.RemoveMetadataInjector(injector);
         }
 
         public void AddWriter(ILogWriter writer) {
-            ArgumentNullException.ThrowIfNull(writer);
-            lock (publishSync) {
-                this.writer += writer;
-            }
+            pipeline.AddWriter(writer);
         }
 
         public void RemoveWriter(ILogWriter writer) {
-            ArgumentNullException.ThrowIfNull(writer);
-            lock (publishSync) {
-                this.writer = this.writer - writer ?? ConsoleLogWriter.Instance;
-            }
+            pipeline.RemoveWriter(writer);
         }
 
         internal int ReplayHistory(ulong afterSequenceExclusive, int maxCount, ILogHistorySink sink) {
@@ -106,7 +101,7 @@ namespace UnifierTSL.Logging
             ArgumentOutOfRangeException.ThrowIfNegative(maxCount);
 
             lock (publishSync) {
-                if (!historyEnabled) {
+                if (historyEnabled == 0) {
                     return 0;
                 }
 
@@ -120,14 +115,15 @@ namespace UnifierTSL.Logging
             ArgumentOutOfRangeException.ThrowIfNegative(maxCount);
 
             lock (publishSync) {
-                int replayed = historyEnabled ? ReplayHistoryCore(afterSequenceExclusive, maxCount, historySink) : 0;
-                this.writer = this.writer + writer;
+                int replayed = HistoryEnabled ? ReplayHistoryCore(afterSequenceExclusive, maxCount, historySink) : 0;
+                pipeline.AddWriter(writer);
                 return replayed;
             }
         }
 
         public void Log(ref LogEntry entry) {
-            ReadOnlySpan<ILogMetadataInjector> injectors = _injectors.AsSpan();
+            LoggerPipelineSnapshot pipelineSnapshot = pipeline.Snapshot;
+            ReadOnlySpan<ILogMetadataInjector> injectors = pipelineSnapshot.MetadataInjectors.AsSpan();
             int injectorCount = injectors.Length;
             if (injectorCount > 0) {
                 ref ILogMetadataInjector element0 = ref MemoryMarshal.GetReference(injectors);
@@ -136,17 +132,23 @@ namespace UnifierTSL.Logging
                 }
             }
 
-            if (!filter.ShouldLog(in entry)) {
+            if (!pipelineSnapshot.Filter.ShouldLog(in entry)) {
                 return;
             }
 
-            lock (publishSync) {
-                if (historyEnabled) {
-                    CommitToHistory(in entry);
+            if (Volatile.Read(ref historyEnabled) != 0) {
+                lock (publishSync) {
+                    if (historyEnabled != 0) {
+                        CommitToHistory(in entry);
+                    }
                 }
-
-                writer.Write(in entry);
             }
+
+            // Never hold publishSync while calling external writer code.
+            // This keeps history bookkeeping local to the logger core and avoids
+            // cross-context contention with shared sinks or console UI locks.
+            localWriter.Write(in entry);
+            pipelineSnapshot.Writer.Write(in entry);
         }
 
         private void ClearHistoryBuffers() {

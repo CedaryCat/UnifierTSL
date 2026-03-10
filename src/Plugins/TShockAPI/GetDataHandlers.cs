@@ -4,6 +4,7 @@ using Terraria.ID;
 using Terraria.Localization;
 using TrProtocol.Models;
 using TrProtocol.NetPackets;
+using TShockAPI.Configuration;
 using TShockAPI.Extension;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
@@ -59,6 +60,7 @@ namespace TShockAPI
             NetPacketHandler.Register<SyncCavernMonsterType>(HandleSyncCavernMonsterType, HandlerPriority.Low);
             NetPacketHandler.Register<SyncLoadout>(HandleSyncLoadout, HandlerPriority.Low);
             NetPacketHandler.Register<TeamChangeFromUI>(HandlePlayerTeamFromUI, HandlerPriority.Low);
+            NetPacketHandler.Register<DeadCellsDisplayJarTryPlacing>(HandleDisplayJar, HandlerPriority.Low);
         }
 
         private static void HandlePlayerInfo(ref ReceivePacketEvent<SyncPlayer> args) {
@@ -368,6 +370,10 @@ namespace TShockAPI
                     }
 
                     tsPlayer.PlayerData = TShock.CharacterDB.GetPlayerData(tsPlayer, account.ID);
+                    if (server.Main.ServerSideCharacter && TShock.CharacterDB.IsSeededAppearanceMissing(tsPlayer.PlayerData)) {
+                        TShock.CharacterDB.SyncSeededAppearance(account, tsPlayer);
+                        tsPlayer.PlayerData = TShock.CharacterDB.GetPlayerData(tsPlayer, account.ID);
+                    }
 
                     tsPlayer.Group = group;
                     tsPlayer.tempGroup = null;
@@ -423,9 +429,17 @@ namespace TShockAPI
 
             var tsPlayer = args.GetTSPlayer();
             var server = args.LocalReceiver.Server;
-            var setting = TShock.Config.GetServerSettings(server.Name);
 
+            var setting = TShock.Config.GlobalSettings;
             if (Utils.GetActivePlayerCount() + 1 > setting.MaxSlots &&
+                !tsPlayer.HasPermission(Permissions.reservedslot)) {
+                server.Log.Debug(GetString("GetDataHandlers / HandleGetSection rejected reserve slot"));
+                tsPlayer.Kick(setting.ServerFullReason, true, true);
+                args.HandleMode = PacketHandleMode.Cancel;
+            }
+
+            setting = TShock.Config.GetServerSettings(server.Name);
+            if (Utils.GetActivePlayerCount(server) + 1 > setting.MaxSlots &&
                 !tsPlayer.HasPermission(Permissions.reservedslot)) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleGetSection rejected reserve slot"));
                 tsPlayer.Kick(setting.ServerFullReason, true, true);
@@ -454,14 +468,42 @@ namespace TShockAPI
             short numberOfDeathsPVP = args.Packet.DeathsPVP;
             byte team = args.Packet.Team;
             PlayerSpawnContext context = args.Packet.Context;
+            bool teamCorrectNeeded = false; // If we need to correct their team after handling
+            var setting = TShock.Config.GetServerSettings(server.Name);
+            string pvpMode = setting.PvPMode.ToLowerInvariant();
 
-            if (tsPlayer.State >= (int)ConnectionState.RequestingWorldData && !tsPlayer.FinishedHandshake)
-                tsPlayer.FinishedHandshake = true; //If the player has requested world data before sending spawn player, they should be at the obvious ClientRequestedWorldData state. Also only set this once to remove redundant updates.
+            // To prevent clients from bypassing this pvp mode, we must correct their team
+            if (pvpMode == PvPModes.PvPWithNoTeam && team != PlayerTeamID.None) {
+                team = (byte)PlayerTeamID.None;
+                tsPlayer.TPlayer.team = PlayerTeamID.None; // Make sure to set it to 0 (no team). This ensures it gets corrected.
+                teamCorrectNeeded = true;
+            }
+
+            // Malicious client likely trying to fast switch their team
+            if (team != tsPlayer.Team && tsPlayer.FinishedHandshake && (DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
+                teamCorrectNeeded = true;
+            }
+
+            if (tsPlayer.State >= (int)ConnectionState.RequestingWorldData && !tsPlayer.FinishedHandshake) {
+                tsPlayer.FinishedHandshake = true;
+                // Player will be requesting a team change later
+                if (!server.Main.ServerSideCharacter && team != PlayerTeamID.None && !teamCorrectNeeded) {
+                    tsPlayer.InitialTeamChangePending = true;
+                    // To prevent malicious clients from being able to get a free team change, we reset InitialTeamChangePending after 5 seconds
+                    tsPlayer.LastPvPTeamChange = DateTime.UtcNow;
+                }
+            }
 
             //if (OnPlayerSpawn(tsPlayer, args.Data, player, spawnX, spawnY, respawnTimer, numberOfDeathsPVE, numberOfDeathsPVP, context))
             //    args.HandleMode = PacketHandleMode.Cancel;
 
-            if (team < Main.teamColor.Length) {
+            if (team < Main.teamColor.Length && team != tsPlayer.TPlayer.team) {
+                if (teamCorrectNeeded) {
+                    team = (byte)tsPlayer.TPlayer.team;
+                }
+                else {
+                    tsPlayer.LastPvPTeamChange = DateTime.UtcNow;
+                }
                 tsPlayer.TPlayer.team = team;
             }
 
@@ -514,10 +556,14 @@ namespace TShockAPI
                 if (tsPlayer.spawnSynced || tsPlayer.initialClientSpawnX != spawnX || tsPlayer.initialClientSpawnY != spawnY) {
                     // Player has changed his spawnpoint, client and server TPlayer.Spawn{X,Y} is now synced
                     tsPlayer.spawnSynced = true;
+                    if (teamCorrectNeeded) {
+                        tsPlayer.SendData(PacketTypes.PlayerTeam, "", tsPlayer.Index);
+                        args.HandleMode = PacketHandleMode.Cancel;
+                        args.StopPropagation = true;
+                    }
                     return;
                 }
 
-                tsPlayer.TPlayer.team = team;
                 tsPlayer.TPlayer.Spawn(server, context);
                 // spawn the player before teleporting
                 server.NetMessage.SendData((int)PacketTypes.PlayerSpawn, -1, tsPlayer.Index, null, tsPlayer.Index, (int)PlayerSpawnContext.ReviveFromDeath);
@@ -527,10 +573,69 @@ namespace TShockAPI
                 server.Log.Debug(GetString("GetDataHandlers / HandleSpawn force ssc teleport for {0} at ({1},{2})", tsPlayer.Name, tsPlayer.TPlayer.SpawnX, tsPlayer.TPlayer.SpawnY));
                 tsPlayer.TeleportSpawnpoint();
 
+                // Correct their team after
+                if (teamCorrectNeeded) {
+                    tsPlayer.SendData(PacketTypes.PlayerTeam, "", tsPlayer.Index);
+                }
+
+                args.HandleMode = PacketHandleMode.Cancel;
+                args.StopPropagation = true;
+                return;
+            }
+
+            if (tsPlayer.State == (int)ConnectionState.RequestingWorldData || teamCorrectNeeded) {
+                // Note: Because clients can change their team through this packet now, we have to always handle it ourselves to make sure we're syncing their team correctly.
+                if (teamCorrectNeeded) {
+                    // Correction of malicious client's team change necessary, or we're enforcing the 'pvpwithnoteam' mode, where their team must be set to 0.
+                    team = (byte)tsPlayer.TPlayer.team;
+                }
+                // Client has changed team through this packet, track time since last team change
+                else if (!tsPlayer.InitialTeamChangePending && tsPlayer.TPlayer.team != team) {
+                    tsPlayer.LastPvPTeamChange = DateTime.UtcNow;
+                }
+
+                tsPlayer.TPlayer.team = team;
+                tsPlayer.TPlayer.respawnTimer = respawnTimer;
+                tsPlayer.TPlayer.numberOfDeathsPVE = numberOfDeathsPVE;
+                tsPlayer.TPlayer.numberOfDeathsPVP = numberOfDeathsPVP;
+
+                if (tsPlayer.TPlayer.respawnTimer > 0) {
+                    tsPlayer.TPlayer.dead = true;
+                }
+
+                tsPlayer.TPlayer.Spawn(server, context);
+
+                if (tsPlayer.State == (int)ConnectionState.RequestingWorldData) {
+                    tsPlayer.State = (int)ConnectionState.Complete;
+
+                    var NetMessage = server.NetMessage;
+                    NetMessage.buffer[tsPlayer.Index].broadcast = true;
+                    NetMessage.SyncConnectedPlayer(tsPlayer.Index);
+                    var isHost = NetMessage.DoesPlayerSlotCountAsAHost(tsPlayer.Index);
+                    server.Main.countsAsHostForGameplay[tsPlayer.Index] = isHost;
+                    if (isHost)
+                        NetMessage.TrySendData((int)PacketTypes.SetCountsAsHostForGameplay, tsPlayer.Index, -1, null, tsPlayer.Index, true.ToInt());
+
+                    NetMessage.TrySendData((int)PacketTypes.FinishedConnectingToServer, tsPlayer.Index);
+                    NetMessage.greetPlayer(tsPlayer.Index);
+                    if (tsPlayer.TPlayer.unlockedBiomeTorches) {
+                        var npc = new NPC();
+                        npc.SetDefaults(server, NPCID.TorchGod);
+                        server.Main.BestiaryTracker.Kills.RegisterKill(server, npc);
+                    }
+                }
+                else {
+                    server.NetMessage.SendData((int)PacketTypes.PlayerSpawn, -1, tsPlayer.Index, null, tsPlayer.Index, (int)context);
+                }
+
+                if (teamCorrectNeeded) {
+                    tsPlayer.SendData(PacketTypes.PlayerTeam, "", tsPlayer.Index);
+                }
+
+                // We've handled it ourselves
                 args.HandleMode = PacketHandleMode.Cancel;
                 args.StopPropagation = true;
             }
-            return;
         }
 
         private static void HandlePlayerUpdate_NullCheck(ref ReceivePacketEvent<PlayerControls> args) {
@@ -767,7 +872,7 @@ namespace TShockAPI
             }
 
             string pvpMode = setting.PvPMode.ToLowerInvariant();
-            if (pvpMode == "disabled" || pvpMode == "always" || pvpMode == "pvpwithnoteam" || (DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
+            if (pvpMode == PvPModes.Disabled || pvpMode == PvPModes.Always || pvpMode == PvPModes.PvPWithNoTeam || (DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleTogglePvp rejected fastswitch {0}", tsPlayer.Name));
                 tsPlayer.SendData(PacketTypes.TogglePvp, "", id);
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
@@ -849,6 +954,10 @@ namespace TShockAPI
                 if (account.VerifyPassword(password)) {
                     tsPlayer.RequiresPassword = false;
                     tsPlayer.PlayerData = TShock.CharacterDB.GetPlayerData(tsPlayer, account.ID);
+                    if (server.Main.ServerSideCharacter && TShock.CharacterDB.IsSeededAppearanceMissing(tsPlayer.PlayerData)) {
+                        TShock.CharacterDB.SyncSeededAppearance(account, tsPlayer);
+                        tsPlayer.PlayerData = TShock.CharacterDB.GetPlayerData(tsPlayer, account.ID);
+                    }
 
                     if (tsPlayer.State == (int)ConnectionState.AssigningPlayerSlot)
                         tsPlayer.State = (int)ConnectionState.AwaitingPlayerInfo;
@@ -1008,8 +1117,9 @@ namespace TShockAPI
             if (id != tsPlayer.Index)
                 return true;
 
-            if (team == tsPlayer.Team) {
-                return false;
+            // No need to handle if initial change isn't pending, interferes with SSC if we do.
+            if (!tsPlayer.InitialTeamChangePending && team == tsPlayer.Team) {
+                return true;
             }
 
             if (tsPlayer.IgnoreSSCPackets) {
@@ -1020,7 +1130,22 @@ namespace TShockAPI
 
             var setting = TShock.Config.GetServerSettings(server.Name);
             string pvpMode = setting.PvPMode.ToLowerInvariant();
-            if (pvpMode == "pvpwithnoteam" || (DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
+            if (pvpMode == PvPModes.PvPWithNoTeam) {
+                tsPlayer.SendData(PacketTypes.PlayerTeam, "", id);
+                server.Log.Debug(GetString("GetDataHandlers / HandlePlayerTeam rejected from (pvp mode disallows teams) {0}", tsPlayer.Name));
+                return true;
+            }
+
+            // Player has pending team change
+            if (tsPlayer.InitialTeamChangePending) {
+                tsPlayer.InitialTeamChangePending = false;
+                // Players can change teams or toggle pvp immediately after joining, so we have to allow such.
+                tsPlayer.LastPvPTeamChange = DateTime.MinValue;
+                server.Log.Debug(GetString("GetDataHandlers / HandlePlayerTeam super accepted from (initial team change) {0}", tsPlayer.Name));
+                return false;
+            }
+
+            if ((DateTime.UtcNow - tsPlayer.LastPvPTeamChange).TotalSeconds < 5) {
                 tsPlayer.SendData(PacketTypes.PlayerTeam, "", id);
                 server.Log.Debug(GetString("GetDataHandlers / HandlePlayerTeam rejected team fastswitch {0}", tsPlayer.Name));
                 return true;
@@ -1123,12 +1248,17 @@ namespace TShockAPI
             if (type == 1) {
                 if (!tsPlayer.HasPermission(Permissions.summonboss)) {
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to summon the Skeletron."));
+                    tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
                     server.Log.Debug(GetString($"GetDataHandlers / HandleNpcStrike rejected Skeletron summon from {tsPlayer.Name}"));
                     { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                 }
             }
             else if (type == 2) {
                 // Plays SoundID.Item1
+            }
+            else if (type == 10) {
+                // Party Girl cake special effect.
+                return;
             }
             else if (type == 3) {
                 if (!tsPlayer.HasPermission(Permissions.usesundial)) {
@@ -1173,6 +1303,12 @@ namespace TShockAPI
                 server.Log.Error(GetString("Unrecognized special effect (Packet 51). Please report this to the TShock developers."));
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
+        }
+
+        /// <summary>
+        /// Handles the display jar placement packet.
+        /// </summary>
+        private static void HandleDisplayJar(ref ReceivePacketEvent<DeadCellsDisplayJarTryPlacing> args) {
         }
 
         private static void HandleUpdateNPCHome(ref ReceivePacketEvent<NPCHome> args) {
@@ -1516,7 +1652,7 @@ namespace TShockAPI
                     }
 
                     if (!tsPlayer.HasPermission(Permissions.tppotion)) {
-                        Fail(server, tsPlayer, "Teleportation Potions");
+                        Fail(server, tsPlayer, GetString("Teleportation Potions"));
                         { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
                     break;
@@ -1531,10 +1667,10 @@ namespace TShockAPI
 
                     if (!tsPlayer.HasPermission(Permissions.magicconch)) {
                         if (tsPlayer.ItemInHand.type == ItemID.ShellphoneOcean || tsPlayer.SelectedItem.type == ItemID.ShellphoneOcean) {
-                            Fail(server, tsPlayer, "the Shellphone (Ocean)");
+                            Fail(server, tsPlayer, GetString("the Shellphone (Ocean)"));
                         }
                         else {
-                            Fail(server, tsPlayer, "the Magic Conch");
+                            Fail(server, tsPlayer, GetString("the Magic Conch"));
                         }
                         { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }
@@ -1550,10 +1686,10 @@ namespace TShockAPI
 
                     if (!tsPlayer.HasPermission(Permissions.demonconch)) {
                         if (tsPlayer.ItemInHand.type == ItemID.ShellphoneHell || tsPlayer.SelectedItem.type == ItemID.ShellphoneHell) {
-                            Fail(server, tsPlayer, "the Shellphone (Underworld)");
+                            Fail(server, tsPlayer, GetString("the Shellphone (Underworld)"));
                         }
                         else {
-                            Fail(server, tsPlayer, "the Demon Conch");
+                            Fail(server, tsPlayer, GetString("the Demon Conch"));
                         }
                         { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
                     }

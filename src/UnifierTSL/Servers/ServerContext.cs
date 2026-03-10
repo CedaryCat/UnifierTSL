@@ -3,7 +3,9 @@ using UnifiedServerProcess;
 using UnifierTSL.CLI;
 using UnifierTSL.Extensions;
 using UnifierTSL.Logging;
+using UnifierTSL.Logging.LogWriters;
 using UnifierTSL.Network;
+using UnifierTSL.Performance;
 
 namespace UnifierTSL.Servers
 {
@@ -12,11 +14,12 @@ namespace UnifierTSL.Servers
         public readonly Guid UniqueId = Guid.NewGuid();
         public readonly IWorldDataProvider worldDataProvider;
         public readonly ClientPacketReceiver PacketReceiver;
+        public readonly ServerPerformance Performance;
         public readonly RoleLogger Log;
 
         public Thread? RunningThread { get; private set; }
-
-        internal int ActivePlayers;
+        public int ActivePlayerCount { get; internal set; }
+        internal int playerCountAccumulator;
         public bool IsRunning { get; private set; }
 
         public string? CurrentLogCategory { get; set; }
@@ -46,12 +49,15 @@ namespace UnifierTSL.Servers
         }
 
         protected virtual ConsoleSystemContext CreateConsoleService()
-            => UnifierApi.EventHub.Server.InvokeCreateConsoleService(this) ?? new ConsoleClientLauncher(this);
+            => UnifierApi.EventHub.Server.InvokeCreateServerConsoleService(this) ?? new RemoteConsoleService(this);
 
         public ServerContext(string serverName, IWorldDataProvider worldData, Logger? overrideLogCore = null) : base(serverName) {
             Console = CreateConsoleService();
             PacketReceiver = new ClientPacketReceiver(this);
-            Log = UnifierApi.CreateLogger(this, overrideLogCore);
+            Performance = new(this);
+
+            Logger logCore = overrideLogCore ?? UnifierApi.LogCore.CreateSibling(new ServerConsoleLogWriter(this), historyEnabled: false);
+            Log = UnifierApi.CreateLogger(this, logCore);
             Log.AddMetadataInjector(injector: this);
 
             worldDataProvider = worldData;

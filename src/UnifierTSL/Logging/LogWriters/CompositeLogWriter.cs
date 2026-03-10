@@ -71,7 +71,7 @@ namespace UnifierTSL.Logging.LogWriters
         }
 
         public static ILogWriter? operator -(CompositeLogWriter left, CompositeLogWriter right) {
-            HashSet<ILogWriter> newWriters = left.Writers.ToHashSet();
+            HashSet<ILogWriter> newWriters = [.. left.Writers];
             foreach (ILogWriter writer in right.Writers) {
                 newWriters.Remove(writer);
             }

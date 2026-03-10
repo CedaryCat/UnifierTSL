@@ -5,63 +5,41 @@ namespace UnifierTSL
 {
     internal static class WorkRunner
     {
-        public static void RunTimedWork(string category, string message, Action work) {
-            UnifierApi.Logger.Info(
-                category: $"TimedWork:{category}",
-                message: message);
-
-            ConsoleSpinner spinner = new(100);
-            spinner.Start();
-            Stopwatch stopwatch = new();
-            stopwatch.Start();
-            work();
-            stopwatch.Stop();
-            spinner.Stop();
-            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
-
-            UnifierApi.Logger.Info(
-                category: $"TimedWork:{category}",
-                message: GetParticularString("{0} is elapsed milliseconds (number format with 2 decimal places)", $"Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)"));
+        public static void RunConsoleActivity(string category, string message, Action work) {
+            RunConsoleActivityCore(category, message, () => {
+                work();
+                return 0;
+            });
         }
-        public static TOut RunTimedWork<TOut>(string category, string message, WorkDelegate<TOut> work) {
-            UnifierApi.Logger.Info(
-                category: $"TimedWork:{category}",
-                message: message);
-
-            ConsoleSpinner spinner = new(100);
-            spinner.Start();
-            Stopwatch stopwatch = new();
-            stopwatch.Start();
-            TOut? output = work();
-            stopwatch.Stop();
-            spinner.Stop();
-            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
-
-            UnifierApi.Logger.Info(
-                category: $"TimedWork:{category}",
-                message: GetParticularString("{0} is elapsed milliseconds (number format with 2 decimal places)", $"Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)"));
-
-            return output;
+        public static TOut RunConsoleActivity<TOut>(string category, string message, WorkDelegate<TOut> work) {
+            return RunConsoleActivityCore(category, message, () => work());
         }
-        public static void RunTimedWorkAsync(string category, string message, Func<TaskCompletionSource> work, Action? endAction = null) {
-            UnifierApi.Logger.Info(
-                category: $"TimedWork:{category}",
-                message: message);
-
-            ConsoleSpinner spinner = new(100);
-            spinner.Start();
-            Stopwatch stopwatch = new();
-            stopwatch.Start();
-            work().Task.Wait();
-            stopwatch.Stop();
-            spinner.Stop();
-            Console.SetCursorPosition(spinner.LastLeft, spinner.LastTop);
-
-            UnifierApi.Logger.Info(
-                category: $"TimedWork:{category}",
-                message: GetParticularString("{0} is elapsed milliseconds (number format with 2 decimal places)", $"Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)"));
-
+        public static void RunConsoleActivityAsync(string category, string message, Func<TaskCompletionSource> work, Action? endAction = null) {
+            RunConsoleActivityCore(category, message, () => {
+                work().Task.Wait();
+                return 0;
+            });
             endAction?.Invoke();
+        }
+
+        private static TOut RunConsoleActivityCore<TOut>(string category, string message, Func<TOut> work)
+        {
+            string logCategory = $"ConsoleActivity:{category}";
+            UnifierApi.Logger.Info(
+                category: logCategory,
+                message: message);
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            using IDisposable statusScope = ConsoleInput.BeginConsoleActivityStatus(category, message);
+            try {
+                return work();
+            }
+            finally {
+                stopwatch.Stop();
+                UnifierApi.Logger.Info(
+                    category: logCategory,
+                    message: GetParticularString("{0} is elapsed milliseconds (number format with 2 decimal places)", $"Done. (used {stopwatch.ElapsedMilliseconds:.00}ms)"));
+            }
         }
 
         public delegate TOut WorkDelegate<TIn, TOut>(TIn input);

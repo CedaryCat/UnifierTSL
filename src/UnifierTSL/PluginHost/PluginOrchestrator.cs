@@ -3,6 +3,7 @@ using System.Reflection;
 using UnifierTSL.Extensions;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;
+using UnifierTSL.Plugins;
 using UnifierTSL.PluginHost.Hosts.Dotnet;
 
 namespace UnifierTSL.PluginHost
@@ -98,6 +99,28 @@ namespace UnifierTSL.PluginHost
             foreach (IPluginHost host in hosts) {
                 await host.UnloadPluginsAsync(cancellationToken);
             }
+        }
+
+        public Task<PluginHotReloadResult> TryHotReloadAsync(PluginHotReloadRequest request, CancellationToken cancellationToken = default) {
+            if (request is null) {
+                return Task.FromResult(PluginHotReloadResult.Rejected(
+                    reasonCode: HotReloadReasonCode.InvalidRequest,
+                    message: GetString("Hot reload request is null."),
+                    matchKey: "",
+                    pluginFilePath: "",
+                    entryPoint: ""));
+            }
+
+            if (!registeredPluginHosts.TryGetValue("dotnet", out IPluginHost? host) || host is not IHotReloadPluginHost hotReloadHost) {
+                return Task.FromResult(PluginHotReloadResult.Rejected(
+                    reasonCode: HotReloadReasonCode.LoadFailed,
+                    message: GetString("Dotnet hot reload host is not available."),
+                    matchKey: request.MatchKey ?? "",
+                    pluginFilePath: request.PluginFilePath,
+                    entryPoint: request.EntryPoint));
+            }
+
+            return hotReloadHost.TryHotReloadAsync(request, cancellationToken);
         }
     }
 }
