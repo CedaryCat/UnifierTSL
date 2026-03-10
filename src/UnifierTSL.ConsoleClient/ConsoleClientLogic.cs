@@ -108,6 +108,9 @@ namespace UnifierTSL.ConsoleClient
 
                 case SET_STATUS_BAR.id:
                     SET_STATUS_BAR statusFramePacket = IPacket.Read<SET_STATUS_BAR>(content);
+                    // Status frames can be replayed after reconnect while older packets are still
+                    // in flight. Only move the UI sequence forward; otherwise a stale resend can
+                    // overwrite a newer frame or resurrect a bar that was already cleared.
                     if (statusFramePacket.Sequence <= Interlocked.Read(ref latestStatusSequence)) {
                         break;
                     }
@@ -128,6 +131,9 @@ namespace UnifierTSL.ConsoleClient
 
                 case BEGIN_READ.id:
                     BEGIN_READ beginRead = IPacket.Read<BEGIN_READ>(content);
+                    // Host side retries BEGIN_READ until CONFIRM_BEGIN_READ arrives, so duplicates
+                    // are expected. Confirm first, then ignore the repeated order to avoid starting
+                    // a second local Console.Read* for the same server-side waiting call.
                     client.Send(new CONFIRM_BEGIN_READ(beginRead.Flags, beginRead.Order));
                     if (beginRead.Order == Interlocked.Read(ref activeReadOrder)
                         || beginRead.Order == Interlocked.Read(ref queuedReadOrder)) {

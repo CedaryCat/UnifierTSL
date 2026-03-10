@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableTerminalDebugTrace Condition="'$(EnableTerminalDebugTrace)' == ''">false</EnableTerminalDebugTrace>
+    <DefineConstants Condition="'$(Configuration)' == 'Debug' and '$(EnableTerminalDebugTrace)' == 'true'">$(DefineConstants);UNIFIER_TERMINAL_DEBUG_TRACE</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,20 +6,28 @@ namespace UnifierTSL.ConsoleClient.Shell
     {
         private bool footerDrawn;
         private int footerTopRow = -1;
-        private int footerTotalRows;
-        private int inputRow = -1;
-        private int footerCursorRow = -1;
+        private FooterSnapshot? footerSnapshot;
+        private bool rebaseAfterReservationDrop;
+        private const int FooterUnsafeClearMarginRows = 2;
 
         public bool FooterDrawn => footerDrawn;
-        // Exposed so ConsoleShell can align its output anchor when reservation caused implicit scroll.
+        // Exposed so ConsoleShell can align its output anchor when footer reservation or reflow moved it.
         public int FooterTopRow => footerTopRow;
 
         public void Reset() {
             footerDrawn = false;
             footerTopRow = -1;
-            footerTotalRows = 0;
-            inputRow = -1;
-            footerCursorRow = -1;
+            footerSnapshot = null;
+            rebaseAfterReservationDrop = false;
+        }
+
+        public bool RequiresViewportRefresh() {
+            if (!footerDrawn || footerSnapshot is null) {
+                return false;
+            }
+
+            return footerSnapshot.DrawnWritableWidth != GetWritableWidth()
+                || footerSnapshot.DrawnWrapWidth != GetWrapWidth();
         }
 
         public void Draw(
@@ -31,94 +39,280 @@ namespace UnifierTSL.ConsoleClient.Shell
             bool supportsVirtualTerminal,
             int? anchorTopRow = null,
             ConsolePromptTheme? statusHeaderThemeOverride = null) {
-            ReconcileFooterTopRowFromCursor();
+            FooterLayout previousLayout = ResolveCurrentFooterLayout();
+            FooterSnapshot? previousSnapshot = footerSnapshot;
             SetCursorVisibleSafe(false);
 
             int writableWidth = GetWritableWidth();
+            int wrapWidth = GetWrapWidth();
             int desiredRows = statusLines.Count + (showInputRow ? 1 : 0);
+            int? normalizedAnchor = anchorTopRow is int requestedTopRow
+                ? ClampRow(requestedTopRow)
+                : null;
 
-            if (anchorTopRow is int requestedTopRow) {
-                int normalizedTop = ClampRow(requestedTopRow);
-                if (footerDrawn && footerTopRow >= 0 && footerTopRow != normalizedTop) {
-                    ClearFooterArea();
+            bool hasPreviousLayout = previousLayout.IsValid && previousSnapshot is not null;
+            bool anchorChanged = normalizedAnchor is int requestedAnchor
+                && hasPreviousLayout
+                && previousLayout.TopRow != requestedAnchor;
+            bool logicalRowCountChanged = hasPreviousLayout
+                && previousSnapshot!.LineCellWidths.Length != desiredRows;
+            bool viewportWidthChanged = hasPreviousLayout
+                && (previousSnapshot!.DrawnWritableWidth != writableWidth
+                    || previousSnapshot.DrawnWrapWidth != wrapWidth);
+
+            // A footer reservation is only trustworthy while it still describes the same logical
+            // slice of the buffer. If the requested anchor, logical row count, or viewport width
+            // changed, clearing/updating in place can target rows that now belong to scrollback or
+            // freshly written log lines after terminal reflow.
+            if (hasPreviousLayout && (anchorChanged || logicalRowCountChanged || viewportWidthChanged)) {
+                string resetReason = string.Join(
+                    ",",
+                    new[] {
+                        anchorChanged ? "anchor" : null,
+                        logicalRowCountChanged ? "rows" : null,
+                        viewportWidthChanged ? "viewport" : null
+                    }.Where(static item => item is not null));
+#if UNIFIER_TERMINAL_DEBUG_TRACE
+                TerminalDebugTrace.WriteThrottled(
+                    "FooterDraw.Reset",
+                    $"reason={resetReason} prevTop={previousLayout.TopRow} prevPhysicalRows={previousLayout.PhysicalRowCount} footerTop={footerTopRow} desiredRows={desiredRows} prevLogicalRows={previousSnapshot!.LineCellWidths.Length} anchorReq={(normalizedAnchor is int anchor ? anchor : -1)} cursorTop={GetCursorTopOrFallback(-1)} widths={previousSnapshot.DrawnWritableWidth}/{previousSnapshot.DrawnWrapWidth}->{writableWidth}/{wrapWidth}",
+                    minIntervalMs: viewportWidthChanged ? 80 : 160);
+#endif
+                TraceFooterSlice(
+                    "FooterReset.Before",
+                    $"reason={resetReason} prevTop={previousLayout.TopRow} prevRows={previousLayout.PhysicalRowCount} desiredRows={desiredRows}",
+                    previousLayout.TopRow,
+                    previousLayout.PhysicalRowCount);
+                if (ShouldAvoidDestructiveClear(previousLayout)) {
+                    DropFooterReservationState();
                 }
-
-                footerTopRow = normalizedTop;
+                else {
+                    ClearFooterArea(previousLayout, supportsVirtualTerminal);
+                }
+                TraceFooterSlice(
+                    "FooterReset.After",
+                    $"reason={resetReason} postTop={footerTopRow} postDrawn={footerDrawn}",
+                    previousLayout.TopRow,
+                    Math.Max(previousLayout.PhysicalRowCount, desiredRows));
+                hasPreviousLayout = false;
+                previousSnapshot = null;
             }
 
-            int previousFooterTotalRows = footerDrawn ? footerTotalRows : 0;
-            if (!footerDrawn || footerTopRow < 0) {
-                if (anchorTopRow is null) {
-                    footerTopRow = ClampRow(Console.CursorTop);
+            if (!hasPreviousLayout || footerTopRow < 0) {
+                int currentCursorTop = ClampRow(GetCursorTopOrFallback(0));
+                if (rebaseAfterReservationDrop) {
+                    int fallbackAnchorLineIndex = showInputRow
+                        ? statusLines.Count
+                        : Math.Max(0, statusLines.Count - 1);
+                    footerTopRow = normalizedAnchor ?? ClampRow(currentCursorTop - fallbackAnchorLineIndex);
                 }
-
+                else {
+                    footerTopRow = normalizedAnchor ?? currentCursorTop;
+                }
                 SetCursorPositionSafe(0, footerTopRow);
-                ReserveFooterRows(desiredRows);
+                if (rebaseAfterReservationDrop) {
+                    rebaseAfterReservationDrop = false;
+                }
+                else {
+                    ReserveFooterRows(desiredRows);
+                }
             }
-            else if (desiredRows > footerTotalRows) {
-                ExtendFooterRows(desiredRows);
+            else {
+                footerTopRow = previousLayout.TopRow;
             }
 
+            int[] lineCellWidths = new int[desiredRows];
+            int anchorLineIndex = 0;
+            int anchorColumn = 0;
             ConsolePromptTheme theme = render.Payload.Theme ?? ConsolePromptTheme.Default;
             ConsolePromptTheme statusHeaderTheme = statusHeaderThemeOverride ?? theme;
+
             SetCursorPositionSafe(0, footerTopRow);
             for (int index = 0; index < statusLines.Count; index++) {
-                WriteStatusLine(
+                int previousLineWidth = previousSnapshot is not null
+                    && index < previousSnapshot.LineCellWidths.Length
+                    ? Math.Max(0, previousSnapshot.LineCellWidths[index])
+                    : 0;
+                bool hasFollowingRow = index < statusLines.Count - 1 || showInputRow;
+                lineCellWidths[index] = WriteStatusLine(
                     statusLines[index],
                     index == 0,
                     writableWidth,
                     supportsVirtualTerminal,
-                    index == 0 ? statusHeaderTheme : theme);
+                    index == 0 ? statusHeaderTheme : theme,
+                    previousLineWidth,
+                    deferResetToNextRow: index == 0 && hasFollowingRow);
                 if (index < statusLines.Count - 1) {
                     SetCursorPositionSafe(0, footerTopRow + index + 1);
                 }
             }
 
-            for (int index = desiredRows; index < previousFooterTotalRows; index++) {
-                ClearLineAt(footerTopRow + index);
-            }
-
             if (showInputRow) {
-                inputRow = footerTopRow + statusLines.Count;
+                int inputRow = footerTopRow + statusLines.Count;
                 SetCursorPositionSafe(0, inputRow);
-                int cursorColumn = WriteInputLine(render, inputState, writableWidth, supportsVirtualTerminal, theme);
-                SetCursorPositionSafe(cursorColumn, inputRow);
+                InputLineRenderResult inputRender = WriteInputLine(
+                    render,
+                    inputState,
+                    writableWidth,
+                    supportsVirtualTerminal,
+                    theme);
+                lineCellWidths[statusLines.Count] = inputRender.RenderedCellWidth;
+                SetCursorPositionSafe(inputRender.CursorColumn, inputRow);
                 SetCursorVisibleSafe(showInputCaret);
-                footerCursorRow = GetCursorTopOrFallback(inputRow);
+                anchorLineIndex = statusLines.Count;
+                anchorColumn = inputRender.CursorColumn;
             }
             else {
-                inputRow = -1;
                 int cursorRow = ClampRow(footerTopRow + Math.Max(0, statusLines.Count - 1));
                 SetCursorPositionSafe(0, cursorRow);
                 SetCursorVisibleSafe(false);
-                footerCursorRow = GetCursorTopOrFallback(cursorRow);
+                anchorLineIndex = Math.Max(0, statusLines.Count - 1);
+                anchorColumn = 0;
             }
 
-            footerTotalRows = desiredRows;
+            footerSnapshot = new FooterSnapshot(
+                lineCellWidths,
+                anchorLineIndex,
+                anchorColumn,
+                writableWidth,
+                wrapWidth);
             footerDrawn = true;
+
+            if (normalizedAnchor is int finalRequestedAnchor && footerTopRow != finalRequestedAnchor) {
+#if UNIFIER_TERMINAL_DEBUG_TRACE
+                TerminalDebugTrace.WriteThrottled(
+                    "FooterDraw.AnchorDrift",
+                    $"requested={finalRequestedAnchor} actual={footerTopRow} desiredRows={desiredRows} anchorLine={anchorLineIndex} anchorColumn={anchorColumn} cursorTop={GetCursorTopOrFallback(-1)} widths={writableWidth}/{wrapWidth}",
+                    minIntervalMs: 80);
+#endif
+            }
         }
 
-        public void ClearFooterArea() {
-            ReconcileFooterTopRowFromCursor();
-
-            if (!footerDrawn || footerTopRow < 0 || footerTotalRows <= 0) {
+        public void ClearFooterArea(bool supportsVirtualTerminal = false) {
+            FooterLayout layout = ResolveCurrentFooterLayout();
+            if (!layout.IsValid) {
                 return;
             }
 
+            if (ShouldAvoidDestructiveClear(layout)) {
+                DropFooterReservationState();
+                return;
+            }
+
+            ClearFooterArea(layout, supportsVirtualTerminal);
+        }
+
+        private void ClearFooterArea(FooterLayout layout, bool supportsVirtualTerminal) {
+            int spillRowsAbove = EstimateSpillRowsAbove(layout);
+            int clearTopRow = Math.Max(0, layout.TopRow - spillRowsAbove);
+            int clearRowCount = Math.Max(0, layout.PhysicalRowCount + spillRowsAbove);
+            TraceFooterSlice(
+                "FooterClear.Before",
+                $"top={layout.TopRow} rows={layout.PhysicalRowCount} clearTop={clearTopRow} clearRows={clearRowCount} spillAbove={spillRowsAbove} supportsVt={supportsVirtualTerminal}",
+                clearTopRow,
+                clearRowCount);
             int bufferHeight = GetBufferHeight();
-            for (int index = 0; index < footerTotalRows; index++) {
-                int row = footerTopRow + index;
+            for (int index = 0; index < clearRowCount; index++) {
+                int row = clearTopRow + index;
                 if (row < 0 || row >= bufferHeight) {
                     continue;
                 }
 
-                ClearLineAt(row);
+                ClearLineAt(row, supportsVirtualTerminal);
             }
 
-            SetCursorPositionSafe(0, footerTopRow);
+            SetCursorPositionSafe(0, layout.TopRow);
             footerDrawn = false;
-            inputRow = -1;
-            footerCursorRow = -1;
+            footerTopRow = -1;
+            footerSnapshot = null;
+            rebaseAfterReservationDrop = false;
+            TraceFooterSlice(
+                "FooterClear.After",
+                $"top={layout.TopRow} rows={layout.PhysicalRowCount} clearTop={clearTopRow} clearRows={clearRowCount} spillAbove={spillRowsAbove}",
+                clearTopRow,
+                clearRowCount);
+        }
+
+        private int EstimateSpillRowsAbove(FooterLayout layout) {
+            if (footerSnapshot is null || footerSnapshot.LineCellWidths.Length == 0 || !layout.IsValid) {
+                return 0;
+            }
+
+            int wrapWidth = GetWrapWidth();
+            int boundedAnchorLineIndex = Math.Clamp(
+                footerSnapshot.AnchorLineIndex,
+                0,
+                footerSnapshot.LineCellWidths.Length - 1);
+
+            int wrappedRowsBeforeAnchor = 0;
+            for (int index = 0; index < boundedAnchorLineIndex; index++) {
+                wrappedRowsBeforeAnchor += GetWrappedRowCount(footerSnapshot.LineCellWidths[index], wrapWidth);
+            }
+
+            wrappedRowsBeforeAnchor += GetWrappedRowOffset(footerSnapshot.AnchorColumn, wrapWidth);
+            int logicalRowsBeforeAnchor = boundedAnchorLineIndex;
+            int spillRows = Math.Max(0, wrappedRowsBeforeAnchor - logicalRowsBeforeAnchor);
+
+            // Guardrail: avoid over-clearing if width probes become inconsistent mid-resize.
+            return Math.Min(spillRows, footerSnapshot.LineCellWidths.Length);
+        }
+
+        private bool ShouldAvoidDestructiveClear(FooterLayout layout) {
+            if (footerSnapshot is null) {
+                return false;
+            }
+
+            int currentWritableWidth = GetWritableWidth();
+            int currentWrapWidth = GetWrapWidth();
+            bool viewportChanged = footerSnapshot.DrawnWritableWidth != currentWritableWidth
+                || footerSnapshot.DrawnWrapWidth != currentWrapWidth;
+
+            int currentTop = ClampRow(GetCursorTopOrFallback(layout.TopRow));
+            int currentBottom = currentTop + FooterUnsafeClearMarginRows;
+            int currentTopMargin = currentTop - FooterUnsafeClearMarginRows;
+            int layoutBottom = layout.TopRow + Math.Max(0, layout.PhysicalRowCount - 1);
+            bool layoutNearCursor = layoutBottom >= currentTopMargin && layout.TopRow <= currentBottom;
+            if (layoutNearCursor) {
+                return false;
+            }
+
+            // If the cached footer is no longer near the live cursor, the terminal probably already
+            // reflowed or scrolled underneath us. Forgetting the reservation is preferable to
+            // blindly blanking the old rows, because a stale clear can erase unrelated history.
+#if UNIFIER_TERMINAL_DEBUG_TRACE
+            TerminalDebugTrace.WriteThrottled(
+                "FooterClear.Degraded",
+                $"viewportChanged={viewportChanged} layoutTop={layout.TopRow} layoutBottom={layoutBottom} cursorTop={currentTop} width={footerSnapshot.DrawnWritableWidth}/{footerSnapshot.DrawnWrapWidth}->{currentWritableWidth}/{currentWrapWidth}",
+                minIntervalMs: viewportChanged ? 80 : 160);
+#endif
+            return true;
+        }
+
+        private void DropFooterReservationState() {
+            int cursorTop = ClampRow(GetCursorTopOrFallback(0));
+            TraceFooterSlice(
+                "FooterDrop.Before",
+                $"cursorTop={cursorTop} drawn={footerDrawn} top={footerTopRow}",
+                cursorTop,
+                6);
+            SetCursorPositionSafe(0, cursorTop);
+            footerDrawn = false;
+            footerTopRow = -1;
+            footerSnapshot = null;
+            rebaseAfterReservationDrop = true;
+            TraceFooterSlice(
+                "FooterDrop.After",
+                $"cursorTop={cursorTop} drawn={footerDrawn} top={footerTopRow}",
+                cursorTop,
+                6);
+        }
+
+        private static void TraceFooterSlice(string category, string headline, int topRow, int rowCount) {
+#if UNIFIER_TERMINAL_DEBUG_TRACE
+            int dumpTop = Math.Max(0, topRow - 2);
+            int dumpRows = Math.Max(6, rowCount + 4);
+            TerminalDebugTrace.DumpConsoleSlice(category, headline, dumpTop, dumpRows, minIntervalMs: 0);
+#endif
         }
 
         private void ReserveFooterRows(int rows) {
@@ -130,63 +324,66 @@ namespace UnifierTSL.ConsoleClient.Shell
             footerTopRow = ClampRow(GetCursorTopOrFallback(footerTopRow) - (boundedRows - 1));
         }
 
-        private void ExtendFooterRows(int rows) {
-            int boundedRows = Math.Max(1, rows);
-            int extraRows = boundedRows - footerTotalRows;
-            if (extraRows <= 0) {
+        private static void ClearLineAt(int row, bool supportsVirtualTerminal) {
+            SetCursorPositionSafe(0, row);
+            if (supportsVirtualTerminal) {
+                Console.Write(AnsiColorCodec.Reset);
+                Console.Write("\u001b[2K\r");
                 return;
             }
 
-            int bottomRow = ClampRow(footerTopRow + Math.Max(0, footerTotalRows - 1));
-            SetCursorPositionSafe(0, bottomRow);
-            for (int index = 0; index < extraRows; index++) {
-                Console.WriteLine();
-            }
-
-            footerTopRow = ClampRow(GetCursorTopOrFallback(bottomRow) - (boundedRows - 1));
-        }
-
-        private static void ClearLineAt(int row) {
             int writableWidth = GetWritableWidth();
-            SetCursorPositionSafe(0, row);
             Console.Write(new string(' ', writableWidth));
             SetCursorPositionSafe(0, row);
         }
 
-        private static void WriteStatusLine(
+        private static int WriteStatusLine(
             string line,
             bool isHeader,
             int writableWidth,
             bool supportsVirtualTerminal,
-            ConsolePromptTheme theme) {
+            ConsolePromptTheme theme,
+            int previousRenderedWidth,
+            bool deferResetToNextRow = false) {
             string source = line ?? string.Empty;
             bool useVividStatusBar = isHeader && supportsVirtualTerminal && theme.UseVividStatusBar;
             string visible = AnsiSanitizer.StripAnsi(source);
+            int visibleWidth = TerminalCellWidth.Measure(visible);
             bool passThroughAnsi = supportsVirtualTerminal
                 && (!isHeader || useVividStatusBar)
                 && AnsiSanitizer.ContainsEscape(source);
             if (passThroughAnsi) {
-                if (TerminalCellWidth.Measure(visible) > writableWidth) {
+                // Reserve one safety column to avoid accidental wrap when glyph-width differs by terminal.
+                int cautiousLimit = Math.Max(1, writableWidth - 1);
+                if (visibleWidth > cautiousLimit) {
                     source = visible;
                     visible = source;
+                    visibleWidth = TerminalCellWidth.Measure(visible);
                     passThroughAnsi = false;
                 }
             }
 
+            int targetFitWidth = isHeader
+                ? Math.Max(1, writableWidth - 1)
+                : writableWidth;
+            string fittedCore = FitText(visible, targetFitWidth);
+            int fittedCoreWidth = TerminalCellWidth.Measure(fittedCore);
             string fitted;
-            int fittedWidth;
+            int renderedContentWidth;
             if (passThroughAnsi) {
                 fitted = source;
-                fittedWidth = TerminalCellWidth.Measure(visible);
+                renderedContentWidth = Math.Min(writableWidth, visibleWidth);
             }
             else {
-                fitted = PadRightByCellWidth(FitText(visible, writableWidth), writableWidth);
-                fittedWidth = TerminalCellWidth.Measure(fitted);
+                fitted = supportsVirtualTerminal
+                    ? fittedCore
+                    : PadRightByCellWidth(fittedCore, writableWidth);
+                renderedContentWidth = Math.Min(writableWidth, fittedCoreWidth);
             }
-            int tailPadding = Math.Max(0, writableWidth - fittedWidth);
 
-            Console.Write('\r');
             if (supportsVirtualTerminal) {
+                Console.Write('\r');
+                Console.Write(AnsiColorCodec.Reset);
                 string statusDetailsBase = $"{AnsiColorCodec.Escape}{AnsiColorCodec.GetForegroundCode(theme.StatusDetailForeground)}m";
                 if (isHeader) {
                     ConsoleColor foreground = useVividStatusBar ? theme.VividStatusBarForeground : theme.StatusBarForeground;
@@ -196,33 +393,47 @@ namespace UnifierTSL.ConsoleClient.Shell
                     if (passThroughAnsi) {
                         string recolored = source.Replace(AnsiColorCodec.Reset, statusBarBase, StringComparison.Ordinal);
                         Console.Write(recolored);
-                        if (tailPadding > 0) {
-                            Console.Write(statusBarBase);
-                            Console.Write(new string(' ', tailPadding));
-                        }
                     }
                     else {
                         Console.Write(fitted);
                     }
-                    Console.Write(AnsiColorCodec.Reset);
+
+                    // Fill the remainder of the row with the status bar background without explicit padding writes.
+                    Console.Write("\u001b[K");
+                    if (!deferResetToNextRow) {
+                        Console.Write(AnsiColorCodec.Reset);
+                    }
                 }
                 else if (passThroughAnsi) {
                     string tinted = fitted.Replace(AnsiColorCodec.Reset, statusDetailsBase, StringComparison.Ordinal);
                     Console.Write(statusDetailsBase);
                     Console.Write(tinted);
+
+                    int previousBounded = Math.Min(writableWidth, Math.Max(0, previousRenderedWidth));
+                    int tailPadding = Math.Max(0, previousBounded - renderedContentWidth);
                     if (tailPadding > 0) {
                         Console.Write(statusDetailsBase);
                         Console.Write(new string(' ', tailPadding));
                     }
+
                     Console.Write(AnsiColorCodec.Reset);
                 }
                 else {
                     Console.Write(statusDetailsBase);
                     Console.Write(fitted);
+
+                    int previousBounded = Math.Min(writableWidth, Math.Max(0, previousRenderedWidth));
+                    int tailPadding = Math.Max(0, previousBounded - renderedContentWidth);
+                    if (tailPadding > 0) {
+                        Console.Write(statusDetailsBase);
+                        Console.Write(new string(' ', tailPadding));
+                    }
+
                     Console.Write(AnsiColorCodec.Reset);
                 }
             }
             else {
+                Console.Write('\r');
                 if (isHeader) {
                     WriteWithConsoleColors(fitted, theme.StatusBarForeground, theme.StatusBarBackground);
                 }
@@ -231,9 +442,10 @@ namespace UnifierTSL.ConsoleClient.Shell
                 }
             }
             Console.Write('\r');
+            return renderedContentWidth;
         }
 
-        private static int WriteInputLine(
+        private static InputLineRenderResult WriteInputLine(
             ConsoleRenderSnapshot render,
             LineEditorRenderState inputState,
             int writableWidth,
@@ -250,7 +462,8 @@ namespace UnifierTSL.ConsoleClient.Shell
                 + TerminalCellWidth.Measure(viewport.Ghost);
 
             if (supportsVirtualTerminal) {
-                Console.Write('\r');
+                Console.Write(AnsiColorCodec.Reset);
+                Console.Write("\u001b[2K\r");
                 WriteForegroundText(safePrompt, theme.PromptForeground, bold: true);
                 WriteTypedViewport(render, inputState, viewport, theme);
                 WriteForegroundText(viewport.Ghost, theme.GhostForeground);
@@ -280,11 +493,14 @@ namespace UnifierTSL.ConsoleClient.Shell
                 }
             }
 
-            if (occupiedWidth < writableWidth) {
+            if (!supportsVirtualTerminal && occupiedWidth < writableWidth) {
                 Console.Write(new string(' ', writableWidth - occupiedWidth));
+                occupiedWidth = writableWidth;
             }
 
-            return Math.Clamp(promptWidth + viewport.CursorOffset, 0, writableWidth);
+            return new InputLineRenderResult(
+                Math.Clamp(promptWidth + viewport.CursorOffset, 0, writableWidth),
+                occupiedWidth);
         }
 
         private static void WriteTypedViewport(
@@ -370,6 +586,20 @@ namespace UnifierTSL.ConsoleClient.Shell
             }
         }
 
+        internal static int GetWrapWidth() {
+            try {
+                return Math.Max(1, Console.BufferWidth);
+            }
+            catch {
+                try {
+                    return Math.Max(1, Console.WindowWidth);
+                }
+                catch {
+                    return GetWritableWidth() + 1;
+                }
+            }
+        }
+
         internal static int ClampRow(int row) {
             try {
                 return Math.Clamp(row, 0, Math.Max(0, Console.BufferHeight - 1));
@@ -422,23 +652,59 @@ namespace UnifierTSL.ConsoleClient.Shell
             }
         }
 
-        private void ReconcileFooterTopRowFromCursor() {
-            if (!footerDrawn || footerTopRow < 0 || footerCursorRow < 0) {
-                return;
+        private FooterLayout ResolveCurrentFooterLayout() {
+            if (!footerDrawn || footerTopRow < 0 || footerSnapshot is null || footerSnapshot.LineCellWidths.Length == 0) {
+                return default;
             }
 
-            int currentCursorTop = GetCursorTopOrFallback(footerCursorRow);
-            int implicitShift = currentCursorTop - footerCursorRow;
-            if (implicitShift == 0) {
-                return;
+            int currentWritableWidth = GetWritableWidth();
+            int wrapWidth = GetWrapWidth();
+            int boundedAnchorLineIndex = Math.Clamp(
+                footerSnapshot.AnchorLineIndex,
+                0,
+                footerSnapshot.LineCellWidths.Length - 1);
+            // Footer rows are explicitly positioned one row at a time via SetCursorPosition.
+            // During inverse layout we still treat each logical footer line as exactly one physical
+            // row. The renderer owns explicit row-to-row positioning; if we "replayed" terminal
+            // wrapping here after a width shrink, we would double-count reflow, push TopRow too far
+            // upward, and let clear passes eat pre-footer history.
+            int rowsBeforeAnchor = boundedAnchorLineIndex;
+
+            int fallbackCursorTop = ClampRow(footerTopRow + rowsBeforeAnchor);
+            int currentCursorTop = GetCursorTopOrFallback(fallbackCursorTop);
+            int topRow = currentCursorTop - rowsBeforeAnchor;
+            int physicalRowCount = footerSnapshot.LineCellWidths.Length;
+
+            int previousTopRow = footerTopRow;
+            footerTopRow = ClampRow(topRow);
+            bool viewportChanged = footerSnapshot.DrawnWritableWidth != currentWritableWidth
+                || footerSnapshot.DrawnWrapWidth != wrapWidth;
+            if (viewportChanged || previousTopRow != footerTopRow) {
+#if UNIFIER_TERMINAL_DEBUG_TRACE
+                TerminalDebugTrace.WriteThrottled(
+                    "FooterLayout.Resolve",
+                    $"prevTop={previousTopRow} resolvedTop={footerTopRow} rowsBefore={rowsBeforeAnchor} cursorTop={currentCursorTop} fallbackCursorTop={fallbackCursorTop} physicalRows={physicalRowCount} anchorLine={boundedAnchorLineIndex}/{footerSnapshot.LineCellWidths.Length - 1} anchorColumn={footerSnapshot.AnchorColumn} widths={footerSnapshot.DrawnWritableWidth}/{footerSnapshot.DrawnWrapWidth}->{currentWritableWidth}/{wrapWidth} mode=logical-fixed-row",
+                    minIntervalMs: viewportChanged ? 80 : 160);
+#endif
             }
 
-            footerTopRow += implicitShift;
-            if (inputRow >= 0) {
-                inputRow += implicitShift;
+            return new FooterLayout(footerTopRow, physicalRowCount);
+        }
+
+        private static int GetWrappedRowCount(int lineCellWidth, int wrapWidth) {
+            int boundedWrapWidth = Math.Max(1, wrapWidth);
+            int boundedLineWidth = Math.Max(0, lineCellWidth);
+            if (boundedLineWidth == 0) {
+                return 1;
             }
 
-            footerCursorRow = currentCursorTop;
+            return 1 + ((boundedLineWidth - 1) / boundedWrapWidth);
+        }
+
+        private static int GetWrappedRowOffset(int column, int wrapWidth) {
+            int boundedWrapWidth = Math.Max(1, wrapWidth);
+            int boundedColumn = Math.Max(0, column);
+            return boundedColumn / boundedWrapWidth;
         }
 
         private static string FitText(string input, int maxWidth) {
@@ -526,6 +792,20 @@ namespace UnifierTSL.ConsoleClient.Shell
                 cursorVisibleOffset,
                 Math.Min(windowStart, typedLength));
         }
+
+        private sealed record FooterSnapshot(
+            int[] LineCellWidths,
+            int AnchorLineIndex,
+            int AnchorColumn,
+            int DrawnWritableWidth,
+            int DrawnWrapWidth);
+
+        private readonly record struct FooterLayout(int TopRow, int PhysicalRowCount)
+        {
+            public bool IsValid => PhysicalRowCount > 0;
+        }
+
+        private readonly record struct InputLineRenderResult(int CursorColumn, int RenderedCellWidth);
 
         private readonly record struct VisibleInputViewport(
             string Typed,

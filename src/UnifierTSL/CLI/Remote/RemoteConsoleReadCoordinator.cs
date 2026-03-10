@@ -164,6 +164,9 @@ namespace UnifierTSL.CLI.Remote
                 completion.TrySetResult(completionResult!);
             }
 
+            // Completion and transport writes stay outside waitingLock. Both can synchronously
+            // trigger user code or reconnect/write paths, and holding the lock across them would
+            // block retries for the single in-flight read or create reentrancy deadlocks.
             if (pendingRenderUpdate is UPDATE_RENDER renderUpdate) {
                 transport.SendManaged(renderUpdate);
             }
@@ -181,6 +184,10 @@ namespace UnifierTSL.CLI.Remote
                     return;
                 }
 
+                // Reconnect creates a fresh console client that has no memory of the old transport
+                // order, while the server-side caller is still blocked in ExecuteRead. Reissue the
+                // same logical read with a fresh order and the latest render snapshot so the prompt
+                // resumes from current state instead of failing the read or replaying stale UI.
                 currentWaiting.Packet.Order = nextReadOrder++;
                 if (currentWaiting.ReadLine is ReadLineWaitingState readLine) {
                     currentWaiting.Packet.InitialRenderJson = readLine.RenderJson;

@@ -55,6 +55,10 @@ namespace UnifierTSL.CLI.Status
                 return false;
             }
 
+            // Baseline providers may execute plugin/runtime callbacks and can themselves emit log
+            // or status traffic. Snapshot the registry under sync, then invoke providers after the
+            // lock is released; holding sync across callbacks would serialize the whole pipeline and
+            // make reentrancy deadlocks trivial.
             ConsoleStatusResolveContext context = new(
                 Server: server,
                 SampleUtc: DateTimeOffset.UtcNow);

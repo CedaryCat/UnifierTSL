@@ -22,11 +22,15 @@ namespace UnifierTSL.ConsoleClient.Shell
         private int outputCursorTop;
         private bool virtualCaretVisible = true;
         private long virtualCaretAnchorTick = Environment.TickCount64;
+        private int lastViewportWritableWidth = -1;
+        private int lastViewportWrapWidth = -1;
+        private long viewportLastChangedTick = Environment.TickCount64;
 
         private ConsoleRenderSnapshot currentContext = ConsoleRenderSnapshot.CreatePlain();
         private ConsolePromptTheme activeTheme = ConsolePromptTheme.Default;
         private StatusBarSurface? statusBar;
         private const int MaxStatusBodyLines = 5;
+        private const int FooterViewportStabilizationMs = 180;
 
         public ConsoleShell() {
             terminalCapabilities = TerminalCapabilities.Detect();
@@ -64,7 +68,7 @@ namespace UnifierTSL.ConsoleClient.Shell
                 ThrowIfDisposed();
 
                 if (IsInteractive && renderer.FooterDrawn) {
-                    renderer.ClearFooterArea();
+                    renderer.ClearFooterArea(SupportsVirtualTerminal);
                     if (hasOutputCursor) {
                         int clearedTop = TerminalRenderer.ClampRow(Console.CursorTop);
                         if (!outputLineContinuation) {
@@ -163,7 +167,7 @@ namespace UnifierTSL.ConsoleClient.Shell
                     DrawFooter();
                 }
                 else {
-                    renderer.ClearFooterArea();
+                    renderer.ClearFooterArea(SupportsVirtualTerminal);
                     // Footer-only teardown should leave output at a clean fresh-line anchor.
                     // Without resetting this state, the next log line may reuse a stale cursor
                     // snapshot and leave right-side status remnants.
@@ -249,7 +253,7 @@ namespace UnifierTSL.ConsoleClient.Shell
 
                             case LineEditorInputActionKind.Cancel:
                                 readInProgress = false;
-                                renderer.ClearFooterArea();
+                                renderer.ClearFooterArea(SupportsVirtualTerminal);
                                 currentContext = ConsoleRenderSnapshot.CreatePlain();
                                 if (statusBar is not null) {
                                     DrawFooter();
@@ -261,7 +265,7 @@ namespace UnifierTSL.ConsoleClient.Shell
                                 line = ResolveSubmitLine(render, line, action.ForceRawSubmit);
 
                                 readInProgress = false;
-                                renderer.ClearFooterArea();
+                                renderer.ClearFooterArea(SupportsVirtualTerminal);
                                 currentContext = ConsoleRenderSnapshot.CreatePlain();
                                 if (statusBar is not null) {
                                     DrawFooter();
@@ -376,6 +380,10 @@ namespace UnifierTSL.ConsoleClient.Shell
         }
 
         private void DrawFooter(int? anchorTopRow = null) {
+            if (ShouldDeferFooterRenderLocked()) {
+                return;
+            }
+
             LineEditorRenderState inputState = lineEditorSession.GetRenderState();
             StatusFrame frame = BuildStatusFrame(currentContext, statusScrollOffset);
             statusScrollOffset = frame.ScrollOffset;
@@ -396,10 +404,66 @@ namespace UnifierTSL.ConsoleClient.Shell
             if (normalizedAnchor is int anchorRow && hasOutputCursor) {
                 int actualFooterTop = renderer.FooterTopRow;
                 int footerShift = anchorRow - actualFooterTop;
+                if (footerShift != 0) {
+#if UNIFIER_TERMINAL_DEBUG_TRACE
+                    TerminalDebugTrace.WriteThrottled(
+                        "ConsoleShell.FooterShift",
+                        $"anchor={anchorRow} actualTop={actualFooterTop} shift={footerShift} outputTopBefore={outputCursorTop} outputLeft={outputCursorLeft} continuation={outputLineContinuation} readInProgress={readInProgress} statusLines={frame.Lines.Count}",
+                        minIntervalMs: 80);
+#endif
+                }
+
                 if (footerShift > 0) {
                     outputCursorTop = TerminalRenderer.ClampRow(outputCursorTop - footerShift);
                 }
             }
+        }
+
+        private bool ShouldDeferFooterRenderLocked() {
+            // Console hosts report width changes before row reflow/cursor relocation fully settle.
+            // Clearing the old footer immediately is safe, but redrawing against that transient
+            // geometry is not: the new footer anchor can be computed from pre-reflow rows and then
+            // applied after reflow, which makes the footer drift or fold into log output while the
+            // user is still dragging the window edge.
+            int currentWritableWidth = TerminalRenderer.GetWritableWidth();
+            int currentWrapWidth = TerminalRenderer.GetWrapWidth();
+            long nowTick = Environment.TickCount64;
+
+            if (lastViewportWritableWidth < 0 || lastViewportWrapWidth < 0) {
+                lastViewportWritableWidth = currentWritableWidth;
+                lastViewportWrapWidth = currentWrapWidth;
+                viewportLastChangedTick = nowTick;
+                return false;
+            }
+
+            if (lastViewportWritableWidth != currentWritableWidth
+                || lastViewportWrapWidth != currentWrapWidth) {
+                int cursorTop;
+                try {
+                    cursorTop = TerminalRenderer.ClampRow(Console.CursorTop);
+                }
+                catch {
+                    cursorTop = -1;
+                }
+
+#if UNIFIER_TERMINAL_DEBUG_TRACE
+                TerminalDebugTrace.WriteThrottled(
+                    "ConsoleShell.ViewportChange",
+                    $"viewport={lastViewportWritableWidth}/{lastViewportWrapWidth}->{currentWritableWidth}/{currentWrapWidth} cursorTop={cursorTop} readInProgress={readInProgress}",
+                    minIntervalMs: 80);
+#endif
+                if (renderer.FooterDrawn) {
+                    // Hide the stale footer immediately so terminal host reflow during drag
+                    // cannot visually fold the old footer into unrelated rows before redraw stabilizes.
+                    renderer.ClearFooterArea(SupportsVirtualTerminal);
+                }
+                lastViewportWritableWidth = currentWritableWidth;
+                lastViewportWrapWidth = currentWrapWidth;
+                viewportLastChangedTick = nowTick;
+                return true;
+            }
+
+            return nowTick - viewportLastChangedTick < FooterViewportStabilizationMs;
         }
 
         private StatusFrame BuildStatusFrame(ConsoleRenderSnapshot render, int requestedScrollOffset) {
@@ -474,12 +538,17 @@ namespace UnifierTSL.ConsoleClient.Shell
 
         private void TickStatusAnimation() {
             lock (sync) {
-                if (disposed || !IsInteractive || !renderer.FooterDrawn) {
+                bool hasFooterTarget = readInProgress || statusBar is not null;
+                if (disposed || !IsInteractive || (!renderer.FooterDrawn && !hasFooterTarget)) {
                     return;
                 }
 
                 long nowTick = Environment.TickCount64;
-                bool shouldRedraw = false;
+                bool shouldRedraw = !renderer.FooterDrawn && hasFooterTarget;
+                if (renderer.FooterDrawn && renderer.RequiresViewportRefresh()) {
+                    shouldRedraw = true;
+                }
+
                 if (statusBar is not null && RefreshRenderedIndicatorLocked(statusBar, nowTick)) {
                     shouldRedraw = true;
                 }
@@ -658,10 +727,17 @@ namespace UnifierTSL.ConsoleClient.Shell
 
             try {
                 int row = TerminalRenderer.ClampRow(Console.CursorTop);
-                int width = TerminalRenderer.GetWritableWidth();
                 Console.SetCursorPosition(0, row);
-                Console.Write(new string(' ', width));
-                Console.SetCursorPosition(0, row);
+                if (SupportsVirtualTerminal) {
+                    Console.Write(AnsiColorCodec.Reset);
+                    Console.Write("\u001b[2K\r");
+                }
+                else {
+                    int width = TerminalRenderer.GetWritableWidth();
+                    Console.Write(new string(' ', width));
+                    Console.SetCursorPosition(0, row);
+                }
+
                 outputCursorTop = row;
                 outputCursorLeft = 0;
                 hasOutputCursor = true;

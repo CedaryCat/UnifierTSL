@@ -141,6 +141,9 @@ namespace UnifierTSL.CLI.Remote
                 pipeServer = stream;
             }
 
+            // The lock only guards swapping the active stream reference. Waiting for the client to
+            // connect is blocking I/O and must stay outside stateLock so send/dispose/reconnect
+            // paths are not serialized behind a stalled WaitForConnection call.
             stream.WaitForConnection();
             Reconnected?.Invoke();
         }
