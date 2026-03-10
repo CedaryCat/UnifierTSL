@@ -23,7 +23,7 @@ namespace UnifierTSL.CLI.Prompting
 
         private ConsolePromptSnapshot BuildSnapshot(ConsoleInputState inputState, ConsolePromptScenario scenario) {
             ConsoleResolvedPrompt resolvedPrompt = ResolvePrompt(inputState, scenario);
-            PromptComputation computed = promptEngine.Compute(resolvedPrompt, inputState);
+            PromptComputation computed = promptEngine.Compute(resolvedPrompt, inputState, scenario);
 
             return new ConsolePromptSnapshot {
                 Purpose = resolvedPrompt.Purpose,
@@ -44,6 +44,8 @@ namespace UnifierTSL.CLI.Prompting
         private ConsoleResolvedPrompt ResolvePrompt(ConsoleInputState inputState, ConsolePromptScenario scenario) {
             ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>> candidates =
                 NormalizeCandidateMap(promptSpec.StaticCandidates);
+            ImmutableDictionary<string, IConsoleParameterValueExplainer> parameterExplainers =
+                NormalizeParameterExplainers(promptSpec.ParameterExplainers);
             ImmutableArray<string> statusBodyLines = NormalizeStatusBodyLines(promptSpec.BaseStatusBodyLines);
             string inputSummary = promptSpec.InputSummary ?? string.Empty;
             string ghostText = promptSpec.GhostText ?? string.Empty;
@@ -83,6 +85,7 @@ namespace UnifierTSL.CLI.Prompting
 
             ConsoleResolvedPrompt resolvedPrompt = new() {
                 Purpose = promptSpec.Purpose,
+                Server = promptSpec.Server,
                 Prompt = promptSpec.Prompt ?? "> ",
                 GhostText = ghostText,
                 EmptySubmitBehavior = promptSpec.EmptySubmitBehavior,
@@ -94,6 +97,7 @@ namespace UnifierTSL.CLI.Prompting
                 CommandPrefixes = NormalizePrefixes(promptSpec.CommandPrefixes),
                 CommandSpecs = NormalizeCommandSpecs(promptSpec.CommandSpecs),
                 Candidates = candidates,
+                ParameterExplainers = parameterExplainers,
             };
 
             return ApplyScenarioFiltering(resolvedPrompt, inputState, scenario);
@@ -169,6 +173,26 @@ namespace UnifierTSL.CLI.Prompting
 
             foreach ((ConsoleSuggestionKind key, ImmutableArray<ConsoleSuggestion> suggestions) in source) {
                 builder[key] = ConsoleSuggestionOps.Normalize(suggestions);
+            }
+
+            return builder.ToImmutable();
+        }
+
+        private static ImmutableDictionary<string, IConsoleParameterValueExplainer> NormalizeParameterExplainers(
+            ImmutableDictionary<string, IConsoleParameterValueExplainer> source) {
+            if (source.Count == 0) {
+                return ImmutableDictionary<string, IConsoleParameterValueExplainer>.Empty.WithComparers(StringComparer.Ordinal);
+            }
+
+            ImmutableDictionary<string, IConsoleParameterValueExplainer>.Builder builder =
+                ImmutableDictionary.CreateBuilder<string, IConsoleParameterValueExplainer>(StringComparer.Ordinal);
+
+            foreach ((string key, IConsoleParameterValueExplainer explainer) in source) {
+                if (string.IsNullOrWhiteSpace(key) || explainer is null) {
+                    continue;
+                }
+
+                builder[key.Trim()] = explainer;
             }
 
             return builder.ToImmutable();

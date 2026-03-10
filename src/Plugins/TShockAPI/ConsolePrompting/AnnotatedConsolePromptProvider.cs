@@ -15,6 +15,7 @@ namespace TShockAPI.ConsolePrompting
 
         public static void Install()
         {
+            TShockConsoleParameterExplainers.RegisterDefaults();
             ConsolePromptRegistry.SetDefaultCommandPromptSpecFactory(BuildPromptSpec);
         }
 
@@ -26,6 +27,7 @@ namespace TShockAPI.ConsolePrompting
                 PlayerCandidateResolver = () => BuildPlayerCandidates(server),
                 ServerCandidateResolver = BuildServerCandidates,
                 ItemCandidateResolver = BuildItemCandidates,
+                ParameterExplainerResolver = TShockConsoleParameterExplainers.CreateSnapshot,
             };
 
             return new AnnotatedConsolePromptProvider(options).BuildContextSpec();
@@ -76,8 +78,15 @@ namespace TShockAPI.ConsolePrompting
                 };
             }
 
-            Dictionary<string, ConsoleCommandSpec> builtins = BuiltinConsoleCommandSpecs.All
-                .ToDictionary(static spec => spec.PrimaryName, StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, ConsoleCommandSpec> builtins = new(StringComparer.OrdinalIgnoreCase);
+            foreach (ConsoleCommandSpec builtin in BuiltinConsoleCommandSpecs.All) {
+                builtins[builtin.PrimaryName] = builtin;
+            }
+
+            foreach (ConsoleCommandSpec external in ConsolePromptRegistry.GetRegisteredCommandSpecs()) {
+                builtins[external.PrimaryName] = external;
+            }
+
             List<ConsoleCommandSpec> merged = [];
 
             foreach (ConsoleCommandSpec runtimeSpec in runtimeSpecs.Values.OrderBy(static spec => spec.PrimaryName, StringComparer.OrdinalIgnoreCase)) {

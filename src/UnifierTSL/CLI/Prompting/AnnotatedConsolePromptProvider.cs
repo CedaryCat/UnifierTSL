@@ -15,12 +15,14 @@ public sealed class AnnotatedConsolePromptProvider
         ArgumentNullException.ThrowIfNull(options.PlayerCandidateResolver);
         ArgumentNullException.ThrowIfNull(options.ServerCandidateResolver);
         ArgumentNullException.ThrowIfNull(options.ItemCandidateResolver);
+        ArgumentNullException.ThrowIfNull(options.ParameterExplainerResolver);
     }
 
     public ConsolePromptSpec BuildContextSpec()
     {
         ImmutableArray<string> prefixes = BuildCommandPrefixes();
         ImmutableArray<ConsoleCommandSpec> commandSpecs = BuildCommandSpecs();
+        ImmutableDictionary<string, IConsoleParameterValueExplainer> parameterExplainers = BuildParameterExplainers();
 
         ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>> candidates =
             ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
@@ -35,6 +37,7 @@ public sealed class AnnotatedConsolePromptProvider
             CommandPrefixes = prefixes,
             CommandSpecs = commandSpecs,
             StaticCandidates = candidates,
+            ParameterExplainers = parameterExplainers,
             BaseStatusBodyLines = [
                 GetString("use Tab/Shift+Tab to rotate, Right to accept"),
             ],
@@ -87,6 +90,21 @@ public sealed class AnnotatedConsolePromptProvider
         return [.. specs.Values.OrderBy(static spec => spec.PrimaryName, StringComparer.OrdinalIgnoreCase)];
     }
 
+    private ImmutableDictionary<string, IConsoleParameterValueExplainer> BuildParameterExplainers()
+    {
+        Dictionary<string, IConsoleParameterValueExplainer> explainers = new(StringComparer.Ordinal);
+
+        foreach ((string key, IConsoleParameterValueExplainer explainer) in ResolveSafeDictionary(options.ParameterExplainerResolver)) {
+            if (string.IsNullOrWhiteSpace(key) || explainer is null) {
+                continue;
+            }
+
+            explainers[key.Trim()] = explainer;
+        }
+
+        return explainers.ToImmutableDictionary(StringComparer.Ordinal);
+    }
+
     private static ImmutableArray<ConsoleCommandPatternSpec> NormalizePatterns(IEnumerable<ConsoleCommandPatternSpec> patterns)
     {
         return [.. patterns
@@ -98,6 +116,7 @@ public sealed class AnnotatedConsolePromptProvider
                 Parameters = [.. pattern.Parameters.Select(parameter => new ConsoleCommandParameterSpec {
                     Name = parameter.Name?.Trim() ?? string.Empty,
                     Kind = parameter.Kind,
+                    SemanticKey = string.IsNullOrWhiteSpace(parameter.SemanticKey) ? null : parameter.SemanticKey.Trim(),
                     Optional = parameter.Optional,
                     Variadic = parameter.Variadic,
                     EnumCandidates = [.. parameter.EnumCandidates
@@ -115,6 +134,17 @@ public sealed class AnnotatedConsolePromptProvider
         }
         catch {
             return [];
+        }
+    }
+
+    private static IReadOnlyDictionary<string, IConsoleParameterValueExplainer> ResolveSafeDictionary(
+        Func<IReadOnlyDictionary<string, IConsoleParameterValueExplainer>> resolver)
+    {
+        try {
+            return resolver() ?? ImmutableDictionary<string, IConsoleParameterValueExplainer>.Empty;
+        }
+        catch {
+            return ImmutableDictionary<string, IConsoleParameterValueExplainer>.Empty;
         }
     }
 }

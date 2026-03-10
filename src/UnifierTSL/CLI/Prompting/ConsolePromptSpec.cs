@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using UnifierTSL.ConsoleClient.Shared.ConsolePrompting;
+using UnifierTSL.Servers;
 
 namespace UnifierTSL.CLI.Prompting
 {
@@ -59,6 +60,8 @@ namespace UnifierTSL.CLI.Prompting
 
         public ConsoleSuggestionKind Kind { get; init; } = ConsoleSuggestionKind.Plain;
 
+        public string? SemanticKey { get; init; }
+
         public bool Optional { get; init; }
 
         public bool Variadic { get; init; }
@@ -86,6 +89,8 @@ namespace UnifierTSL.CLI.Prompting
     {
         public ConsoleInputPurpose Purpose { get; init; } = ConsoleInputPurpose.Plain;
 
+        public ServerContext? Server { get; init; }
+
         public string Prompt { get; init; } = "> ";
 
         public string GhostText { get; init; } = string.Empty;
@@ -108,6 +113,9 @@ namespace UnifierTSL.CLI.Prompting
 
         public ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>> StaticCandidates { get; init; } =
             ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty;
+
+        public ImmutableDictionary<string, IConsoleParameterValueExplainer> ParameterExplainers { get; init; } =
+            ImmutableDictionary<string, IConsoleParameterValueExplainer>.Empty.WithComparers(StringComparer.Ordinal);
 
         public Func<ConsolePromptResolveContext, ConsolePromptUpdate>? DynamicResolver { get; init; }
 
@@ -137,6 +145,8 @@ namespace UnifierTSL.CLI.Prompting
     {
         public required ConsoleInputPurpose Purpose { get; init; }
 
+        public required ServerContext? Server { get; init; }
+
         public required string Prompt { get; init; }
 
         public required string GhostText { get; init; }
@@ -159,12 +169,23 @@ namespace UnifierTSL.CLI.Prompting
 
         public required ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>> Candidates { get; init; }
 
+        public required ImmutableDictionary<string, IConsoleParameterValueExplainer> ParameterExplainers { get; init; }
+
         public ImmutableArray<ConsoleSuggestion> ResolveCandidates(ConsoleSuggestionKind target) {
             if (Candidates.TryGetValue(target, out ImmutableArray<ConsoleSuggestion> suggestions)) {
                 return suggestions;
             }
 
             return ImmutableArray<ConsoleSuggestion>.Empty;
+        }
+
+        public IConsoleParameterValueExplainer? ResolveParameterExplainer(string semanticKey) {
+            if (!string.IsNullOrWhiteSpace(semanticKey)
+                && ParameterExplainers.TryGetValue(semanticKey, out IConsoleParameterValueExplainer? explainer)) {
+                return explainer;
+            }
+
+            return null;
         }
     }
 }

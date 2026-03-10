@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace UnifierTSL.CLI.Prompting
 {
     public sealed class AnnotatedConsolePromptOptions
@@ -11,5 +13,8 @@ namespace UnifierTSL.CLI.Prompting
         public Func<IReadOnlyList<string>> ServerCandidateResolver { get; init; } = static () => [];
 
         public Func<IReadOnlyList<string>> ItemCandidateResolver { get; init; } = static () => [];
+
+        public Func<IReadOnlyDictionary<string, IConsoleParameterValueExplainer>> ParameterExplainerResolver { get; init; } =
+            static () => ImmutableDictionary<string, IConsoleParameterValueExplainer>.Empty;
     }
 }

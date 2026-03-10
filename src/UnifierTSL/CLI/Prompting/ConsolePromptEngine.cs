@@ -23,7 +23,10 @@ namespace UnifierTSL.CLI.Prompting
     {
         private const string AnsiReset = "\u001b[0m";
 
-        public PromptComputation Compute(ConsoleResolvedPrompt context, ConsoleInputState state) {
+        public PromptComputation Compute(
+            ConsoleResolvedPrompt context,
+            ConsoleInputState state,
+            ConsolePromptScenario scenario) {
             ArgumentNullException.ThrowIfNull(context);
             ArgumentNullException.ThrowIfNull(state);
 
@@ -42,7 +45,7 @@ namespace UnifierTSL.CLI.Prompting
             IReadOnlyList<string> suggestionsForCommand = ResolveCommandLineSuggestions(input, context, parse);
             int completionIndex = ResolveGlobalCompletionIndex(state);
             ConsoleCommandSpec? activeHint = ResolveActiveCommandSpec(context, parse, completionIndex, suggestionsForCommand, input);
-            List<string> statusBodyForCommand = BuildCommandStatusBodyLines(context, parse, activeHint);
+            List<string> statusBodyForCommand = BuildCommandStatusBodyLines(context, parse, activeHint, state, scenario);
             return new PromptComputation(
                 Suggestions: suggestionsForCommand,
                 HelpText: activeHint?.HelpText ?? string.Empty,
@@ -124,7 +127,9 @@ namespace UnifierTSL.CLI.Prompting
         private List<string> BuildCommandStatusBodyLines(
             ConsoleResolvedPrompt context,
             CommandParseResult parse,
-            ConsoleCommandSpec? activeHint) {
+            ConsoleCommandSpec? activeHint,
+            ConsoleInputState state,
+            ConsolePromptScenario scenario) {
             List<string> lines = [.. context.StatusBodyLines];
             if (activeHint is null) {
                 return lines;
@@ -146,6 +151,10 @@ namespace UnifierTSL.CLI.Prompting
                     ? $"(arg#{parse.ArgumentIndex + 1})"
                     : "| " + argsLine
                 )}");
+
+                if (TryBuildParameterExplainStatusLine(context, parse, activeHint, state, scenario, out string? explainLine)) {
+                    lines.Add(explainLine!);
+                }
             }
             else {
 
@@ -165,11 +174,81 @@ namespace UnifierTSL.CLI.Prompting
                 return ConsoleSuggestionKind.Plain;
             }
 
-            if (TryResolvePatternParameter(parse, out ConsoleCommandParameterSpec? descriptor)) {
+            if (TryResolvePatternParameter(parse, parse.Hint, out _, out ConsoleCommandParameterSpec? descriptor)) {
                 return descriptor.Kind;
             }
 
             return ConsoleSuggestionKind.Plain;
+        }
+
+        private bool TryBuildParameterExplainStatusLine(
+            ConsoleResolvedPrompt context,
+            CommandParseResult parse,
+            ConsoleCommandSpec activeHint,
+            ConsoleInputState state,
+            ConsolePromptScenario scenario,
+            out string? line) {
+            line = null;
+
+            if (parse.ArgumentIndex < 0 || string.IsNullOrWhiteSpace(parse.CurrentToken)) {
+                return false;
+            }
+
+            if (!TryResolvePatternParameter(parse, activeHint, out ConsoleCommandPatternSpec pattern, out ConsoleCommandParameterSpec parameter)) {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(parameter.SemanticKey)) {
+                return false;
+            }
+
+            IConsoleParameterValueExplainer? explainer = context.ResolveParameterExplainer(parameter.SemanticKey);
+            if (explainer is null) {
+                return false;
+            }
+
+            ConsoleParameterExplainContext explainContext = new(
+                ResolveContext: new ConsolePromptResolveContext(state, scenario),
+                Server: context.Server,
+                ActiveCommand: activeHint,
+                ActivePattern: pattern,
+                ActiveParameter: parameter,
+                ArgumentIndex: parse.ArgumentIndex,
+                RawToken: parse.CurrentToken);
+
+            ConsoleParameterExplainResult result;
+            try {
+                if (!explainer.TryExplain(explainContext, out result)) {
+                    return false;
+                }
+            }
+            catch {
+                return false;
+            }
+
+            string displayText = FormatExplainDisplayText(result);
+            if (string.IsNullOrWhiteSpace(displayText)) {
+                return false;
+            }
+
+            line = $"resolve: {parse.CurrentToken} -> {displayText}";
+            return true;
+        }
+
+        private static string FormatExplainDisplayText(ConsoleParameterExplainResult result) {
+            if (result.State == ConsoleParameterExplainState.None) {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(result.DisplayText)) {
+                return result.DisplayText.Trim();
+            }
+
+            return result.State switch {
+                ConsoleParameterExplainState.Ambiguous => "ambiguous",
+                ConsoleParameterExplainState.Invalid => "invalid",
+                _ => string.Empty,
+            };
         }
 
         public CommandParseResult ParseCommandInput(string? input, ConsoleResolvedPrompt context) {
@@ -713,14 +792,24 @@ namespace UnifierTSL.CLI.Prompting
         }
 
         private static bool TryResolvePatternParameter(CommandParseResult parse, out ConsoleCommandParameterSpec descriptor) {
+            return TryResolvePatternParameter(parse, parse.Hint, out _, out descriptor);
+        }
+
+        private static bool TryResolvePatternParameter(
+            CommandParseResult parse,
+            ConsoleCommandSpec? hint,
+            out ConsoleCommandPatternSpec pattern,
+            out ConsoleCommandParameterSpec descriptor) {
+            pattern = new ConsoleCommandPatternSpec();
             descriptor = new ConsoleCommandParameterSpec();
 
-            if (parse.Hint is null || parse.ArgumentIndex < 0 || parse.Hint.Patterns.Length == 0) {
+            ConsoleCommandSpec? effectiveHint = hint ?? parse.Hint;
+            if (effectiveHint is null || parse.ArgumentIndex < 0 || effectiveHint.Patterns.Length == 0) {
                 return false;
             }
 
-            foreach (ConsoleCommandPatternSpec pattern in parse.Hint.Patterns) {
-                List<string> literals = [.. pattern.SubCommands
+            foreach (ConsoleCommandPatternSpec candidate in effectiveHint.Patterns) {
+                List<string> literals = [.. candidate.SubCommands
                     .Where(static sub => !string.IsNullOrWhiteSpace(sub))
                     .Select(static sub => sub.Trim())];
 
@@ -733,17 +822,19 @@ namespace UnifierTSL.CLI.Prompting
                     continue;
                 }
 
-                if (parameterIndex < pattern.Parameters.Length) {
-                    descriptor = pattern.Parameters[parameterIndex];
+                if (parameterIndex < candidate.Parameters.Length) {
+                    pattern = candidate;
+                    descriptor = candidate.Parameters[parameterIndex];
                     return true;
                 }
 
-                if (pattern.Parameters.Length == 0) {
+                if (candidate.Parameters.Length == 0) {
                     continue;
                 }
 
-                ConsoleCommandParameterSpec tail = pattern.Parameters[^1];
+                ConsoleCommandParameterSpec tail = candidate.Parameters[^1];
                 if (tail.Variadic) {
+                    pattern = candidate;
                     descriptor = tail;
                     return true;
                 }
