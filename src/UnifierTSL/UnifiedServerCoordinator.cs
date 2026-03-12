@@ -30,6 +30,7 @@ namespace UnifierTSL
             public int totalData = 0;
             public string? ReceivedUUID = "";
             public void Reset(ISocket socket) {
+                player.active = false;
                 players[Index] = player;
 
                 RemoteClient client = globalClients[Index];
@@ -256,11 +257,14 @@ namespace UnifierTSL
                                         message: GetParticularString("{0} is player name, {1} is player UUID", $"No available server found for player '{player.name}' ({client.ClientUUID}); connection aborted."));
                                 }
                                 else {
-                                    SetClientCurrentlyServer(Index, joinServer);
                                     SyncPlayer playerData = player.CreateSyncPacket(Index);
                                     Player serverPlayer = players[Index] = joinServer.Main.player[Index];
                                     serverPlayer.ApplySyncPlayerPacket(in playerData, false);
-                                    globalClients[Index].mfwh_ResetSections(joinServer);
+                                    globalClients[Index].ResetSections(joinServer);
+
+                                    SetClientCurrentlyServer(Index, joinServer);
+
+                                    serverPlayer.active = true;
 
                                     UnifierApi.EventHub.Coordinator.JoinServer.Invoke(new(joinServer, player.whoAmI));
 
@@ -476,9 +480,7 @@ namespace UnifierTSL
                 if (server != GetClientCurrentlyServer(i)) {
                     continue;
                 }
-                if (server.NetMessage.buffer[i].checkBytes) {
-                    server.NetMessage.CheckBytes(i);
-                }
+                server.NetMessage.CheckBytes(i);
             }
         }
 
@@ -626,7 +628,7 @@ namespace UnifierTSL
                     else {
                         if (client.PendingTermination) {
                             if (client.PendingTerminationApproved) {
-                                ClearClientData(client);
+                                ResetUnboundClientState(client);
                             }
                         }
                         if (client.IsConnected()) {
@@ -664,8 +666,13 @@ namespace UnifierTSL
                 Console.WriteLine(ex);
             }
         }
-        static void ClearClientData(RemoteClient client) {
+
+        // Used only for pre-routing cleanup when the client is not bound to any server context.
+        // Routed clients must use the standard server-bound reset path instead.
+        static void ResetUnboundClientState(RemoteClient client) {
             client.Data.Clear();
+
+            client.ClientUUID = null;
 
             client.TimeOutTimer = 0;
             client.StatusCount = 0;
@@ -679,7 +686,8 @@ namespace UnifierTSL
             client.SpamClear();
             client.IsActive = false;
 
-            players[client.Id] = new();
+            var plr = players[client.Id] = new();
+            plr.active = false;
 
             globalMsgBuffers[client.Id].Reset();
             client.Socket?.Close();
@@ -714,16 +722,25 @@ namespace UnifierTSL
         private static void ListenLoop(ListenerSession session) {
             CancellationToken token = session.Cts.Token;
             while (!token.IsCancellationRequested && listenerController.IsCurrentSession(session.Generation)) {
+                TcpClient? client = null;
                 try {
-                    TcpClient client = session.Listener.AcceptTcpClient();
-                    CreateSocketEvent e = new(client);
-                    UnifierApi.EventHub.Coordinator.CreateSocket.Invoke(ref e);
-                    OnConnectionAccepted(e.Socket ?? new TcpSocket(client), session);
+                    client = session.Listener.AcceptTcpClient();
                 }
                 catch {
                     if (token.IsCancellationRequested || !listenerController.IsCurrentSession(session.Generation)) {
                         break;
                     }
+                }
+                if (client is null) {
+                    continue;
+                }
+                try {
+                    CreateSocketEvent e = new(client);
+                    UnifierApi.EventHub.Coordinator.CreateSocket.Invoke(ref e);
+                    OnConnectionAccepted(e.Socket ?? new TcpSocket(client), session);
+                }
+                catch {
+
                 }
             }
         }
@@ -749,7 +766,7 @@ namespace UnifierTSL
                         bw.Write(true);
                         // GameMode
                         bw.Write(2);
-                        bw.Write(255);
+                        bw.Write((byte)255);
                         playerCountPosInStream = (int)memoryStream.Position;
                         bw.Write((byte)0);
                         // hardMode
@@ -860,7 +877,7 @@ namespace UnifierTSL
 
                 // Update current server
                 SetClientCurrentlyServer(plr, to);
-                client.mfwh_ResetSections(to);
+                client.ResetSections(to);
 
                 // Join data sync
                 to.SyncServerOnlineToPlayer(plr);

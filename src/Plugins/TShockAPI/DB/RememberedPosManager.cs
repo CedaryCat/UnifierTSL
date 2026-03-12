@@ -25,25 +25,33 @@ namespace TShockAPI.DB
             public required string WorldID { get; set; }
         }
 
-        readonly DataConnection database;
-        readonly ITable<RememberedPos> table;
+        readonly Func<DataConnection> _dbFactory;
         public RememberedPosManager(DataConnection db) {
-            database = db;
-            table = database.CreateTable<RememberedPos>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using var localDb = _dbFactory();
+            localDb.CreateTable<RememberedPos>(tableOptions: TableOptions.CreateIfNotExists);
+        }
+        private Vector2 CheckLeavePos(DataConnection db, string name) {
+            var table = db.GetTable<RememberedPos>();
+            var pos = table.FirstOrDefault(p => p.Name == name);
+            if (pos != null) {
+                int checkX = pos.X;
+                int checkY = pos.Y;
+                //fix leftover inconsistencies
+                if (checkX == 0)
+                    checkX++;
+                if (checkY == 0)
+                    checkY++;
+                return new Vector2(checkX, checkY);
+            }
+
+            return new Vector2();
         }
         public Vector2 CheckLeavePos(string name) {
             try {
-                var pos = table.FirstOrDefault(p => p.Name == name);
-                if (pos != null) {
-                    int checkX = pos.X;
-                    int checkY = pos.Y;
-                    //fix leftover inconsistencies
-                    if (checkX == 0)
-                        checkX++;
-                    if (checkY == 0)
-                        checkY++;
-                    return new Vector2(checkX, checkY);
-                }
+                using var db = _dbFactory();
+                return CheckLeavePos(db, name);
             }
             catch (Exception ex) {
                 TShock.Log.Error(ex.ToString());
@@ -54,6 +62,8 @@ namespace TShockAPI.DB
 
         public Vector2 GetLeavePos(string worldid, string name, string IP) {
             try {
+                using var db = _dbFactory();
+                var table = db.GetTable<RememberedPos>();
                 var pos = table.FirstOrDefault(p => p.Name == name && p.IP == IP && p.WorldID == worldid);
                 if (pos != null) {
                     return new Vector2(pos.X, pos.Y);
@@ -67,7 +77,10 @@ namespace TShockAPI.DB
         }
 
         public void InsertLeavePos(string worldid, string name, string IP, int X, int Y) {
-            if (CheckLeavePos(name) == Vector2.Zero) {
+            using var db = _dbFactory();
+            var table = db.GetTable<RememberedPos>();
+
+            if (CheckLeavePos(db, name) == Vector2.Zero) {
                 try {
                     if ((X != 0) && (Y != 0)) //invalid pos!
                     {

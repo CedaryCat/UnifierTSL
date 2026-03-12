@@ -21,13 +21,15 @@ namespace TShockAPI.DB
             [Column(DataType = DataType.Text)]
             public required string AllowedGroups { get; set; }
         }
-        readonly DataConnection database;
-        readonly ITable<ItemBansTable> itemBansTable;
+        readonly Func<DataConnection> _dbFactory;
         public List<ItemBan> ItemBans = [];
 
         public ItemManager(DataConnection db) {
-            database = db;
-            itemBansTable = database.CreateTable<ItemBansTable>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using (var localDb = _dbFactory()) {
+                localDb.CreateTable<ItemBansTable>(tableOptions: TableOptions.CreateIfNotExists);
+            }
 
             UpdateItemBans();
         }
@@ -35,7 +37,8 @@ namespace TShockAPI.DB
             ItemBans.Clear();
 
             try {
-                var bans = itemBansTable
+                using var db = _dbFactory();
+                var bans = db.GetTable<ItemBansTable>()
                     .Select(b => new { b.Name, b.AllowedGroups })
                     .ToList();
 
@@ -52,6 +55,8 @@ namespace TShockAPI.DB
 
         public void AddNewBan(string itemname = "") {
             try {
+                using var db = _dbFactory();
+                var itemBansTable = db.GetTable<ItemBansTable>();
                 var existing = itemBansTable.Where(b => b.Name == itemname).FirstOrDefault();
                 if (existing == null) {
                     itemBansTable.Insert(() => new ItemBansTable {
@@ -73,6 +78,8 @@ namespace TShockAPI.DB
                 return;
 
             try {
+                using var db = _dbFactory();
+                var itemBansTable = db.GetTable<ItemBansTable>();
                 itemBansTable.Where(b => b.Name == itemname).Delete();
                 ItemBans.Remove(new ItemBan(itemname));
             }
@@ -85,6 +92,8 @@ namespace TShockAPI.DB
             var b = GetItemBanByName(item);
             if (b != null) {
                 try {
+                    using var db = _dbFactory();
+                    var itemBansTable = db.GetTable<ItemBansTable>();
                     string groupsNew = string.Join(",", b.AllowedGroups);
                     if (groupsNew.Length > 0)
                         groupsNew += ",";
@@ -110,6 +119,8 @@ namespace TShockAPI.DB
             var b = GetItemBanByName(item);
             if (b != null) {
                 try {
+                    using var db = _dbFactory();
+                    var itemBansTable = db.GetTable<ItemBansTable>();
                     b.RemoveGroup(group);
                     string groups = string.Join(",", b.AllowedGroups);
 

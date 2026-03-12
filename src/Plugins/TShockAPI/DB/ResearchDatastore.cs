@@ -21,11 +21,12 @@ namespace TShockAPI.DB
             public DateTime TimeSacrificed { get; set; }
         }
 
-        readonly DataConnection database;
-        readonly ITable<Research> table;
+        readonly Func<DataConnection> _dbFactory;
         public ResearchDatastore(DataConnection db) { 
-            database = db;
-            table = database.CreateTable<Research>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using var localDb = _dbFactory();
+            localDb.CreateTable<Research>(tableOptions: TableOptions.CreateIfNotExists);
             _itemsSacrificed = [];
         }
 
@@ -56,7 +57,8 @@ namespace TShockAPI.DB
             Dictionary<int, int> sacrificedItems = new Dictionary<int, int>();
 
             try {
-                var query = table
+                using var db = _dbFactory();
+                var query = db.GetTable<Research>()
                     .Where(r => r.WorldId == worldid)
                     .GroupBy(r => r.ItemId)
                     .Select(g => new {
@@ -89,7 +91,8 @@ namespace TShockAPI.DB
 
             var result = 0;
             try {
-                result = table
+                using var db = _dbFactory();
+                result = db.GetTable<Research>()
                     .Value(r => r.WorldId, worldid)
                     .Value(r => r.PlayerId, player.Account.ID)
                     .Value(r => r.ItemId, itemId)

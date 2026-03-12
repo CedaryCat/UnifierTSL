@@ -19,19 +19,22 @@ namespace TShockAPI.DB
             [Column(DataType = DataType.Text)]
             public required string AllowedGroups { get; set; }
         }
-        readonly DataConnection database;
-        readonly ITable<ProjectileBansTable> projectileBansTable;
+        readonly Func<DataConnection> _dbFactory;
         public List<ProjectileBan> ProjectileBans = new List<ProjectileBan>();
         public ProjectileManagager(DataConnection db) {
-            database = db;
-            projectileBansTable = database.CreateTable<ProjectileBansTable>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using (var localDb = _dbFactory()) {
+                localDb.CreateTable<ProjectileBansTable>(tableOptions: TableOptions.CreateIfNotExists);
+            }
             UpdateBans();
         }
         public void UpdateBans() {
             ProjectileBans.Clear();
 
             try {
-                var rows = projectileBansTable.ToList(); // SELECT * FROM ProjectileBans
+                using var db = _dbFactory();
+                var rows = db.GetTable<ProjectileBansTable>().ToList(); // SELECT * FROM ProjectileBans
 
                 foreach (var row in rows) {
                     ProjectileBan ban = new ProjectileBan((short)row.ProjectileID);
@@ -46,6 +49,8 @@ namespace TShockAPI.DB
 
         public void AddNewBan(short id = 0) {
             try {
+                using var db = _dbFactory();
+                var projectileBansTable = db.GetTable<ProjectileBansTable>();
                 projectileBansTable.Insert(() => new ProjectileBansTable {
                     ProjectileID = id,
                     AllowedGroups = ""
@@ -64,6 +69,8 @@ namespace TShockAPI.DB
                 return;
 
             try {
+                using var db = _dbFactory();
+                var projectileBansTable = db.GetTable<ProjectileBansTable>();
                 projectileBansTable
                     .Where(b => b.ProjectileID == id)
                     .Delete();
@@ -79,6 +86,8 @@ namespace TShockAPI.DB
             var b = GetBanById(id);
             if (b != null) {
                 try {
+                    using var db = _dbFactory();
+                    var projectileBansTable = db.GetTable<ProjectileBansTable>();
                     string groupsNew = string.Join(",", b.AllowedGroups);
                     if (groupsNew.Length > 0)
                         groupsNew += ",";
@@ -104,6 +113,8 @@ namespace TShockAPI.DB
             var b = GetBanById(id);
             if (b != null) {
                 try {
+                    using var db = _dbFactory();
+                    var projectileBansTable = db.GetTable<ProjectileBansTable>();
                     b.RemoveGroup(group);
                     string groups = string.Join(",", b.AllowedGroups);
 

@@ -33,12 +33,13 @@ namespace TShockAPI.DB
             [Column(DataType = DataType.Text)]
             public required string Private { get; set; }
         }
-        readonly DataConnection database;
-        readonly ITable<WarpTable> table;
+        readonly Func<DataConnection> _dbFactory;
         internal readonly List<Warp> Warps = [];
         public WarpManager(DataConnection db) {
-            database = db;
-            table = database.CreateTable<WarpTable>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using var localDb = _dbFactory();
+            localDb.CreateTable<WarpTable>(tableOptions: TableOptions.CreateIfNotExists);
         }
 
         /// <summary>
@@ -50,6 +51,8 @@ namespace TShockAPI.DB
         /// <returns>Whether the operation succeeded.</returns>
         public bool Add(string worldId, int x, int y, string name) {
             try {
+                using var db = _dbFactory();
+                var table = db.GetTable<WarpTable>();
                 if (table.Insert(() => new WarpTable {
                     X = x,
                     Y = y,
@@ -73,7 +76,8 @@ namespace TShockAPI.DB
         public void ReloadWarps() {
             Warps.Clear();
 
-            var warps = table.ToList();
+            using var db = _dbFactory();
+            var warps = db.GetTable<WarpTable>().ToList();
             foreach (var warp in warps) {
                 Warps.Add(new Warp(
                     warp.WorldID,
@@ -90,6 +94,8 @@ namespace TShockAPI.DB
         /// <returns>Whether the operation succeeded.</returns>
         public bool Remove(string worldId, string warpName) {
             try {
+                using var db = _dbFactory();
+                var table = db.GetTable<WarpTable>();
                 if (table.Where(w => w.WarpName == warpName && w.WorldID == worldId)
                         .Delete() > 0) {
                     Warps.RemoveAll(w => string.Equals(w.Name, warpName, StringComparison.OrdinalIgnoreCase));
@@ -120,6 +126,8 @@ namespace TShockAPI.DB
         /// <returns>Whether the operation succeeded.</returns>
         public bool Position(string worldId, string warpName, int x, int y) {
             try {
+                using var db = _dbFactory();
+                var table = db.GetTable<WarpTable>();
                 if (table.Where(w => w.WarpName == warpName && w.WorldID == worldId)
                         .Set(w => w.X, x)
                         .Set(w => w.Y, y)
@@ -142,6 +150,8 @@ namespace TShockAPI.DB
         /// <returns>Whether the operation succeeded.</returns>
         public bool Hide(string worldId, string warpName, bool state) {
             try {
+                using var db = _dbFactory();
+                var table = db.GetTable<WarpTable>();
                 if (table.Where(w => w.WarpName == warpName && w.WorldID == worldId)
                         .Set(w => w.Private, state ? "1" : "0")
                         .Update() > 0) {
