@@ -82,9 +82,9 @@ namespace UnifierTSL.CLI.Status
             long frame,
             ConsoleStatusThresholds thresholds) {
 
-            var perfData = PerformanceData.Queries.GetSnapshot(server, TimeSpan.FromSeconds(1));
+            var perfData = ServerPerformance.Queries.GetSnapshot(server, TimeSpan.FromSeconds(1));
             var ups = perfData.TicksPerSecond;
-            var util = perfData.BusyUtilization;
+            var util = perfData.LoopUtilization;
 
             double upKbps = perfData.SentBytesCount / 1000d;
             double downKbps = perfData.ReceivedBytesCount / 1000d;
@@ -136,9 +136,9 @@ namespace UnifierTSL.CLI.Status
             long frame,
             ConsoleStatusThresholds thresholds) {
 
-            var perfData = PerformanceData.Queries.GetSnapshot(server, TimeSpan.FromSeconds(1));
+            var perfData = ServerPerformance.Queries.GetSnapshot(server, TimeSpan.FromSeconds(1));
             var ups = perfData.TicksPerSecond;
-            var util = perfData.BusyUtilization;
+            var util = perfData.LoopUtilization;
 
             double upKbps = perfData.SentBytesCount / 1000d;
             double downKbps = perfData.ReceivedBytesCount / 1000d;
@@ -202,8 +202,8 @@ namespace UnifierTSL.CLI.Status
         private static LauncherBandwidthSnapshot SampleLauncherBandwidth(DateTimeOffset sampleUtc) {
             LauncherNetworkSample currentSample = new(
                 TimestampUtc: sampleUtc,
-                ReceivedBytesCount: PerformanceData.Network.ReceivedBytesCount,
-                SentBytesCount: PerformanceData.Network.SentBytesCount);
+                ReceivedBytesCount: ServerPerformance.Network.ReceivedBytesCount,
+                SentBytesCount: ServerPerformance.Network.SentBytesCount);
 
             LauncherNetworkSamples.Enqueue(currentSample);
             PruneLauncherNetworkSamples(sampleUtc - LauncherBandwidthRetention);

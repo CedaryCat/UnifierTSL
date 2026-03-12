@@ -10,6 +10,7 @@ namespace UnifierTSL.Performance
         TimeSpan PresentTime,
         TimeSpan IdleTime,
         TimeSpan GCPauseTime,
+        TimeSpan NonSleepTime,
         TimeSpan AverageFrameTime,
         TimeSpan MaxFrameTime,
         long AllocatedBytes,
@@ -32,6 +33,7 @@ namespace UnifierTSL.Performance
                 PresentTime: TimeSpan.Zero,
                 IdleTime: TimeSpan.Zero,
                 GCPauseTime: TimeSpan.Zero,
+                NonSleepTime: TimeSpan.Zero,
                 AverageFrameTime: TimeSpan.Zero,
                 MaxFrameTime: TimeSpan.Zero,
                 AllocatedBytes: 0,
@@ -58,6 +60,8 @@ namespace UnifierTSL.Performance
         public double IdleUtilization => Divide(IdleTime, SampleDuration);
 
         public double GCPauseUtilization => Divide(GCPauseTime, SampleDuration);
+
+        public double LoopUtilization => Divide(NonSleepTime, SampleDuration);
 
         public double FramesPerSecond => Divide(SampledFrames, SampleDuration.TotalSeconds);
 

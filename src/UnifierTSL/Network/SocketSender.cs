@@ -29,8 +29,8 @@ namespace UnifierTSL.Network
                 perf.CurrentFrameData.SentBytesCount += size;
                 perf.CurrentFrameData.SentPacketCount += 1;
             }
-            PerformanceData.Network.SentBytes(size);
-            PerformanceData.Network.SentPacket();
+            ServerPerformance.Network.SentBytes(size);
+            ServerPerformance.Network.SentPacket();
             SentData();
         }
 
