@@ -30,6 +30,7 @@ namespace UnifierTSL
             public int totalData = 0;
             public string? ReceivedUUID = "";
             public void Reset(ISocket socket) {
+                player.active = false;
                 players[Index] = player;
 
                 RemoteClient client = globalClients[Index];
