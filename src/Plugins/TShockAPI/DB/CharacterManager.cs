@@ -63,11 +63,15 @@ namespace TShockAPI.DB
             [Column] public int team { get; set; }
         }
         public DataConnection database;
-        ITable<Character> characterTable;
+        readonly Func<DataConnection> _dbFactory;
 
         public CharacterManager(DataConnection db) {
             database = db;
-            characterTable = db.CreateTable<Character>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using (var localDb = _dbFactory()) {
+                localDb.CreateTable<Character>(tableOptions: TableOptions.CreateIfNotExists);
+            }
             EnsureSchemaColumns();
         }
 
@@ -80,8 +84,9 @@ namespace TShockAPI.DB
         }
 
         private void EnsureColumn(string columnName, string sqlType, bool nullable = true, string? defaultValue = null) {
+            using var db = _dbFactory();
             try {
-                database.Execute(BuildAddColumnSql(columnName, sqlType, nullable, defaultValue));
+                db.Execute(BuildAddColumnSql(columnName, sqlType, nullable, defaultValue));
             }
             catch (Exception ex) when (IsDuplicateColumnError(ex)) {
                 return;
@@ -132,7 +137,8 @@ namespace TShockAPI.DB
             var playerData = new PlayerData(true);
 
             try {
-                var character = characterTable.FirstOrDefault(c => c.AccountId == acctid);
+                using var db = _dbFactory();
+                var character = db.GetTable<Character>().FirstOrDefault(c => c.AccountId == acctid);
 
                 if (character != null) {
                     playerData.exists = true;
@@ -230,7 +236,8 @@ namespace TShockAPI.DB
             }
 
             try {
-                return database.GetTable<Character>()
+                using var db = _dbFactory();
+                return db.GetTable<Character>()
                     .Where(c => c.AccountId == account.ID)
                     .Set(c => c.skinVariant, player.TPlayer.skinVariant)
                     .Set(c => c.hair, player.TPlayer.hair)
@@ -263,7 +270,8 @@ namespace TShockAPI.DB
             string initialItems = string.Join("~", items.Take(NetItem.MaxInventory));
 
             try {
-                database.Insert(new Character {
+                using var db = _dbFactory();
+                db.Insert(new Character {
                     AccountId = account.ID,
                     Health = TShock.ServerSideCharacterConfig.Settings.StartingHealth,
                     MaxHealth = TShock.ServerSideCharacterConfig.Settings.StartingHealth,
@@ -338,11 +346,12 @@ namespace TShockAPI.DB
             };
 
             try {
-                if (!GetPlayerData(player, player.Account.ID).exists) {
-                    database.Insert(character);
+                using var db = _dbFactory();
+                if (!db.GetTable<Character>().Any(c => c.AccountId == player.Account.ID)) {
+                    db.Insert(character);
                 }
                 else {
-                    database.Update(character);
+                    db.Update(character);
                 }
                 return true;
             }
@@ -354,7 +363,8 @@ namespace TShockAPI.DB
 
         public bool RemovePlayer(int userid) {
             try {
-                database.GetTable<Character>()
+                using var db = _dbFactory();
+                db.GetTable<Character>()
                     .Where(c => c.AccountId == userid)
                     .Delete();
                 return true;
@@ -418,11 +428,12 @@ namespace TShockAPI.DB
             };
 
             try {
-                if (!GetPlayerData(player, player.Account.ID).exists) {
-                    database.Insert(character);
+                using var db = _dbFactory();
+                if (!db.GetTable<Character>().Any(c => c.AccountId == player.Account.ID)) {
+                    db.Insert(character);
                 }
                 else {
-                    database.Update(character);
+                    db.Update(character);
                 }
                 return true;
             }
