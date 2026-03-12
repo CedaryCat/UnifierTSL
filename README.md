@@ -1,4 +1,4 @@
-# UnifierTSL
+﻿# UnifierTSL
 
 > Languages: [English](./README.md) | [简体中文](./docs/README.zh-cn.md)
 
@@ -90,16 +90,16 @@ The baseline values below come straight from project files and runtime version h
 |:--|:--|:--|
 | Target framework | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
 | Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs` (assembly file version from OTAPI/Terraria runtime) |
-| OTAPI USP | `1.1.0-pre-release-upstream.26` | `src/UnifierTSL/UnifierTSL.csproj` |
+| OTAPI USP | `1.1.0-pre-release-upstream.29` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock and dependency details</strong></summary>
 
 | Item | Value |
 |:--|:--|
-| Bundled TShock version | `6.0.0` |
+| Bundled TShock version | `6.1.0` |
 | Sync branch | `general-devel` |
-| Sync commit | `0dbb07854cf9cb4e47e315d6160d785d51a27788` |
+| Sync commit | `1afaeb514343ca547abceeb357654603d1e2a456` |
 | Source | `src/Plugins/TShockAPI/TShockAPI.csproj` |
 
 Additional dependency baselines:
@@ -536,3 +536,4 @@ This table reflects the currently maintained/documented packaging targets, not e
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
+

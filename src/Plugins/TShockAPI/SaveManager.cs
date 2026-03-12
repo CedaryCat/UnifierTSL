@@ -33,26 +33,28 @@ namespace TShockAPI
             _channel = Channel.CreateUnbounded<SaveTask?>();
             _saveWorkerTask = Task.Run(SaveWorkerAsync);
 
-            On.Terraria.IO.WorldFileSystemContext.SaveWorld_bool_bool += OnSaveWorld;
+            On.Terraria.IO.WorldFileSystemContext._SaveWorld += OnSaveWorld;
             TShock.DisposingEvent += Dispose;
         }
 
-        private static void OnSaveWorld(On.Terraria.IO.WorldFileSystemContext.orig_SaveWorld_bool_bool orig, 
+        private static void OnSaveWorld(On.Terraria.IO.WorldFileSystemContext.orig__SaveWorld orig, 
             Terraria.IO.WorldFileSystemContext self, 
             bool useCloudSaving,
-            bool resetTime) {
+            bool resetTime,
+            bool useTemps,
+            bool canBeSkipped) {
 
             if (self.root is ServerContext server) {
                 OnSaveWorld(server);
             }
-            orig(self, useCloudSaving, resetTime);
+            orig(self, useCloudSaving, resetTime, useTemps, canBeSkipped);
         }
 
         private static void Dispose() {
             _channel.Writer.TryWrite(null); // Signal exit
             _saveWorkerTask.Wait();
 
-            On.Terraria.IO.WorldFileSystemContext.SaveWorld_bool_bool -= OnSaveWorld;
+            On.Terraria.IO.WorldFileSystemContext._SaveWorld -= OnSaveWorld;
         }
 
         public static void OnSaveWorld(ServerContext server) {
