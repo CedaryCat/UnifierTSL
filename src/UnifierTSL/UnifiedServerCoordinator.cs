@@ -870,7 +870,7 @@ namespace UnifierTSL
 
                 // Update current server
                 SetClientCurrentlyServer(plr, to);
-                client.mfwh_ResetSections(to);
+                client.ResetSections(to);
 
                 // Join data sync
                 to.SyncServerOnlineToPlayer(plr);
