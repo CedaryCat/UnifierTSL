@@ -766,7 +766,7 @@ namespace UnifierTSL
             }
 
             ServerContext server = new(serverName, IWorldDataProvider.GenerateOrLoadExisting(worldName, size, difficulty, evil, seed));
-            Task.Run(() => server.Program.LaunchGame([]));
+            server.Run([]);
             UnifiedServerCoordinator.AddServer(server);
         }
 
