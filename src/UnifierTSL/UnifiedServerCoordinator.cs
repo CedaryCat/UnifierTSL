@@ -749,7 +749,7 @@ namespace UnifierTSL
                         bw.Write(true);
                         // GameMode
                         bw.Write(2);
-                        bw.Write(255);
+                        bw.Write((byte)255);
                         playerCountPosInStream = (int)memoryStream.Position;
                         bw.Write((byte)0);
                         // hardMode
