@@ -480,9 +480,9 @@ namespace UnifierTSL
                 if (server != GetClientCurrentlyServer(i)) {
                     continue;
                 }
-                    server.NetMessage.CheckBytes(i);
-                }
+                server.NetMessage.CheckBytes(i);
             }
+        }
 
         static void CountReceivedData(int who, uint size, ServerContext? server) {
             PerformanceData.Network.ReceivedPacket();
@@ -722,16 +722,25 @@ namespace UnifierTSL
         private static void ListenLoop(ListenerSession session) {
             CancellationToken token = session.Cts.Token;
             while (!token.IsCancellationRequested && listenerController.IsCurrentSession(session.Generation)) {
+                TcpClient? client = null;
                 try {
-                    TcpClient client = session.Listener.AcceptTcpClient();
-                    CreateSocketEvent e = new(client);
-                    UnifierApi.EventHub.Coordinator.CreateSocket.Invoke(ref e);
-                    OnConnectionAccepted(e.Socket ?? new TcpSocket(client), session);
+                    client = session.Listener.AcceptTcpClient();
                 }
                 catch {
                     if (token.IsCancellationRequested || !listenerController.IsCurrentSession(session.Generation)) {
                         break;
                     }
+                }
+                if (client is null) {
+                    continue;
+                }
+                try {
+                    CreateSocketEvent e = new(client);
+                    UnifierApi.EventHub.Coordinator.CreateSocket.Invoke(ref e);
+                    OnConnectionAccepted(e.Socket ?? new TcpSocket(client), session);
+                }
+                catch {
+
                 }
             }
         }
