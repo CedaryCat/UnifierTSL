@@ -629,7 +629,7 @@ namespace UnifierTSL
                     else {
                         if (client.PendingTermination) {
                             if (client.PendingTerminationApproved) {
-                                ClearClientData(client);
+                                ResetUnboundClientState(client);
                             }
                         }
                         if (client.IsConnected()) {
@@ -667,8 +667,13 @@ namespace UnifierTSL
                 Console.WriteLine(ex);
             }
         }
-        static void ClearClientData(RemoteClient client) {
+
+        // Used only for pre-routing cleanup when the client is not bound to any server context.
+        // Routed clients must use the standard server-bound reset path instead.
+        static void ResetUnboundClientState(RemoteClient client) {
             client.Data.Clear();
+
+            client.ClientUUID = null;
 
             client.TimeOutTimer = 0;
             client.StatusCount = 0;
@@ -682,7 +687,8 @@ namespace UnifierTSL
             client.SpamClear();
             client.IsActive = false;
 
-            players[client.Id] = new();
+            var plr = players[client.Id] = new();
+            plr.active = false;
 
             globalMsgBuffers[client.Id].Reset();
             client.Socket?.Close();
