@@ -131,8 +131,8 @@ namespace UnifierTSL
             EventHub.Launcher.InitializedEvent.Invoke(new());
         }
 
-        internal static ConsoleStatusThresholds GetConsoleStatusThresholds() {
-            return runtimeSettings.ConsoleStatusThresholds;
+        internal static ConsoleStatusSettings GetConsoleStatus() {
+            return runtimeSettings.ConsoleStatus;
         }
 
         internal static bool UseColorfulConsoleStatus() {

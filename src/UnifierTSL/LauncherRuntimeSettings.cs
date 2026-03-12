@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace UnifierTSL
 {
     internal static class LauncherPortRules
@@ -28,6 +30,12 @@ namespace UnifierTSL
         AddIfMissing,
     }
 
+    internal enum ConsoleStatusBandwidthUnit
+    {
+        Bytes,
+        Bits,
+    }
+
     internal sealed class RootLauncherConfiguration
     {
         public LoggingConfiguration Logging { get; set; } = new();
@@ -46,39 +54,79 @@ namespace UnifierTSL
         public string JoinServer { get; set; } = "none";
         public bool ColorfulConsoleStatus { get; set; } = true;
         public List<AutoStartServerConfiguration> AutoStartServers { get; set; } = [];
-        public ConsoleStatusThresholdsConfiguration ConsoleStatusThresholds { get; set; } = new();
+        public ConsoleStatusConfiguration ConsoleStatus { get; set; } = new();
     }
 
-    internal sealed class ConsoleStatusThresholdsConfiguration
+    internal sealed class ConsoleStatusConfiguration
     {
-        public double TargetUps { get; set; } = ConsoleStatusThresholds.DefaultTargetUps;
-        public double HealthyUpsDeviation { get; set; } = ConsoleStatusThresholds.DefaultHealthyUpsDeviation;
-        public double WarningUpsDeviation { get; set; } = ConsoleStatusThresholds.DefaultWarningUpsDeviation;
-        public double UtilHealthyMax { get; set; } = ConsoleStatusThresholds.DefaultUtilHealthyMax;
-        public double UtilWarningMax { get; set; } = ConsoleStatusThresholds.DefaultUtilWarningMax;
-        public int OnlineWarnRemainingSlots { get; set; } = ConsoleStatusThresholds.DefaultOnlineWarnRemainingSlots;
-        public int OnlineBadRemainingSlots { get; set; } = ConsoleStatusThresholds.DefaultOnlineBadRemainingSlots;
-        public double UpWarnKbps { get; set; } = ConsoleStatusThresholds.DefaultUpWarnKbps;
-        public double UpBadKbps { get; set; } = ConsoleStatusThresholds.DefaultUpBadKbps;
-        public double DownWarnKbps { get; set; } = ConsoleStatusThresholds.DefaultDownWarnKbps;
-        public double DownBadKbps { get; set; } = ConsoleStatusThresholds.DefaultDownBadKbps;
+        public double TargetUps { get; set; } = ConsoleStatusSettings.DefaultTargetUps;
+        public double HealthyUpsDeviation { get; set; } = ConsoleStatusSettings.DefaultHealthyUpsDeviation;
+        public double WarningUpsDeviation { get; set; } = ConsoleStatusSettings.DefaultWarningUpsDeviation;
+        public double UtilHealthyMax { get; set; } = ConsoleStatusSettings.DefaultUtilHealthyMax;
+        public double UtilWarningMax { get; set; } = ConsoleStatusSettings.DefaultUtilWarningMax;
+        public int OnlineWarnRemainingSlots { get; set; } = ConsoleStatusSettings.DefaultOnlineWarnRemainingSlots;
+        public int OnlineBadRemainingSlots { get; set; } = ConsoleStatusSettings.DefaultOnlineBadRemainingSlots;
+        public string BandwidthUnit { get; set; } = "bytes";
+        public double BandwidthRolloverThreshold { get; set; } = ConsoleStatusSettings.DefaultBandwidthRolloverThreshold;
+        [JsonPropertyName("upWarnKBps")]
+        public double ServerUpWarnKBps { get; set; } = ConsoleStatusSettings.DefaultServerUpWarnKBps;
+        [JsonPropertyName("upBadKBps")]
+        public double ServerUpBadKBps { get; set; } = ConsoleStatusSettings.DefaultServerUpBadKBps;
+        [JsonPropertyName("downWarnKBps")]
+        public double ServerDownWarnKBps { get; set; } = ConsoleStatusSettings.DefaultServerDownWarnKBps;
+        [JsonPropertyName("downBadKBps")]
+        public double ServerDownBadKBps { get; set; } = ConsoleStatusSettings.DefaultServerDownBadKBps;
+        [JsonPropertyName("launcherUpWarnKBps")]
+        public double LauncherUpWarnKBps { get; set; } = ConsoleStatusSettings.DefaultLauncherUpWarnKBps;
+        [JsonPropertyName("launcherUpBadKBps")]
+        public double LauncherUpBadKBps { get; set; } = ConsoleStatusSettings.DefaultLauncherUpBadKBps;
+        [JsonPropertyName("launcherDownWarnKBps")]
+        public double LauncherDownWarnKBps { get; set; } = ConsoleStatusSettings.DefaultLauncherDownWarnKBps;
+        [JsonPropertyName("launcherDownBadKBps")]
+        public double LauncherDownBadKBps { get; set; } = ConsoleStatusSettings.DefaultLauncherDownBadKBps;
     }
 
-    internal sealed record ConsoleStatusThresholds
+    internal sealed record ConsoleStatusBandwidthThresholds
+    {
+        public double UpWarnKBps { get; init; }
+        public double UpBadKBps { get; init; }
+        public double DownWarnKBps { get; init; }
+        public double DownBadKBps { get; init; }
+    }
+
+    internal sealed record ConsoleStatusSettings
     {
         public const double DefaultTargetUps = 60.0;
-        public const double DefaultHealthyUpsDeviation = 1.2;
-        public const double DefaultWarningUpsDeviation = 4.0;
-        public const double DefaultUtilHealthyMax = 0.50;
+        public const double DefaultHealthyUpsDeviation = 2;
+        public const double DefaultWarningUpsDeviation = 5.0;
+        public const double DefaultUtilHealthyMax = 0.55;
         public const double DefaultUtilWarningMax = 0.80;
         public const int DefaultOnlineWarnRemainingSlots = 5;
         public const int DefaultOnlineBadRemainingSlots = 0;
-        public const double DefaultUpWarnKbps = 65.0;
-        public const double DefaultUpBadKbps = 75.0;
-        public const double DefaultDownWarnKbps = 85.0;
-        public const double DefaultDownBadKbps = 95.0;
+        public const double DefaultBandwidthRolloverThreshold = 500.0;
+        public const double DefaultServerUpWarnKBps = 800.0;
+        public const double DefaultServerUpBadKBps = 1600.0;
+        public const double DefaultServerDownWarnKBps = 50.0;
+        public const double DefaultServerDownBadKBps = 100.0;
+        public const double DefaultLauncherUpWarnKBps = 2400;
+        public const double DefaultLauncherUpBadKBps = 4800;
+        public const double DefaultLauncherDownWarnKBps = 150;
+        public const double DefaultLauncherDownBadKBps = 300;
 
-        public static ConsoleStatusThresholds Default { get; } = new();
+        public static ConsoleStatusBandwidthThresholds DefaultServerBandwidth { get; } = new() {
+            UpWarnKBps = DefaultServerUpWarnKBps,
+            UpBadKBps = DefaultServerUpBadKBps,
+            DownWarnKBps = DefaultServerDownWarnKBps,
+            DownBadKBps = DefaultServerDownBadKBps,
+        };
+
+        public static ConsoleStatusBandwidthThresholds DefaultLauncherBandwidth { get; } = new() {
+            UpWarnKBps = DefaultLauncherUpWarnKBps,
+            UpBadKBps = DefaultLauncherUpBadKBps,
+            DownWarnKBps = DefaultLauncherDownWarnKBps,
+            DownBadKBps = DefaultLauncherDownBadKBps,
+        };
+        public static ConsoleStatusSettings Default { get; } = new();
 
         public double TargetUps { get; init; } = DefaultTargetUps;
         public double HealthyUpsDeviation { get; init; } = DefaultHealthyUpsDeviation;
@@ -87,10 +135,10 @@ namespace UnifierTSL
         public double UtilWarningMax { get; init; } = DefaultUtilWarningMax;
         public int OnlineWarnRemainingSlots { get; init; } = DefaultOnlineWarnRemainingSlots;
         public int OnlineBadRemainingSlots { get; init; } = DefaultOnlineBadRemainingSlots;
-        public double UpWarnKbps { get; init; } = DefaultUpWarnKbps;
-        public double UpBadKbps { get; init; } = DefaultUpBadKbps;
-        public double DownWarnKbps { get; init; } = DefaultDownWarnKbps;
-        public double DownBadKbps { get; init; } = DefaultDownBadKbps;
+        public ConsoleStatusBandwidthUnit BandwidthUnit { get; init; } = ConsoleStatusBandwidthUnit.Bytes;
+        public double BandwidthRolloverThreshold { get; init; } = DefaultBandwidthRolloverThreshold;
+        public ConsoleStatusBandwidthThresholds ServerBandwidth { get; init; } = DefaultServerBandwidth;
+        public ConsoleStatusBandwidthThresholds LauncherBandwidth { get; init; } = DefaultLauncherBandwidth;
     }
 
     internal sealed class AutoStartServerConfiguration
@@ -123,6 +171,6 @@ namespace UnifierTSL
         public JoinServerMode JoinServer { get; init; } = JoinServerMode.None;
         public bool ColorfulConsoleStatus { get; init; } = true;
         public List<AutoStartServerConfiguration> AutoStartServers { get; init; } = [];
-        public ConsoleStatusThresholds ConsoleStatusThresholds { get; init; } = ConsoleStatusThresholds.Default;
+        public ConsoleStatusSettings ConsoleStatus { get; init; } = ConsoleStatusSettings.Default;
     }
 }

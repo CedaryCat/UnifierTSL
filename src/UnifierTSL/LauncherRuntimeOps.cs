@@ -160,7 +160,7 @@ namespace UnifierTSL
                 JoinServer = ResolveConfiguredJoinServerMode(config.Launcher.JoinServer),
                 ColorfulConsoleStatus = config.Launcher.ColorfulConsoleStatus,
                 AutoStartServers = CloneAutoStartServers(config.Launcher.AutoStartServers),
-                ConsoleStatusThresholds = ResolveConsoleStatusThresholds(config.Launcher.ConsoleStatusThresholds),
+                ConsoleStatus = ResolveConsoleStatus(config.Launcher.ConsoleStatus),
             };
         }
 
@@ -227,9 +227,9 @@ namespace UnifierTSL
                     category: "Config");
             }
 
-            if (current.ConsoleStatusThresholds != desired.ConsoleStatusThresholds) {
+            if (current.ConsoleStatus != desired.ConsoleStatus) {
                 UnifierApi.Logger.Info(
-                    GetString("launcher.consoleStatusThresholds changed. Command-line status thresholds are now using the reloaded values."),
+                    GetString("launcher.consoleStatus changed. Command-line status settings are now using the reloaded values."),
                     category: "Config");
             }
 
@@ -241,7 +241,7 @@ namespace UnifierTSL
                 JoinServer = desired.JoinServer,
                 ColorfulConsoleStatus = desired.ColorfulConsoleStatus,
                 AutoStartServers = CloneAutoStartServers(desired.AutoStartServers),
-                ConsoleStatusThresholds = desired.ConsoleStatusThresholds,
+                ConsoleStatus = desired.ConsoleStatus,
             };
         }
 
@@ -263,7 +263,7 @@ namespace UnifierTSL
                 JoinServer = current.JoinServer,
                 ColorfulConsoleStatus = current.ColorfulConsoleStatus,
                 AutoStartServers = CloneAutoStartServers(current.AutoStartServers),
-                ConsoleStatusThresholds = current.ConsoleStatusThresholds,
+                ConsoleStatus = current.ConsoleStatus,
             };
         }
 
@@ -439,7 +439,7 @@ namespace UnifierTSL
                     JoinServer = source.Launcher?.JoinServer ?? "none",
                     ColorfulConsoleStatus = source.Launcher?.ColorfulConsoleStatus ?? true,
                     AutoStartServers = CloneAutoStartServers(source.Launcher?.AutoStartServers),
-                    ConsoleStatusThresholds = CloneConsoleStatusThresholdsConfiguration(source.Launcher?.ConsoleStatusThresholds),
+                    ConsoleStatus = CloneConsoleStatusConfiguration(source.Launcher?.ConsoleStatus),
                 },
             };
         }
@@ -455,9 +455,9 @@ namespace UnifierTSL
             };
         }
 
-        private static ConsoleStatusThresholdsConfiguration CloneConsoleStatusThresholdsConfiguration(ConsoleStatusThresholdsConfiguration? source) {
-            ConsoleStatusThresholdsConfiguration threshold = source ?? new ConsoleStatusThresholdsConfiguration();
-            return new ConsoleStatusThresholdsConfiguration {
+        private static ConsoleStatusConfiguration CloneConsoleStatusConfiguration(ConsoleStatusConfiguration? source) {
+            ConsoleStatusConfiguration threshold = source ?? new ConsoleStatusConfiguration();
+            return new ConsoleStatusConfiguration {
                 TargetUps = threshold.TargetUps,
                 HealthyUpsDeviation = threshold.HealthyUpsDeviation,
                 WarningUpsDeviation = threshold.WarningUpsDeviation,
@@ -465,10 +465,16 @@ namespace UnifierTSL
                 UtilWarningMax = threshold.UtilWarningMax,
                 OnlineWarnRemainingSlots = threshold.OnlineWarnRemainingSlots,
                 OnlineBadRemainingSlots = threshold.OnlineBadRemainingSlots,
-                UpWarnKbps = threshold.UpWarnKbps,
-                UpBadKbps = threshold.UpBadKbps,
-                DownWarnKbps = threshold.DownWarnKbps,
-                DownBadKbps = threshold.DownBadKbps,
+                BandwidthUnit = threshold.BandwidthUnit,
+                BandwidthRolloverThreshold = threshold.BandwidthRolloverThreshold,
+                ServerUpWarnKBps = threshold.ServerUpWarnKBps,
+                ServerUpBadKBps = threshold.ServerUpBadKBps,
+                ServerDownWarnKBps = threshold.ServerDownWarnKBps,
+                ServerDownBadKBps = threshold.ServerDownBadKBps,
+                LauncherUpWarnKBps = threshold.LauncherUpWarnKBps,
+                LauncherUpBadKBps = threshold.LauncherUpBadKBps,
+                LauncherDownWarnKBps = threshold.LauncherDownWarnKBps,
+                LauncherDownBadKBps = threshold.LauncherDownBadKBps,
             };
         }
 
@@ -503,17 +509,17 @@ namespace UnifierTSL
                 return false;
             }
 
-            return ConsoleStatusThresholdsConfigurationEquivalent(
-                leftLauncher.ConsoleStatusThresholds,
-                rightLauncher.ConsoleStatusThresholds);
+            return ConsoleStatusConfigurationEquivalent(
+                leftLauncher.ConsoleStatus,
+                rightLauncher.ConsoleStatus);
         }
 
-        private static bool ConsoleStatusThresholdsConfigurationEquivalent(
-            ConsoleStatusThresholdsConfiguration? left,
-            ConsoleStatusThresholdsConfiguration? right) {
+        private static bool ConsoleStatusConfigurationEquivalent(
+            ConsoleStatusConfiguration? left,
+            ConsoleStatusConfiguration? right) {
 
-            ConsoleStatusThresholdsConfiguration leftThresholds = left ?? new ConsoleStatusThresholdsConfiguration();
-            ConsoleStatusThresholdsConfiguration rightThresholds = right ?? new ConsoleStatusThresholdsConfiguration();
+            ConsoleStatusConfiguration leftThresholds = left ?? new ConsoleStatusConfiguration();
+            ConsoleStatusConfiguration rightThresholds = right ?? new ConsoleStatusConfiguration();
 
             return leftThresholds.TargetUps == rightThresholds.TargetUps
                 && leftThresholds.HealthyUpsDeviation == rightThresholds.HealthyUpsDeviation
@@ -522,10 +528,16 @@ namespace UnifierTSL
                 && leftThresholds.UtilWarningMax == rightThresholds.UtilWarningMax
                 && leftThresholds.OnlineWarnRemainingSlots == rightThresholds.OnlineWarnRemainingSlots
                 && leftThresholds.OnlineBadRemainingSlots == rightThresholds.OnlineBadRemainingSlots
-                && leftThresholds.UpWarnKbps == rightThresholds.UpWarnKbps
-                && leftThresholds.UpBadKbps == rightThresholds.UpBadKbps
-                && leftThresholds.DownWarnKbps == rightThresholds.DownWarnKbps
-                && leftThresholds.DownBadKbps == rightThresholds.DownBadKbps;
+                && OrdinalIgnoreCaseEquals(leftThresholds.BandwidthUnit, rightThresholds.BandwidthUnit)
+                && leftThresholds.BandwidthRolloverThreshold == rightThresholds.BandwidthRolloverThreshold
+                && leftThresholds.ServerUpWarnKBps == rightThresholds.ServerUpWarnKBps
+                && leftThresholds.ServerUpBadKBps == rightThresholds.ServerUpBadKBps
+                && leftThresholds.ServerDownWarnKBps == rightThresholds.ServerDownWarnKBps
+                && leftThresholds.ServerDownBadKBps == rightThresholds.ServerDownBadKBps
+                && leftThresholds.LauncherUpWarnKBps == rightThresholds.LauncherUpWarnKBps
+                && leftThresholds.LauncherUpBadKBps == rightThresholds.LauncherUpBadKBps
+                && leftThresholds.LauncherDownWarnKBps == rightThresholds.LauncherDownWarnKBps
+                && leftThresholds.LauncherDownBadKBps == rightThresholds.LauncherDownBadKBps;
         }
 
         private static bool AutoStartServerListEquivalent(
@@ -983,10 +995,55 @@ namespace UnifierTSL
             return enabled ? "true" : "false";
         }
 
-        private static ConsoleStatusThresholds ResolveConsoleStatusThresholds(ConsoleStatusThresholdsConfiguration? configured) {
-            ConsoleStatusThresholdsConfiguration source = configured ?? new ConsoleStatusThresholdsConfiguration();
+        private static bool TryParseConsoleStatusBandwidthUnit(string? value, out ConsoleStatusBandwidthUnit unit) {
+            string text = value?.Trim() ?? "";
+            if (text.Length == 0 || OrdinalIgnoreCaseEquals(text, "bytes") || OrdinalIgnoreCaseEquals(text, "byte")) {
+                unit = ConsoleStatusBandwidthUnit.Bytes;
+                return true;
+            }
 
-            return new ConsoleStatusThresholds {
+            if (OrdinalIgnoreCaseEquals(text, "bits") || OrdinalIgnoreCaseEquals(text, "bit")) {
+                unit = ConsoleStatusBandwidthUnit.Bits;
+                return true;
+            }
+
+            unit = ConsoleStatusBandwidthUnit.Bytes;
+            return false;
+        }
+
+        private static ConsoleStatusBandwidthUnit ResolveConfiguredConsoleStatusBandwidthUnit(string? value) {
+            if (TryParseConsoleStatusBandwidthUnit(value, out ConsoleStatusBandwidthUnit unit)) {
+                return unit;
+            }
+
+            UnifierApi.Logger.Warning(
+                GetParticularString("{0} is configured launcher.consoleStatus.bandwidthUnit value", $"Invalid launcher.consoleStatus.bandwidthUnit setting '{value}'. Falling back to 'bytes'."),
+                category: "Config");
+            return ConsoleStatusBandwidthUnit.Bytes;
+        }
+
+        private static string DescribeConsoleStatusBandwidthUnit(ConsoleStatusBandwidthUnit unit) {
+            return unit switch {
+                ConsoleStatusBandwidthUnit.Bits => "bits",
+                _ => "bytes",
+            };
+        }
+
+        private static double ResolveConfiguredConsoleStatusBandwidthRolloverThreshold(double value) {
+            if (!double.IsFinite(value) || value <= 0d) {
+                UnifierApi.Logger.Warning(
+                    GetParticularString("{0} is configured launcher.consoleStatus.bandwidthRolloverThreshold value", $"Invalid launcher.consoleStatus.bandwidthRolloverThreshold setting '{value}'. Falling back to '{ConsoleStatusSettings.DefaultBandwidthRolloverThreshold}'."),
+                    category: "Config");
+                return ConsoleStatusSettings.DefaultBandwidthRolloverThreshold;
+            }
+
+            return value;
+        }
+
+        private static ConsoleStatusSettings ResolveConsoleStatus(ConsoleStatusConfiguration? configured) {
+            ConsoleStatusConfiguration source = configured ?? new ConsoleStatusConfiguration();
+
+            return new ConsoleStatusSettings {
                 TargetUps = source.TargetUps,
                 HealthyUpsDeviation = source.HealthyUpsDeviation,
                 WarningUpsDeviation = source.WarningUpsDeviation,
@@ -994,10 +1051,20 @@ namespace UnifierTSL
                 UtilWarningMax = source.UtilWarningMax,
                 OnlineWarnRemainingSlots = source.OnlineWarnRemainingSlots,
                 OnlineBadRemainingSlots = source.OnlineBadRemainingSlots,
-                UpWarnKbps = source.UpWarnKbps,
-                UpBadKbps = source.UpBadKbps,
-                DownWarnKbps = source.DownWarnKbps,
-                DownBadKbps = source.DownBadKbps,
+                BandwidthUnit = ResolveConfiguredConsoleStatusBandwidthUnit(source.BandwidthUnit),
+                BandwidthRolloverThreshold = ResolveConfiguredConsoleStatusBandwidthRolloverThreshold(source.BandwidthRolloverThreshold),
+                ServerBandwidth = new ConsoleStatusBandwidthThresholds {
+                    UpWarnKBps = source.ServerUpWarnKBps,
+                    UpBadKBps = source.ServerUpBadKBps,
+                    DownWarnKBps = source.ServerDownWarnKBps,
+                    DownBadKBps = source.ServerDownBadKBps,
+                },
+                LauncherBandwidth = new ConsoleStatusBandwidthThresholds {
+                    UpWarnKBps = source.LauncherUpWarnKBps,
+                    UpBadKBps = source.LauncherUpBadKBps,
+                    DownWarnKBps = source.LauncherDownWarnKBps,
+                    DownBadKBps = source.LauncherDownBadKBps,
+                },
             };
         }
 

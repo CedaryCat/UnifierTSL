@@ -1493,7 +1493,7 @@ For more logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/Unifie
 - You get back a `ConfigHandle<T>` that lets you `RequestAsync`, `Overwrite`, `ModifyInMemory`, and subscribe via `OnChangedAsync` for hot reload. File access is guarded by `FileLockManager` to prevent corruption.
 - Launcher root config is separate from plugin config: `LauncherConfigManager` owns `config/config.json`, creates it when missing, and intentionally ignores the legacy root-level `config.json`.
 - Startup precedence for launcher settings is `config/config.json` -> CLI overrides -> interactive fallback for missing port/password, and the effective startup snapshot is persisted back to `config/config.json`. After startup, edits to `config/config.json` apply to the launcher settings that support reload.
-- Root-config hot reload applies `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (via listener rebind), `launcher.colorfulConsoleStatus`, and `launcher.consoleStatusThresholds`.
+- Root-config hot reload applies `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (via listener rebind), `launcher.colorfulConsoleStatus`, and `launcher.consoleStatus`.
 
 ## 3. USP Integration Points
 
@@ -1561,7 +1561,7 @@ For more logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/Unifie
 ### 5.2 Runtime Operations
 - Event handlers handle cross-cutting concerns — chat moderation, transfer control, packet filtering, etc.
 - Config handles react to file changes, so you can tweak settings without restarting.
-- The launcher root config watcher applies password changes, join-policy changes, additive auto-start worlds (hot-add only), `launcher.listenPort` listener rebinding, `launcher.colorfulConsoleStatus`, and `launcher.consoleStatusThresholds`.
+- The launcher root config watcher applies password changes, join-policy changes, additive auto-start worlds (hot-add only), `launcher.listenPort` listener rebinding, `launcher.colorfulConsoleStatus`, and `launcher.consoleStatus`.
 - The coordinator keeps window titles updated, maintains server lists, replays join/leave sequences, and can swap the active listener without tearing down the process.
 - Launcher and per-server consoles now exchange semantic prompt/render/status frames through `TerminalLauncherConsoleHost`, `RemoteConsoleService`, and the console-client protocol, so reconnects can replay cached state instead of dropping back to plain text.
 - Logging metadata and the bounded history ring let you trace any log entry back to its server, plugin, or subsystem, and attach new sinks without losing recent context.

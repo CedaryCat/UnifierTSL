@@ -967,8 +967,8 @@ msgid "launcher.colorfulConsoleStatus changed from '{0}' to '{1}'. Status bar ap
 msgstr "launcher.colorfulConsoleStatus 已从 '{0}' 更改为 '{1}'。状态栏外观已刷新。"
 
 #: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:232
-msgid "launcher.consoleStatusThresholds changed. Command-line status thresholds are now using the reloaded values."
-msgstr "launcher.consoleStatusThresholds 已更改。命令行状态阈值现已使用重载后的值。"
+msgid "launcher.consoleStatus changed. Command-line status settings are now using the reloaded values."
+msgstr "launcher.consoleStatus 已更改。命令行状态设置现已使用重载后的值。"
 
 #: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:975
 #, csharp-format

@@ -23,8 +23,8 @@ namespace UnifierTSL.CLI.Status
             ulong SentBytesCount);
 
         private readonly record struct LauncherBandwidthSnapshot(
-            double UpKbps,
-            double DownKbps);
+            double UpKBps,
+            double DownKBps);
 
         public static Func<ConsoleStatusResolveContext, ConsoleStatusFrame?> CreateBaseline(ServerContext? server) {
             return context => Compose(server, context);
@@ -41,12 +41,12 @@ namespace UnifierTSL.CLI.Status
             }
 
             long frameNumber = context.SampleUtc.ToUnixTimeMilliseconds() / ConsoleStatusService.RefreshIntervalMs;
-            ConsoleStatusThresholds thresholds = UnifierApi.GetConsoleStatusThresholds();
+            ConsoleStatusSettings consoleStatus = UnifierApi.GetConsoleStatus();
             bool useColorfulStatus = UnifierApi.UseColorfulConsoleStatus();
 
             string text = server is null
-                ? ComposeLauncherMonitor(context.SampleUtc, thresholds, useColorfulStatus)
-                : ComposeServerMonitor(server, frameNumber, thresholds, useColorfulStatus);
+                ? ComposeLauncherMonitor(context.SampleUtc, consoleStatus, useColorfulStatus)
+                : ComposeServerMonitor(server, frameNumber, consoleStatus, useColorfulStatus);
 
             ConsoleStatusFrame frame = new(
                 Text: text,
@@ -70,38 +70,39 @@ namespace UnifierTSL.CLI.Status
         private static string ComposeServerMonitor(
             ServerContext server,
             long frame,
-            ConsoleStatusThresholds thresholds,
+            ConsoleStatusSettings consoleStatus,
             bool useColorfulStatus) {
             return useColorfulStatus
-                ? ComposeColorfulServerMonitor(server, frame, thresholds)
-                : ComposePlainServerMonitor(server, frame, thresholds);
+                ? ComposeColorfulServerMonitor(server, frame, consoleStatus)
+                : ComposePlainServerMonitor(server, frame, consoleStatus);
         }
 
         private static string ComposeColorfulServerMonitor(
             ServerContext server,
             long frame,
-            ConsoleStatusThresholds thresholds) {
+            ConsoleStatusSettings consoleStatus) {
 
             var perfData = ServerPerformance.Queries.GetSnapshot(server, TimeSpan.FromSeconds(1));
             var ups = perfData.TicksPerSecond;
             var util = perfData.LoopUtilization;
 
-            double upKbps = perfData.SentBytesCount / 1000d;
-            double downKbps = perfData.ReceivedBytesCount / 1000d;
+            double upKBps = perfData.SentBytesCount / 1000d;
+            double downKBps = perfData.ReceivedBytesCount / 1000d;
 
             int online = server.ActivePlayerCount;
 
-            int upsL = UpsLevel(ups, thresholds);
-            int utilL = UtilLevel(util, thresholds);
+            int upsL = UpsLevel(ups, consoleStatus);
+            int utilL = UtilLevel(util, consoleStatus);
+            ConsoleStatusBandwidthThresholds bandwidthThresholds = consoleStatus.ServerBandwidth;
 
             if (online == 0) {
                 upsL = utilL = -1;
             }
 
 
-            int onlineL = OnlineLevel(online, server.Main.maxNetPlayers, thresholds);
-            int upL = BandwidthLevel(upKbps, thresholds.UpWarnKbps, thresholds.UpBadKbps);
-            int downL = BandwidthLevel(downKbps, thresholds.DownWarnKbps, thresholds.DownBadKbps);
+            int onlineL = OnlineLevel(online, server.Main.maxNetPlayers, consoleStatus);
+            int upL = BandwidthLevel(upKBps, bandwidthThresholds.UpWarnKBps, bandwidthThresholds.UpBadKBps);
+            int downL = BandwidthLevel(downKBps, bandwidthThresholds.DownWarnKBps, bandwidthThresholds.DownBadKBps);
 
             string text = $"{LColor(onlineL)}[online:{online}/{server.Main.maxNetPlayers}]{Reset} ";
             if (upsL == utilL) {
@@ -118,14 +119,14 @@ namespace UnifierTSL.CLI.Status
 
             if (upL == downL) {
                 text +=
-                    $"{LColor(upL, healthyDefault: true)}[↑{upKbps:0.0}kb/s" +
+                    $"{LColor(upL, healthyDefault: true)}[↑{FormatBandwidth(upKBps, consoleStatus)}" +
                     " " +
-                    $"↓{downKbps:0.0}kb/s]{Reset}";
+                    $"↓{FormatBandwidth(downKBps, consoleStatus)}]{Reset}";
             }
             else {
                 text +=
-                    $"{LColor(upL, healthyDefault: true)}[↑{upKbps:0.0}kb/s]" +
-                    $"{LColor(downL, healthyDefault: true)}[↓{downKbps:0.0}kb/s]{Reset}";
+                    $"{LColor(upL, healthyDefault: true)}[↑{FormatBandwidth(upKBps, consoleStatus)}]" +
+                    $"{LColor(downL, healthyDefault: true)}[↓{FormatBandwidth(downKBps, consoleStatus)}]{Reset}";
             }
 
             return text;
@@ -134,69 +135,70 @@ namespace UnifierTSL.CLI.Status
         private static string ComposePlainServerMonitor(
             ServerContext server,
             long frame,
-            ConsoleStatusThresholds thresholds) {
+            ConsoleStatusSettings consoleStatus) {
 
             var perfData = ServerPerformance.Queries.GetSnapshot(server, TimeSpan.FromSeconds(1));
             var ups = perfData.TicksPerSecond;
             var util = perfData.LoopUtilization;
 
-            double upKbps = perfData.SentBytesCount / 1000d;
-            double downKbps = perfData.ReceivedBytesCount / 1000d;
+            double upKBps = perfData.SentBytesCount / 1000d;
+            double downKBps = perfData.ReceivedBytesCount / 1000d;
 
             int online = server.ActivePlayerCount;
 
             return $"[online:{online}/{server.Main.maxNetPlayers}] "
                 + $"[tps:{ups:0.0}|util:{FormatUtil(util)}] "
-                + $"[↑{upKbps:0.0}kb/s ↓{downKbps:0.0}kb/s]";
+                + $"[↑{FormatBandwidth(upKBps, consoleStatus)} ↓{FormatBandwidth(downKBps, consoleStatus)}]";
         }
 
         private static string ComposeLauncherMonitor(
             DateTimeOffset sampleUtc,
-            ConsoleStatusThresholds thresholds,
+            ConsoleStatusSettings consoleStatus,
             bool useColorfulStatus) {
             return useColorfulStatus
-                ? ComposeColorfulLauncherMonitor(sampleUtc, thresholds)
-                : ComposePlainLauncherMonitor(sampleUtc, thresholds);
+                ? ComposeColorfulLauncherMonitor(sampleUtc, consoleStatus)
+                : ComposePlainLauncherMonitor(sampleUtc, consoleStatus);
         }
 
         private static string ComposeColorfulLauncherMonitor(
             DateTimeOffset sampleUtc,
-            ConsoleStatusThresholds thresholds) {
+            ConsoleStatusSettings consoleStatus) {
             LauncherBandwidthSnapshot bandwidth = SampleLauncherBandwidth(sampleUtc);
-            double upKbps = bandwidth.UpKbps;
-            double downKbps = bandwidth.DownKbps;
+            double upKBps = bandwidth.UpKBps;
+            double downKBps = bandwidth.DownKBps;
+            ConsoleStatusBandwidthThresholds bandwidthThresholds = consoleStatus.LauncherBandwidth;
 
             int online = UnifiedServerCoordinator.ActiveConnections;
-            int onlineL = OnlineLevel(online, Terraria.Main.maxPlayers, thresholds);
-            int upL = BandwidthLevel(upKbps, thresholds.UpWarnKbps, thresholds.UpBadKbps);
-            int downL = BandwidthLevel(downKbps, thresholds.DownWarnKbps, thresholds.DownBadKbps);
+            int onlineL = OnlineLevel(online, Terraria.Main.maxPlayers, consoleStatus);
+            int upL = BandwidthLevel(upKBps, bandwidthThresholds.UpWarnKBps, bandwidthThresholds.UpBadKBps);
+            int downL = BandwidthLevel(downKBps, bandwidthThresholds.DownWarnKBps, bandwidthThresholds.DownBadKBps);
 
             string text = $"{LColor(onlineL)}[online:{online}/{Terraria.Main.maxPlayers}]{Reset} ";
             if (upL == downL) {
                 text +=
-                    $"{LColor(upL, healthyDefault: true)}[↑{upKbps:0.0}kb/s" +
+                    $"{LColor(upL, healthyDefault: true)}[↑{FormatBandwidth(upKBps, consoleStatus)}" +
                     " " +
-                    $"↓{downKbps:0.0}kb/s]{Reset}";
+                    $"↓{FormatBandwidth(downKBps, consoleStatus)}]{Reset}";
             }
             else {
                 text +=
-                    $"{LColor(upL, healthyDefault: true)}[↑{upKbps:0.0}kb/s]" +
-                    $"{LColor(downL, healthyDefault: true)}[↓{downKbps:0.0}kb/s]{Reset}";
+                    $"{LColor(upL, healthyDefault: true)}[↑{FormatBandwidth(upKBps, consoleStatus)}]" +
+                    $"{LColor(downL, healthyDefault: true)}[↓{FormatBandwidth(downKBps, consoleStatus)}]{Reset}";
             }
             return text;
         }
 
         private static string ComposePlainLauncherMonitor(
             DateTimeOffset sampleUtc,
-            ConsoleStatusThresholds thresholds) {
+            ConsoleStatusSettings consoleStatus) {
             LauncherBandwidthSnapshot bandwidth = SampleLauncherBandwidth(sampleUtc);
-            double upKbps = bandwidth.UpKbps;
-            double downKbps = bandwidth.DownKbps;
+            double upKBps = bandwidth.UpKBps;
+            double downKBps = bandwidth.DownKBps;
 
             int online = UnifiedServerCoordinator.ActiveConnections;
 
             return $"[online:{online}/{Terraria.Main.maxPlayers}] "
-                + $"[↑{upKbps:0.0}kb/s ↓{downKbps:0.0}kb/s]";
+                + $"[↑{FormatBandwidth(upKBps, consoleStatus)} ↓{FormatBandwidth(downKBps, consoleStatus)}]";
         }
 
         private static LauncherBandwidthSnapshot SampleLauncherBandwidth(DateTimeOffset sampleUtc) {
@@ -241,8 +243,8 @@ namespace UnifierTSL.CLI.Status
             ulong receivedBytesDelta = SaturatingSubtract(latestWindowSample.ReceivedBytesCount, oldestWindowSample.ReceivedBytesCount);
 
             return new(
-                UpKbps: sentBytesDelta / elapsedSeconds / 1000d,
-                DownKbps: receivedBytesDelta / elapsedSeconds / 1000d);
+                UpKBps: sentBytesDelta / elapsedSeconds / 1000d,
+                DownKBps: receivedBytesDelta / elapsedSeconds / 1000d);
         }
 
         private static void PruneLauncherNetworkSamples(DateTimeOffset retentionCutoffUtc) {
@@ -259,6 +261,26 @@ namespace UnifierTSL.CLI.Status
             return util >= 1 ? "1.00" : $"{util:0.0%}";
         }
 
+        private static string FormatBandwidth(double kiloBytesPerSecond, ConsoleStatusSettings consoleStatus) {
+            double rolloverThreshold = consoleStatus.BandwidthRolloverThreshold;
+            double value = consoleStatus.BandwidthUnit == ConsoleStatusBandwidthUnit.Bits
+                ? kiloBytesPerSecond * 8d
+                : kiloBytesPerSecond;
+
+            string[] units = consoleStatus.BandwidthUnit == ConsoleStatusBandwidthUnit.Bits
+                ? ["Kbps", "Mbps", "Gbps", "Tbps"]
+                : ["KB/s", "MB/s", "GB/s", "TB/s"];
+
+            int unitIndex = 0;
+            while (unitIndex < units.Length - 1 && value >= rolloverThreshold) {
+                value /= 1000d;
+                unitIndex++;
+            }
+
+            string format = unitIndex == 0 ? "0.0" : "0.00";
+            return $"{value.ToString(format)}{units[unitIndex]}";
+        }
+
         private static string LColor(int x, int y = -1, bool healthyDefault = false) {
             return Math.Max(x, y) switch {
                 -1 => Reset,
@@ -268,48 +290,48 @@ namespace UnifierTSL.CLI.Status
             };
         }
 
-        private static int UpsLevel(double ups, ConsoleStatusThresholds thresholds) {
-            double deviation = Math.Abs(ups - thresholds.TargetUps);
-            if (deviation <= thresholds.HealthyUpsDeviation) {
+        private static int UpsLevel(double ups, ConsoleStatusSettings consoleStatus) {
+            double deviation = Math.Abs(ups - consoleStatus.TargetUps);
+            if (deviation <= consoleStatus.HealthyUpsDeviation) {
                 return 1;
             }
 
-            if (deviation <= thresholds.WarningUpsDeviation) {
+            if (deviation <= consoleStatus.WarningUpsDeviation) {
                 return 2;
             }
 
             return 3;
         }
 
-        private static int UtilLevel(double util, ConsoleStatusThresholds thresholds) {
-            if (util <= thresholds.UtilHealthyMax) {
+        private static int UtilLevel(double util, ConsoleStatusSettings consoleStatus) {
+            if (util <= consoleStatus.UtilHealthyMax) {
                 return 1;
             }
 
-            if (util <= thresholds.UtilWarningMax) {
+            if (util <= consoleStatus.UtilWarningMax) {
                 return 2;
             }
 
             return 3;
         }
 
-        private static int OnlineLevel(int online, int maxNetPlayers, ConsoleStatusThresholds thresholds) {
+        private static int OnlineLevel(int online, int maxNetPlayers, ConsoleStatusSettings consoleStatus) {
             int remainingSlots = Math.Max(0, maxNetPlayers - online);
-            if (remainingSlots <= thresholds.OnlineBadRemainingSlots) {
+            if (remainingSlots <= consoleStatus.OnlineBadRemainingSlots) {
                 return 3;
             }
-            if (remainingSlots <= thresholds.OnlineWarnRemainingSlots) {
+            if (remainingSlots <= consoleStatus.OnlineWarnRemainingSlots) {
                 return 2;
             }
             return 1;
         }
 
-        private static int BandwidthLevel(double kbps, double warnThresholdKbps, double badThresholdKbps) {
-            if (kbps >= badThresholdKbps) {
+        private static int BandwidthLevel(double kiloBytesPerSecond, double warnThresholdKBps, double badThresholdKBps) {
+            if (kiloBytesPerSecond >= badThresholdKBps) {
                 return 3;
             }
 
-            if (kbps >= warnThresholdKbps) {
+            if (kiloBytesPerSecond >= warnThresholdKBps) {
                 return 2;
             }
 
