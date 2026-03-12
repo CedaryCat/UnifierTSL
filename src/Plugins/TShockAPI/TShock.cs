@@ -264,6 +264,7 @@ namespace TShockAPI
 
         public override ValueTask DisposeAsync(bool isDisposing) {
             DisposingEvent?.Invoke();
+            DB?.Dispose();
             return base.DisposeAsync(isDisposing);
         }
     }

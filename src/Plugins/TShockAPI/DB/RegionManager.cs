@@ -35,11 +35,12 @@ namespace TShockAPI.DB
             [Column] public int Z { get; set; }
         }
         public List<Region> Regions = new List<Region>();
-        readonly DataConnection database;
-        readonly ITable<RegionTable> regionTable;
+        readonly Func<DataConnection> _dbFactory;
         public RegionManager(DataConnection db) {
-            database = db;
-            regionTable = database.CreateTable<RegionTable>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using var localDb = _dbFactory();
+            localDb.CreateTable<RegionTable>(tableOptions: TableOptions.CreateIfNotExists);
         }
         /// <summary>
         /// Reloads all regions.
@@ -47,8 +48,10 @@ namespace TShockAPI.DB
         public void Reload() {
             try {
                 Regions.Clear();
+                using var db = _dbFactory();
+                var regionRecords = db.GetTable<RegionTable>().ToList();
 
-                foreach (var record in regionTable)
+                foreach (var record in regionRecords)
                 {
                     string[] splitids = record.UserIds.Split([','], StringSplitOptions.RemoveEmptyEntries);
 
@@ -90,6 +93,7 @@ namespace TShockAPI.DB
                 return false;
             }
             try {
+                using var db = _dbFactory();
                 var newRegion = new RegionTable {
                     X1 = tx,
                     Y1 = ty,
@@ -104,7 +108,7 @@ namespace TShockAPI.DB
                     Z = z
                 };
 
-                newRegion.Id = database.InsertWithInt32Identity(newRegion);
+                newRegion.Id = db.InsertWithInt32Identity(newRegion);
 
                 Region region = new Region(newRegion.Id, new Rectangle(tx, ty, width, height), regionname, owner, true, worldid, z);
                 Regions.Add(region);
@@ -122,7 +126,8 @@ namespace TShockAPI.DB
         /// </summary>
         public bool DeleteRegion(string worldid, int id) {
             try {
-                regionTable.Where(r => r.Id == id && r.WorldID == worldid).Delete();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.Id == id && r.WorldID == worldid).Delete();
 
                 var region = Regions.FirstOrDefault(r => r.ID == id && r.WorldID == worldid);
                 Regions.RemoveAll(r => r.ID == id && r.WorldID == worldid);
@@ -140,7 +145,8 @@ namespace TShockAPI.DB
         /// </summary>
         public bool DeleteRegion(string worldid, string name) {
             try {
-                regionTable.Where(r => r.RegionName == name && r.WorldID == worldid).Delete();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.RegionName == name && r.WorldID == worldid).Delete();
 
                 var region = Regions.FirstOrDefault(r => r.Name == name && r.WorldID == worldid);
                 Regions.RemoveAll(r => r.Name == name && r.WorldID == worldid);
@@ -158,9 +164,10 @@ namespace TShockAPI.DB
         /// </summary>
         public bool SetRegionState(string worldid, int id, bool state) {
             try {
-                regionTable.Where(r => r.Id == id && r.WorldID == worldid)
-                          .Set(r => r.Protected, state ? 1 : 0)
-                          .Update();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.Id == id && r.WorldID == worldid)
+                    .Set(r => r.Protected, state ? 1 : 0)
+                    .Update();
 
                 var region = GetRegionByID(id, worldid);
                 if (region != null) {
@@ -179,9 +186,10 @@ namespace TShockAPI.DB
         /// </summary>
         public bool SetRegionState(string worldid, string name, bool state) {
             try {
-                regionTable.Where(r => r.RegionName == name && r.WorldID == worldid)
-                          .Set(r => r.Protected, state ? 1 : 0)
-                          .Update();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.RegionName == name && r.WorldID == worldid)
+                    .Set(r => r.Protected, state ? 1 : 0)
+                    .Update();
 
                 var region = GetRegionByName(name, worldid);
                 if (region != null)
@@ -196,6 +204,8 @@ namespace TShockAPI.DB
 
         public bool ResizeRegion(string worldid, string regionName, int addAmount, int direction) {
             try {
+                using var db = _dbFactory();
+                var regionTable = db.GetTable<RegionTable>();
                 var regionRecord = regionTable.FirstOrDefault(r => r.RegionName == regionName && r.WorldID == worldid);
                 if (regionRecord == null)
                     return false;
@@ -228,11 +238,11 @@ namespace TShockAPI.DB
                     region.Area = new Rectangle(X, Y, width, height);
 
                 regionTable.Where(r => r.RegionName == regionName && r.WorldID == worldid)
-                          .Set(r => r.X1, X)
-                          .Set(r => r.Y1, Y)
-                          .Set(r => r.Width, width)
-                          .Set(r => r.Height, height)
-                          .Update();
+                    .Set(r => r.X1, X)
+                    .Set(r => r.Y1, Y)
+                    .Set(r => r.Width, width)
+                    .Set(r => r.Height, height)
+                    .Update();
 
                 return true;
             }
@@ -252,9 +262,10 @@ namespace TShockAPI.DB
                 if (region == null)
                     return false;
 
-                int updated = regionTable.Where(r => r.RegionName == oldName && r.WorldID == worldid)
-                                        .Set(r => r.RegionName, newName)
-                                        .Update();
+                using var db = _dbFactory();
+                int updated = db.GetTable<RegionTable>().Where(r => r.RegionName == oldName && r.WorldID == worldid)
+                    .Set(r => r.RegionName, newName)
+                    .Update();
 
                 if (updated > 0) {
                     region.Name = newName;
@@ -280,9 +291,10 @@ namespace TShockAPI.DB
                 }
 
                 string ids = string.Join(",", r.AllowedIDs);
-                regionTable.Where(r => r.RegionName == regionName && r.WorldID == worldid)
-                          .Set(r => r.UserIds, ids)
-                          .Update();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.RegionName == regionName && r.WorldID == worldid)
+                    .Set(r => r.UserIds, ids)
+                    .Update();
                 return true;
             }
 
@@ -294,6 +306,8 @@ namespace TShockAPI.DB
         /// </summary>
         public bool AddNewUser(string worldid, string regionName, string userName) {
             try {
+                using var db = _dbFactory();
+                var regionTable = db.GetTable<RegionTable>();
                 var regionRecord = regionTable.FirstOrDefault(r => r.RegionName == regionName && r.WorldID == worldid);
                 if (regionRecord == null)
                     return false;
@@ -311,8 +325,8 @@ namespace TShockAPI.DB
                     mergedIDs = string.Concat(mergedIDs, ",", userIdToAdd);
 
                 regionTable.Where(r => r.RegionName == regionName && r.WorldID == worldid)
-                          .Set(r => r.UserIds, mergedIDs)
-                          .Update();
+                    .Set(r => r.UserIds, mergedIDs)
+                    .Update();
 
                 foreach (var r in Regions) {
                     if (r.Name == regionName && r.WorldID == worldid)
@@ -334,12 +348,13 @@ namespace TShockAPI.DB
                 Region region = Regions.First(r => string.Equals(regionName, r.Name, StringComparison.OrdinalIgnoreCase));
                 region.Area = new Rectangle(x, y, width, height);
 
-                regionTable.Where(r => r.RegionName == regionName && r.WorldID == worldid)
-                          .Set(r => r.X1, x)
-                          .Set(r => r.Y1, y)
-                          .Set(r => r.Width, width)
-                          .Set(r => r.Height, height)
-                          .Update();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.RegionName == regionName && r.WorldID == worldid)
+                    .Set(r => r.X1, x)
+                    .Set(r => r.Y1, y)
+                    .Set(r => r.Width, width)
+                    .Set(r => r.Height, height)
+                    .Update();
 
                 return true;
             }
@@ -355,7 +370,8 @@ namespace TShockAPI.DB
         public List<Region> ListAllRegions(string worldid) {
             var regions = new List<Region>();
             try {
-                var query = regionTable.Where(r => r.WorldID == worldid).Select(r => r.RegionName);
+                using var db = _dbFactory();
+                var query = db.GetTable<RegionTable>().Where(r => r.WorldID == worldid).Select(r => r.RegionName).ToList();
                 foreach (var name in query) {
                     regions.Add(new Region { Name = name });
                 }
@@ -373,9 +389,10 @@ namespace TShockAPI.DB
             var region = GetRegionByName(regionName, worldid);
             if (region != null) {
                 region.Owner = newOwner;
-                regionTable.Where(r => r.RegionName == regionName && r.WorldID == worldid)
-                          .Set(r => r.Owner, newOwner)
-                          .Update();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.RegionName == regionName && r.WorldID == worldid)
+                    .Set(r => r.Owner, newOwner)
+                    .Update();
                 return true;
             }
             return false;
@@ -386,6 +403,8 @@ namespace TShockAPI.DB
         /// </summary>
         public bool AllowGroup(string worldid, string regionName, string groupName) {
             try {
+                using var db = _dbFactory();
+                var regionTable = db.GetTable<RegionTable>();
                 var regionRecord = regionTable.FirstOrDefault(r => r.RegionName == regionName && r.WorldID == worldid);
                 if (regionRecord == null)
                     return false;
@@ -401,8 +420,8 @@ namespace TShockAPI.DB
                 mergedGroups += groupName;
 
                 regionTable.Where(r => r.RegionName == regionName && r.WorldID == worldid)
-                          .Set(r => r.Groups, mergedGroups)
-                          .Update();
+                    .Set(r => r.Groups, mergedGroups)
+                    .Update();
 
                 Region r = GetRegionByName(regionName, worldid);
                 if (r != null) {
@@ -428,9 +447,10 @@ namespace TShockAPI.DB
             if (r != null) {
                 r.RemoveGroup(group);
                 string groups = string.Join(",", r.AllowedGroups);
-                regionTable.Where(r => r.RegionName == regionName && r.WorldID == worldid)
-                          .Set(r => r.Groups, groups)
-                          .Update();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.RegionName == regionName && r.WorldID == worldid)
+                    .Set(r => r.Groups, groups)
+                    .Update();
                 return true;
             }
             return false;
@@ -441,9 +461,10 @@ namespace TShockAPI.DB
         /// </summary>
         public bool SetZ( string worldid, string name, int z) {
             try {
-                regionTable.Where(r => r.RegionName == name && r.WorldID == worldid)
-                          .Set(r => r.Z, z)
-                          .Update();
+                using var db = _dbFactory();
+                db.GetTable<RegionTable>().Where(r => r.RegionName == name && r.WorldID == worldid)
+                    .Set(r => r.Z, z)
+                    .Update();
 
                 var region = GetRegionByName(name, worldid);
                 if (region != null)

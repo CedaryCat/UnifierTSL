@@ -43,11 +43,12 @@ namespace TShockAPI.DB
             [Column(DataType = DataType.Text)]
             public string KnownIPs { get; set; } = "";
         }
-        readonly DataConnection database;
-        readonly ITable<UserTable> _tables;
+        readonly Func<DataConnection> _dbFactory;
         public UserAccountManager(DataConnection db) {
-            database = db;
-            _tables = database.CreateTable<UserTable>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using var localDb = _dbFactory();
+            localDb.CreateTable<UserTable>(tableOptions: TableOptions.CreateIfNotExists);
         }
         private UserAccount LoadUserAccountFromTable(UserAccount account, UserTable row) {
             account.ID = row.ID;
@@ -62,7 +63,8 @@ namespace TShockAPI.DB
         }
 
         internal void AfterRenameGroup(string oldGroup, string newGroup) {
-            _tables
+            using var db = _dbFactory();
+            db.GetTable<UserTable>()
                 .Where(u => u.Usergroup == oldGroup)
                 .Set(u => u.Usergroup, newGroup)
                 .Update();
@@ -74,7 +76,10 @@ namespace TShockAPI.DB
 
             // Username must be globally unique
             try {
-                bool exists = _tables.Any(u => u.Username == account.Name);
+                using var db = _dbFactory();
+                var table = db.GetTable<UserTable>();
+
+                bool exists = table.Any(u => u.Username == account.Name);
                 if (exists)
                     throw new UserAccountExistsException(account.Name);
 
@@ -87,7 +92,7 @@ namespace TShockAPI.DB
                     Registered = now
                 };
 
-                int inserted = _tables.Insert(() => new UserTable {
+                int inserted = table.Insert(() => new UserTable {
                     Username = newRow.Username,
                     Password = newRow.Password,
                     UUID = newRow.UUID,
@@ -105,7 +110,8 @@ namespace TShockAPI.DB
             }
             catch (Exception ex) {
                 // Some providers might still throw on uniqueness race; try to detect username collision by rechecking
-                if (_tables.Any(u => u.Username == account.Name))
+                using var db = _dbFactory();
+                if (db.GetTable<UserTable>().Any(u => u.Username == account.Name))
                     throw new UserAccountExistsException(account.Name);
                 throw new UserAccountManagerException(GetString($"AddUser SQL returned an error ({ex.Message})"), ex);
             }
@@ -118,8 +124,10 @@ namespace TShockAPI.DB
 
                 UserAccount tempuser = GetUserAccount(account);
 
-                int affected = _tables.Where(u => u.Username == account.Name)
-                                      .Delete();
+                using var db = _dbFactory();
+                int affected = db.GetTable<UserTable>()
+                    .Where(u => u.Username == account.Name)
+                    .Delete();
 
                 if (affected < 1)
                     throw new UserAccountNotExistException(account.Name);
@@ -135,9 +143,11 @@ namespace TShockAPI.DB
             try {
                 account.CreateBCryptHash(password);
 
-                int updated = _tables.Where(u => u.Username == account.Name)
-                                     .Set(u => u.Password, account.Password)
-                                     .Update();
+                using var db = _dbFactory();
+                int updated = db.GetTable<UserTable>()
+                    .Where(u => u.Username == account.Name)
+                    .Set(u => u.Password, account.Password)
+                    .Update();
 
                 if (updated == 0)
                     throw new UserAccountNotExistException(account.Name);
@@ -149,9 +159,11 @@ namespace TShockAPI.DB
 
         public void SetUserAccountUUID(UserAccount account, string uuid) {
             try {
-                int updated = _tables.Where(u => u.Username == account.Name)
-                                     .Set(u => u.UUID, uuid)
-                                     .Update();
+                using var db = _dbFactory();
+                int updated = db.GetTable<UserTable>()
+                    .Where(u => u.Username == account.Name)
+                    .Set(u => u.UUID, uuid)
+                    .Update();
 
                 if (updated == 0)
                     throw new UserAccountNotExistException(account.Name);
@@ -169,9 +181,11 @@ namespace TShockAPI.DB
             if (AccountHooks.OnAccountGroupUpdate(account, ref grp))
                 throw new UserGroupUpdateLockedException(account.Name);
 
-            int updated = _tables.Where(u => u.Username == account.Name)
-                                 .Set(u => u.Usergroup, grp.Name)
-                                 .Update();
+            using var db = _dbFactory();
+            int updated = db.GetTable<UserTable>()
+                .Where(u => u.Username == account.Name)
+                .Set(u => u.Usergroup, grp.Name)
+                .Update();
 
             if (updated == 0)
                 throw new UserAccountNotExistException(account.Name);
@@ -194,9 +208,11 @@ namespace TShockAPI.DB
             if (AccountHooks.OnAccountGroupUpdate(account, author, ref grp))
                 throw new UserGroupUpdateLockedException(account.Name);
 
-            int updated = _tables.Where(u => u.Username == account.Name)
-                                 .Set(u => u.Usergroup, grp.Name)
-                                 .Update();
+            using var db = _dbFactory();
+            int updated = db.GetTable<UserTable>()
+                .Where(u => u.Username == account.Name)
+                .Set(u => u.Usergroup, grp.Name)
+                .Update();
 
             if (updated == 0)
                 throw new UserAccountNotExistException(account.Name);
@@ -214,10 +230,12 @@ namespace TShockAPI.DB
         public void UpdateLogin(UserAccount account) {
             try {
                 var now = DateTime.UtcNow.ToString("s");
-                int updated = _tables.Where(u => u.Username == account.Name)
-                                     .Set(u => u.LastAccessed, now)
-                                     .Set(u => u.KnownIPs, account.KnownIps)
-                                     .Update();
+                using var db = _dbFactory();
+                int updated = db.GetTable<UserTable>()
+                    .Where(u => u.Username == account.Name)
+                    .Set(u => u.LastAccessed, now)
+                    .Set(u => u.KnownIPs, account.KnownIps)
+                    .Update();
 
                 if (updated == 0)
                     throw new UserAccountNotExistException(account.Name);
@@ -229,8 +247,10 @@ namespace TShockAPI.DB
 
         public int GetUserAccountID(string username) {
             try {
-                var row = _tables.Where(u => u.Username == username)
-                                 .FirstOrDefault();
+                using var db = _dbFactory();
+                var row = db.GetTable<UserTable>()
+                    .Where(u => u.Username == username)
+                    .FirstOrDefault();
 
                 if (row != null)
                     return row.ID;
@@ -242,52 +262,44 @@ namespace TShockAPI.DB
         }
 
         public UserAccount GetUserAccount(UserAccount account) {
-            bool multiple = false;
-            UserTable? row = null;
             string type;
             object arg;
 
-            if (account.ID != 0) {
-                row = _tables.Where(u => u.ID == account.ID).FirstOrDefault();
-                type = "id";
-                arg = account.ID;
-            }
-            else {
-                row = _tables.Where(u => u.Username == account.Name).FirstOrDefault();
-                type = "name";
-                arg = account.Name;
-            }
-
             try {
-                if (row != null) {
-                    // check for multiple matches manually (shouldn't happen unless data corruption)
-                    IEnumerable<UserTable> matches;
-                    if (account.ID != 0)
-                        matches = _tables.Where(u => u.ID == account.ID).ToList();
-                    else
-                        matches = _tables.Where(u => u.Username == account.Name).ToList();
+                using var db = _dbFactory();
+                var table = db.GetTable<UserTable>();
 
-                    if (matches.Count() > 1)
-                        multiple = true;
-
-                    if (!multiple) {
-                        return LoadUserAccountFromTable(account, row);
-                    }
+                List<UserTable> matches;
+                if (account.ID != 0) {
+                    matches = table.Where(u => u.ID == account.ID).ToList();
+                    type = "id";
+                    arg = account.ID;
                 }
+                else {
+                    matches = table.Where(u => u.Username == account.Name).ToList();
+                    type = "name";
+                    arg = account.Name;
+                }
+
+                if (matches.Count > 1)
+                    throw new UserAccountManagerException(GetString($"Multiple user accounts found for {type} '{arg}'"));
+
+                if (matches.Count == 1)
+                    return LoadUserAccountFromTable(account, matches[0]);
             }
             catch (Exception ex) {
+                if (ex is UserAccountManagerException)
+                    throw;
                 throw new UserAccountManagerException(GetString($"GetUser SQL returned an error {ex.Message}"), ex);
             }
-
-            if (multiple)
-                throw new UserAccountManagerException(GetString($"Multiple user accounts found for {type} '{arg}'"));
 
             throw new UserAccountNotExistException(account.Name);
         }
 
         public List<UserAccount> GetUserAccounts() {
             try {
-                return [.. _tables
+                using var db = _dbFactory();
+                return [.. db.GetTable<UserTable>()
                     .Select(u => new UserAccount {
                         ID = u.ID,
                         Group = u.Usergroup,
@@ -308,7 +320,8 @@ namespace TShockAPI.DB
         public List<UserAccount> GetUserAccountsByName(string username, bool notAtStart = false) {
             try {
                 string pattern = notAtStart ? $"%{username}%" : $"{username}%";
-                return [.. _tables
+                using var db = _dbFactory();
+                return [.. db.GetTable<UserTable>()
                     .Where(u => Sql.Like(u.Username, pattern))
                     .Select(u => new UserAccount {
                         ID = u.ID,

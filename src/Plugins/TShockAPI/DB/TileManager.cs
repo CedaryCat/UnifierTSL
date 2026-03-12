@@ -17,18 +17,21 @@ namespace TShockAPI.DB
             public int TileId { get; set; }
             public string AllowedGroups { get; set; } = "";
         }
-        readonly DataConnection database;
-        readonly ITable<TileBansTable> tileBansTable;
+        readonly Func<DataConnection> _dbFactory;
         public List<TileBan> TileBans = new List<TileBan>();
         public TileManager(DataConnection db) { 
-            database = db;
-            tileBansTable = database.CreateTable<TileBansTable>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
+
+            using (var localDb = _dbFactory()) {
+                localDb.CreateTable<TileBansTable>(tableOptions: TableOptions.CreateIfNotExists);
+            }
             UpdateBans();
         }
         public void UpdateBans() {
             TileBans.Clear();
 
-            var bans = tileBansTable.ToList();
+            using var db = _dbFactory();
+            var bans = db.GetTable<TileBansTable>().ToList();
             foreach (var ban in bans) {
                 TileBan tileBan = new TileBan((short)ban.TileId);
                 tileBan.SetAllowedGroups(ban.AllowedGroups);
@@ -38,7 +41,8 @@ namespace TShockAPI.DB
 
         public void AddNewBan(short id = 0) {
             try {
-                database.Insert(new TileBansTable { TileId = id, AllowedGroups = "" });
+                using var db = _dbFactory();
+                db.Insert(new TileBansTable { TileId = id, AllowedGroups = "" });
 
                 if (!TileIsBanned(id, null))
                     TileBans.Add(new TileBan(id));
@@ -52,6 +56,8 @@ namespace TShockAPI.DB
             if (!TileIsBanned(id, null))
                 return;
             try {
+                using var db = _dbFactory();
+                var tileBansTable = db.GetTable<TileBansTable>();
                 tileBansTable.Where(x => x.TileId == id).Delete();
                 TileBans.Remove(new TileBan(id));
             }
@@ -64,6 +70,8 @@ namespace TShockAPI.DB
             var b = GetBanById(id);
             if (b != null) {
                 try {
+                    using var db = _dbFactory();
+                    var tileBansTable = db.GetTable<TileBansTable>();
                     string groupsNew = string.Join(",", b.AllowedGroups);
                     if (groupsNew.Length > 0)
                         groupsNew += ",";
@@ -89,6 +97,8 @@ namespace TShockAPI.DB
             var b = GetBanById(id);
             if (b != null) {
                 try {
+                    using var db = _dbFactory();
+                    var tileBansTable = db.GetTable<TileBansTable>();
                     b.RemoveGroup(group);
                     string groups = string.Join(",", b.AllowedGroups);
                     int q = tileBansTable

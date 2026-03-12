@@ -1,6 +1,7 @@
 using LinqToDB;
 using LinqToDB.Data;
 using LinqToDB.Mapping;
+using System;
 using System.Collections;
 using System.Diagnostics;
 
@@ -31,15 +32,18 @@ namespace TShockAPI.DB
             public string Suffix { get; set; } = "";
         }
 
-        readonly DataConnection database;
+        readonly Func<DataConnection> _dbFactory;
         public readonly List<Group> groups = [];
-        readonly ITable<GroupList> groupListTable;
         public GroupManager(DataConnection db) {
-            database = db;
-            groupListTable = database.CreateTable<GroupList>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(db);
 
-            if (!db.GetTable<GroupList>().Any()) {
+            bool hasGroups;
+            using (var localDb = _dbFactory()) {
+                localDb.CreateTable<GroupList>(tableOptions: TableOptions.CreateIfNotExists);
+                hasGroups = localDb.GetTable<GroupList>().Any();
+            }
 
+            if (!hasGroups) {
                 // Add default groups if they don't exist
                 AddDefaultGroup(TShock.Config.GlobalSettings.DefaultGuestGroupName, "",
                     string.Join(",",
@@ -311,12 +315,14 @@ namespace TShockAPI.DB
                 group.Parent = parent;
             }
 
-            int inserted = groupListTable.Insert(() => new GroupList {
-                GroupName = name,
-                Parent = parentname,
-                Commands = permissions,
-                ChatColor = chatcolor
-            });
+            using var db = _dbFactory();
+            int inserted = db.GetTable<GroupList>()
+                .Insert(() => new GroupList {
+                    GroupName = name,
+                    Parent = parentname,
+                    Commands = permissions,
+                    ChatColor = chatcolor
+                });
 
             if (inserted == 1) {
                 groups.Add(group);
@@ -355,7 +361,8 @@ namespace TShockAPI.DB
                 Suffix = suffix
             };
 
-            int updated = groupListTable
+            using var db = _dbFactory();
+            int updated = db.GetTable<GroupList>()
                 .Where(gl => gl.GroupName == name)
                 .Set(gl => gl.Parent, parentname)
                 .Set(gl => gl.Commands, newGroup.Permissions)
@@ -384,6 +391,9 @@ namespace TShockAPI.DB
             }
 
             try {
+                using var db = _dbFactory();
+                var groupListTable = db.GetTable<GroupList>();
+
                 groupListTable
                   .Where(gl => gl.GroupName == name)
                   .Set(gl => gl.GroupName, () => newName)
@@ -447,7 +457,8 @@ namespace TShockAPI.DB
                 return GetString("You can't remove the default guest group.");
             }
 
-            int affected = groupListTable
+            using var db = _dbFactory();
+            int affected = db.GetTable<GroupList>()
                 .Where(g => g.GroupName == name)
                 .Delete();
 
@@ -468,7 +479,8 @@ namespace TShockAPI.DB
             var oldperms = group.Permissions; // Store old permissions in case of error
             permissions.ForEach(p => group.AddPermission(p));
 
-            var updated = groupListTable
+            using var db = _dbFactory();
+            var updated = db.GetTable<GroupList>()
                 .Where(gl => gl.GroupName == name)
                 .Set(gl => gl.Commands, group.Permissions)
                 .Update();
@@ -489,7 +501,8 @@ namespace TShockAPI.DB
             permissions.ForEach(group.RemovePermission);
 
             // Use LINQ2DB to update the Commands column for the group
-            var updated = groupListTable
+            using var db = _dbFactory();
+            var updated = db.GetTable<GroupList>()
                 .Where(gl => gl.GroupName == name)
                 .Set(gl => gl.Commands, group.Permissions)
                 .Update();
@@ -506,7 +519,8 @@ namespace TShockAPI.DB
                 List<Group> newGroups = new List<Group>(groups.Count);
                 Dictionary<string, string> newGroupParents = new Dictionary<string, string>(groups.Count);
 
-                var groupEntries = groupListTable.ToList();
+                using var db = _dbFactory();
+                var groupEntries = db.GetTable<GroupList>().ToList();
 
                 foreach (var entry in groupEntries) {
                     string groupName = entry.GroupName;

@@ -128,8 +128,7 @@ namespace TShockAPI.DB
             public long Expiration { get; set; }
         }
 
-        ITable<PlayerBan> bansTable;
-        private readonly DataConnection db;
+        private readonly Func<DataConnection> _dbFactory;
 
         private Dictionary<int, Ban> _bans;
 
@@ -152,13 +151,22 @@ namespace TShockAPI.DB
         public static event EventHandler<BanEventArgs>? OnBanPostAdd;
 
         public BanManager(DataConnection dataConnection) {
-            db = dataConnection;
-            bansTable = db.CreateTable<PlayerBan>(tableOptions: TableOptions.CreateIfNotExists);
+            _dbFactory = DataConnectionFactory.FromPrototype(dataConnection);
+
+            using (var db = _dbFactory()) {
+                db.CreateTable<PlayerBan>(tableOptions: TableOptions.CreateIfNotExists);
+            }
 
             UpdateBans();
 
             OnBanValidate += BanValidateCheck;
             OnBanPreAdd += BanAddedCheck;
+        }
+
+        private static Ban ToBan(PlayerBan playerBan) {
+            return new Ban(playerBan.TicketNumber, playerBan.Identifier, playerBan.Reason, playerBan.BanningUser,
+                new DateTime(playerBan.Date, DateTimeKind.Utc),
+                new DateTime(playerBan.Expiration, DateTimeKind.Utc));
         }
 
 
@@ -266,6 +274,7 @@ namespace TShockAPI.DB
             }
 
             try {
+                using var db = _dbFactory();
                 var playerBan = new PlayerBan {
                     Identifier = args.Identifier,
                     Reason = args.Reason,
@@ -296,6 +305,7 @@ namespace TShockAPI.DB
 
         public bool RemoveBan(int ticketNumber, bool fullDelete = false) {
             try {
+                using var db = _dbFactory();
                 if (fullDelete) {
                     int rows = db
                         .GetTable<PlayerBan>()
@@ -331,52 +341,40 @@ namespace TShockAPI.DB
             if (_bans.TryGetValue(id, out var cached))
                 return cached;
 
+            using var db = _dbFactory();
             var pb = db.GetTable<PlayerBan>()
-                       .FirstOrDefault(b => b.TicketNumber == id);
+                .FirstOrDefault(b => b.TicketNumber == id);
 
-            if (pb != null) {
-                var ban = new Ban(pb.TicketNumber, pb.Identifier, pb.Reason, pb.BanningUser,
-                                  new DateTime(pb.Date, DateTimeKind.Utc),
-                                  new DateTime(pb.Expiration, DateTimeKind.Utc));
-                return ban;
-            }
-
-            return null;
+            return pb != null ? ToBan(pb) : null;
         }
 
         public IEnumerable<Ban> RetrieveBansByIdentifier(string identifier, bool currentOnly = true) {
+            using var db = _dbFactory();
             var query = db.GetTable<PlayerBan>()
-                          .Where(pb => pb.Identifier == identifier);
+                .Where(pb => pb.Identifier == identifier);
 
             if (currentOnly) {
                 var nowTicks = DateTime.UtcNow.Ticks;
                 query = query.Where(pb => pb.Expiration > nowTicks);
             }
 
-            foreach (var pb in query) {
-                yield return new Ban(pb.TicketNumber, pb.Identifier, pb.Reason, pb.BanningUser,
-                                     new DateTime(pb.Date, DateTimeKind.Utc),
-                                     new DateTime(pb.Expiration, DateTimeKind.Utc));
-            }
+            return query.ToList().Select(ToBan).ToList();
         }
 
         public IEnumerable<Ban> GetBansByIdentifiers(bool currentOnly = true, params string[] identifiers) {
             if (identifiers == null || identifiers.Length == 0)
-                yield break;
+                return [];
 
+            using var db = _dbFactory();
             var query = db.GetTable<PlayerBan>()
-                          .Where(pb => identifiers.Contains(pb.Identifier));
+                .Where(pb => identifiers.Contains(pb.Identifier));
 
             if (currentOnly) {
                 var nowTicks = DateTime.UtcNow.Ticks;
                 query = query.Where(pb => pb.Expiration > nowTicks);
             }
 
-            foreach (var pb in query) {
-                yield return new Ban(pb.TicketNumber, pb.Identifier, pb.Reason, pb.BanningUser,
-                                     new DateTime(pb.Date, DateTimeKind.Utc),
-                                     new DateTime(pb.Expiration, DateTimeKind.Utc));
-            }
+            return query.ToList().Select(ToBan).ToList();
         }
 
         public IEnumerable<Ban> RetrieveAllBans() => RetrieveAllBansSorted(BanSortMethod.AddedNewestToOldest);
@@ -384,6 +382,7 @@ namespace TShockAPI.DB
         public IEnumerable<Ban> RetrieveAllBansSorted(BanSortMethod sortMethod) {
             List<Ban> banlist = [];
             try {
+                using var db = _dbFactory();
                 IQueryable<PlayerBan> query = db.GetTable<PlayerBan>();
 
                 query = sortMethod switch {
@@ -394,10 +393,8 @@ namespace TShockAPI.DB
                     _ => query
                 };
 
-                foreach (var pb in query) {
-                    banlist.Add(new Ban(pb.TicketNumber, pb.Identifier, pb.Reason, pb.BanningUser,
-                        new DateTime(pb.Date, DateTimeKind.Utc),
-                        new DateTime(pb.Expiration, DateTimeKind.Utc)));
+                foreach (var pb in query.ToList()) {
+                    banlist.Add(ToBan(pb));
                 }
             }
             catch (Exception ex) {
@@ -409,6 +406,7 @@ namespace TShockAPI.DB
 
         public bool ClearBans() {
             try {
+                using var db = _dbFactory();
                 int deleted = db.GetTable<PlayerBan>().Delete();
                 if (deleted > 0) {
                     _bans.Clear();
