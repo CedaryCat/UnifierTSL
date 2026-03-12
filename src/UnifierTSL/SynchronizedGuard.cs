@@ -26,8 +26,8 @@ namespace UnifierTSL
             On.Terraria.IO.FavoritesFile.Load
                 += (orig, file, root)
                 => { lock (favoritesFileLock) { orig(file, root); } };
-            On.Terraria.IO.WorldFileSystemContext.SaveWorld_bool_bool
-                += (orig, self, _, resetTime)
+            On.Terraria.IO.WorldFileSystemContext._SaveWorld
+                += (orig, self, _, resetTime, useTemps, canBeSkipped)
                 => {
                     UnifiedServerProcess.RootContext s = self.root;
                     if (s.Main.worldName == "") {
@@ -38,7 +38,7 @@ namespace UnifierTSL
                     }
                     using (FileLockManager.Enter(self.root.Main.worldPathName)) {
                         FileUtilities.ProtectedInvoke(delegate {
-                            self.InternalSaveWorld(false, resetTime);
+                            self.InternalSaveWorld(false, resetTime, useTemps);
                         });
                     }
                 };
