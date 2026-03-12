@@ -480,11 +480,9 @@ namespace UnifierTSL
                 if (server != GetClientCurrentlyServer(i)) {
                     continue;
                 }
-                if (server.NetMessage.buffer[i].checkBytes) {
                     server.NetMessage.CheckBytes(i);
                 }
             }
-        }
 
         static void CountReceivedData(int who, uint size, ServerContext? server) {
             PerformanceData.Network.ReceivedPacket();
