@@ -256,11 +256,14 @@ namespace UnifierTSL
                                         message: GetParticularString("{0} is player name, {1} is player UUID", $"No available server found for player '{player.name}' ({client.ClientUUID}); connection aborted."));
                                 }
                                 else {
-                                    SetClientCurrentlyServer(Index, joinServer);
                                     SyncPlayer playerData = player.CreateSyncPacket(Index);
                                     Player serverPlayer = players[Index] = joinServer.Main.player[Index];
                                     serverPlayer.ApplySyncPlayerPacket(in playerData, false);
-                                    globalClients[Index].mfwh_ResetSections(joinServer);
+                                    globalClients[Index].ResetSections(joinServer);
+
+                                    SetClientCurrentlyServer(Index, joinServer);
+
+                                    serverPlayer.active = true;
 
                                     UnifierApi.EventHub.Coordinator.JoinServer.Invoke(new(joinServer, player.whoAmI));
 
