@@ -38,11 +38,15 @@ public sealed class AnnotatedConsolePromptProvider
             CommandSpecs = commandSpecs,
             StaticCandidates = candidates,
             ParameterExplainers = parameterExplainers,
-            DynamicResolver = _ => new ConsolePromptUpdate {
-                CandidateOverrides = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
-                    .Add(ConsoleSuggestionKind.Player, BuildTargetCandidates(options.PlayerCandidateResolver))
-                    .Add(ConsoleSuggestionKind.Server, BuildTargetCandidates(options.ServerCandidateResolver)),
-            },
+            RuntimeResolver = ConsolePromptRuntimeResolver.Create(
+                _ => new ConsolePromptUpdate {
+                    CandidateOverrides = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
+                        .Add(ConsoleSuggestionKind.Player, BuildTargetCandidates(options.PlayerCandidateResolver))
+                        .Add(ConsoleSuggestionKind.Server, BuildTargetCandidates(options.ServerCandidateResolver)),
+                },
+                _ => HashCode.Combine(
+                    ComputeCandidateRevision(options.PlayerCandidateResolver),
+                    ComputeCandidateRevision(options.ServerCandidateResolver))),
             BaseStatusBodyLines = [
                 GetString("use Tab/Shift+Tab to rotate, Right to accept"),
             ],
@@ -66,6 +70,20 @@ public sealed class AnnotatedConsolePromptProvider
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(static name => name, StringComparer.OrdinalIgnoreCase)
             .Select(static value => new ConsoleSuggestion(value, 0))];
+    }
+
+    private static long ComputeCandidateRevision(Func<IReadOnlyList<string>> resolver)
+    {
+        HashCode hash = new();
+        foreach (string value in ResolveSafe(resolver)
+            .Where(static item => !string.IsNullOrWhiteSpace(item))
+            .Select(static item => item.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static item => item, StringComparer.OrdinalIgnoreCase)) {
+            hash.Add(value, StringComparer.OrdinalIgnoreCase);
+        }
+
+        return hash.ToHashCode();
     }
 
     private ImmutableArray<ConsoleCommandSpec> BuildCommandSpecs()

@@ -18,10 +18,18 @@ namespace TShockAPI.ConsolePrompting
     {
         private static readonly IReadOnlyDictionary<string, IConsoleParameterValueExplainer> All =
             new Dictionary<string, IConsoleParameterValueExplainer>(StringComparer.Ordinal) {
-                [TShockConsoleParameterSemanticKeys.BuffRef] = new DelegateConsoleParameterValueExplainer(ExplainBuff),
-                [TShockConsoleParameterSemanticKeys.PrefixRef] = new DelegateConsoleParameterValueExplainer(ExplainPrefix),
-                [TShockConsoleParameterSemanticKeys.BanTicket] = new DelegateConsoleParameterValueExplainer(ExplainBanTicket),
-                [TShockConsoleParameterSemanticKeys.NpcRef] = new DelegateConsoleParameterValueExplainer(ExplainNpc),
+                [TShockConsoleParameterSemanticKeys.BuffRef] = new DelegateConsoleParameterValueExplainer(
+                    ExplainBuff,
+                    static _ => 0),
+                [TShockConsoleParameterSemanticKeys.PrefixRef] = new DelegateConsoleParameterValueExplainer(
+                    ExplainPrefix,
+                    static _ => 0),
+                [TShockConsoleParameterSemanticKeys.BanTicket] = new DelegateConsoleParameterValueExplainer(
+                    ExplainBanTicket,
+                    GetBanTicketRevision),
+                [TShockConsoleParameterSemanticKeys.NpcRef] = new DelegateConsoleParameterValueExplainer(
+                    ExplainNpc,
+                    GetNpcRevision),
             };
 
         private static int defaultsRegistered;
@@ -96,6 +104,32 @@ namespace TShockAPI.ConsolePrompting
             return context.ActiveCommand.PrimaryName.Equals("tpnpc", StringComparison.OrdinalIgnoreCase)
                 ? ExplainLiveNpc(context)
                 : ExplainNpcCatalog(context);
+        }
+
+        private static long GetBanTicketRevision(ConsoleParameterExplainContext context) {
+            HashCode hash = new();
+            foreach (Ban ban in TShock.Bans.Bans.Values.OrderBy(static ban => ban.TicketNumber)) {
+                hash.Add(ban.TicketNumber);
+                hash.Add(ban.Identifier ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+            }
+
+            return hash.ToHashCode();
+        }
+
+        private static long GetNpcRevision(ConsoleParameterExplainContext context) {
+            if (!context.ActiveCommand.PrimaryName.Equals("tpnpc", StringComparison.OrdinalIgnoreCase)
+                || context.Server is null) {
+                return 0;
+            }
+
+            HashCode hash = new();
+            foreach (NPC npc in context.Server.Main.npc.Where(static npc => npc.active)) {
+                hash.Add(npc.whoAmI);
+                hash.Add(npc.netID);
+                hash.Add(npc.FullName ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+            }
+
+            return hash.ToHashCode();
         }
 
         private static ConsoleParameterExplainResult ExplainNpcCatalog(ConsoleParameterExplainContext context) {
@@ -193,8 +227,13 @@ namespace TShockAPI.ConsolePrompting
         }
 
         private sealed class DelegateConsoleParameterValueExplainer(
-            Func<ConsoleParameterExplainContext, ConsoleParameterExplainResult> handler) : IConsoleParameterValueExplainer
+            Func<ConsoleParameterExplainContext, ConsoleParameterExplainResult> handler,
+            Func<ConsoleParameterExplainContext, long> revisionProvider) : IConsoleParameterValueExplainer
         {
+            public long GetRevision(ConsoleParameterExplainContext context) {
+                return revisionProvider(context);
+            }
+
             public bool TryExplain(ConsoleParameterExplainContext context, out ConsoleParameterExplainResult result) {
                 result = handler(context);
                 return result.State != ConsoleParameterExplainState.None;

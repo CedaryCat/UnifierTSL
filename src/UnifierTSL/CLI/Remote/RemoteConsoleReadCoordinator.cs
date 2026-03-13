@@ -14,7 +14,6 @@ namespace UnifierTSL.CLI.Remote
         {
             public required ConsolePromptSessionRunner SessionRunner;
             public required string RenderJson;
-            public long LastRenderRefreshTick;
         }
 
         private sealed class CurrentWaitingData
@@ -32,11 +31,13 @@ namespace UnifierTSL.CLI.Remote
         private readonly Lock waitingLock = new();
         private readonly SemaphoreSlim readGate = new(1, 1);
         private readonly Timer retryTimer;
+        private readonly Timer promptRefreshTimer;
 
         private bool disposed;
-        private int timeoutCounter;
         private long nextReadOrder;
         private CurrentWaitingData? currentWaiting;
+
+        private const int BeginReadRetryIntervalMs = 1000;
 
         public RemoteConsoleReadCoordinator(
             PipeRemoteConsoleTransport transport,
@@ -44,7 +45,16 @@ namespace UnifierTSL.CLI.Remote
             this.transport = transport;
             this.defaultCompilerFactory = defaultCompilerFactory;
 
-            retryTimer = new Timer(static state => ((RemoteConsoleReadCoordinator)state!).OnRetryTick(), this, 50, 50);
+            retryTimer = new Timer(
+                static state => ((RemoteConsoleReadCoordinator)state!).OnRetryTick(),
+                this,
+                Timeout.Infinite,
+                Timeout.Infinite);
+            promptRefreshTimer = new Timer(
+                static state => ((RemoteConsoleReadCoordinator)state!).OnPromptRefreshTick(),
+                this,
+                Timeout.Infinite,
+                Timeout.Infinite);
             transport.PacketReceived += OnPacketReceived;
             transport.Reconnected += OnTransportReconnected;
         }
@@ -83,6 +93,11 @@ namespace UnifierTSL.CLI.Remote
             }
             catch {
             }
+            try {
+                promptRefreshTimer.Dispose();
+            }
+            catch {
+            }
 
             transport.PacketReceived -= OnPacketReceived;
             transport.Reconnected -= OnTransportReconnected;
@@ -97,10 +112,10 @@ namespace UnifierTSL.CLI.Remote
                 waiting = CreateWaiting(flag, promptSpec);
                 lock (waitingLock) {
                     ThrowIfDisposed();
-                    timeoutCounter = 0;
                     currentWaiting = waiting;
                 }
 
+                RefreshTimerSchedule();
                 SendWaiting(waiting);
                 return waiting.Completion.Task.GetAwaiter().GetResult();
             }
@@ -111,6 +126,7 @@ namespace UnifierTSL.CLI.Remote
                     }
                 }
 
+                RefreshTimerSchedule();
                 readGate.Release();
             }
         }
@@ -123,12 +139,14 @@ namespace UnifierTSL.CLI.Remote
             TaskCompletionSource<object>? completion = null;
             object? completionResult = null;
             UPDATE_RENDER? pendingRenderUpdate = null;
+            bool refreshTimerSchedule = false;
             lock (waitingLock) {
                 switch (id) {
                     case CONFIRM_BEGIN_READ.id:
                         CONFIRM_BEGIN_READ confirm = IPacket.ReadUnmanaged<CONFIRM_BEGIN_READ>(content);
                         if (IsCurrentWaiting(confirm.Order)) {
                             currentWaiting!.ConfirmedWaiting = true;
+                            refreshTimerSchedule = true;
                         }
                         break;
 
@@ -136,6 +154,7 @@ namespace UnifierTSL.CLI.Remote
                         PUSH_READ read = IPacket.ReadUnmanaged<PUSH_READ>(content);
                         if (TryCompleteCurrentWaiting(read.Order, out completion)) {
                             completionResult = read.ReadResult;
+                            refreshTimerSchedule = true;
                         }
                         break;
 
@@ -143,6 +162,7 @@ namespace UnifierTSL.CLI.Remote
                         PUSH_READKEY readKey = IPacket.ReadUnmanaged<PUSH_READKEY>(content);
                         if (TryCompleteCurrentWaiting(readKey.Order, out completion)) {
                             completionResult = readKey.KeyInfo;
+                            refreshTimerSchedule = true;
                         }
                         break;
 
@@ -150,6 +170,7 @@ namespace UnifierTSL.CLI.Remote
                         PUSH_READLINE readLine = IPacket.Read<PUSH_READLINE>(content);
                         if (TryCompleteCurrentWaiting(readLine.Order, out completion)) {
                             completionResult = readLine.Line;
+                            refreshTimerSchedule = true;
                         }
                         break;
 
@@ -167,6 +188,10 @@ namespace UnifierTSL.CLI.Remote
             // Completion and transport writes stay outside waitingLock. Both can synchronously
             // trigger user code or reconnect/write paths, and holding the lock across them would
             // block retries for the single in-flight read or create reentrancy deadlocks.
+            if (refreshTimerSchedule) {
+                RefreshTimerSchedule();
+            }
+
             if (pendingRenderUpdate is UPDATE_RENDER renderUpdate) {
                 transport.SendManaged(renderUpdate);
             }
@@ -193,10 +218,10 @@ namespace UnifierTSL.CLI.Remote
                     currentWaiting.Packet.InitialRenderJson = readLine.RenderJson;
                 }
                 currentWaiting.ConfirmedWaiting = false;
-                timeoutCounter = 0;
                 resend = currentWaiting;
             }
 
+            RefreshTimerSchedule();
             SendWaiting(resend);
         }
 
@@ -206,26 +231,29 @@ namespace UnifierTSL.CLI.Remote
             }
 
             CurrentWaitingData? resend = null;
-            UPDATE_RENDER? refreshUpdate = null;
-            long nowTick = Environment.TickCount64;
             lock (waitingLock) {
                 if (currentWaiting is null || currentWaiting.Completed) {
                     return;
                 }
 
-                if (!currentWaiting.ConfirmedWaiting) {
-                    timeoutCounter += 1;
-                    if (timeoutCounter > 20 && transport.IsConnected) {
-                        timeoutCounter = 0;
-                        resend = currentWaiting;
-                    }
+                if (!currentWaiting.ConfirmedWaiting && transport.IsConnected) {
+                    resend = currentWaiting;
                 }
-
-                refreshUpdate = BuildPeriodicRenderUpdateLocked(nowTick);
             }
 
             if (resend is not null) {
                 SendWaiting(resend);
+            }
+        }
+
+        private void OnPromptRefreshTick() {
+            if (disposed) {
+                return;
+            }
+
+            UPDATE_RENDER? refreshUpdate = null;
+            lock (waitingLock) {
+                refreshUpdate = BuildRuntimeRefreshUpdateLocked();
             }
 
             if (refreshUpdate is UPDATE_RENDER renderUpdate) {
@@ -250,7 +278,6 @@ namespace UnifierTSL.CLI.Remote
             waiting.ReadLine = new ReadLineWaitingState {
                 SessionRunner = sessionRunner,
                 RenderJson = initialRenderJson,
-                LastRenderRefreshTick = Environment.TickCount64,
             };
             waiting.Packet.InitialRenderJson = initialRenderJson;
 
@@ -320,24 +347,51 @@ namespace UnifierTSL.CLI.Remote
             };
 
             ConsolePromptSessionState updatedSession = readLine.SessionRunner.Update(reactiveState);
-            readLine.LastRenderRefreshTick = Environment.TickCount64;
             return BuildRenderPacket(currentWaiting.Packet.Order, readLine, updatedSession.RenderSnapshot);
         }
 
-        private UPDATE_RENDER? BuildPeriodicRenderUpdateLocked(long nowTick) {
+        private UPDATE_RENDER? BuildRuntimeRefreshUpdateLocked() {
             if (currentWaiting?.ReadLine is not ReadLineWaitingState readLine
                 || !currentWaiting.ConfirmedWaiting
                 || currentWaiting.Completed) {
                 return null;
             }
 
-            if ((nowTick - readLine.LastRenderRefreshTick) < ConsoleStatusService.RefreshIntervalMs) {
+            if (!readLine.SessionRunner.TryRefreshRuntimeDependencies(out ConsolePromptSessionState refreshedSession)) {
                 return null;
             }
 
-            ConsolePromptSessionState refreshedSession = readLine.SessionRunner.Refresh();
-            readLine.LastRenderRefreshTick = nowTick;
             return BuildRenderPacket(currentWaiting.Packet.Order, readLine, refreshedSession.RenderSnapshot);
+        }
+
+        private void RefreshTimerSchedule() {
+            bool enableRetry = false;
+            bool enablePromptRefresh = false;
+            lock (waitingLock) {
+                if (!disposed
+                    && currentWaiting is CurrentWaitingData waiting
+                    && !waiting.Completed) {
+                    enableRetry = !waiting.ConfirmedWaiting;
+                    enablePromptRefresh = waiting.ConfirmedWaiting && waiting.ReadLine is not null;
+                }
+            }
+
+            ChangeTimer(
+                retryTimer,
+                enableRetry ? BeginReadRetryIntervalMs : Timeout.Infinite,
+                enableRetry ? BeginReadRetryIntervalMs : Timeout.Infinite);
+            ChangeTimer(
+                promptRefreshTimer,
+                enablePromptRefresh ? ConsoleStatusService.RefreshIntervalMs : Timeout.Infinite,
+                enablePromptRefresh ? ConsoleStatusService.RefreshIntervalMs : Timeout.Infinite);
+        }
+
+        private static void ChangeTimer(Timer timer, int dueTime, int period) {
+            try {
+                timer.Change(dueTime, period);
+            }
+            catch {
+            }
         }
 
         private static UPDATE_RENDER? BuildRenderPacket(

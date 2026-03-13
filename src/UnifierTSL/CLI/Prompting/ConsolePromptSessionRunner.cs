@@ -16,6 +16,7 @@ namespace UnifierTSL.CLI.Prompting
 
         private readonly ConsolePromptCompiler compiler;
         private readonly ConsoleRenderMapOptions renderOptions;
+        private ConsolePromptRuntimeRevision runtimeRevision;
 
         public ConsolePromptSessionRunner(
             ConsolePromptCompiler compiler,
@@ -26,6 +27,7 @@ namespace UnifierTSL.CLI.Prompting
             ConsolePromptSnapshot promptSnapshot = this.compiler.BuildInitial();
             ConsoleInputState inputState = CreateInitialInputState(promptSnapshot.Purpose);
             Current = new(inputState, ConsoleRenderMapper.Map(promptSnapshot, inputState, renderOptions));
+            runtimeRevision = compiler.GetRuntimeRevision(Current.InputState);
         }
 
         public ConsolePromptSessionState Current { get; private set; }
@@ -39,11 +41,19 @@ namespace UnifierTSL.CLI.Prompting
                 Purpose = promptSnapshot.Purpose,
             };
             Current = new(normalizedState, ConsoleRenderMapper.Map(promptSnapshot, normalizedState, renderOptions));
+            runtimeRevision = compiler.GetRuntimeRevision(Current.InputState);
             return Current;
         }
 
-        public ConsolePromptSessionState Refresh() {
-            return Update(Current.InputState);
+        public bool TryRefreshRuntimeDependencies(out ConsolePromptSessionState state) {
+            ConsolePromptRuntimeRevision currentRevision = compiler.GetRuntimeRevision(Current.InputState);
+            if (currentRevision == runtimeRevision) {
+                state = Current;
+                return false;
+            }
+
+            state = Update(Current.InputState);
+            return true;
         }
 
         public static ConsoleInputState CreateInitialInputState(ConsoleInputPurpose purpose) {

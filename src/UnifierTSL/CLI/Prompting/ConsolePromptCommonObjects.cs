@@ -17,8 +17,12 @@ public static class ConsolePromptCommonObjects
 
     internal static IReadOnlyDictionary<string, IConsoleParameterValueExplainer> ParameterExplainers { get; } =
         new Dictionary<string, IConsoleParameterValueExplainer>(StringComparer.Ordinal) {
-            [ConsolePromptCommonParameterSemanticKeys.PlayerRef] = new DelegateConsoleParameterValueExplainer(ExplainPlayer),
-            [ConsolePromptCommonParameterSemanticKeys.ItemRef] = new DelegateConsoleParameterValueExplainer(ExplainItem),
+            [ConsolePromptCommonParameterSemanticKeys.PlayerRef] = new DelegateConsoleParameterValueExplainer(
+                ExplainPlayer,
+                GetPlayerRevision),
+            [ConsolePromptCommonParameterSemanticKeys.ItemRef] = new DelegateConsoleParameterValueExplainer(
+                ExplainItem,
+                static _ => 0),
         };
 
     public static IReadOnlyList<string> GetPlayerCandidates(ServerContext? server = null)
@@ -247,6 +251,18 @@ public static class ConsolePromptCommonObjects
             "ambiguous: " + preview);
     }
 
+    private static long GetPlayerRevision(ConsoleParameterExplainContext context)
+    {
+        HashCode hash = new();
+        foreach (PlayerCandidate candidate in EnumeratePlayers(context.Server)) {
+            hash.Add(candidate.ClientIndex);
+            hash.Add(candidate.Name, StringComparer.OrdinalIgnoreCase);
+            hash.Add(candidate.Server?.UniqueId ?? Guid.Empty);
+        }
+
+        return hash.ToHashCode();
+    }
+
     private readonly record struct PlayerCandidate(
         int ClientIndex,
         ServerContext? Server,
@@ -258,8 +274,14 @@ public static class ConsolePromptCommonObjects
         ImmutableDictionary<string, ImmutableArray<int>> IdsByName);
 
     private sealed class DelegateConsoleParameterValueExplainer(
-        Func<ConsoleParameterExplainContext, ConsoleParameterExplainResult> handler) : IConsoleParameterValueExplainer
+        Func<ConsoleParameterExplainContext, ConsoleParameterExplainResult> handler,
+        Func<ConsoleParameterExplainContext, long> revisionProvider) : IConsoleParameterValueExplainer
     {
+        public long GetRevision(ConsoleParameterExplainContext context)
+        {
+            return revisionProvider(context);
+        }
+
         public bool TryExplain(ConsoleParameterExplainContext context, out ConsoleParameterExplainResult result)
         {
             result = handler(context);
