@@ -163,7 +163,7 @@ namespace UnifierTSL
         public List<AutoStartServerConfiguration> AutoStartServers { get; } = [];
     }
 
-    internal sealed class LauncherRuntimeSettings
+    internal sealed record LauncherRuntimeSettings
     {
         public LogPersistenceMode LogMode { get; init; } = LogPersistenceMode.Txt;
         public int ListenPort { get; init; } = -1;
