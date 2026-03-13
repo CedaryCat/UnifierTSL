@@ -464,8 +464,8 @@ namespace TShockAPI.ConsolePrompting
         private static string? InferSemanticKey(Kind kind)
         {
             return kind switch {
-                Kind.Player => TShockConsoleParameterSemanticKeys.PlayerRef,
-                Kind.Item => TShockConsoleParameterSemanticKeys.ItemRef,
+                Kind.Player => ConsolePromptCommonParameterSemanticKeys.PlayerRef,
+                Kind.Item => ConsolePromptCommonParameterSemanticKeys.ItemRef,
                 _ => null,
             };
         }

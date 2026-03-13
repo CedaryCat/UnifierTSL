@@ -35,7 +35,7 @@ namespace UnifierTSL
             UnifiedNetworkPatcher.Load();
             UnifiedServerCoordinator.Load();
             ServerContext.Initialize();
-            PerformanceData.Initializer.Load();
+            ServerPerformance.Initializer.Load();
 
             InitSets();
         }

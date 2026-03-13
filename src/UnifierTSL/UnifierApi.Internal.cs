@@ -73,6 +73,7 @@ namespace UnifierTSL
         private static readonly LauncherConfigStore rootConfigStore = new();
         private static readonly LauncherRuntimeOps runtimeOps = new();
         private static readonly LauncherConfigManager rootConfigManager = new(rootConfigStore, ReloadRootConfigFromWatch);
+        private static long consolePromptAppearanceRevision;
         internal static event Action? ConsoleAppearanceChanged;
 
         static UnifierApi() {
@@ -131,8 +132,8 @@ namespace UnifierTSL
             EventHub.Launcher.InitializedEvent.Invoke(new());
         }
 
-        internal static ConsoleStatusThresholds GetConsoleStatusThresholds() {
-            return runtimeSettings.ConsoleStatusThresholds;
+        internal static ConsoleStatusSettings GetConsoleStatus() {
+            return runtimeSettings.ConsoleStatus;
         }
 
         internal static bool UseColorfulConsoleStatus() {
@@ -143,6 +144,10 @@ namespace UnifierTSL
             return ConsolePromptTheme.Default with {
                 UseVividStatusBar = runtimeSettings.ColorfulConsoleStatus,
             };
+        }
+
+        internal static long GetConsolePromptAppearanceRevision() {
+            return Interlocked.Read(ref consolePromptAppearanceRevision);
         }
 
         internal static void StartRootConfigMonitoring() {
@@ -324,6 +329,7 @@ namespace UnifierTSL
                     UnifiedServerCoordinator.ServerPassword = password;
                 });
             ConsoleInput.RefreshAppearanceSettings();
+            Interlocked.Increment(ref consolePromptAppearanceRevision);
             ConsoleAppearanceChanged?.Invoke();
         }
 

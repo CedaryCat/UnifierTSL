@@ -2,17 +2,11 @@ using UnifierTSL;
 using UnifierTSL.CLI;
 using UnifierTSL.CLI.Prompting;
 using UnifierTSL.Servers;
-using Terraria;
-using Terraria.ID;
-using Terraria.Localization;
-using TShockAPI.Localization;
 
 namespace TShockAPI.ConsolePrompting
 {
     internal static class TShockConsolePromptInstaller
     {
-        private static readonly Lazy<IReadOnlyList<string>> ItemCandidates = new(BuildItemCandidatesCore);
-
         public static void Install()
         {
             TShockConsoleParameterExplainers.RegisterDefaults();
@@ -24,9 +18,7 @@ namespace TShockAPI.ConsolePrompting
             AnnotatedConsolePromptOptions options = new() {
                 CommandPrefixResolver = BuildCommandPrefixes,
                 CommandSpecResolver = () => BuildCommandSpecs(server),
-                PlayerCandidateResolver = () => BuildPlayerCandidates(server),
-                ServerCandidateResolver = BuildServerCandidates,
-                ItemCandidateResolver = BuildItemCandidates,
+                PlayerCandidateResolver = () => ConsolePromptCommonObjects.GetPlayerCandidates(server),
                 ParameterExplainerResolver = TShockConsoleParameterExplainers.CreateSnapshot,
             };
 
@@ -103,50 +95,6 @@ namespace TShockAPI.ConsolePrompting
             }
 
             return merged;
-        }
-
-        private static IReadOnlyList<string> BuildPlayerCandidates(ServerContext? server)
-        {
-            return [.. TShock.Players
-                .Where(static player => player is not null && player.Active)
-                .Where(player => server is null || player!.GetCurrentServer() == server)
-                .Select(player => player!.Name)
-                .Where(static name => !string.IsNullOrWhiteSpace(name))
-                .OrderBy(static name => name, StringComparer.OrdinalIgnoreCase)];
-        }
-
-        private static IReadOnlyList<string> BuildServerCandidates()
-        {
-            return [.. UnifiedServerCoordinator.Servers
-                .Where(static server => server.IsRunning)
-                .Select(static server => server.Name)
-                .Where(static name => !string.IsNullOrWhiteSpace(name))
-                .OrderBy(static name => name, StringComparer.OrdinalIgnoreCase)];
-        }
-
-        private static IReadOnlyList<string> BuildItemCandidates()
-        {
-            return ItemCandidates.Value;
-        }
-
-        private static IReadOnlyList<string> BuildItemCandidatesCore()
-        {
-            HashSet<string> names = new(StringComparer.OrdinalIgnoreCase);
-            for (int i = 1; i < ItemID.Count; i++) {
-                AddItemCandidateName(names, Lang.GetItemNameValue(i));
-                AddItemCandidateName(names, EnglishLanguage.GetItemNameById(i));
-            }
-
-            return [.. names.OrderBy(static name => name, StringComparer.OrdinalIgnoreCase)];
-        }
-
-        private static void AddItemCandidateName(HashSet<string> names, string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) {
-                return;
-            }
-
-            names.Add(value.Trim());
         }
 
         private static ConsoleCommandSpec Merge(ConsoleCommandSpec runtimeSpec, ConsoleCommandSpec? builtin)

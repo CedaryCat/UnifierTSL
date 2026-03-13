@@ -285,30 +285,36 @@ Startup precedence is:
 
 On interactive terminals, missing port/password prompts use semantic readline with ghost text, rotating suggestions, and live validation/status lines; non-interactive hosts fall back automatically.
 
-`launcher.consoleStatusThresholds` controls command-line status bar thresholding, and `launcher.colorfulConsoleStatus` toggles the vivid ANSI palette when the terminal supports it:
+`launcher.consoleStatus` controls command-line status rendering. `launcher.colorfulConsoleStatus` still toggles the vivid ANSI palette, while `launcher.consoleStatus.bandwidthUnit` selects `bytes` (`KB/s -> MB/s -> GB/s -> TB/s`, default) or `bits` (`Kbps -> Mbps -> Gbps -> Tbps`), and `launcher.consoleStatus.bandwidthRolloverThreshold` controls when the formatter promotes to the next unit family step (default: `500.0`).
 
 <details>
-<summary><strong>Default status-threshold values</strong></summary>
+<summary><strong>Default console-status values</strong></summary>
 
 | Key | Unit | Default | Description |
 |:--|:--|:--|:--|
 | `targetUps` | UPS | `60.0` | Target update rate used as the baseline for TPS health checks |
-| `healthyUpsDeviation` | UPS delta | `1.2` | Maximum absolute deviation from `targetUps` that still counts as healthy |
-| `warningUpsDeviation` | UPS delta | `4.0` | Maximum absolute deviation from `targetUps` that still counts as warning before turning bad |
-| `utilHealthyMax` | ratio (`0.0`-`1.0`) | `0.50` | Highest busy-utilization value that still counts as healthy |
+| `healthyUpsDeviation` | UPS delta | `2.0` | Maximum absolute deviation from `targetUps` that still counts as healthy |
+| `warningUpsDeviation` | UPS delta | `5.0` | Maximum absolute deviation from `targetUps` that still counts as warning before turning bad |
+| `utilHealthyMax` | ratio (`0.0`-`1.0`) | `0.55` | Highest busy-utilization value that still counts as healthy |
 | `utilWarningMax` | ratio (`0.0`-`1.0`) | `0.80` | Highest busy-utilization value that still counts as warning before turning bad |
 | `onlineWarnRemainingSlots` | slots | `5` | Remaining player slots at or below this value turn the online indicator to warning |
 | `onlineBadRemainingSlots` | slots | `0` | Remaining player slots at or below this value turn the online indicator to bad/full |
-| `upWarnKbps` | KB/s | `65.0` | Upstream bandwidth threshold that turns the network indicator to warning |
-| `upBadKbps` | KB/s | `75.0` | Upstream bandwidth threshold that turns the network indicator to bad |
-| `downWarnKbps` | KB/s | `85.0` | Downstream bandwidth threshold that turns the network indicator to warning |
-| `downBadKbps` | KB/s | `95.0` | Downstream bandwidth threshold that turns the network indicator to bad |
+| `bandwidthUnit` | enum | `bytes` | Bandwidth display family: `bytes` (`KB/s -> MB/s -> GB/s -> TB/s`) or `bits` (`Kbps -> Mbps -> Gbps -> Tbps`) |
+| `bandwidthRolloverThreshold` | current display unit | `500.0` | Value at or above this threshold promotes the formatter to the next bandwidth unit |
+| `upWarnKBps` | KB/s | `800.0` | Server upstream bandwidth threshold that turns the network indicator to warning |
+| `upBadKBps` | KB/s | `1600.0` | Server upstream bandwidth threshold that turns the network indicator to bad |
+| `downWarnKBps` | KB/s | `50.0` | Server downstream bandwidth threshold that turns the network indicator to warning |
+| `downBadKBps` | KB/s | `100.0` | Server downstream bandwidth threshold that turns the network indicator to bad |
+| `launcherUpWarnKBps` | KB/s | `2400.0` | Launcher upstream bandwidth threshold that turns the network indicator to warning |
+| `launcherUpBadKBps` | KB/s | `4800.0` | Launcher upstream bandwidth threshold that turns the network indicator to bad |
+| `launcherDownWarnKBps` | KB/s | `150.0` | Launcher downstream bandwidth threshold that turns the network indicator to warning |
+| `launcherDownBadKBps` | KB/s | `300.0` | Launcher downstream bandwidth threshold that turns the network indicator to bad |
 
 </details>
 
 After `UnifiedServerCoordinator.Launch(...)` succeeds, the launcher begins watching `config/config.json` for safe hot reloads:
 
-- Live-applied: `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (listener rebind), `launcher.colorfulConsoleStatus`, `launcher.consoleStatusThresholds`
+- Live-applied: `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (listener rebind), `launcher.colorfulConsoleStatus`, `launcher.consoleStatus`
 
 ### Server Definition Keys
 

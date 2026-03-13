@@ -64,7 +64,6 @@ public sealed class TerminalLauncherConsoleHost : ILauncherConsoleHost
         ConsolePromptSessionRunner sessionRunner = new(compiler, ConsolePromptSessionRunner.LocalRenderOptions);
         ConsolePromptSessionState session = sessionRunner.Current;
         ConsoleRenderSnapshot initialRender = session.RenderSnapshot;
-        ConsoleInputState latestReactiveState = session.InputState;
         string latestRenderJson = JsonSerializer.Serialize(initialRender);
 
         void PublishReactiveSnapshot(ConsoleInputState reactiveState) {
@@ -82,6 +81,24 @@ public sealed class TerminalLauncherConsoleHost : ILauncherConsoleHost
             }
         }
 
+        void PublishRuntimeRefreshSnapshot() {
+            try {
+                if (!sessionRunner.TryRefreshRuntimeDependencies(out ConsolePromptSessionState refreshed)) {
+                    return;
+                }
+
+                string renderJson = JsonSerializer.Serialize(refreshed.RenderSnapshot);
+                if (string.Equals(Volatile.Read(ref latestRenderJson), renderJson, StringComparison.Ordinal)) {
+                    return;
+                }
+
+                Volatile.Write(ref latestRenderJson, renderJson);
+                shell.UpdateReadLineContext(refreshed.RenderSnapshot);
+            }
+            catch (ObjectDisposedException) {
+            }
+        }
+
         Timer? refreshTimer = null;
         int refreshStopped = 0;
         if (shell.IsInteractive && session.InputState.Purpose == ConsoleInputPurpose.CommandLine) {
@@ -91,7 +108,7 @@ public sealed class TerminalLauncherConsoleHost : ILauncherConsoleHost
                         return;
                     }
 
-                    PublishReactiveSnapshot(Volatile.Read(ref latestReactiveState));
+                    PublishRuntimeRefreshSnapshot();
                 }
                 catch {
                 }
@@ -104,7 +121,6 @@ public sealed class TerminalLauncherConsoleHost : ILauncherConsoleHost
                 initialRender,
                 trim: false,
                 onInputStateChanged: state => {
-                    Volatile.Write(ref latestReactiveState, state);
                     PublishReactiveSnapshot(state);
                 });
         }

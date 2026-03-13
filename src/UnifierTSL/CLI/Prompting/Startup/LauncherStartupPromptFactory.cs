@@ -33,11 +33,13 @@ namespace UnifierTSL.CLI.Prompting.Startup
                 BaseStatusBodyLines = [.. baseStatusBodyLines],
                 StaticCandidates = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
                     .Add(ConsoleSuggestionKind.Plain, [.. portCandidates.Select(static port => new ConsoleSuggestion(port.ToString(), 0))]),
-                DynamicResolver = resolveContext => new ConsolePromptUpdate {
-                    CandidateOverrides = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
-                        .Add(ConsoleSuggestionKind.Plain, [.. suggestionResolver(resolveContext.State)]),
-                    AdditionalStatusBodyLines = [.. statusResolver(resolveContext.State)],
-                },
+                RuntimeResolver = ConsolePromptRuntimeResolver.Create(
+                    resolveContext => new ConsolePromptUpdate {
+                        CandidateOverrides = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
+                            .Add(ConsoleSuggestionKind.Plain, [.. suggestionResolver(resolveContext.State)]),
+                        AdditionalStatusBodyLines = [.. statusResolver(resolveContext.State)],
+                    },
+                    resolveContext => BuildRuntimeRevision(resolveContext.State, suggestionResolver, statusResolver)),
             };
         }
 
@@ -63,12 +65,39 @@ namespace UnifierTSL.CLI.Prompting.Startup
                 ],
                 StaticCandidates = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
                     .Add(ConsoleSuggestionKind.Plain, [.. passwordCandidates.Select(static value => new ConsoleSuggestion(value, 0))]),
-                DynamicResolver = resolveContext => new ConsolePromptUpdate {
-                    CandidateOverrides = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
-                        .Add(ConsoleSuggestionKind.Plain, [.. suggestionResolver(resolveContext.State)]),
-                    AdditionalStatusBodyLines = [.. statusResolver(resolveContext.State)],
-                },
+                RuntimeResolver = ConsolePromptRuntimeResolver.Create(
+                    resolveContext => new ConsolePromptUpdate {
+                        CandidateOverrides = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
+                            .Add(ConsoleSuggestionKind.Plain, [.. suggestionResolver(resolveContext.State)]),
+                        AdditionalStatusBodyLines = [.. statusResolver(resolveContext.State)],
+                    },
+                    resolveContext => BuildRuntimeRevision(resolveContext.State, suggestionResolver, statusResolver)),
             };
+        }
+
+        private static long BuildRuntimeRevision(
+            ConsoleInputState state,
+            Func<ConsoleInputState, IReadOnlyList<ConsoleSuggestion>> suggestionResolver,
+            Func<ConsoleInputState, IReadOnlyList<string>> statusResolver) {
+            HashCode hash = new();
+            foreach (ConsoleSuggestion suggestion in suggestionResolver(state) ?? []) {
+                if (string.IsNullOrWhiteSpace(suggestion.Value)) {
+                    continue;
+                }
+
+                hash.Add(suggestion.Value.Trim(), StringComparer.OrdinalIgnoreCase);
+                hash.Add(suggestion.Weight);
+            }
+
+            foreach (string statusLine in statusResolver(state) ?? []) {
+                if (string.IsNullOrWhiteSpace(statusLine)) {
+                    continue;
+                }
+
+                hash.Add(statusLine.Trim(), StringComparer.Ordinal);
+            }
+
+            return hash.ToHashCode();
         }
     }
 }

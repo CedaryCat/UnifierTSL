@@ -181,6 +181,43 @@ namespace UnifierTSL.CLI.Prompting
             return ConsoleSuggestionKind.Plain;
         }
 
+        public bool TryCreateParameterExplainContext(
+            ConsoleResolvedPrompt context,
+            ConsoleInputState state,
+            ConsolePromptScenario scenario,
+            out ConsoleParameterExplainContext explainContext) {
+            explainContext = default;
+            if (context.Purpose != ConsoleInputPurpose.CommandLine) {
+                return false;
+            }
+
+            CommandParseResult parse = ParseCommandInput(state.InputText, context);
+            if (parse.ArgumentIndex < 0
+                || string.IsNullOrWhiteSpace(parse.CurrentToken)
+                || parse.Hint is not ConsoleCommandSpec activeCommand) {
+                return false;
+            }
+
+            if (!TryResolvePatternParameter(
+                parse,
+                activeCommand,
+                out ConsoleCommandPatternSpec pattern,
+                out ConsoleCommandParameterSpec parameter)
+                || string.IsNullOrWhiteSpace(parameter.SemanticKey)) {
+                return false;
+            }
+
+            explainContext = new ConsoleParameterExplainContext(
+                ResolveContext: new ConsolePromptResolveContext(state, scenario),
+                Server: context.Server,
+                ActiveCommand: activeCommand,
+                ActivePattern: pattern,
+                ActiveParameter: parameter,
+                ArgumentIndex: parse.ArgumentIndex,
+                RawToken: parse.CurrentToken);
+            return true;
+        }
+
         private bool TryBuildParameterExplainStatusLine(
             ConsoleResolvedPrompt context,
             CommandParseResult parse,
