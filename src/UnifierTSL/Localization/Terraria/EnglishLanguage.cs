@@ -2,6 +2,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Terraria;
 using Terraria.Chat.Commands;
+using Terraria.ID;
 using Terraria.Localization;
 using UnifierTSL.Reflection.Metadata;
 
@@ -10,12 +11,14 @@ namespace UnifierTSL.Localization.Terraria
     public static class EnglishLanguage
     {
         private static readonly LanguageManager Language;
+        private static readonly IReadOnlyDictionary<int, string> ItemNames;
         private static readonly Dictionary<string, string> CommandID2EnglishText = [];
         static EnglishLanguage() {
             LanguageManager.Instance._localizedTexts[""] = LocalizedText.Empty;
             Language = new();
             Language.LoadFilesForCulture(GameCulture.FromCultureName(GameCulture.CultureName.English));
             Language.ProcessCopyCommandsInTexts();
+            ItemNames = BuildEnglishItemNames();
 
             using FileStream stream = File.OpenRead(typeof(Main).Assembly.Location);
             using PEReader peReader = MetadataBlobHelpers.GetPEReader(stream)!;
@@ -48,11 +51,47 @@ namespace UnifierTSL.Localization.Terraria
         public static void Load() {
 
         }
+        public static string? GetItemNameById(int id) {
+            if (ItemNames.TryGetValue(id, out string? value)) {
+                return value;
+            }
+
+            return null;
+        }
         public static string GetCommandPrefixByName(string commandName) {
             if (CommandID2EnglishText.TryGetValue(commandName, out string? value)) {
                 return value;
             }
             return "";
+        }
+
+        private static IReadOnlyDictionary<int, string> BuildEnglishItemNames() {
+            Dictionary<int, string> itemNames = [];
+            GameCulture englishCulture = GameCulture.FromCultureName(GameCulture.CultureName.English);
+            GameCulture originalCulture = global::Terraria.Localization.Language.ActiveCulture;
+            bool restoreCulture = originalCulture != englishCulture;
+
+            try {
+                if (restoreCulture) {
+                    LanguageManager.Instance.SetLanguage(englishCulture);
+                }
+
+                for (int i = 1; i < ItemID.Count; i++) {
+                    string itemName = Lang.GetItemNameValue(i);
+                    if (string.IsNullOrWhiteSpace(itemName)) {
+                        continue;
+                    }
+
+                    itemNames[i] = itemName.Trim();
+                }
+            }
+            finally {
+                if (restoreCulture) {
+                    LanguageManager.Instance.SetLanguage(originalCulture);
+                }
+            }
+
+            return itemNames;
         }
     }
 }

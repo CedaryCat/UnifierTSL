@@ -124,14 +124,15 @@ namespace UnifierTSL.CLI
                 ParameterExplainers = MergeParameterExplainers(GetRegisteredParameterExplainersSnapshot(), contextSpec.ParameterExplainers),
             };
 
-            Func<ConsolePromptResolveContext, ConsolePromptUpdate>? sourceResolver = contextSpec.DynamicResolver;
+            IConsolePromptRuntimeResolver? sourceResolver = contextSpec.RuntimeResolver;
 
             return contextSpec with {
-                DynamicResolver = resolveContext => {
+                RuntimeResolver = ConsolePromptRuntimeResolver.Create(
+                resolveContext => {
                     ConsolePromptUpdate? sourcePatch = null;
                     if (sourceResolver is not null) {
                         try {
-                            sourcePatch = sourceResolver(resolveContext);
+                            sourcePatch = sourceResolver.Resolve(resolveContext);
                         }
                         catch {
                         }
@@ -151,6 +152,20 @@ namespace UnifierTSL.CLI
                         ThemeOverride = sourcePatch.ThemeOverride ?? runtimeTheme,
                     };
                 },
+                resolveContext => {
+                    long sourceRevision = 0;
+                    if (sourceResolver is not null) {
+                        try {
+                            sourceRevision = sourceResolver.GetRevision(resolveContext);
+                        }
+                        catch {
+                        }
+                    }
+
+                    return HashCode.Combine(
+                        sourceRevision,
+                        UnifierApi.GetConsolePromptAppearanceRevision());
+                }),
             };
         }
 

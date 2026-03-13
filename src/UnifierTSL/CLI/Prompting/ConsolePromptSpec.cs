@@ -73,6 +73,37 @@ namespace UnifierTSL.CLI.Prompting
         ConsoleInputState State,
         ConsolePromptScenario Scenario);
 
+    public interface IConsolePromptRuntimeResolver
+    {
+        long GetRevision(ConsolePromptResolveContext context);
+
+        ConsolePromptUpdate Resolve(ConsolePromptResolveContext context);
+    }
+
+    public static class ConsolePromptRuntimeResolver
+    {
+        public static IConsolePromptRuntimeResolver Create(
+            Func<ConsolePromptResolveContext, ConsolePromptUpdate> resolve,
+            Func<ConsolePromptResolveContext, long> getRevision) {
+            ArgumentNullException.ThrowIfNull(resolve);
+            ArgumentNullException.ThrowIfNull(getRevision);
+            return new DelegateConsolePromptRuntimeResolver(resolve, getRevision);
+        }
+
+        private sealed class DelegateConsolePromptRuntimeResolver(
+            Func<ConsolePromptResolveContext, ConsolePromptUpdate> resolve,
+            Func<ConsolePromptResolveContext, long> getRevision) : IConsolePromptRuntimeResolver
+        {
+            public long GetRevision(ConsolePromptResolveContext context) {
+                return getRevision(context);
+            }
+
+            public ConsolePromptUpdate Resolve(ConsolePromptResolveContext context) {
+                return resolve(context);
+            }
+        }
+    }
+
     public sealed record ConsolePromptUpdate
     {
         public ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>> CandidateOverrides { get; init; } =
@@ -117,7 +148,7 @@ namespace UnifierTSL.CLI.Prompting
         public ImmutableDictionary<string, IConsoleParameterValueExplainer> ParameterExplainers { get; init; } =
             ImmutableDictionary<string, IConsoleParameterValueExplainer>.Empty.WithComparers(StringComparer.Ordinal);
 
-        public Func<ConsolePromptResolveContext, ConsolePromptUpdate>? DynamicResolver { get; init; }
+        public IConsolePromptRuntimeResolver? RuntimeResolver { get; init; }
 
         public static ConsolePromptSpec CreatePlain(string? prompt = null) {
             return new ConsolePromptSpec {

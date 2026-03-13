@@ -3,6 +3,10 @@ using UnifierTSL.ConsoleClient.Shared.ConsolePrompting;
 
 namespace UnifierTSL.CLI.Prompting
 {
+    internal readonly record struct ConsolePromptRuntimeRevision(
+        long RuntimeResolverRevision,
+        long ParameterExplainerRevision);
+
     internal sealed class ConsolePromptCompiler(
         ConsolePromptSpec promptSpec,
         ConsolePromptScenario initialScenario = ConsolePromptScenario.PagedInitial,
@@ -10,6 +14,7 @@ namespace UnifierTSL.CLI.Prompting
     {
         private readonly ConsolePromptSpec promptSpec = promptSpec ?? throw new ArgumentNullException(nameof(promptSpec));
         private readonly ConsolePromptEngine promptEngine = new();
+        private readonly ConsoleResolvedPrompt runtimeRevisionProbeContext = BuildRuntimeRevisionProbeContext(promptSpec);
 
         public ConsolePromptSnapshot BuildInitial() {
             ConsoleInputState initialState = ConsolePromptSessionRunner.CreateInitialInputState(promptSpec.Purpose);
@@ -19,6 +24,26 @@ namespace UnifierTSL.CLI.Prompting
         public ConsolePromptSnapshot BuildReactive(ConsoleInputState inputState) {
             ArgumentNullException.ThrowIfNull(inputState);
             return BuildSnapshot(NormalizeInputState(inputState), reactiveScenario);
+        }
+
+        public ConsolePromptRuntimeRevision GetRuntimeRevision(ConsoleInputState inputState) {
+            ArgumentNullException.ThrowIfNull(inputState);
+
+            ConsoleInputState normalizedState = NormalizeInputState(inputState);
+            ConsolePromptResolveContext resolveContext = new(
+                State: normalizedState,
+                Scenario: reactiveScenario);
+            long runtimeResolverRevision = 0;
+            if (promptSpec.RuntimeResolver is not null) {
+                try {
+                    runtimeResolverRevision = promptSpec.RuntimeResolver.GetRevision(resolveContext);
+                }
+                catch {
+                }
+            }
+
+            long parameterExplainerRevision = ResolveParameterExplainerRevision(normalizedState);
+            return new(runtimeResolverRevision, parameterExplainerRevision);
         }
 
         private ConsolePromptSnapshot BuildSnapshot(ConsoleInputState inputState, ConsolePromptScenario scenario) {
@@ -52,12 +77,12 @@ namespace UnifierTSL.CLI.Prompting
             string helpText = promptSpec.HelpText ?? string.Empty;
             ConsolePromptTheme theme = promptSpec.Theme ?? ConsolePromptTheme.Default;
 
-            if (promptSpec.DynamicResolver is not null) {
+            if (promptSpec.RuntimeResolver is not null) {
                 try {
                     ConsolePromptResolveContext resolveContext = new(
                         State: inputState,
                         Scenario: scenario);
-                    ConsolePromptUpdate? patch = promptSpec.DynamicResolver(resolveContext);
+                    ConsolePromptUpdate? patch = promptSpec.RuntimeResolver.Resolve(resolveContext);
                     if (patch is not null) {
                         if (patch.CandidateOverrides.Count > 0) {
                             ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Builder mapBuilder = candidates.ToBuilder();
@@ -113,6 +138,29 @@ namespace UnifierTSL.CLI.Prompting
                     => ApplyPagedCommandLineCompaction(source, inputState),
                 _ => source,
             };
+        }
+
+        private long ResolveParameterExplainerRevision(ConsoleInputState inputState) {
+            if (!promptEngine.TryCreateParameterExplainContext(
+                runtimeRevisionProbeContext,
+                inputState,
+                reactiveScenario,
+                out ConsoleParameterExplainContext explainContext)) {
+                return 0;
+            }
+
+            IConsoleParameterValueExplainer? explainer =
+                runtimeRevisionProbeContext.ResolveParameterExplainer(explainContext.ActiveParameter.SemanticKey!);
+            if (explainer is null) {
+                return 0;
+            }
+
+            try {
+                return explainer.GetRevision(explainContext);
+            }
+            catch {
+                return 0;
+            }
         }
 
         private ConsoleResolvedPrompt ApplyPagedCommandLineCompaction(
@@ -218,6 +266,31 @@ namespace UnifierTSL.CLI.Prompting
             return [.. lines
                 .Where(static line => !string.IsNullOrWhiteSpace(line))
                 .Distinct(StringComparer.OrdinalIgnoreCase)];
+        }
+
+        private static ConsoleResolvedPrompt BuildRuntimeRevisionProbeContext(ConsolePromptSpec promptSpec) {
+            ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>> candidates =
+                NormalizeCandidateMap(promptSpec.StaticCandidates);
+            if (!candidates.ContainsKey(ConsoleSuggestionKind.Boolean)) {
+                candidates = candidates.Add(ConsoleSuggestionKind.Boolean, ConsoleSuggestionCatalog.DefaultBooleanSuggestions);
+            }
+
+            return new ConsoleResolvedPrompt {
+                Purpose = promptSpec.Purpose,
+                Server = promptSpec.Server,
+                Prompt = promptSpec.Prompt ?? "> ",
+                GhostText = promptSpec.GhostText ?? string.Empty,
+                EmptySubmitBehavior = promptSpec.EmptySubmitBehavior,
+                EnableCtrlEnterBypassGhostFallback = promptSpec.EnableCtrlEnterBypassGhostFallback,
+                HelpText = promptSpec.HelpText ?? string.Empty,
+                InputSummary = promptSpec.InputSummary ?? string.Empty,
+                StatusBodyLines = NormalizeStatusBodyLines(promptSpec.BaseStatusBodyLines),
+                Theme = (promptSpec.Theme ?? ConsolePromptTheme.Default) with { },
+                CommandPrefixes = NormalizePrefixes(promptSpec.CommandPrefixes),
+                CommandSpecs = NormalizeCommandSpecs(promptSpec.CommandSpecs),
+                Candidates = candidates,
+                ParameterExplainers = NormalizeParameterExplainers(promptSpec.ParameterExplainers),
+            };
         }
     }
 }

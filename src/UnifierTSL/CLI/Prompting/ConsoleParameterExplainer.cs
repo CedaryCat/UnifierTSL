@@ -29,5 +29,7 @@ public readonly record struct ConsoleParameterExplainResult(
 
 public interface IConsoleParameterValueExplainer
 {
+    long GetRevision(ConsoleParameterExplainContext context);
+
     bool TryExplain(ConsoleParameterExplainContext context, out ConsoleParameterExplainResult result);
 }

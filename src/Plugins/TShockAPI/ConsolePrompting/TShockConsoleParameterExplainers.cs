@@ -8,8 +8,6 @@ namespace TShockAPI.ConsolePrompting
 {
     internal static class TShockConsoleParameterSemanticKeys
     {
-        public const string PlayerRef = "tshock.player-ref";
-        public const string ItemRef = "tshock.item-ref";
         public const string BuffRef = "tshock.buff-ref";
         public const string PrefixRef = "tshock.prefix-ref";
         public const string BanTicket = "tshock.ban-ticket";
@@ -20,12 +18,18 @@ namespace TShockAPI.ConsolePrompting
     {
         private static readonly IReadOnlyDictionary<string, IConsoleParameterValueExplainer> All =
             new Dictionary<string, IConsoleParameterValueExplainer>(StringComparer.Ordinal) {
-                [TShockConsoleParameterSemanticKeys.PlayerRef] = new DelegateConsoleParameterValueExplainer(ExplainPlayer),
-                [TShockConsoleParameterSemanticKeys.ItemRef] = new DelegateConsoleParameterValueExplainer(ExplainItem),
-                [TShockConsoleParameterSemanticKeys.BuffRef] = new DelegateConsoleParameterValueExplainer(ExplainBuff),
-                [TShockConsoleParameterSemanticKeys.PrefixRef] = new DelegateConsoleParameterValueExplainer(ExplainPrefix),
-                [TShockConsoleParameterSemanticKeys.BanTicket] = new DelegateConsoleParameterValueExplainer(ExplainBanTicket),
-                [TShockConsoleParameterSemanticKeys.NpcRef] = new DelegateConsoleParameterValueExplainer(ExplainNpc),
+                [TShockConsoleParameterSemanticKeys.BuffRef] = new DelegateConsoleParameterValueExplainer(
+                    ExplainBuff,
+                    static _ => 0),
+                [TShockConsoleParameterSemanticKeys.PrefixRef] = new DelegateConsoleParameterValueExplainer(
+                    ExplainPrefix,
+                    static _ => 0),
+                [TShockConsoleParameterSemanticKeys.BanTicket] = new DelegateConsoleParameterValueExplainer(
+                    ExplainBanTicket,
+                    GetBanTicketRevision),
+                [TShockConsoleParameterSemanticKeys.NpcRef] = new DelegateConsoleParameterValueExplainer(
+                    ExplainNpc,
+                    GetNpcRevision),
             };
 
         private static int defaultsRegistered;
@@ -40,45 +44,6 @@ namespace TShockAPI.ConsolePrompting
             foreach ((string semanticKey, IConsoleParameterValueExplainer explainer) in All) {
                 _ = ConsolePromptRegistry.RegisterParameterExplainer(semanticKey, explainer);
             }
-        }
-
-        private static ConsoleParameterExplainResult ExplainPlayer(ConsoleParameterExplainContext context) {
-            IEnumerable<TSPlayer> filteredPlayers = TSPlayer.FindByNameOrID(context.RawToken)
-                .Where(static player => player is not null)
-                .GroupBy(static player => player.Index)
-                .Select(static group => group.First());
-
-            if (context.Server is not null) {
-                filteredPlayers = filteredPlayers.Where(player => player.GetCurrentServer() == context.Server);
-            }
-
-            List<TSPlayer> players = [.. filteredPlayers];
-            if (players.Count == 0) {
-                return Invalid();
-            }
-
-            if (players.Count == 1) {
-                return Resolved(players[0].Name);
-            }
-
-            return Ambiguous(players.Select(static player => player.Name));
-        }
-
-        private static ConsoleParameterExplainResult ExplainItem(ConsoleParameterExplainContext context) {
-            List<Item> items = [.. Utils.GetItemByIdOrName(context.RawToken)
-                .Where(static item => item is not null)
-                .GroupBy(static item => item.type)
-                .Select(static group => group.First())];
-
-            if (items.Count == 0) {
-                return Invalid();
-            }
-
-            if (items.Count == 1) {
-                return Resolved(items[0].Name);
-            }
-
-            return Ambiguous(items.Select(static item => item.Name));
         }
 
         private static ConsoleParameterExplainResult ExplainBuff(ConsoleParameterExplainContext context) {
@@ -139,6 +104,32 @@ namespace TShockAPI.ConsolePrompting
             return context.ActiveCommand.PrimaryName.Equals("tpnpc", StringComparison.OrdinalIgnoreCase)
                 ? ExplainLiveNpc(context)
                 : ExplainNpcCatalog(context);
+        }
+
+        private static long GetBanTicketRevision(ConsoleParameterExplainContext context) {
+            HashCode hash = new();
+            foreach (Ban ban in TShock.Bans.Bans.Values.OrderBy(static ban => ban.TicketNumber)) {
+                hash.Add(ban.TicketNumber);
+                hash.Add(ban.Identifier ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+            }
+
+            return hash.ToHashCode();
+        }
+
+        private static long GetNpcRevision(ConsoleParameterExplainContext context) {
+            if (!context.ActiveCommand.PrimaryName.Equals("tpnpc", StringComparison.OrdinalIgnoreCase)
+                || context.Server is null) {
+                return 0;
+            }
+
+            HashCode hash = new();
+            foreach (NPC npc in context.Server.Main.npc.Where(static npc => npc.active)) {
+                hash.Add(npc.whoAmI);
+                hash.Add(npc.netID);
+                hash.Add(npc.FullName ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+            }
+
+            return hash.ToHashCode();
         }
 
         private static ConsoleParameterExplainResult ExplainNpcCatalog(ConsoleParameterExplainContext context) {
@@ -236,8 +227,13 @@ namespace TShockAPI.ConsolePrompting
         }
 
         private sealed class DelegateConsoleParameterValueExplainer(
-            Func<ConsoleParameterExplainContext, ConsoleParameterExplainResult> handler) : IConsoleParameterValueExplainer
+            Func<ConsoleParameterExplainContext, ConsoleParameterExplainResult> handler,
+            Func<ConsoleParameterExplainContext, long> revisionProvider) : IConsoleParameterValueExplainer
         {
+            public long GetRevision(ConsoleParameterExplainContext context) {
+                return revisionProvider(context);
+            }
+
             public bool TryExplain(ConsoleParameterExplainContext context, out ConsoleParameterExplainResult result) {
                 result = handler(context);
                 return result.State != ConsoleParameterExplainState.None;

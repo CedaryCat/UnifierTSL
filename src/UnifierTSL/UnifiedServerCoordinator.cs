@@ -485,8 +485,8 @@ namespace UnifierTSL
         }
 
         static void CountReceivedData(int who, uint size, ServerContext? server) {
-            PerformanceData.Network.ReceivedPacket();
-            PerformanceData.Network.ReceivedBytes(size);
+            ServerPerformance.Network.ReceivedPacket();
+            ServerPerformance.Network.ReceivedBytes(size);
             if (server?.Performance is { } perf) {
                 perf.CurrentFrameData.ReceivedPacketCount += 1;
                 perf.CurrentFrameData.ReceivedBytesCount += size;

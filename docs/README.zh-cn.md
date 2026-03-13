@@ -285,30 +285,36 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 
 在交互式终端中，缺失端口/密码的补全会使用语义化 readline，提供 ghost 文本、候选轮换和实时校验/状态行；非交互宿主会自动回退。
 
-`launcher.consoleStatusThresholds` 用于控制命令行状态栏阈值，而 `launcher.colorfulConsoleStatus` 用于在终端支持时启用鲜艳 ANSI 配色：
+`launcher.consoleStatus` 用于控制命令行状态栏渲染。`launcher.colorfulConsoleStatus` 仍然负责鲜艳 ANSI 配色，而 `launcher.consoleStatus.bandwidthUnit` 用于选择带宽显示单位族：`bytes` 显示 `KB/s -> MB/s -> GB/s -> TB/s`（默认），`bits` 显示 `Kbps -> Mbps -> Gbps -> Tbps`；`launcher.consoleStatus.bandwidthRolloverThreshold` 用于控制何时向上进位到下一个单位（默认 `500.0`）。
 
 <details>
-<summary><strong>默认状态阈值</strong></summary>
+<summary><strong>默认控制台状态值</strong></summary>
 
 | 键 | 单位 | 默认值 | 描述 |
 |:--|:--|:--|:--|
 | `targetUps` | UPS | `60.0` | 作为 TPS 健康判断基线的目标更新速率 |
-| `healthyUpsDeviation` | UPS 偏差 | `1.2` | 相对 `targetUps` 的绝对偏差不超过该值时仍视为健康 |
-| `warningUpsDeviation` | UPS 偏差 | `4.0` | 相对 `targetUps` 的绝对偏差不超过该值时视为警告，再高则转为异常 |
-| `utilHealthyMax` | 比例（`0.0`-`1.0`） | `0.50` | 忙碌利用率不高于该值时仍视为健康 |
+| `healthyUpsDeviation` | UPS 偏差 | `2.0` | 相对 `targetUps` 的绝对偏差不超过该值时仍视为健康 |
+| `warningUpsDeviation` | UPS 偏差 | `5.0` | 相对 `targetUps` 的绝对偏差不超过该值时视为警告，再高则转为异常 |
+| `utilHealthyMax` | 比例（`0.0`-`1.0`） | `0.55` | 忙碌利用率不高于该值时仍视为健康 |
 | `utilWarningMax` | 比例（`0.0`-`1.0`） | `0.80` | 忙碌利用率不高于该值时视为警告，再高则转为异常 |
 | `onlineWarnRemainingSlots` | 槽位数 | `5` | 剩余玩家槽位小于等于该值时，在线指标转为警告 |
 | `onlineBadRemainingSlots` | 槽位数 | `0` | 剩余玩家槽位小于等于该值时，在线指标转为异常/满员 |
-| `upWarnKbps` | KB/s | `65.0` | 上行带宽达到该阈值时，网络指标转为警告 |
-| `upBadKbps` | KB/s | `75.0` | 上行带宽达到该阈值时，网络指标转为异常 |
-| `downWarnKbps` | KB/s | `85.0` | 下行带宽达到该阈值时，网络指标转为警告 |
-| `downBadKbps` | KB/s | `95.0` | 下行带宽达到该阈值时，网络指标转为异常 |
+| `bandwidthUnit` | 枚举 | `bytes` | 带宽显示单位族：`bytes`（`KB/s -> MB/s -> GB/s -> TB/s`）或 `bits`（`Kbps -> Mbps -> Gbps -> Tbps`） |
+| `bandwidthRolloverThreshold` | 当前显示单位 | `500.0` | 数值达到或超过该阈值时，格式化器会进位到下一个带宽单位 |
+| `upWarnKBps` | KB/s | `800.0` | Server 上行带宽达到该阈值时，网络指标转为警告 |
+| `upBadKBps` | KB/s | `1600.0` | Server 上行带宽达到该阈值时，网络指标转为异常 |
+| `downWarnKBps` | KB/s | `50.0` | Server 下行带宽达到该阈值时，网络指标转为警告 |
+| `downBadKBps` | KB/s | `100.0` | Server 下行带宽达到该阈值时，网络指标转为异常 |
+| `launcherUpWarnKBps` | KB/s | `2400.0` | Launcher 上行带宽达到该阈值时，网络指标转为警告 |
+| `launcherUpBadKBps` | KB/s | `4800.0` | Launcher 上行带宽达到该阈值时，网络指标转为异常 |
+| `launcherDownWarnKBps` | KB/s | `150.0` | Launcher 下行带宽达到该阈值时，网络指标转为警告 |
+| `launcherDownBadKBps` | KB/s | `300.0` | Launcher 下行带宽达到该阈值时，网络指标转为异常 |
 
 </details>
 
 在 `UnifiedServerCoordinator.Launch(...)` 成功后，启动器会开始监视 `config/config.json`，只做安全范围内的热重载：
 
-- 立即生效：`launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、`launcher.listenPort`（监听器重绑）、`launcher.colorfulConsoleStatus`、`launcher.consoleStatusThresholds`
+- 立即生效：`launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、`launcher.listenPort`（监听器重绑）、`launcher.colorfulConsoleStatus`、`launcher.consoleStatus`
 
 ### 服务器定义键
 
