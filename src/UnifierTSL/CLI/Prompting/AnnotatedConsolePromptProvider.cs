@@ -38,6 +38,11 @@ public sealed class AnnotatedConsolePromptProvider
             CommandSpecs = commandSpecs,
             StaticCandidates = candidates,
             ParameterExplainers = parameterExplainers,
+            DynamicResolver = _ => new ConsolePromptUpdate {
+                CandidateOverrides = ImmutableDictionary<ConsoleSuggestionKind, ImmutableArray<ConsoleSuggestion>>.Empty
+                    .Add(ConsoleSuggestionKind.Player, BuildTargetCandidates(options.PlayerCandidateResolver))
+                    .Add(ConsoleSuggestionKind.Server, BuildTargetCandidates(options.ServerCandidateResolver)),
+            },
             BaseStatusBodyLines = [
                 GetString("use Tab/Shift+Tab to rotate, Right to accept"),
             ],
@@ -93,6 +98,9 @@ public sealed class AnnotatedConsolePromptProvider
     private ImmutableDictionary<string, IConsoleParameterValueExplainer> BuildParameterExplainers()
     {
         Dictionary<string, IConsoleParameterValueExplainer> explainers = new(StringComparer.Ordinal);
+        foreach ((string key, IConsoleParameterValueExplainer explainer) in ConsolePromptCommonObjects.ParameterExplainers) {
+            explainers[key] = explainer;
+        }
 
         foreach ((string key, IConsoleParameterValueExplainer explainer) in ResolveSafeDictionary(options.ParameterExplainerResolver)) {
             if (string.IsNullOrWhiteSpace(key) || explainer is null) {
