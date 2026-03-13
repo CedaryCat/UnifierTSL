@@ -296,19 +296,19 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 | `healthyUpsDeviation` | UPS 偏差 | `2.0` | 相对 `targetUps` 的绝对偏差不超过该值时仍视为健康 |
 | `warningUpsDeviation` | UPS 偏差 | `5.0` | 相对 `targetUps` 的绝对偏差不超过该值时视为警告，再高则转为异常 |
 | `utilHealthyMax` | 比例（`0.0`-`1.0`） | `0.55` | 忙碌利用率不高于该值时仍视为健康 |
-| `utilWarningMax` | 比例（`0.0`-`1.0`） | `0.85` | 忙碌利用率不高于该值时视为警告，再高则转为异常 |
+| `utilWarningMax` | 比例（`0.0`-`1.0`） | `0.80` | 忙碌利用率不高于该值时视为警告，再高则转为异常 |
 | `onlineWarnRemainingSlots` | 槽位数 | `5` | 剩余玩家槽位小于等于该值时，在线指标转为警告 |
 | `onlineBadRemainingSlots` | 槽位数 | `0` | 剩余玩家槽位小于等于该值时，在线指标转为异常/满员 |
 | `bandwidthUnit` | 枚举 | `bytes` | 带宽显示单位族：`bytes`（`KB/s -> MB/s -> GB/s -> TB/s`）或 `bits`（`Kbps -> Mbps -> Gbps -> Tbps`） |
 | `bandwidthRolloverThreshold` | 当前显示单位 | `500.0` | 数值达到或超过该阈值时，格式化器会进位到下一个带宽单位 |
-| `upWarnKBps` | KB/s | `595.0` | Server 上行带宽达到该阈值时，网络指标转为警告 |
-| `upBadKBps` | KB/s | `665.0` | Server 上行带宽达到该阈值时，网络指标转为异常 |
-| `downWarnKBps` | KB/s | `85.0` | Server 下行带宽达到该阈值时，网络指标转为警告 |
-| `downBadKBps` | KB/s | `95.0` | Server 下行带宽达到该阈值时，网络指标转为异常 |
-| `launcherUpWarnKBps` | KB/s | `1487.5` | Launcher 上行带宽达到该阈值时，网络指标转为警告 |
-| `launcherUpBadKBps` | KB/s | `1662.5` | Launcher 上行带宽达到该阈值时，网络指标转为异常 |
-| `launcherDownWarnKBps` | KB/s | `212.5` | Launcher 下行带宽达到该阈值时，网络指标转为警告 |
-| `launcherDownBadKBps` | KB/s | `237.5` | Launcher 下行带宽达到该阈值时，网络指标转为异常 |
+| `upWarnKBps` | KB/s | `800.0` | Server 上行带宽达到该阈值时，网络指标转为警告 |
+| `upBadKBps` | KB/s | `1600.0` | Server 上行带宽达到该阈值时，网络指标转为异常 |
+| `downWarnKBps` | KB/s | `50.0` | Server 下行带宽达到该阈值时，网络指标转为警告 |
+| `downBadKBps` | KB/s | `100.0` | Server 下行带宽达到该阈值时，网络指标转为异常 |
+| `launcherUpWarnKBps` | KB/s | `2400.0` | Launcher 上行带宽达到该阈值时，网络指标转为警告 |
+| `launcherUpBadKBps` | KB/s | `4800.0` | Launcher 上行带宽达到该阈值时，网络指标转为异常 |
+| `launcherDownWarnKBps` | KB/s | `150.0` | Launcher 下行带宽达到该阈值时，网络指标转为警告 |
+| `launcherDownBadKBps` | KB/s | `300.0` | Launcher 下行带宽达到该阈值时，网络指标转为异常 |
 
 </details>
 

@@ -296,19 +296,19 @@ On interactive terminals, missing port/password prompts use semantic readline wi
 | `healthyUpsDeviation` | UPS delta | `2.0` | Maximum absolute deviation from `targetUps` that still counts as healthy |
 | `warningUpsDeviation` | UPS delta | `5.0` | Maximum absolute deviation from `targetUps` that still counts as warning before turning bad |
 | `utilHealthyMax` | ratio (`0.0`-`1.0`) | `0.55` | Highest busy-utilization value that still counts as healthy |
-| `utilWarningMax` | ratio (`0.0`-`1.0`) | `0.85` | Highest busy-utilization value that still counts as warning before turning bad |
+| `utilWarningMax` | ratio (`0.0`-`1.0`) | `0.80` | Highest busy-utilization value that still counts as warning before turning bad |
 | `onlineWarnRemainingSlots` | slots | `5` | Remaining player slots at or below this value turn the online indicator to warning |
 | `onlineBadRemainingSlots` | slots | `0` | Remaining player slots at or below this value turn the online indicator to bad/full |
 | `bandwidthUnit` | enum | `bytes` | Bandwidth display family: `bytes` (`KB/s -> MB/s -> GB/s -> TB/s`) or `bits` (`Kbps -> Mbps -> Gbps -> Tbps`) |
 | `bandwidthRolloverThreshold` | current display unit | `500.0` | Value at or above this threshold promotes the formatter to the next bandwidth unit |
-| `upWarnKBps` | KB/s | `595.0` | Server upstream bandwidth threshold that turns the network indicator to warning |
-| `upBadKBps` | KB/s | `665.0` | Server upstream bandwidth threshold that turns the network indicator to bad |
-| `downWarnKBps` | KB/s | `85.0` | Server downstream bandwidth threshold that turns the network indicator to warning |
-| `downBadKBps` | KB/s | `95.0` | Server downstream bandwidth threshold that turns the network indicator to bad |
-| `launcherUpWarnKBps` | KB/s | `1487.5` | Launcher upstream bandwidth threshold that turns the network indicator to warning |
-| `launcherUpBadKBps` | KB/s | `1662.5` | Launcher upstream bandwidth threshold that turns the network indicator to bad |
-| `launcherDownWarnKBps` | KB/s | `212.5` | Launcher downstream bandwidth threshold that turns the network indicator to warning |
-| `launcherDownBadKBps` | KB/s | `237.5` | Launcher downstream bandwidth threshold that turns the network indicator to bad |
+| `upWarnKBps` | KB/s | `800.0` | Server upstream bandwidth threshold that turns the network indicator to warning |
+| `upBadKBps` | KB/s | `1600.0` | Server upstream bandwidth threshold that turns the network indicator to bad |
+| `downWarnKBps` | KB/s | `50.0` | Server downstream bandwidth threshold that turns the network indicator to warning |
+| `downBadKBps` | KB/s | `100.0` | Server downstream bandwidth threshold that turns the network indicator to bad |
+| `launcherUpWarnKBps` | KB/s | `2400.0` | Launcher upstream bandwidth threshold that turns the network indicator to warning |
+| `launcherUpBadKBps` | KB/s | `4800.0` | Launcher upstream bandwidth threshold that turns the network indicator to bad |
+| `launcherDownWarnKBps` | KB/s | `150.0` | Launcher downstream bandwidth threshold that turns the network indicator to warning |
+| `launcherDownBadKBps` | KB/s | `300.0` | Launcher downstream bandwidth threshold that turns the network indicator to bad |
 
 </details>
 
