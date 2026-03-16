@@ -84,13 +84,13 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 ## 📊 版本矩阵
 
 <!-- BEGIN:version-matrix -->
-下面这些基线值直接来自仓库内项目文件与运行时版本辅助逻辑：
+下面这些基线值直接来自仓库内项目文件与该仓库实际使用的已还原包资产：
 
 | 组件 | 版本 | 来源 |
 |:--|:--|:--|
 | 目标框架 | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
-| Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs`（从 OTAPI/Terraria 运行时程序集文件版本读取） |
-| OTAPI USP | `1.1.0-pre-release-upstream.29` | `src/UnifierTSL/UnifierTSL.csproj` |
+| Terraria | `1.4.5.6` | 通过 `src/UnifierTSL/obj/project.assets.json` 定位已还原的 `OTAPI.dll`（程序集文件版本） |
+| OTAPI USP | `1.1.0-pre-release-upstream.30` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock 与依赖详情</strong></summary>
@@ -542,4 +542,6 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
+
+
 

@@ -47,6 +47,147 @@ function Get-PackageVersion {
     return [string]$node.Version
 }
 
+function Get-RestoreAssets {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectPath
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "Could not locate restore assets '$Path'. Run: dotnet restore '$ProjectPath'"
+    }
+
+    return (Get-Content -Path $Path -Raw -Encoding UTF8 | ConvertFrom-Json)
+}
+
+function Convert-NuGetRelativePath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    return ($Path -replace '[\\/]', [System.IO.Path]::DirectorySeparatorChar)
+}
+
+function Get-RestoredPackageLibrary {
+    param(
+        [Parameter(Mandatory = $true)]
+        [psobject]$Assets,
+        [Parameter(Mandatory = $true)]
+        [string]$PackageId
+    )
+
+    $pattern = '^{0}/' -f [regex]::Escape($PackageId)
+    $library = $Assets.libraries.PSObject.Properties |
+        Where-Object { $_.Name -imatch $pattern } |
+        Select-Object -First 1
+
+    if ($null -eq $library) {
+        throw "Could not locate restored package '$PackageId' in project assets."
+    }
+
+    return $library
+}
+
+function Get-RestoredTargetPackageEntry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [psobject]$Assets,
+        [Parameter(Mandatory = $true)]
+        [string]$TargetFramework,
+        [Parameter(Mandatory = $true)]
+        [string]$PackageLibraryName
+    )
+
+    $target = $Assets.targets.PSObject.Properties |
+        Where-Object { $_.Name -eq $TargetFramework -or $_.Name -like "$TargetFramework/*" } |
+        Where-Object { $_.Value.PSObject.Properties.Name -contains $PackageLibraryName } |
+        Select-Object -First 1
+
+    if ($null -eq $target) {
+        throw "Could not locate restore target entry for '$PackageLibraryName' under '$TargetFramework'."
+    }
+
+    return $target.Value.PSObject.Properties[$PackageLibraryName].Value
+}
+
+function Resolve-RestoredPackageAssetPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [psobject]$Assets,
+        [Parameter(Mandatory = $true)]
+        [string]$TargetFramework,
+        [Parameter(Mandatory = $true)]
+        [string]$PackageId,
+        [Parameter(Mandatory = $true)]
+        [string]$AssetFileName,
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectPath
+    )
+
+    $library = Get-RestoredPackageLibrary -Assets $Assets -PackageId $PackageId
+    $targetPackage = Get-RestoredTargetPackageEntry -Assets $Assets -TargetFramework $TargetFramework -PackageLibraryName $library.Name
+    $runtimeAssets = @($targetPackage.runtime.PSObject.Properties)
+    $assetRelativePath = $runtimeAssets |
+        Where-Object { [System.IO.Path]::GetFileName([string]$_.Name) -ieq $AssetFileName } |
+        Select-Object -ExpandProperty Name -First 1
+
+    if ([string]::IsNullOrWhiteSpace($assetRelativePath)) {
+        throw "Could not locate runtime asset '$AssetFileName' for restored package '$PackageId'."
+    }
+
+    $packageRelativePath = Convert-NuGetRelativePath -Path ([string]$library.Value.path)
+    $normalizedAssetRelativePath = Convert-NuGetRelativePath -Path $assetRelativePath
+    $assetPath = $Assets.packageFolders.PSObject.Properties.Name |
+        ForEach-Object {
+            Join-Path (Join-Path $_ $packageRelativePath) $normalizedAssetRelativePath
+        } |
+        Where-Object { Test-Path -LiteralPath $_ } |
+        Select-Object -First 1
+
+    if ([string]::IsNullOrWhiteSpace($assetPath)) {
+        throw "Could not resolve restored asset '$AssetFileName' for package '$PackageId'. Run: dotnet restore '$ProjectPath'"
+    }
+
+    return $assetPath
+}
+
+function Get-AssemblyFileVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $fileVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($Path).FileVersion
+    if ([string]::IsNullOrWhiteSpace($fileVersion)) {
+        throw "Could not read assembly file version from '$Path'."
+    }
+
+    return $fileVersion
+}
+
+function Get-TerrariaVersionFromRestoreAssets {
+    param(
+        [Parameter(Mandatory = $true)]
+        [psobject]$Assets,
+        [Parameter(Mandatory = $true)]
+        [string]$TargetFramework,
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectPath
+    )
+
+    $otapiPath = Resolve-RestoredPackageAssetPath `
+        -Assets $Assets `
+        -TargetFramework $TargetFramework `
+        -PackageId 'OTAPI.USP' `
+        -AssetFileName 'OTAPI.dll' `
+        -ProjectPath $ProjectPath
+
+    return Get-AssemblyFileVersion -Path $otapiPath
+}
+
 function Convert-TargetFrameworkDisplay {
     param(
         [Parameter(Mandatory = $true)]
@@ -68,12 +209,12 @@ function Build-EnglishVersionBlock {
 
     $lines = @(
         '<!-- BEGIN:version-matrix -->',
-        'The baseline values below come straight from project files and runtime version helpers in this repository:',
+        'The baseline values below come straight from project files and restored package assets used by this repository:',
         '',
         '| Component | Version | Source |',
         '|:--|:--|:--|',
         ('| Target framework | `{0}` | `src/UnifierTSL/*.csproj` |' -f $Metadata.TargetFrameworkDisplay),
-        '| Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs` (assembly file version from OTAPI/Terraria runtime) |',
+        ('| Terraria | `{0}` | restored `OTAPI.dll` resolved via `src/UnifierTSL/obj/project.assets.json` (assembly file version) |' -f $Metadata.TerrariaVersion),
         ('| OTAPI USP | `{0}` | `src/UnifierTSL/UnifierTSL.csproj` |' -f $Metadata.OTAPIUSPVersion),
         '',
         '<details>',
@@ -111,12 +252,12 @@ function Build-ChineseVersionBlock {
 
     $lines = @(
         '<!-- BEGIN:version-matrix -->',
-        '下面这些基线值直接来自仓库内项目文件与运行时版本辅助逻辑：',
+        '下面这些基线值直接来自仓库内项目文件与该仓库实际使用的已还原包资产：',
         '',
         '| 组件 | 版本 | 来源 |',
         '|:--|:--|:--|',
         ('| 目标框架 | `{0}` | `src/UnifierTSL/*.csproj` |' -f $Metadata.TargetFrameworkDisplay),
-        '| Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs`（从 OTAPI/Terraria 运行时程序集文件版本读取） |',
+        ('| Terraria | `{0}` | 通过 `src/UnifierTSL/obj/project.assets.json` 定位已还原的 `OTAPI.dll`（程序集文件版本） |' -f $Metadata.TerrariaVersion),
         ('| OTAPI USP | `{0}` | `src/UnifierTSL/UnifierTSL.csproj` |' -f $Metadata.OTAPIUSPVersion),
         '',
         '<details>',
@@ -187,11 +328,13 @@ function Sync-MarkedBlock {
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $unifierCsproj = Join-Path $repoRoot 'src/UnifierTSL/UnifierTSL.csproj'
 $tshockCsproj = Join-Path $repoRoot 'src/Plugins/TShockAPI/TShockAPI.csproj'
+$restoreAssetsPath = Join-Path $repoRoot 'src/UnifierTSL/obj/project.assets.json'
 $readmeEn = Join-Path $repoRoot 'README.md'
 $readmeZh = Join-Path $repoRoot 'docs/README.zh-cn.md'
 
 $unifierXml = Get-ProjectXml -Path $unifierCsproj
 $tshockXml = Get-ProjectXml -Path $tshockCsproj
+$restoreAssets = Get-RestoreAssets -Path $restoreAssetsPath -ProjectPath $unifierCsproj
 
 $unifierProps = $unifierXml.Project.PropertyGroup | Select-Object -First 1
 $tshockProps = $tshockXml.Project.PropertyGroup | Select-Object -First 1
@@ -203,6 +346,7 @@ if ([string]::IsNullOrWhiteSpace($targetFramework)) {
 
 $metadata = @{
     TargetFrameworkDisplay         = Convert-TargetFrameworkDisplay -TargetFramework $targetFramework
+    TerrariaVersion                = Get-TerrariaVersionFromRestoreAssets -Assets $restoreAssets -TargetFramework $targetFramework -ProjectPath $unifierCsproj
     OTAPIUSPVersion                = Get-PackageVersion -ProjectXml $unifierXml -PackageId 'OTAPI.USP'
     ModFrameworkVersion            = Get-PackageVersion -ProjectXml $unifierXml -PackageId 'ModFramework'
     MonoModRuntimeDetourVersion    = Get-PackageVersion -ProjectXml $unifierXml -PackageId 'MonoMod.RuntimeDetour'
@@ -228,10 +372,8 @@ $changed = (Sync-MarkedBlock -Path $readmeEn -NewBlock $englishBlock -Mode $Mode
 $changed = (Sync-MarkedBlock -Path $readmeZh -NewBlock $chineseBlock -Mode $Mode) -or $changed
 
 if ($Mode -eq 'check' -and $changed) {
-    throw "Documentation metadata is out of sync. Run: pwsh ./tools/sync-doc-metadata.ps1 -Mode apply"
+    throw "Documentation metadata is out of sync. Run the sync script in apply mode: ./tools/sync-doc-metadata.ps1 -Mode apply"
 }
 
 Write-Host "Version metadata sync check completed in '$Mode' mode."
-
-
 

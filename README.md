@@ -1,4 +1,4 @@
-﻿# UnifierTSL
+# UnifierTSL
 
 > Languages: [English](./README.md) | [简体中文](./docs/README.zh-cn.md)
 
@@ -84,13 +84,13 @@ Some heavier implementations may stay outside launcher core, but you can expect 
 ## 📊 Version Matrix
 
 <!-- BEGIN:version-matrix -->
-The baseline values below come straight from project files and runtime version helpers in this repository:
+The baseline values below come straight from project files and restored package assets used by this repository:
 
 | Component | Version | Source |
 |:--|:--|:--|
 | Target framework | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
-| Terraria | `1.4.5.5` | `src/UnifierTSL/VersionHelper.cs` (assembly file version from OTAPI/Terraria runtime) |
-| OTAPI USP | `1.1.0-pre-release-upstream.29` | `src/UnifierTSL/UnifierTSL.csproj` |
+| Terraria | `1.4.5.6` | restored `OTAPI.dll` resolved via `src/UnifierTSL/obj/project.assets.json` (assembly file version) |
+| OTAPI USP | `1.1.0-pre-release-upstream.30` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock and dependency details</strong></summary>
@@ -542,4 +542,6 @@ This table reflects the currently maintained/documented packaging targets, not e
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
+
+
 
