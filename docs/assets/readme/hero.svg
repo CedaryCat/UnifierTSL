@@ -21,12 +21,12 @@
   <circle cx="80" cy="320" r="140" fill="#DBEAFE" fill-opacity="0.35"/>
 
   <!-- Accent bar -->
-  <rect x="76" y="72" width="6" height="80" rx="3" fill="url(#accent)"/>
+  <rect x="76" y="70" width="6" height="128" rx="3" fill="url(#accent)"/>
 
   <!-- Title group -->
-  <text x="100" y="100" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" letter-spacing="2.4">UNIFIED TERRARIA SERVER LAUNCHER</text>
+  <text x="100" y="84" fill="#64748B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" letter-spacing="2.4">UNIFIED TERRARIA SERVER LAUNCHER</text>
   <text x="100" y="148" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="60" font-weight="700">UnifierTSL</text>
-  <text x="100" y="190" fill="#475569" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="22" font-weight="400">Multi-world orchestration on OTAPI Unified Server Process</text>
+  <text x="100" y="192" fill="#475569" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="22" font-weight="400">Multi-world orchestration on OTAPI Unified Server Process</text>
 
   <!-- Feature pills -->
   <rect x="100" y="220" width="200" height="36" rx="18" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>

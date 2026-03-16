@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <em>Host multiple Terraria worlds in one launcher process,<br>keep worlds isolated, and keep extending behavior with plugins and publisher tooling on OTAPI USP.</em>
+  <em>Run multiple Terraria worlds from one launcher,<br>keep each world in its own context, and handle routing, data sharing, and plugin-driven extension inside the same OTAPI USP runtime.</em>
 </p>
 
 ---
@@ -51,15 +51,14 @@
 
 UnifierTSL wraps [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) into a runtime you can run directly to host **multiple Terraria worlds in one launcher process**.
 
-The launcher handles world lifecycle, player join routing, and spins up a dedicated console client per world context so each world's I/O stays separate.
-Those console sessions now use an ANSI-safe prompt/status protocol, so launcher and per-world consoles can keep semantic readline state, replay status frames, and recover cleanly after reconnects instead of acting like plain text pipes.
-Compared with classic single-world servers or packet-routed multi-process world stacks, Unifier keeps join routing, world handoff, and extension hooks in one runtime surface instead of scattering that logic across process boundaries.
-`UnifiedServerCoordinator` handles coordination, `UnifierApi.EventHub` carries event traffic, and `PluginHost.PluginOrchestrator` runs plugin hosting.
-With shared connection and state surfaces, you can operate worlds together and build tighter cross-world interactions, while policy-based routing and transfer hooks still leave room for world-level fallback behavior.
+In traditional multi-process multi-world stacks, building a cluster of cooperating worlds usually means extra cross-process routing, state synchronization, and serialization design. Moving players between instances often relies on packet relays and side channels; when plugin-attached data, temporary state, or runtime objects need to cross worlds, problems that could otherwise stay in-process often have to be rewritten as protocols and synchronization flows.
 
-If you push this model further, you can build more gameplay-driven setups: fully connected multi-instance world clusters, elastic worlds that load or unload region-sized shards on demand, or private worlds tuned per player for logic and resource budgets.
-These are achievable directions, not out-of-the-box defaults.
-Some heavier implementations may stay outside launcher core, but you can expect practical sample plugins for these patterns to land over time in the `plugins/` ecosystem.
+Compared with approaches that push this coordination outside process boundaries, Unifier, based on OTAPI USP, keeps join routing, world switching, and extension hooks inside the same runtime plane and treats cross-world coordination as a first-class concern from the start. The launcher manages multi-world lifecycle centrally, lets each world run independently and in parallel in its own `ServerContext`, and provides a dedicated console per world so I/O stays isolated.
+`UnifiedServerCoordinator` handles coordination, `UnifierApi.EventHub` carries event traffic, and `PluginHost.PluginOrchestrator` runs plugin hosting.
+This shared listener-and-coordination model reduces the extra overhead and complexity introduced by cross-process relays, making cross-world interaction, data interchange, and unified operations easier while still leaving enough routing control to define the default join target and take over later world-switch flows.
+
+From the player's side, this still behaves like a normal Terraria entry point: clients connect to one shared listener port, and `UnifiedServerCoordinator` routes each connection to the selected world inside the same process. If you push this model further, you can build more gameplay-driven setups: fully connected multi-instance world clusters, elastic worlds that load or unload region-sized shards on demand, or private worlds tuned per player for logic and resource budgets.
+These are reachable directions, even though the launcher does not currently ship them as default out-of-the-box features, and heavier implementations like these may stay out of the launcher core itself; you can still expect usable example plugins to land under `plugins/` over time.
 
 ---
 
@@ -75,7 +74,7 @@ Some heavier implementations may stay outside launcher core, but you can expect 
 | 📦 **Collectible module contexts** | `ModuleLoadContext` gives you unloadable plugin domains and staged dependency handling |
 | 📝 **Shared logging pipeline** | `UnifierApi.LogCore` supports custom filters, writers, and metadata injectors |
 | 🛡 **Bundled TShock port** | Ships with a USP-adapted TShock baseline ready for use |
-| 💻 **Per-context console isolation** | Named-pipe console sessions with ANSI-safe logs, semantic readline prompts, and live status bars per world context |
+| 💻 **Per-context console isolation** | Independent, auto-reconnecting console I/O windows for each world context, plus semantic readline prompts and live status bars |
 | 🚀 **RID-targeted publishing** | Publisher produces reproducible, runtime-specific directory trees |
 
 ---
@@ -124,7 +123,7 @@ Additional dependency baselines:
   <img src="./docs/assets/readme/arch-flow.svg" alt="Architecture flow" width="100%">
 </p>
 
-Actual runtime startup flow:
+If you want the real boot order, it looks like this:
 
 1. `Program.Main` initializes assembly resolver, applies pre-run CLI language overrides, and prints runtime version details.
 2. `Initializer.Initialize()` prepares Terraria/USP runtime state and loads core hooks (`UnifiedNetworkPatcher`, `UnifiedServerCoordinator`, `ServerContext` setup).
@@ -148,6 +147,8 @@ Actual runtime startup flow:
 
 ### Pick Your Path
 
+If you already know why you're here, jump in from the track that matches your role:
+
 | Role | Start Here | Why |
 |:--|:--|:--|
 | 🖥 Server operator | [Quick Start ↓](#quick-start) | Bring up a usable multi-world host with minimal setup |
@@ -157,6 +158,8 @@ Actual runtime startup flow:
 
 <a id="quick-start"></a>
 ## 🚀 Quick Start
+
+If your main goal is "get a launcher up and see worlds come online," start here.
 
 ### Prerequisites
 
@@ -168,6 +171,8 @@ Choose the requirement set that matches how you plan to run UnifierTSL:
 | **From source / Publisher** | [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) + `msgfmt` in `PATH` (for `.mo` files) |
 
 ### Option A: Use a Release Bundle
+
+If you just want to run it, this is the shortest path.
 
 **1.** Download the release asset that matches your platform from [GitHub Releases](https://github.com/CedaryCat/UnifierTSL/releases):
 
@@ -209,7 +214,7 @@ chmod +x UnifierTSL
 
 ### Option B: Run from Source
 
-Use this path for local debugging, CI integration, or custom bundle output.
+Take this path if you want local debugging, CI integration, or your own Publisher output.
 
 **1.** Clone and restore:
 
@@ -252,6 +257,23 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 2. The bundled Publisher profile writes to `src/UnifierTSL.Publisher/bin/Debug/net9.0/utsl-publish/` because it uses `--use-rid-folder false --clean-output-dir false --output-path "utsl-publish"`.
 3. Switch startup project to `UnifierTSL`, choose the `Executable` launch profile, and start debugging.
 4. That profile runs the published launcher from `utsl-publish` and debugs the published program directly.
+
+### What Happens on First Boot
+
+- On the first successful launch, `config/config.json` is created automatically and stores the effective launcher startup snapshot. CLI arguments still win for the launch you are doing right now.
+- Plugin configs live under `config/<PluginName>/`. For the bundled TShock port, that root is `config/TShockAPI/`; it also stores other TShock runtime files such as `tshock.sqlite` when SQLite is enabled, so in practice it fills the same role as the standalone TShock `tshock/` directory.
+- Published bundles start with a flat `plugins/` directory. During startup, the module loader may reshuffle modules into subfolders when dependency or core-module metadata says it should.
+- If everything went well, you should see the shared listener bind, the configured worlds start, the launcher status output begin updating, and, under the default console I/O implementation, one dedicated console window appear for each world.
+
+### Bundled TShock Notes
+
+- The bundled TShock here is a migration for the UnifierTSL / OTAPI USP runtime. Its lower-level logic is reimplemented by prioritizing UTSL/USP-native runtime APIs, event surfaces, packet models, and similar built-in capabilities, without maintaining an extra compatibility layer, while still aiming to keep the behavior and operator experience of TShock's higher-level features as close to upstream TShock as possible within a multi-world, single-process runtime model.
+- This port is maintained to keep tracking upstream TShock. You can inspect the current migration baseline directly in `src/Plugins/TShockAPI/TShockAPI.csproj`, especially `MainlineSyncBranch`, `MainlineSyncCommit`, and `MainlineVersion`.
+- Launcher settings stay in `config/config.json`, while the bundled TShock uses its own config-and-data root under `config/TShockAPI/`, separate from the launcher root config. This is also where other TShock runtime files live, such as `tshock.sqlite` when SQLite is enabled, so this directory effectively plays the same role as the standalone TShock `tshock/` folder.
+- `config/TShockAPI/config.json` holds global TShock defaults, while `config/TShockAPI/config.override.json` stores per-server override patches keyed by configured server name, for example `"S1": { "MaxSlots": 16 }`. `config/TShockAPI/sscconfig.json` remains a separate file for SSC settings.
+- Because the runtime hosts multiple worlds at once, some TShock data access that is usually implicit in a single-world flow becomes explicit here; for example, warp-related code paths resolve entries with an explicit `worldId` instead of only relying on the current global world state.
+- Editing `config.json` or `config.override.json` externally updates the watched config handles and reapplies runtime TShock server settings. `/reload` still matters because it additionally refreshes permissions, regions, bans, whitelist-backed state, and the classic TShock reload flow. Some changes still require a restart.
+- Finally, thanks to the TShock project and its contributors for the functionality, design work, and ecosystem this migration builds upon.
 
 ---
 
@@ -533,6 +555,8 @@ This table reflects the currently maintained/documented packaging targets, not e
 |:--|:--|
 | Developer Overview | [docs/dev-overview.md](./docs/dev-overview.md) |
 | Plugin Development Guide | [docs/dev-plugin.md](./docs/dev-plugin.md) |
+| Branch Workflow Guide | [docs/branch-setup-guide.md](./docs/branch-setup-guide.md) |
+| Branch Workflow Quick Reference | [docs/branch-strategy-quick-reference.md](./docs/branch-strategy-quick-reference.md) |
 | OTAPI Unified Server Process | [GitHub](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) |
 | Upstream TShock | [GitHub](https://github.com/Pryaxis/TShock) |
 | DeepWiki AI Analysis | [deepwiki.com](https://deepwiki.com/CedaryCat/UnifierTSL) *(reference only)* |
@@ -542,6 +566,3 @@ This table reflects the currently maintained/documented packaging targets, not e
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
-
-
-

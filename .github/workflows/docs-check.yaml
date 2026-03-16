@@ -1,31 +1,32 @@
 name: Documentation Check
 
-# Trigger conditions for documentation workflow
 on:
-  # Push events to docs-related paths on active branches
   push:
     branches:
       - main
       - develop
-      - documentation
       - 'release/**'
       - 'releases/**'
     paths:
       - '**.md'
       - 'docs/**'
       - '.github/workflows/docs-check.yaml'
-  # Pull requests with docs-related changes
+      - 'tools/sync-doc-metadata.ps1'
   pull_request:
     branches:
       - main
       - develop
-      - documentation
       - 'release/**'
       - 'releases/**'
     paths:
       - '**.md'
       - 'docs/**'
       - '.github/workflows/docs-check.yaml'
+      - 'tools/sync-doc-metadata.ps1'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  PROJECT_PATH: 'src/'
 
 jobs:
   docs-check:
@@ -33,108 +34,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Check for build-affecting changes in documentation branch
-      if: |
-        (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'documentation') ||
-        (github.event_name == 'push' && github.ref == 'refs/heads/documentation')
-      run: |
-        echo "🔍 Checking for build-affecting changes in documentation branch..."
-        echo ""
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-        # Determine the base reference for comparison
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-            # For pull requests, compare PR head with base
-            BASE_REF="${{ github.event.pull_request.base.sha }}"
-            HEAD_REF="${{ github.event.pull_request.head.sha }}"
-            echo "📋 Comparing PR changes:"
-            echo "   Base: $BASE_REF"
-            echo "   Head: $HEAD_REF"
-        else
-            # For push events, compare with the previous commit
-            BASE_REF="HEAD^"
-            HEAD_REF="HEAD"
-            echo "📋 Comparing push changes:"
-            echo "   Base: $BASE_REF"
-            echo "   Head: $HEAD_REF"
-        fi
-        echo ""
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
 
-        # Get all changed files
-        CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" 2>&1)
-        
-        if [ $? -ne 0 ]; then
-            echo "⚠️  Warning: git diff command failed"
-            echo "$CHANGED_FILES"
-            exit 1
-        fi
+      - name: Check docs metadata sync
+        shell: pwsh
+        run: ./tools/sync-doc-metadata.ps1 -Mode check
 
-        if [ -z "$CHANGED_FILES" ]; then
-            echo "ℹ️  No files changed"
-            exit 0
-        fi
-
-        echo "📝 Changed files:"
-        echo "$CHANGED_FILES"
-        echo ""
-
-        # Define patterns for build-affecting files
-        # These are files that should NOT be changed in a documentation-only PR
-        BUILD_AFFECTING_PATTERNS=(
-            "^src/"
-            "^GitVersion\.yml$"
-        )
-
-        BLOCKED_FILES=""
-        while IFS= read -r file; do
-            [ -z "$file" ] && continue
-            is_blocked=false
-            for pattern in "${BUILD_AFFECTING_PATTERNS[@]}"; do
-                if echo "$file" | grep -qE "$pattern"; then
-                    is_blocked=true
-                    break
-                fi
-            done
-
-            if echo "$file" | grep -qE "^\.github/workflows/" && ! echo "$file" | grep -qE "^\.github/workflows/docs-"; then
-                is_blocked=true
-            fi
-
-            if [ "$is_blocked" = true ]; then
-                BLOCKED_FILES="$BLOCKED_FILES$file"$'\n'
-            fi
-        done <<< "$CHANGED_FILES"
-
-        if [ -n "$BLOCKED_FILES" ]; then
-            echo "❌ ERROR: Found build-affecting changes in documentation branch!"
-            echo ""
-            echo "The following files affect the build and should not be modified in PRs to the documentation branch:"
-            echo "$BLOCKED_FILES"
-            echo ""
-            echo "The documentation branch should only contain:"
-            echo "  - Markdown files (*.md)"
-            echo "  - Files in docs/ directory"
-            echo "  - Documentation workflow files (docs-*.yaml)"
-            echo ""
-            exit 1
-        fi
-
-        echo "✅ All changes are documentation-only"
-
-    - name: Documentation validation
-      run: |
-        echo "📚 Documentation Check"
-        echo "Branch: ${{ github.ref }}"
-        echo "Event: ${{ github.event_name }}"
-        echo ""
-        echo "✅ Documentation files detected and validated"
-        echo ""
-        echo "Future enhancements:"
-        echo "- Markdown lint validation"
-        echo "- Link validation"
-        echo "- Documentation coverage checks"
-        echo "- Build documentation site"
+      - name: Documentation validation summary
+        run: |
+          echo "📚 Documentation Check"
+          echo "Branch: ${{ github.ref }}"
+          echo "Event: ${{ github.event_name }}"
+          echo ""
+          echo "✅ Documentation metadata is in sync"
