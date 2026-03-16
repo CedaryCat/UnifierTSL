@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <em>Host multiple Terraria worlds in one launcher process,<br>run each world in its own context in parallel, and handle routing, data interchange, and plugin-driven extension directly inside the same runtime on OTAPI USP.</em>
+  <em>Run multiple Terraria worlds from one launcher,<br>keep each world in its own context, and handle routing, data sharing, and plugin-driven extension inside the same OTAPI USP runtime.</em>
 </p>
 
 ---
@@ -123,7 +123,7 @@ Additional dependency baselines:
   <img src="./docs/assets/readme/arch-flow.svg" alt="Architecture flow" width="100%">
 </p>
 
-Actual runtime startup flow:
+If you want the real boot order, it looks like this:
 
 1. `Program.Main` initializes assembly resolver, applies pre-run CLI language overrides, and prints runtime version details.
 2. `Initializer.Initialize()` prepares Terraria/USP runtime state and loads core hooks (`UnifiedNetworkPatcher`, `UnifiedServerCoordinator`, `ServerContext` setup).
@@ -147,6 +147,8 @@ Actual runtime startup flow:
 
 ### Pick Your Path
 
+If you already know why you're here, jump in from the track that matches your role:
+
 | Role | Start Here | Why |
 |:--|:--|:--|
 | 🖥 Server operator | [Quick Start ↓](#quick-start) | Bring up a usable multi-world host with minimal setup |
@@ -156,6 +158,8 @@ Actual runtime startup flow:
 
 <a id="quick-start"></a>
 ## 🚀 Quick Start
+
+If your main goal is "get a launcher up and see worlds come online," start here.
 
 ### Prerequisites
 
@@ -167,6 +171,8 @@ Choose the requirement set that matches how you plan to run UnifierTSL:
 | **From source / Publisher** | [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) + `msgfmt` in `PATH` (for `.mo` files) |
 
 ### Option A: Use a Release Bundle
+
+If you just want to run it, this is the shortest path.
 
 **1.** Download the release asset that matches your platform from [GitHub Releases](https://github.com/CedaryCat/UnifierTSL/releases):
 
@@ -208,7 +214,7 @@ chmod +x UnifierTSL
 
 ### Option B: Run from Source
 
-Use this path for local debugging, CI integration, or custom bundle output.
+Take this path if you want local debugging, CI integration, or your own Publisher output.
 
 **1.** Clone and restore:
 
@@ -254,10 +260,10 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 
 ### What Happens on First Boot
 
-- `config/config.json` is created automatically and stores the effective launcher startup snapshot; CLI arguments still take priority for the current launch.
-- Plugin configs live under `config/<PluginName>/`. For the bundled TShock port, that root is `config/TShockAPI/`; it is also the save location for other TShock runtime files such as `tshock.sqlite` when SQLite is enabled, so this folder effectively plays the same role as the standalone TShock `tshock/` directory.
-- Published bundles start with a flat `plugins/` directory; on startup, the module loader may reorganize modules into subfolders when dependency or core-module metadata requires it.
-- A healthy startup means the shared listener bound successfully, the configured worlds started, the launcher status output began updating, and, under the default console I/O implementation, a dedicated console window appeared for each world.
+- On the first successful launch, `config/config.json` is created automatically and stores the effective launcher startup snapshot. CLI arguments still win for the launch you are doing right now.
+- Plugin configs live under `config/<PluginName>/`. For the bundled TShock port, that root is `config/TShockAPI/`; it also stores other TShock runtime files such as `tshock.sqlite` when SQLite is enabled, so in practice it fills the same role as the standalone TShock `tshock/` directory.
+- Published bundles start with a flat `plugins/` directory. During startup, the module loader may reshuffle modules into subfolders when dependency or core-module metadata says it should.
+- If everything went well, you should see the shared listener bind, the configured worlds start, the launcher status output begin updating, and, under the default console I/O implementation, one dedicated console window appear for each world.
 
 ### Bundled TShock Notes
 
