@@ -27,7 +27,7 @@ next-version: 'v0.2.1'
 
 # Branch-specific configuration
 branches:
-  # Main branch: Production releases
+  # Main branch: Stable promotions
   main:
     # Prevent version jumping when merging from develop
     # Version increments based on main's own version, not the merged branch
@@ -38,7 +38,7 @@ branches:
     regex: ^master$|^main$
     source-branches: ['develop', 'hotfix']
 
-  # Develop branch: Integration branch for ongoing development
+  # Develop branch: Daily integration
   develop:
     # Allow normal version increment from merged branches
     prevent-increment:
@@ -52,18 +52,7 @@ branches:
     source-branches: ['feature', 'bugfix', 'hotfix']
     track-merge-target: false
 
-  # Documentation branch: Documentation maintenance
-  documentation:
-    # Don't affect main version when merging documentation
-    prevent-increment:
-      when-branch-merged: true
-    increment: Patch
-    # Docs tag for documentation releases
-    label: docs
-    regex: ^docs?$|^documentation$
-    source-branches: []
-
-  # Feature branches: New features under development
+  # Feature branches: Optional short-lived feature work
   feature:
     increment: Minor
     # Alpha tag for feature development
@@ -71,14 +60,14 @@ branches:
     regex: ^features?[/-](?<number>\d+)
     source-branches: ['develop']
 
-  # Bugfix branches: Bug fixes under development
+  # Bugfix branches: Optional short-lived bugfix work
   bugfix:
     increment: Patch
     label: 'bugfix.{BranchName}'
     regex: ^bug(fix)?[/-]
     source-branches: ['develop']
 
-  # Hotfix branches: Emergency fixes from production
+  # Hotfix branches: Exceptional fixes based on main
   hotfix:
     increment: Patch
     label: hotfix
@@ -93,12 +82,12 @@ branches:
     # Use PR number in version (e.g., 1.1.0-pr.123)
     regex: ^(pull|pull\-requests|pr)[/-](?<number>\d+)
 
-  # Release branches: Release preparation
+  # Release branches: Release execution from main
   release:
     increment: None
     label: rc
     regex: ^releases?[/-]
-    source-branches: ['develop', 'main']
+    source-branches: ['main']
     is-main-branch: false
     prevent-increment:
       when-branch-merged: true

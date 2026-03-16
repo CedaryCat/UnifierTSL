@@ -57,9 +57,8 @@ Compared with approaches that push this coordination outside process boundaries,
 `UnifiedServerCoordinator` handles coordination, `UnifierApi.EventHub` carries event traffic, and `PluginHost.PluginOrchestrator` runs plugin hosting.
 This shared listener-and-coordination model reduces the extra overhead and complexity introduced by cross-process relays, making cross-world interaction, data interchange, and unified operations easier while still leaving enough routing control to define the default join target and take over later world-switch flows.
 
-If you push this model further, you can build more gameplay-driven setups: fully connected multi-instance world clusters, elastic worlds that load or unload region-sized shards on demand, or private worlds tuned per player for logic and resource budgets.
-These are reachable directions, not default out-of-the-box features.
-Heavier implementations like these may stay out of the launcher core itself, but usable example plugins can be added under `plugins/` over time.
+From the player's side, this still behaves like a normal Terraria entry point: clients connect to one shared listener port, and `UnifiedServerCoordinator` routes each connection to the selected world inside the same process. If you push this model further, you can build more gameplay-driven setups: fully connected multi-instance world clusters, elastic worlds that load or unload region-sized shards on demand, or private worlds tuned per player for logic and resource budgets.
+These are reachable directions, even though the launcher does not currently ship them as default out-of-the-box features, and heavier implementations like these may stay out of the launcher core itself; you can still expect usable example plugins to land under `plugins/` over time.
 
 ---
 
@@ -252,6 +251,23 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 2. The bundled Publisher profile writes to `src/UnifierTSL.Publisher/bin/Debug/net9.0/utsl-publish/` because it uses `--use-rid-folder false --clean-output-dir false --output-path "utsl-publish"`.
 3. Switch startup project to `UnifierTSL`, choose the `Executable` launch profile, and start debugging.
 4. That profile runs the published launcher from `utsl-publish` and debugs the published program directly.
+
+### What Happens on First Boot
+
+- `config/config.json` is created automatically and stores the effective launcher startup snapshot; CLI arguments still take priority for the current launch.
+- Plugin configs live under `config/<PluginName>/`. For the bundled TShock port, that root is `config/TShockAPI/`; it is also the save location for other TShock runtime files such as `tshock.sqlite` when SQLite is enabled, so this folder effectively plays the same role as the standalone TShock `tshock/` directory.
+- Published bundles start with a flat `plugins/` directory; on startup, the module loader may reorganize modules into subfolders when dependency or core-module metadata requires it.
+- A healthy startup means the shared listener bound successfully, the configured worlds started, the launcher status output began updating, and, under the default console I/O implementation, a dedicated console window appeared for each world.
+
+### Bundled TShock Notes
+
+- The bundled TShock here is a migration for the UnifierTSL / OTAPI USP runtime. Its lower-level logic is reimplemented by prioritizing UTSL/USP-native runtime APIs, event surfaces, packet models, and similar built-in capabilities, without maintaining an extra compatibility layer, while still aiming to keep the behavior and operator experience of TShock's higher-level features as close to upstream TShock as possible within a multi-world, single-process runtime model.
+- This port is maintained to keep tracking upstream TShock. You can inspect the current migration baseline directly in `src/Plugins/TShockAPI/TShockAPI.csproj`, especially `MainlineSyncBranch`, `MainlineSyncCommit`, and `MainlineVersion`.
+- Launcher settings stay in `config/config.json`, while the bundled TShock uses its own config-and-data root under `config/TShockAPI/`, separate from the launcher root config. This is also where other TShock runtime files live, such as `tshock.sqlite` when SQLite is enabled, so this directory effectively plays the same role as the standalone TShock `tshock/` folder.
+- `config/TShockAPI/config.json` holds global TShock defaults, while `config/TShockAPI/config.override.json` stores per-server override patches keyed by configured server name, for example `"S1": { "MaxSlots": 16 }`. `config/TShockAPI/sscconfig.json` remains a separate file for SSC settings.
+- Because the runtime hosts multiple worlds at once, some TShock data access that is usually implicit in a single-world flow becomes explicit here; for example, warp-related code paths resolve entries with an explicit `worldId` instead of only relying on the current global world state.
+- Editing `config.json` or `config.override.json` externally updates the watched config handles and reapplies runtime TShock server settings. `/reload` still matters because it additionally refreshes permissions, regions, bans, whitelist-backed state, and the classic TShock reload flow. Some changes still require a restart.
+- Finally, thanks to the TShock project and its contributors for the functionality, design work, and ecosystem this migration builds upon.
 
 ---
 
@@ -533,6 +549,8 @@ This table reflects the currently maintained/documented packaging targets, not e
 |:--|:--|
 | Developer Overview | [docs/dev-overview.md](./docs/dev-overview.md) |
 | Plugin Development Guide | [docs/dev-plugin.md](./docs/dev-plugin.md) |
+| Branch Workflow Guide | [docs/branch-setup-guide.md](./docs/branch-setup-guide.md) |
+| Branch Workflow Quick Reference | [docs/branch-strategy-quick-reference.md](./docs/branch-strategy-quick-reference.md) |
 | OTAPI Unified Server Process | [GitHub](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) |
 | Upstream TShock | [GitHub](https://github.com/Pryaxis/TShock) |
 | DeepWiki AI Analysis | [deepwiki.com](https://deepwiki.com/CedaryCat/UnifierTSL) *(reference only)* |
@@ -542,4 +560,3 @@ This table reflects the currently maintained/documented packaging targets, not e
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
-

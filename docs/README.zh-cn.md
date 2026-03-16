@@ -57,9 +57,8 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 `UnifiedServerCoordinator` 负责总体协调，`UnifierApi.EventHub` 传递事件流，`PluginHost.PluginOrchestrator` 负责插件宿主编排。
 这种共享监听入口与协调平面的方式，减少了跨进程中转带来的额外开销与复杂度，既方便建立跨世界联动、数据互通和统一运维，也保留了足够的路由控制空间，用于定义默认入服目标并接管后续的世界切换流程。
 
-如果继续把这套模型往前推，你可以做出更偏玩法的形态：完全互通的多实例世界集群、按需加载/卸载区域分片的弹性世界，或为单个玩家定制逻辑和资源预算的私人世界。
-这些是可达方向，不是开箱即用的默认能力。
-这类较重实现不一定会放进启动器核心，但后续可以期待在 `plugins/` 里陆续补上对应的可用示例插件。
+从玩家视角看，它依然像一个普通的 Terraria 服务器入口：客户端只需要连到同一个监听端口，随后由 `UnifiedServerCoordinator` 在同一进程内把连接路由到目标世界；如果继续把这套模型往前推，你可以做出更偏玩法的形态：完全互通的多实例世界集群、按需加载/卸载区域分片的弹性世界，或为单个玩家定制逻辑和资源预算的私人世界。
+这些是可达方向，尽管启动器目前并未直接提供这些开箱即用的默认能力；而这类较重实现也未必会放进启动器核心本体，但你仍可以期待后续在 `plugins/` 下逐步补上的可用示例插件。
 
 ---
 
@@ -252,6 +251,23 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 2. 仓库内置的 Publisher 启动配置会使用 `--use-rid-folder false --clean-output-dir false --output-path "utsl-publish"`，因此输出目录是 `src/UnifierTSL.Publisher/bin/Debug/net9.0/utsl-publish/`，而不是 `utsl-<rid>`。
 3. 随后把启动项目切换为 `UnifierTSL`，选择 `Executable` 启动配置并开始调试。
 4. 该配置会直接从 `utsl-publish` 运行发布后的启动器，并对该已发布程序附加调试。
+
+### 首次启动后会发生什么
+
+- `config/config.json` 会自动生成，并保存当前生效的启动器启动快照；本次启动里 CLI 参数仍然优先。
+- 插件配置统一落在 `config/<PluginName>/` 下。对内置 TShock 来说，配置根目录是 `config/TShockAPI/`；这同时也是其他 TShock 相关运行时文件的保存位置，例如启用 SQLite 时的 `tshock.sqlite` 也会放在这里，所以这个目录基本就相当于原版独立 TShock 程序目录下的 `tshock/` 文件夹。
+- 发布产物初始是平铺的 `plugins/` 目录；启动过程中如果模块声明了核心模块或依赖元数据，加载器可能会把它们重组到子目录里。
+- 启动正常时，你会看到共享监听端口绑定成功、目标世界启动、启动器状态输出开始刷新，并且在默认控制台 IO 实现下，为每个世界分配的独立控制台窗口正常出现。
+
+### 内置 TShock 说明
+
+- 这里内置的 TShock 是面向 UnifierTSL / OTAPI USP 运行时的移植实现。底层会优先使用 UTSL/USP 原生提供的运行时接口、事件系统、数据包模型等通用能力来重实现相关逻辑，不会额外维持一套兼容层，但仍会尽力让 TShock 上层功能的行为与使用体验保持和原来一致，并适配多世界同进程运行模型。
+- 这个移植会持续跟随上游 TShock 的进度进行迁移更新。当前跟踪的移植基线可以直接在 `src/Plugins/TShockAPI/TShockAPI.csproj` 里查看，例如 `MainlineSyncBranch`、`MainlineSyncCommit` 和 `MainlineVersion`。
+- 启动器设置固定在 `config/config.json`，而内置 TShock 使用 `config/TShockAPI/` 下的独立配置和数据目录，不和启动器根配置混用；这也同时是其他 TShock 相关运行时文件的保存位置，例如启用 SQLite 时的 `tshock.sqlite` 也会放在这里，所以这个目录基本就相当于原版独立 TShock 程序目录下的 `tshock/` 文件夹。
+- `config/TShockAPI/config.json` 保存全局默认值，`config/TShockAPI/config.override.json` 以已配置的服务器名为键保存分服覆盖补丁，例如 `"S1": { "MaxSlots": 16 }`；`config/TShockAPI/sscconfig.json` 仍然独立负责 SSC 设置。
+- 由于运行时会同时承载多个世界，一些在原版单世界流程里通常依赖“当前世界”隐式决定的数据访问，在这里会改成显式带上 world 上下文；例如 warp 相关代码逻辑在查找或修改条目时会显式使用 `worldId`。
+- 直接编辑 `config.json` 或 `config.override.json` 会触发配置句柄监听，并重新应用运行中的 TShock 服务器设置；`/reload` 仍然有意义，因为它还会额外刷新权限、区域、封禁、白名单等状态，并走 TShock 传统 reload 流程。部分改动依旧需要重启。
+- 最后，也感谢 TShock 项目及其贡献者长期积累下来的功能、设计和社区生态；这个移植建立在这些工作的基础之上。
 
 ---
 
@@ -533,6 +549,8 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 |:--|:--|
 | 开发者总览 | [docs/dev-overview.zh-cn.md](./dev-overview.zh-cn.md) |
 | 插件开发指南 | [docs/dev-plugin.zh-cn.md](./dev-plugin.zh-cn.md) |
+| 分支工作流指南 | [docs/branch-setup-guide.zh-cn.md](./branch-setup-guide.zh-cn.md) |
+| 分支工作流速查 | [docs/branch-strategy-quick-reference.zh-cn.md](./branch-strategy-quick-reference.zh-cn.md) |
 | OTAPI Unified Server Process | [GitHub](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) |
 | 上游 TShock | [GitHub](https://github.com/Pryaxis/TShock) |
 | DeepWiki AI 分析 | [deepwiki.com](https://deepwiki.com/CedaryCat/UnifierTSL) *(仅供参考)* |
@@ -542,4 +560,3 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
-
