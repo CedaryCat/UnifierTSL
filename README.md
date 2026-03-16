@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <em>Host multiple Terraria worlds in one launcher process,<br>keep worlds isolated, and keep extending behavior with plugins and publisher tooling on OTAPI USP.</em>
+  <em>Host multiple Terraria worlds in one launcher process,<br>run each world in its own context in parallel, and handle routing, data interchange, and plugin-driven extension directly inside the same runtime on OTAPI USP.</em>
 </p>
 
 ---
@@ -51,15 +51,15 @@
 
 UnifierTSL wraps [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) into a runtime you can run directly to host **multiple Terraria worlds in one launcher process**.
 
-The launcher handles world lifecycle, player join routing, and spins up a dedicated console client per world context so each world's I/O stays separate.
-Those console sessions now use an ANSI-safe prompt/status protocol, so launcher and per-world consoles can keep semantic readline state, replay status frames, and recover cleanly after reconnects instead of acting like plain text pipes.
-Compared with classic single-world servers or packet-routed multi-process world stacks, Unifier keeps join routing, world handoff, and extension hooks in one runtime surface instead of scattering that logic across process boundaries.
+In traditional multi-process multi-world stacks, building a cluster of cooperating worlds usually means extra cross-process routing, state synchronization, and serialization design. Moving players between instances often relies on packet relays and side channels; when plugin-attached data, temporary state, or runtime objects need to cross worlds, problems that could otherwise stay in-process often have to be rewritten as protocols and synchronization flows.
+
+Compared with approaches that push this coordination outside process boundaries, Unifier, based on OTAPI USP, keeps join routing, world switching, and extension hooks inside the same runtime plane and treats cross-world coordination as a first-class concern from the start. The launcher manages multi-world lifecycle centrally, lets each world run independently and in parallel in its own `ServerContext`, and provides a dedicated console per world so I/O stays isolated.
 `UnifiedServerCoordinator` handles coordination, `UnifierApi.EventHub` carries event traffic, and `PluginHost.PluginOrchestrator` runs plugin hosting.
-With shared connection and state surfaces, you can operate worlds together and build tighter cross-world interactions, while policy-based routing and transfer hooks still leave room for world-level fallback behavior.
+This shared listener-and-coordination model reduces the extra overhead and complexity introduced by cross-process relays, making cross-world interaction, data interchange, and unified operations easier while still leaving enough routing control to define the default join target and take over later world-switch flows.
 
 If you push this model further, you can build more gameplay-driven setups: fully connected multi-instance world clusters, elastic worlds that load or unload region-sized shards on demand, or private worlds tuned per player for logic and resource budgets.
-These are achievable directions, not out-of-the-box defaults.
-Some heavier implementations may stay outside launcher core, but you can expect practical sample plugins for these patterns to land over time in the `plugins/` ecosystem.
+These are reachable directions, not default out-of-the-box features.
+Heavier implementations like these may stay out of the launcher core itself, but usable example plugins can be added under `plugins/` over time.
 
 ---
 
@@ -75,7 +75,7 @@ Some heavier implementations may stay outside launcher core, but you can expect 
 | 📦 **Collectible module contexts** | `ModuleLoadContext` gives you unloadable plugin domains and staged dependency handling |
 | 📝 **Shared logging pipeline** | `UnifierApi.LogCore` supports custom filters, writers, and metadata injectors |
 | 🛡 **Bundled TShock port** | Ships with a USP-adapted TShock baseline ready for use |
-| 💻 **Per-context console isolation** | Named-pipe console sessions with ANSI-safe logs, semantic readline prompts, and live status bars per world context |
+| 💻 **Per-context console isolation** | Independent, auto-reconnecting console I/O windows for each world context, plus semantic readline prompts and live status bars |
 | 🚀 **RID-targeted publishing** | Publisher produces reproducible, runtime-specific directory trees |
 
 ---
@@ -542,6 +542,4 @@ This table reflects the currently maintained/documented packaging targets, not e
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
-
-
 

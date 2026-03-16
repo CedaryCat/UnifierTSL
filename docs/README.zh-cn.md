@@ -1,4 +1,4 @@
-﻿# UnifierTSL
+# UnifierTSL
 
 > Languages: [English](../README.md) | [简体中文](./README.zh-cn.md)
 
@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <em>在一个启动器进程里运行多个 Terraria 世界，<br>保持世界级隔离，并基于 OTAPI USP 用插件和发布工具链持续扩展能力。</em>
+  <em>在一个启动器进程里运行多个 Terraria 世界，<br>让各世界在独立上下文中并行运行，并在同一运行时内直接进行路由协调、数据互通与插件扩展。</em>
 </p>
 
 ---
@@ -51,11 +51,11 @@
 
 UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) 封装成可直接使用的运行时，让你在**一个启动器进程里托管多个 Terraria 世界**。
 
-启动器负责世界启停、玩家入服路由，并为每个世界上下文拉起独立控制台客户端，保证各世界 I/O 互不干扰。
-这些控制台会话现在通过 ANSI 安全的提示/状态协议工作，因此启动器与各世界控制台可以维护语义化 readline 状态、回放状态栏帧，并在重连后平滑恢复，而不只是简单的纯文本管道。
-和经典单世界服务器、或基于数据包路由的多进程多世界方案相比，Unifier 把入服路由、世界切换和扩展钩子都放在同一个运行时平面里，不需要把关键逻辑拆到进程边界外。
+在传统的多进程多世界架构中，构建彼此协作的世界集群通常意味着额外的跨进程路由、状态同步和序列化设计。玩家在实例间迁移往往依赖数据包中转和额外信道；当需要跨世界共享插件附加数据、临时状态或运行时对象时，也常常要把原本进程内可以直接处理的问题改写成协议和同步流程。
+
+相比将这些协调逻辑放到进程边界之外的方案，Unifier 基于 OTAPI USP 把入服路由、世界切换和扩展钩子收敛在同一个运行时平面内，在设计之初就将世界间协调作为一等公民来实现。启动器负责统一管理多世界生命周期，让每个世界在各自的 `ServerContext` 中独立并行运行，并为每个世界切分出独立的控制台以保证 I/O 隔离。
 `UnifiedServerCoordinator` 负责总体协调，`UnifierApi.EventHub` 传递事件流，`PluginHost.PluginOrchestrator` 负责插件宿主编排。
-这种共享连接与状态平面的方式，既方便统一运维和跨世界联动，也保留了策略化路由与转服钩子，方便按世界做兜底策略。
+这种共享监听入口与协调平面的方式，减少了跨进程中转带来的额外开销与复杂度，既方便建立跨世界联动、数据互通和统一运维，也保留了足够的路由控制空间，用于定义默认入服目标并接管后续的世界切换流程。
 
 如果继续把这套模型往前推，你可以做出更偏玩法的形态：完全互通的多实例世界集群、按需加载/卸载区域分片的弹性世界，或为单个玩家定制逻辑和资源预算的私人世界。
 这些是可达方向，不是开箱即用的默认能力。
@@ -75,7 +75,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 | 📦 **可回收模块上下文** | `ModuleLoadContext` 提供可卸载插件域，并支持分阶段依赖处理 |
 | 📝 **统一日志管线** | `UnifierApi.LogCore` 支持自定义过滤器、写入器与元数据注入 |
 | 🛡 **内置 TShock 移植基线** | 内置适配 USP 的 TShock 基线，开箱可用 |
-| 💻 **上下文级控制台隔离** | 通过命名管道协议为每个世界提供 ANSI 安全日志、语义化 readline 提示与实时状态栏 |
+| 💻 **上下文级控制台隔离** | 默认为每个世界实例提供独立、自动重连的控制台窗口 IO，以及语义化 readline 提示与实时状态栏 |
 | 🚀 **按 RID 发布** | Publisher 生成可复现、面向目标运行时的目录结构 |
 
 ---
@@ -542,6 +542,4 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
-
-
 
