@@ -94,14 +94,17 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Check docs metadata sync
-        shell: pwsh
-        run: ./tools/sync-doc-metadata.ps1 -Mode check
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Check docs metadata sync
+        shell: pwsh
+        run: ./tools/sync-doc-metadata.ps1 -Mode check
 
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v3.0.0
@@ -125,9 +128,6 @@ jobs:
           echo "Minor: ${{ steps.gitversion.outputs.minor }}"
           echo "Patch: ${{ steps.gitversion.outputs.patch }}"
           echo "InformationalVersion: ${{ steps.gitversion.outputs.informationalVersion }}"
-
-      - name: Restore dependencies
-        run: dotnet restore ${{ env.PROJECT_PATH }}
 
       - name: Build Publisher
         run: dotnet build --no-restore ${{ env.PUBLISHER_PATH }} -c Release
