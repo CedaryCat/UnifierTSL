@@ -34,8 +34,9 @@
 
 - [Overview](#overview)
 - [Core Capabilities](#core-capabilities)
+- [Multi-World Architecture Comparison](#architecture-tradeoffs)
 - [Version Matrix](#version-matrix)
-- [Architecture](#architecture)
+- [Runtime Architecture](#architecture)
 - [Quick Start](#quick-start)
 - [Launcher Reference](#launcher-reference)
 - [Publisher Reference](#publisher-reference)
@@ -58,7 +59,7 @@ Compared with approaches that push this coordination outside process boundaries,
 This shared listener-and-coordination model reduces the extra overhead and complexity introduced by cross-process relays, making cross-world interaction, data interchange, and unified operations easier while still leaving enough routing control to define the default join target and take over later world-switch flows.
 
 From the player's side, this still behaves like a normal Terraria entry point: clients connect to one shared listener port, and `UnifiedServerCoordinator` routes each connection to the selected world inside the same process. If you push this model further, you can build more gameplay-driven setups: fully connected multi-instance world clusters, elastic worlds that load or unload region-sized shards on demand, or private worlds tuned per player for logic and resource budgets.
-These are reachable directions, even though the launcher does not currently ship them as default out-of-the-box features, and heavier implementations like these may stay out of the launcher core itself; you can still expect usable example plugins to land under `plugins/` over time.
+These are reachable directions, even though the launcher does not currently ship them as default out-of-the-box features, you can still expect usable example plugins to land under `plugins/` over time.
 
 ---
 
@@ -79,6 +80,55 @@ These are reachable directions, even though the launcher does not currently ship
 
 ---
 
+<a id="architecture-tradeoffs"></a>
+## ⚖️ Multi-World Architecture Comparison
+
+> Here, `proxy-based` broadly refers to the common family of designs built around a front proxy, multiple independent backend server processes, packet-level relays or rewriting, and optional shared storage or control-plane components.
+
+<details>
+<summary><strong>Deployment and Lifecycle</strong></summary>
+
+| Dimension | UnifierTSL (single-process unified coordination) | Proxy-based (front proxy + multiple backend processes) | Stronger Fit |
+|:--|:--|:--|:--|
+| Failure isolation | Worlds share one host process; isolation between contexts exists at the thread/runtime-context level | Process-level isolation; one backend crash usually does not directly take down other backends or the proxy itself | Proxy-based |
+| Instance-level restart | World contexts can be started and stopped freely | A single backend can be restarted, replaced, or moved while the front entry point stays up | Depends on the operational goal |
+| Plugin hot reload | The runtime provides standard support; whether a plugin can hot reload depends on the plugin's own design, and players are usually unaffected | Backend plugins can be reloaded cleanly by restarting only the target backend instance, though that may require moving players to a temporary backend | Depends on the operational goal |
+| Horizontal elasticity | The core design targets multi-world coordination inside one host; instances can be created freely, but they still share one process resource pool | Naturally suited to cross-machine, cross-container, or cross-device scale-out | Proxy-based |
+| Existing plugin ecosystem reuse | Requires adaptation to the Unifier runtime model | Directly uses the existing plugin ecosystem | Proxy-based |
+
+</details>
+
+<details>
+<summary><strong>Runtime Coordination and Transfer</strong></summary>
+
+| Dimension | UnifierTSL (single-process unified coordination) | Proxy-based (front proxy + multiple backend processes) | Stronger Fit |
+|:--|:--|:--|:--|
+| World customizability | World contexts are fully customizable and can be changed dynamically at runtime | Depends on the backend implementation; in practice, most setups are relatively static after startup | UnifierTSL |
+| Server-side consistency | World existence, routing targets, and connection ownership are resolved directly inside one runtime, so the consistency surface is narrower | Depends on cross-process topology, registration, shared storage, or an external control plane, so the race surface is wider | UnifierTSL |
+| State awareness and switch orchestration | One coordinator can see source world, target world, and player connection state together, so fallback and recovery logic can be centralized | Target readiness, transfer failures, disconnect recovery, and rollback may require cross-process coordination | UnifierTSL |
+| Data transfer and entity migration | Temporary state, plugin-attached data, and runtime objects can be transferred or coordinated directly inside one runtime | State often has to be serialized, protocolized, or moved through shared databases or custom packets first | UnifierTSL |
+| Connection-state maintenance | One listener keeps ownership of the client connection throughout world switches | The proxy must maintain both client-side and backend-side connections and recover from failures on either side | UnifierTSL |
+| Cross-world plugin interoperability | Feels more like “one plugin working across many `ServerContext` instances,” with direct reuse of in-process events and APIs | Feels more like distributed-systems work, usually requiring message protocols, shared storage, or sync layers first | UnifierTSL |
+
+</details>
+
+<details>
+<summary><strong>Operations and System Shape</strong></summary>
+
+| Dimension | UnifierTSL (single-process unified coordination) | Proxy-based (front proxy + multiple backend processes) | Stronger Fit |
+|:--|:--|:--|:--|
+| Unified management cost | Entry point, world lifecycle, default join policy, and config application all live on one coordination plane | Management is usually split across the proxy, backend instances, and external orchestration pieces | UnifierTSL |
+| Monitoring and observability | Logs, status bars, event flow, and per-world runtime metrics aggregate naturally | Observability is often split across proxy, backend, and external control layers, so correlation costs more | UnifierTSL |
+| Debugging and incident handling | A single process gives you a more continuous timeline for debugging, log correlation, and reproduction | Failures can be spread across proxy, backend, shared storage, and deployment orchestration layers | UnifierTSL |
+| Network and serialization overhead | Critical coordination paths can stay in-process and avoid extra hops or auxiliary protocols | Player transfers and extended state propagation may introduce extra packets plus related interception strategies, or rely on side channels | UnifierTSL |
+| Single-node capability density | A single host can already cover routing, coordination, linkage, plugin interoperability, and unified operations | A single node is more of a routing shell, with heavier behavior often shifted toward backends or external systems | UnifierTSL |
+
+</details>
+
+It is important to note that UnifierTSL and proxy-based topologies are not mutually exclusive. Because UnifierTSL already organizes many worlds behind a single external listener, it can still sit behind a higher-level gateway or proxy as a stronger single-node backend. In the end, the better choice depends on your needs: proxy-based stacks have a higher ceiling for cross-device, cross-process scaling and isolation, so if you prefer elastic multi-machine deployment with basic cross-server features, proxy-based is likely the better fit. By contrast, UnifierTSL has more natural advantages in single-node multi-world consistency, migration, and coordination. If you want to build a more structured and interactive multi-world group, UnifierTSL is likely the more interesting option to try today.
+
+---
+
 <a id="version-matrix"></a>
 ## 📊 Version Matrix
 
@@ -88,7 +138,7 @@ The baseline values below come straight from project files and restored package 
 | Component | Version | Source |
 |:--|:--|:--|
 | Target framework | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
-| Terraria | `1.4.5.6` | restored `OTAPI.dll` resolved via `src/UnifierTSL/obj/project.assets.json` (assembly file version) |
+| Terraria | `1.4.5.6` | `OTAPI.dll` from the OTAPI USP package referenced by this project |
 | OTAPI USP | `1.1.0-pre-release-upstream.30` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
@@ -117,7 +167,7 @@ Additional dependency baselines:
 ---
 
 <a id="architecture"></a>
-## 🏗 Architecture
+## 🏗 Runtime Architecture
 
 <p align="center">
   <img src="./docs/assets/readme/arch-flow.svg" alt="Architecture flow" width="100%">
