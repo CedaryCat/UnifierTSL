@@ -34,8 +34,9 @@
 
 - [概览](#overview)
 - [核心能力](#core-capabilities)
+- [多世界架构横向比对](#architecture-tradeoffs)
 - [版本矩阵](#version-matrix)
-- [架构](#architecture)
+- [运行架构](#architecture)
 - [快速开始](#quick-start)
 - [启动器参考](#launcher-reference)
 - [Publisher 参考](#publisher-reference)
@@ -58,7 +59,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 这种共享监听入口与协调平面的方式，减少了跨进程中转带来的额外开销与复杂度，既方便建立跨世界联动、数据互通和统一运维，也保留了足够的路由控制空间，用于定义默认入服目标并接管后续的世界切换流程。
 
 从玩家视角看，它依然像一个普通的 Terraria 服务器入口：客户端只需要连到同一个监听端口，随后由 `UnifiedServerCoordinator` 在同一进程内把连接路由到目标世界；如果继续把这套模型往前推，你可以做出更偏玩法的形态：完全互通的多实例世界集群、按需加载/卸载区域分片的弹性世界，或为单个玩家定制逻辑和资源预算的私人世界。
-这些是可达方向，尽管启动器目前并未直接提供这些开箱即用的默认能力；而这类较重实现也未必会放进启动器核心本体，但你仍可以期待后续在 `plugins/` 下逐步补上的可用示例插件。
+这些是可达方向，尽管启动器目前并未直接提供这些开箱即用的默认能力，但你仍可以期待后续在 `plugins/` 下逐步补上的可用示例插件。
 
 ---
 
@@ -79,6 +80,56 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 
 ---
 
+<a id="architecture-tradeoffs"></a>
+## ⚖️ 多世界架构横向比对
+
+> 这里的 `proxy-based` 泛指“前置代理 + 多个后端独立服务器进程 + 协议级转发/改写 + 可选共享存储或控制面”的常见可能形态。
+
+<details>
+<summary><strong>部署与生命周期</strong></summary>
+
+| 维度 | UnifierTSL（同进程统一协调） | proxy-based（前置代理 + 多后端进程） | 更占优 |
+|:--|:--|:--|:--|
+| 错误域隔离 | 多世界共享宿主进程；上下文之间有线程级隔离 | 进程级隔离，单个后端崩溃通常不会直接拖垮其他后端或代理本身 | proxy-based |
+| 实例级重启 | 支持世界上下文自由启停 | 可单独重启、替换、迁移某个后端实例，外层入口可继续存活 | 视具体需求而定 |
+| 插件热重载 | 运行时提供标准支持，由插件自身设计决定是否可热重载，通常玩家端无感 | 可单独重启后端实例完成后端插件干净重载，可能需要迁移玩家到临时后端 | 视具体需求而定 |
+| 水平弹性部署 | 核心设计目标为单宿主内多世界协调，可任意创建实例，但共享同一进程资源 | 天然适合跨设备、跨容器、跨主机扩展 | proxy-based |
+| 现有插件生态复用 | 需要按 Unifier 运行时模型适配 | 直接使用当前插件生态 | proxy-based |
+
+</details>
+
+<details>
+<summary><strong>运行时协同与迁移</strong></summary>
+
+| 维度 | UnifierTSL（同进程统一协调） | proxy-based（前置代理 + 多后端进程） | 更占优 |
+|:--|:--|:--|:--|
+| 世界定制化 | 完全可定制并可在运行中动态更改的世界上下文 | 视具体后端实现而定，通常启动后不再变动 | UnifierTSL |
+| 服务器一致性 | 世界存在性、路由目标、连接归属都在同一运行时里直接判定，一致性面更窄 | 依赖跨进程拓扑、注册信息、共享存储或控制面，竞态面更宽 | UnifierTSL |
+| 感知与切换编排 | 同一协调器可同时感知来源世界、目标世界与玩家连接状态，回退与兜底可集中处理 | 可能需要跨进程协同处理目标就绪、切换失败、掉线恢复和回滚 | UnifierTSL |
+| 数据传输与实体迁移 | 临时状态、插件附加数据、运行时对象可以在统一运行时内直接转移或协调 | 往往必须先序列化、协议化，或借共享数据库 / 自定义数据包搬运 | UnifierTSL |
+| 连接状态维护 | 单一监听入口持续持有客户端连接，切世界时不需要把连接所有权交给其他进程 | 代理需同时维护前后端连接，并处理任一侧掉线、重连与状态复原 | UnifierTSL |
+| 插件跨服互操作 | 更像“同一插件面对多个 `ServerContext`”，跨服协作可以直接复用进程内事件与 API | 更像分布式系统开发，通常要先定义消息协议、共享存储或同步层 | UnifierTSL |
+
+</details>
+
+
+<details>
+<summary><strong>运维与系统形态</strong></summary>
+
+| 维度 | UnifierTSL（同进程统一协调） | proxy-based（前置代理 + 多后端进程） | 更占优 |
+|:--|:--|:--|:--|
+| 统一管理成本 | 入口、世界生命周期、默认入服策略、配置应用都集中在同一协调平面 | 管理面通常分散在代理、后端实例和外部编排组件之间 | UnifierTSL |
+| 状态监测与观测 | 日志、状态栏、事件流、各世界运行指标天然可聚合 | 观测往往分散在代理层、后端层和外部控制面，拼接成本较高 | UnifierTSL |
+| 调试与故障定位 | 单进程时间线更连续，调试会话、日志关联和问题复现更集中 | 故障可能散落在代理、后端、共享存储和运维编排多个层面 | UnifierTSL |
+| 网络与序列化开销 | 关键协调路径可留在进程内，避免额外 hop 和附加协议 | 玩家迁移与扩展状态传播可能引入额外数据包和相关拦截策略、或通过旁路信道实现 | UnifierTSL |
+| 单节点能力密度 | 单机内即可覆盖路由、协调、联动、插件互通与统一运维 | 单节点更像路由壳层，复杂能力常转移到后端或外部系统 | UnifierTSL |
+
+</details>
+
+必须说明的是，UnifierTSL 与 proxy-based 并不互斥。由于 UnifierTSL 已经把多世界组织成单一对外监听入口，它完全可以作为一个更强的“单节点后端”继续挂到更外层的 gateway / proxy 前面。总之，具体的选择取决于你的需求，proxy-based 在跨设备、跨进程的伸缩与隔离问题上具备更高上限，如果你倾向于跨设备弹性部署并体验基础跨服功能，proxy-based会是你的最优选择。相比之下 UnifierTSL 可能在单节点内部的多世界一致性、迁移和协同能力方面具备天然优势，如果你想设计更具组织性和交互能力的多世界群组，也许现在就可以尝试UnifierTSL来搭建你的多世界服务器。
+
+---
+
 <a id="version-matrix"></a>
 ## 📊 版本矩阵
 
@@ -88,7 +139,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 | 组件 | 版本 | 来源 |
 |:--|:--|:--|
 | 目标框架 | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
-| Terraria | `1.4.5.6` | 通过 `src/UnifierTSL/obj/project.assets.json` 定位已还原的 `OTAPI.dll`（程序集文件版本） |
+| Terraria | `1.4.5.6` | 项目引用的 OTAPI.USP 包中的 `OTAPI.dll` |
 | OTAPI USP | `1.1.0-pre-release-upstream.30` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
@@ -117,7 +168,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 ---
 
 <a id="architecture"></a>
-## 🏗 架构
+## 🏗 运行架构
 
 <p align="center">
   <img src="./assets/readme/arch-flow.svg" alt="Architecture flow" width="100%">
