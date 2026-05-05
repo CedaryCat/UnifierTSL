@@ -75,7 +75,7 @@ jobs:
 
       - name: Extract templates and seed local translations
         shell: pwsh
-        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -NoMo
+        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -SkipMo
 
       - name: Synchronize with Crowdin
         uses: crowdin/github-action@v2
@@ -93,7 +93,7 @@ jobs:
 
       - name: Re-apply TShock upstream seed to downloaded translations
         shell: pwsh
-        run: ./tools/i18n.ps1 -Domain TShockAPI -TShockUpstreamPath .local/tshock-upstream -NoExtract -NoMo
+        run: ./tools/i18n.ps1 -Domain TShockAPI -TShockUpstreamPath .local/tshock-upstream -NoExtract -SkipMo
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8

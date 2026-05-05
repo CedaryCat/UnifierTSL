@@ -13,7 +13,7 @@ param (
     [Parameter()]
     [switch] $NoPo,
     [Parameter()]
-    [switch] $NoMo,
+    [switch] $SkipMo,
     [Parameter()]
     [switch] $NoTShockSeed,
     [Parameter()]
@@ -234,7 +234,7 @@ function Update-PoFiles {
 function Update-MoFiles {
     param ($Config)
 
-    if ($NoMo) {
+    if ($SkipMo) {
         return
     }
 
