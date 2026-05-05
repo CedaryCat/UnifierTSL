@@ -1,0 +1,108 @@
+name: Crowdin Sync
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'src/**/*.cs'
+      - 'src/**/*.csproj'
+      - 'i18n/**/*.po'
+      - 'i18n/**/*.pot'
+      - 'tools/i18n.ps1'
+      - 'crowdin.yml'
+      - '.config/dotnet-tools.json'
+      - '.github/workflows/i18n-sync.yaml'
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      upload_seed_translations:
+        description: 'Upload local seeded translations to Crowdin. Use this for the first bootstrap or after a TShock upstream baseline update.'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    if: github.event_name != 'schedule' || github.ref_name == 'develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Install gettext
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+        shell: bash
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Restore dependencies
+        run: dotnet restore src/UnifierTSL.slnx
+
+      - name: Resolve TShock upstream commit
+        id: tshock-ref
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content src/Plugins/TShockAPI/TShockAPI.csproj
+          $commit = @($project.Project.PropertyGroup | ForEach-Object { $_.MainlineSyncCommit } | Where-Object { $_ })[0]
+          if (!$commit) {
+            throw "MainlineSyncCommit was not found in src/Plugins/TShockAPI/TShockAPI.csproj."
+          }
+          "commit=$commit" >> $env:GITHUB_OUTPUT
+
+      - name: Checkout TShock upstream baseline
+        uses: actions/checkout@v4
+        with:
+          repository: Pryaxis/TShock
+          ref: ${{ steps.tshock-ref.outputs.commit }}
+          path: .local/tshock-upstream
+
+      - name: Extract templates and seed local translations
+        shell: pwsh
+        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -NoMo
+
+      - name: Synchronize with Crowdin
+        uses: crowdin/github-action@v2
+        with:
+          config: crowdin.yml
+          upload_sources: true
+          upload_translations: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_seed_translations }}
+          download_sources: false
+          download_translations: true
+          push_sources: false
+          push_translations: false
+          create_pull_request: false
+        env:
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Re-apply TShock upstream seed to downloaded translations
+        shell: pwsh
+        run: ./tools/i18n.ps1 -Domain TShockAPI -TShockUpstreamPath .local/tshock-upstream -NoExtract -NoMo
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: 'chore: sync Crowdin translations [skip i18n]'
+          committer: 'Crowdin Bot <support+bot@crowdin.com>'
+          author: 'Crowdin Bot <support+bot@crowdin.com>'
+          title: 'Sync Crowdin translations'
+          body: 'Updates gettext templates and Crowdin translations for UnifierTSL, TShockAPI, and Atelier.'
+          branch: 'i18n/crowdin-sync'
+          base: 'develop'
+          delete-branch: true
