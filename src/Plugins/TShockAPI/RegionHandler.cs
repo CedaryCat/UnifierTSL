@@ -111,27 +111,17 @@ namespace TShockAPI
             #region Region Information Display
 
             if (player.AwaitingName) {
-                bool includeUnprotected = false;
-                bool includeZIndexes = false;
-                bool persistentMode = false;
+                RegionNameDisplayFlags displayFlags = player.AwaitingNameFlags;
 
-                foreach (string nameParameter in player.AwaitingNameParameters) {
-                    // If this flag is passed the final output will include unprotected regions, i.e regions
-                    // that have the DisableBuild flag set to false
-                    if (nameParameter.Equals("-u", StringComparison.InvariantCultureIgnoreCase)) {
-                        includeUnprotected = true;
-                    }
+                // If this flag is passed the final output will include unprotected regions, i.e regions
+                // that have the DisableBuild flag set to false
+                bool includeUnprotected = (displayFlags & RegionNameDisplayFlags.IncludeUnprotected) != 0;
 
-                    // If this flag is passed the final output will include a region's Z index
-                    if (nameParameter.Equals("-z", StringComparison.InvariantCultureIgnoreCase)) {
-                        includeZIndexes = true;
-                    }
+                // If this flag is passed the final output will include a region's Z index
+                bool includeZIndexes = (displayFlags & RegionNameDisplayFlags.IncludeZIndexes) != 0;
 
-                    // If this flag is passed the player will continue to receive region information upon editing tiles
-                    if (nameParameter.Equals("-p", StringComparison.InvariantCultureIgnoreCase)) {
-                        persistentMode = true;
-                    }
-                }
+                // If this flag is passed the player will continue to receive region information upon editing tiles
+                bool persistentMode = (displayFlags & RegionNameDisplayFlags.Persistent) != 0;
 
                 var output = new List<string>();
                 foreach (Region region in _regionManager.Regions.Where(r => r.WorldID == worldId).OrderBy(r => r.Z).Reverse()) {
@@ -149,7 +139,7 @@ namespace TShockAPI
                         continue;
                     }
 
-                    output.Add($"{region.Name} {(includeZIndexes ? $"(Z:{region.Z}" : string.Empty)}");
+                    output.Add($"{region.Name}{(includeZIndexes ? $" (Z:{region.Z})" : string.Empty)}");
                 }
 
                 if (output.Count == 0) {
@@ -167,7 +157,7 @@ namespace TShockAPI
 
                 if (!persistentMode) {
                     player.AwaitingName = false;
-                    player.AwaitingNameParameters = null;
+                    player.AwaitingNameFlags = RegionNameDisplayFlags.None;
                 }
 
                 // Revert all tile changes and handle the event

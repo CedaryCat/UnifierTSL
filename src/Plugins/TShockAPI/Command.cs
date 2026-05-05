@@ -19,6 +19,7 @@ namespace TShockAPI
         public string Message { get; private set; }
         [MemberNotNull(nameof(Server))]
         public TSPlayer? Player { get; private set; }
+        public TSPlayer ExecutorActor { get; private set; }
         public bool Silent { get; private set; }
 
         /// <summary>
@@ -31,18 +32,27 @@ namespace TShockAPI
             get { return Player?.TPlayer; }
         }
 
-        public CommandArgs(string message, CommandExecutor executor, List<string> args) {
+        public CommandArgs(
+            string message,
+            CommandExecutor executor,
+            List<string> args) {
             Message = message;
             Executor = executor;
-            Player = executor.Player;
+            Player = executor.InGamePlayer;
+            ExecutorActor = executor.Player;
             Parameters = args;
             Silent = false;
         }
 
-        public CommandArgs(string message, bool silent, CommandExecutor sender, List<string> args) {
+        public CommandArgs(
+            string message,
+            bool silent,
+            CommandExecutor sender,
+            List<string> args) {
             Message = message;
             Executor = sender;
-            Player = sender.Player;
+            Player = sender.InGamePlayer;
+            ExecutorActor = sender.Player;
             Parameters = args;
             Silent = silent;
         }
@@ -144,15 +154,11 @@ namespace TShockAPI
         }
 
         public bool CanRun(CommandExecutor executor) {
-            if (executor.IsServer) {
-                return true;
-            }
             if (Permissions == null || Permissions.Count < 1) {
                 return true;
             }
-            var player = executor.Player!;
             foreach (var Permission in Permissions) {
-                if (player.HasPermission(Permission)) {
+                if (executor.HasPermission(Permission)) {
                     return true;
                 }
             }

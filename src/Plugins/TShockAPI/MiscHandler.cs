@@ -7,10 +7,13 @@ using Terraria;
 using Terraria.GameContent.Creative;
 using Terraria.ID;
 using Terraria.Localization;
+using TShockAPI.Commanding;
 using TShockAPI.Configuration;
 using TShockAPI.Hooks;
 using UnifiedServerProcess;
 using UnifierTSL;
+using UnifierTSL.Commanding;
+using UnifierTSL.Commanding.Composition;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
 using UnifierTSL.Servers;
@@ -633,7 +636,6 @@ namespace TShockAPI
                 if (!text.StartsWith(Config.GlobalSettings.CommandSpecifier) && !text.StartsWith(Config.GlobalSettings.CommandSilentSpecifier)) {
                     text = "/" + text;
                 }
-                isCmd = true;
             }
             else if ((text.StartsWith(Config.GlobalSettings.CommandSpecifier) || text.StartsWith(Config.GlobalSettings.CommandSilentSpecifier))
                     && !string.IsNullOrWhiteSpace(text[1..])) {
@@ -645,12 +647,31 @@ namespace TShockAPI
                 var executor = new CommandExecutor(sender.SourceServer, sender.UserId);
                 try {
                     args.Handled = true;
-                    if (!Commands.HandleCommand(executor, text)) {
-                        // This is required in case anyone makes HandleCommand return false again
-                        if (executor.IsClient) {
-                            executor.Player.SendErrorMessage(GetString("Unable to parse command. Please contact an administrator for assistance."));
+                    var endpointId = TSCommandBridge.ResolveEndpointId(executor);
+                    var request = TSCommandBridge.CreateDispatchRequest(
+                        executor,
+                        endpointId,
+                        text,
+                        TSCommandBridge.IsSilentInvocation(text));
+                    var result = CommandDispatchCoordinator.DispatchAsync(request)
+                        .GetAwaiter()
+                        .GetResult();
+                    if (result.Matched) {
+                        TSCommandBridge.AuditDispatch(executor, request, result);
+                        CommandSystem.GetOutcomeWriter<CommandExecutor>().Write(executor, result.Outcome ?? CommandOutcome.Empty);
+                    }
+                    else if (Commands.RequiresLegacyDispatch(executor, result.ExecutionRequest?.InvokedRoot)) {
+                        if (!Commands.HandleCommand(executor, text)) {
+                            if (executor.IsClient) {
+                                executor.Player.SendErrorMessage(GetString("Unable to parse command. Please contact an administrator for assistance."));
+                            }
+                            Log.Error(GetString("Unable to parse command '{0}' from player {1}.", text, executor.Name));
                         }
-                        Log.Error(GetString("Unable to parse command '{0}' from player {1}.", text, executor.Name));
+                    }
+                    else {
+                        CommandSystem.GetOutcomeWriter<CommandExecutor>().Write(
+                            executor,
+                            CommandOutcome.Error(GetString("Invalid command entered. Type {0}help for a list of valid commands.", Commands.Specifier)));
                     }
                 }
                 catch (Exception ex) {

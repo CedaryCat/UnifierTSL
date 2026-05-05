@@ -17,27 +17,41 @@ namespace TShockAPI
 {
     public readonly record struct CommandExecutor(ServerContext? SourceServer, byte UserId, TSRestPlayer? RestPlayer = null)
     {
+        public static CommandExecutor ForRest(TSRestPlayer restPlayer)
+        {
+            ArgumentNullException.ThrowIfNull(restPlayer);
+            return new CommandExecutor(null, byte.MaxValue, restPlayer);
+        }
+
         public readonly string Name {
             get {
                 return 
-                    SourceServer is null
+                    IsRest
                         ? RestPlayer
-                            ?.Name 
-                            ?? "UnifiedConsole"
-                        : IsClient
-                            ? TShock.Players[UserId].Name
-                            : $"Serv:{SourceServer.Name}";
+                            !.Name
+                        : SourceServer is null
+                            ? "UnifiedConsole"
+                            : IsClient
+                                ? TShock.Players[UserId].Name
+                                : $"Serv:{SourceServer.Name}";
             }
         }
-        public readonly bool IsServer => SourceServer is null || UserId == byte.MaxValue;
+
+        public readonly bool IsRest => RestPlayer is not null;
+        public readonly bool HasServerPrivileges => !IsRest && (SourceServer is null || UserId == byte.MaxValue);
+        public readonly bool IsServer => HasServerPrivileges;
         [MemberNotNullWhen(true, nameof(SourceServer))]
-        [MemberNotNullWhen(true, nameof(Player))]
-        public readonly bool IsClient => SourceServer is not null && UserId != byte.MaxValue;
-        public readonly TSPlayer Player => SourceServer is null
-            ? RestPlayer ?? (TSPlayer)TShock.TSLauncherPlr
-            : IsClient
-                ? TShock.Players[UserId]
-                : SourceServer.GetExtension<TSServerPlayer>();
+        public readonly bool IsClient => !IsRest && SourceServer is not null && UserId != byte.MaxValue;
+        public readonly TSPlayer? InGamePlayer => IsClient ? TShock.Players[UserId] : null;
+        // Legacy compatibility: Player remains the execution actor surface, which can be backed by
+        // launcher/server/rest pseudo players. Callers that require a real in-game player should use InGamePlayer.
+        public readonly TSPlayer Player => IsRest
+            ? RestPlayer!
+            : SourceServer is null
+                ? (TSPlayer)TShock.TSLauncherPlr
+                : IsClient
+                    ? TShock.Players[UserId]
+                    : SourceServer.GetExtension<TSServerPlayer>();
         public readonly UserAccount Account => Player?.Account ?? CoordAccount;
         public readonly Group Group => Player?.Group ?? superAdminGroup;
         public readonly string IP => Player?.IP ?? "127.0.0.1";
@@ -51,10 +65,10 @@ namespace TShockAPI
         private readonly IStandardLogger CurrentLogger => SourceServer?.Log ?? Log;
 
         public bool HasPermission(string permission) {
-            if (RestPlayer is not null) {
-                return RestPlayer.HasPermission(permission);
+            if (IsRest) {
+                return RestPlayer!.HasPermission(permission);
             }
-            if (IsServer) {
+            if (HasServerPrivileges) {
                 return true;
             }
             return TShock.Players[UserId].HasPermission(permission);

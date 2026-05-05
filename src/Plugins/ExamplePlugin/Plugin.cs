@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using UnifierTSL;
+using UnifierTSL.Commanding.Composition;
 using UnifierTSL.Logging;
 using UnifierTSL.Module;
 using UnifierTSL.Plugins;
@@ -13,6 +14,8 @@ namespace ExamplePlugin
     [PluginMetadata("ExamplePlugin", "1.0.0", "Anonymous", "A test plugin for UnifierTSL")]
     public class Plugin : BasePlugin, ILoggerHost
     {
+        private IDisposable? commandingRegistration;
+
         public string Name => "ExamplePlugin";
         public string? CurrentLogCategory => null;
 
@@ -50,6 +53,23 @@ namespace ExamplePlugin
             var config = await configHandle.RequestAsync(cancellationToken: cancellationToken);
 
             logger.Info($"Config loaded: {config.Name} {config.Message}");
+            commandingRegistration = CommandSystem.Install(static context =>
+                context.AddControllerGroup<ExampleTerminalCommandController>());
+        }
+
+        public override Task ShutdownAsync(CancellationToken cancellationToken = default) {
+            UnregisterRuntimeBindings();
+            return Task.CompletedTask;
+        }
+
+        public override ValueTask DisposeAsync(bool isDisposing) {
+            UnregisterRuntimeBindings();
+            return base.DisposeAsync(isDisposing);
+        }
+
+        private void UnregisterRuntimeBindings() {
+            commandingRegistration?.Dispose();
+            commandingRegistration = null;
         }
     }
 }

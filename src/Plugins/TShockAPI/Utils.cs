@@ -277,47 +277,25 @@ namespace TShockAPI
 		/// <returns>List of Items</returns>
 		public static List<Item> GetItemByName(string name)
 		{
-			var startswith = new List<int>();
-			var contains = new List<int>();
-			for (int i = 1; i < ItemID.Count; i++)
-			{
-				var currentName = Lang.GetItemNameValue(i);
-				if (!string.IsNullOrEmpty(currentName))
-				{
-					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
-						return new List<Item> { GetItemById(i) };
-					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
-					{
-						startswith.Add(i);
-						continue;
-					}
-					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
-					{
-						contains.Add(i);
-						continue;
-					}
-				}
-				currentName = EnglishLanguage.GetItemNameById(i);
-				if (!string.IsNullOrEmpty(currentName))
-				{
-					if (currentName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
-						return new List<Item> { GetItemById(i) };
-					if (currentName.StartsWith(name, StringComparison.InvariantCultureIgnoreCase))
-					{
-						startswith.Add(i);
-						continue;
-					}
-					if (currentName.Contains(name, StringComparison.InvariantCultureIgnoreCase))
-					{
-						contains.Add(i);
-						continue;
-					}
-				}
-			}
+			if (string.IsNullOrWhiteSpace(name))
+				return new List<Item>();
 
-			if (startswith.Count != 1)
-				startswith.AddRange(contains);
-			return startswith.Select(GetItemById).ToList();
+			var exactIds = UnifierTSL.Localization.Terraria.TerrariaItemNameLookup.GetIdsByExactName(name);
+			if (exactIds.Count > 0)
+				return new List<Item> { GetItemById(exactIds[0]) };
+
+			var prefixIds = UnifierTSL.Localization.Terraria.TerrariaItemNameLookup.GetIdsByPrefix(name);
+			if (prefixIds.Count == 1)
+				return prefixIds.Select(GetItemById).ToList();
+
+			var matchIds = prefixIds.Count > 1
+				? prefixIds
+				: prefixIds
+					.Concat(UnifierTSL.Localization.Terraria.TerrariaItemNameLookup.GetIdsByContains(name))
+					.Distinct()
+					.OrderBy(static id => id)
+					.ToList();
+			return matchIds.Select(GetItemById).ToList();
 		}
 
 		/// <summary>

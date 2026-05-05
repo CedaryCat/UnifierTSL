@@ -217,7 +217,7 @@ namespace TShockAPI.DB
                         Permissions.createdumps));
             }
 
-            // Load Permissions from the DB
+            // Initialize Permissions from the DB
             LoadPermisions();
 
             Group.DefaultGroup = GetGroupByName(TShock.Config.GlobalSettings.DefaultGuestGroupName);

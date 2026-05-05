@@ -5,6 +5,8 @@ using System.Collections.Immutable;
 using System.Net;
 using System.Reflection;
 using Terraria;
+using TShockAPI.Commanding;
+using TShockAPI.Commanding.Jobs;
 using TShockAPI.CLI;
 using TShockAPI.ConsolePrompting;
 using TShockAPI.Configuration;
@@ -17,6 +19,8 @@ using UnifierTSL.Events.Handlers;
 using UnifierTSL.Logging;
 using UnifierTSL.Plugins;
 using UnifierTSL.Servers;
+using UnifierTSL.Commanding.Composition;
+using UnifierTSL.Commanding.Prompting;
 
 namespace TShockAPI
 {
@@ -24,6 +28,9 @@ namespace TShockAPI
     [PluginMetadata("TShock", "6.0.0", "The TShock Team", "The administration modification of the future.")]
     public class TShock : BasePlugin
     {
+        private IDisposable? runtimeRegistrations;
+        private static TShockCommandJobRunner? commandJobRunner;
+
         class LogHost : ILoggerHost {
             string ILoggerHost.Name => "TShock";
             string? ILoggerHost.CurrentLogCategory => null;
@@ -89,6 +96,8 @@ namespace TShockAPI
         /// Static reference to a <see cref="CommandLineParser"/> used for simple command-line parsing
         /// </summary>
         public static CommandLineParser CliParser { get; } = new CommandLineParser();
+        internal static TShockCommandJobRunner CommandJobRunner => commandJobRunner
+            ?? throw new InvalidOperationException("TShock command jobs are not initialized.");
         /// <summary>
         /// only used for creating sample like item, projectile and npc (SetDefaults() requires it).
         /// </summary>
@@ -166,8 +175,11 @@ namespace TShockAPI
                 Geo = new GeoIPCountry(geoippath);
 
             MiscHandler.Attach();
-            Commands.InitCommands();
-            TShockConsolePromptInstaller.Install();
+            runtimeRegistrations += Commands.InitCommands();
+            runtimeRegistrations += CommandSystem.Install(TShockCommandRegistration.Configure);
+            runtimeRegistrations += TerminalCommandDispatchRegistry.Register<TShockTerminalCommandDispatchAdapter>();
+            runtimeRegistrations += TShockPromptInstaller.Install();
+            runtimeRegistrations += InstallCommandJobRunner();
             GetDataHandlers.InitGetDataHandler();
 
             ModuleManager.Initialise([this]);
@@ -262,10 +274,48 @@ namespace TShockAPI
             CliParser.ParseFromSource(parms);
         }
 
+        public override Task ShutdownAsync(CancellationToken cancellationToken = default) {
+            DisposeRuntimeRegistrations();
+            return Task.CompletedTask;
+        }
+
         public override ValueTask DisposeAsync(bool isDisposing) {
+            DisposeRuntimeRegistrations();
             DisposingEvent?.Invoke();
             DB?.Dispose();
             return base.DisposeAsync(isDisposing);
+        }
+
+        private void DisposeRuntimeRegistrations() {
+            runtimeRegistrations?.Dispose();
+            runtimeRegistrations = null;
+        }
+
+        private static IDisposable InstallCommandJobRunner() {
+            if (commandJobRunner is not null) {
+                throw new InvalidOperationException("TShock command jobs are already initialized.");
+            }
+
+            commandJobRunner = new TShockCommandJobRunner();
+            return new CommandJobRunnerRegistration(commandJobRunner);
+        }
+
+        private sealed class CommandJobRunnerRegistration(TShockCommandJobRunner runner) : IDisposable
+        {
+            private TShockCommandJobRunner? runner = runner;
+
+            public void Dispose() {
+                var current = Interlocked.Exchange(ref runner, null);
+                if (current is null) {
+                    return;
+                }
+
+                if (ReferenceEquals(commandJobRunner, current)) {
+                    commandJobRunner = null;
+                }
+
+                current.Dispose();
+            }
         }
     }
 }
