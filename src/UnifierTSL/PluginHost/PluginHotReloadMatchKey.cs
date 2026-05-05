@@ -7,9 +7,9 @@ namespace UnifierTSL.PluginHost
         public static string Create(string pluginFilePath, string entryPoint)
         {
             if (string.IsNullOrWhiteSpace(pluginFilePath))
-                throw new ArgumentException("Plugin file path cannot be null or empty.", nameof(pluginFilePath));
+                throw new ArgumentException(GetString("Plugin file path cannot be null or empty."), nameof(pluginFilePath));
             if (string.IsNullOrWhiteSpace(entryPoint))
-                throw new ArgumentException("Entry point cannot be null or empty.", nameof(entryPoint));
+                throw new ArgumentException(GetString("Entry point cannot be null or empty."), nameof(entryPoint));
 
             string normalizedPath = Path.GetFullPath(pluginFilePath).Trim();
             string normalizedEntryPoint = entryPoint.Trim();

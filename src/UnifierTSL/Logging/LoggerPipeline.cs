@@ -5,11 +5,24 @@ using UnifierTSL.Logging.LogWriters;
 
 namespace UnifierTSL.Logging
 {
-    internal sealed record LoggerPipelineSnapshot(
-        ImmutableArray<ILogMetadataInjector> MetadataInjectors,
-        ILogFilter Filter,
-        ILogWriter Writer)
+    internal sealed class LoggerPipelineSnapshot
     {
+        public LoggerPipelineSnapshot(
+            ImmutableArray<ILogMetadataInjector> metadataInjectors,
+            ILogFilter filter,
+            ILogWriter writer)
+        {
+            MetadataInjectors = metadataInjectors;
+            Filter = filter;
+            Writer = writer;
+        }
+
+        public ImmutableArray<ILogMetadataInjector> MetadataInjectors { get; }
+
+        public ILogFilter Filter { get; }
+
+        public ILogWriter Writer { get; }
+
         public static readonly LoggerPipelineSnapshot Empty = new(
             ImmutableArray<ILogMetadataInjector>.Empty,
             EmptyLogFilter.Instance,
@@ -28,7 +41,7 @@ namespace UnifierTSL.Logging
                 ILogFilter resolved = value ?? EmptyLogFilter.Instance;
                 UpdateSnapshot(current => ReferenceEquals(current.Filter, resolved)
                     ? current
-                    : current with { Filter = resolved });
+                    : new LoggerPipelineSnapshot(current.MetadataInjectors, resolved, current.Writer));
             }
         }
 
@@ -38,42 +51,42 @@ namespace UnifierTSL.Logging
                 ILogWriter resolved = value ?? EmptyLogWriter.Instance;
                 UpdateSnapshot(current => ReferenceEquals(current.Writer, resolved)
                     ? current
-                    : current with { Writer = resolved });
+                    : new LoggerPipelineSnapshot(current.MetadataInjectors, current.Filter, resolved));
             }
         }
 
         public IReadOnlyList<ILogMetadataInjector> MetadataInjectors => Snapshot.MetadataInjectors;
 
         public void AddMetadataInjector(ILogMetadataInjector injector) {
-            ArgumentNullException.ThrowIfNull(injector);
             UpdateSnapshot(current => current.MetadataInjectors.Contains(injector)
                 ? current
-                : current with { MetadataInjectors = current.MetadataInjectors.Add(injector) });
+                : new LoggerPipelineSnapshot(current.MetadataInjectors.Add(injector), current.Filter, current.Writer));
         }
 
         public void RemoveMetadataInjector(ILogMetadataInjector injector) {
-            ArgumentNullException.ThrowIfNull(injector);
-            UpdateSnapshot(current => current with { MetadataInjectors = current.MetadataInjectors.Remove(injector) });
+            UpdateSnapshot(current => new LoggerPipelineSnapshot(
+                current.MetadataInjectors.Remove(injector),
+                current.Filter,
+                current.Writer));
         }
 
         public void AddWriter(ILogWriter writer) {
-            ArgumentNullException.ThrowIfNull(writer);
-            UpdateSnapshot(current => current with {
-                Writer = current.Writer is EmptyLogWriter ? writer : current.Writer + writer
-            });
+            UpdateSnapshot(current => new LoggerPipelineSnapshot(
+                current.MetadataInjectors,
+                current.Filter,
+                current.Writer is EmptyLogWriter ? writer : current.Writer + writer));
         }
 
         public void RemoveWriter(ILogWriter writer) {
-            ArgumentNullException.ThrowIfNull(writer);
-            UpdateSnapshot(current => current with {
-                Writer = current.Writer is EmptyLogWriter
+            UpdateSnapshot(current => new LoggerPipelineSnapshot(
+                current.MetadataInjectors,
+                current.Filter,
+                current.Writer is EmptyLogWriter
                     ? current.Writer
-                    : current.Writer - writer ?? EmptyLogWriter.Instance
-            });
+                    : current.Writer - writer ?? EmptyLogWriter.Instance));
         }
 
         private void UpdateSnapshot(Func<LoggerPipelineSnapshot, LoggerPipelineSnapshot> updater) {
-            ArgumentNullException.ThrowIfNull(updater);
 
             while (true) {
                 LoggerPipelineSnapshot current = Snapshot;

@@ -43,12 +43,12 @@ namespace UnifierTSL.Logging.LogTrace
 
         public static unsafe SpanId Parse(ReadOnlySpan<char> hex) {
             if (hex.Length != Size * 2)
-                throw new ArgumentException($"SpanId hex string must be {Size * 2} characters.", nameof(hex));
+                throw new ArgumentException(GetString($"SpanId hex string must be {Size * 2} characters."), nameof(hex));
 
             Span<byte> buffer = stackalloc byte[Size];
             System.Buffers.OperationStatus status = Convert.FromHexString(hex, buffer, out int charsConsumed, out int bytesWritten);
             if (status != System.Buffers.OperationStatus.Done || charsConsumed != hex.Length || bytesWritten != Size)
-                throw new FormatException("Invalid hex format for SpanId.");
+                throw new FormatException(GetString("Invalid hex format for SpanId."));
 
             return Unsafe.As<byte, SpanId>(ref buffer[0]);
         }
@@ -93,7 +93,7 @@ namespace UnifierTSL.Logging.LogTrace
 
         public void ToHexFormat(Span<char> destination) {
             if (destination.Length < Size * 2) {
-                throw new ArgumentException($"SpanId hex string must be {Size * 2} characters.", nameof(destination));
+                throw new ArgumentException(GetString($"SpanId hex string must be {Size * 2} characters."), nameof(destination));
             }
             ref byte byteRef = ref Unsafe.AsRef(in v0);
             ref char charRef = ref destination[0];

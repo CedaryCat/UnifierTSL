@@ -8,7 +8,7 @@ namespace UnifierTSL.Launcher
             ScalarSettings.ServerPassword,
             ScalarSettings.JoinServer,
             ScalarSettings.ColorfulConsoleStatus,
-            ConsoleStatusSetting.Spec,
+            StatusProjectionSetting.Spec,
             AutoStartServers.Spec,
         ];
 
@@ -60,24 +60,24 @@ namespace UnifierTSL.Launcher
         }
 
         public static LauncherRuntimeSettings ResolveRuntimeSettings(RootLauncherConfiguration config) {
-            LauncherRuntimeSettings settings = new();
+            var builder = LauncherRuntimeSettings.Builder.Create();
             foreach (ILauncherSettingSpec spec in all) {
-                settings = spec.ApplyConfiguredValue(config, settings);
+                spec.ApplyConfiguredValue(config, builder);
             }
 
-            return settings;
+            return builder.Build();
         }
 
         public static LauncherRuntimeSettings ApplyInteractiveInput(
             LauncherRuntimeSettings current,
             InteractiveInput input) {
 
-            LauncherRuntimeSettings applied = current;
+            var builder = LauncherRuntimeSettings.Builder.From(current);
             foreach (ILauncherSettingSpec spec in all) {
-                applied = spec.ApplyInteractiveInput(applied, input);
+                spec.ApplyInteractiveInput(builder, input);
             }
 
-            return applied;
+            return builder.Build();
         }
 
         public static LauncherRuntimeSettings ApplyReload(
@@ -85,12 +85,12 @@ namespace UnifierTSL.Launcher
             LauncherRuntimeSettings desired,
             ReloadContext context) {
 
-            LauncherRuntimeSettings applied = current;
+            var builder = LauncherRuntimeSettings.Builder.From(current);
             foreach (ILauncherSettingSpec spec in all) {
-                applied = spec.ApplyReload(applied, current, desired, context);
+                spec.ApplyReload(builder, current, desired, context);
             }
 
-            return applied;
+            return builder.Build();
         }
 
         private static Dictionary<string, CliBinding> BuildCliBindings(IEnumerable<ILauncherSettingSpec> specs) {

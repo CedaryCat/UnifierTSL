@@ -1,6 +1,7 @@
 using Terraria;
 using UnifiedServerProcess;
-using UnifierTSL.CLI;
+using UnifierTSL.Surface.Adapter.Cli.Server;
+using UnifierTSL.Surface.Hosting.Server;
 using UnifierTSL.Extensions;
 using UnifierTSL.Logging;
 using UnifierTSL.Logging.LogWriters;
@@ -24,6 +25,10 @@ namespace UnifierTSL.Servers
 
         public string? CurrentLogCategory { get; set; }
         string ILoggerHost.Name => $"Log";
+        public new ServerSurfaceConsole Console {
+            get => (ServerSurfaceConsole)base.Console;
+            private set => base.Console = value;
+        }
 
         internal static void Initialize() {
             On.Terraria.NetplaySystemContext.StartServer += StartServer;
@@ -48,11 +53,11 @@ namespace UnifierTSL.Servers
             orig(self, name);
         }
 
-        protected virtual ConsoleSystemContext CreateConsoleService()
-            => UnifierApi.EventHub.Server.InvokeCreateServerConsoleService(this) ?? new RemoteConsoleService(this);
+        protected virtual ServerSurfaceConsole CreateSurfaceConsole() => new CliServerSurfaceConsole(this);
 
         public ServerContext(string serverName, IWorldDataProvider worldData, Logger? overrideLogCore = null) : base(serverName) {
-            Console = CreateConsoleService();
+            Dispatcher = CreateDispatcher();
+            Console = CreateSurfaceConsole();
             PacketReceiver = new ClientPacketReceiver(this);
             Performance = new(this);
 
@@ -116,6 +121,7 @@ namespace UnifierTSL.Servers
         private bool disposedValue;
         protected virtual void Dispose(bool disposing) {
             Netplay.Disconnect = true;
+            Dispatcher.Dispose();
             Console.Dispose();
             if (!disposedValue) {
                 if (disposing) {

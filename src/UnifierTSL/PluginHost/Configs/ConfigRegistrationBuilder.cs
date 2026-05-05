@@ -82,7 +82,6 @@ namespace UnifierTSL.PluginHost.Configs
         }
 
         IConfigRegistrationBuilder<TConfig> IConfigRegistrationBuilder<TConfig>.WithDefault(Func<TConfig> factory) {
-            ArgumentNullException.ThrowIfNull(factory);
             DefaultFactory = factory;
             return this;
         }

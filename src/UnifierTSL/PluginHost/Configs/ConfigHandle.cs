@@ -116,7 +116,7 @@ namespace UnifierTSL.PluginHost.Configs
                 CachedConfig = FormatProvider.Deserialize<TConfig>(result);
 
                 Logger.LogHandledExceptionWithMetadata(
-                    message: $"Failed to serialize config: '{Option.RelativePath}'.",
+                    message: GetString($"Failed to serialize config: '{Option.RelativePath}'."),
                     ex: ex,
                     metadata: [new("PluginFile", Owner.Location.FilePath)]);
             }
@@ -143,7 +143,7 @@ namespace UnifierTSL.PluginHost.Configs
                         break;
                 }
                 Logger.LogHandledExceptionWithMetadata(
-                    message: $"Failed to read config: '{Option.RelativePath}' when requesting, return by mode: {Option.DeseriFailureHandling}.",
+                    message: GetString($"Failed to read config: '{Option.RelativePath}' when requesting, return by mode: {Option.DeseriFailureHandling}."),
                     ex: readException,
                     metadata: [new("PluginFile", Owner.Location.FilePath)]);
 
@@ -175,7 +175,7 @@ namespace UnifierTSL.PluginHost.Configs
                         break;
                 }
                 Logger.LogHandledExceptionWithMetadata(
-                    message: $"Failed to deserialize config: '{Option.RelativePath}' when reloading, skipping reload.",
+                    message: GetString($"Failed to deserialize config: '{Option.RelativePath}' when reloading, skipping reload."),
                     ex: ex,
                     metadata: [new("PluginFile", Owner.Location.FilePath)]);
                 return CachedConfig;
@@ -204,7 +204,7 @@ namespace UnifierTSL.PluginHost.Configs
                         throw;
                     }
                     Logger.LogHandledExceptionWithMetadata(
-                        message: $"Failed to write config: '{Option.RelativePath}'.",
+                        message: GetString($"Failed to write config: '{Option.RelativePath}'."),
                         ex: ex,
                         metadata: [new("PluginFile", Owner.Location.FilePath)]);
                 }
@@ -228,7 +228,7 @@ namespace UnifierTSL.PluginHost.Configs
                         throw;
                     }
                     Logger.LogHandledExceptionWithMetadata(
-                        message: $"Failed to write config: '{Option.RelativePath}'.",
+                        message: GetString($"Failed to write config: '{Option.RelativePath}'."),
                         ex: ex,
                         metadata: [new("PluginFile", Owner.Location.FilePath)]);
                 }
@@ -253,7 +253,7 @@ namespace UnifierTSL.PluginHost.Configs
                         throw;
                     }
                     Logger.LogHandledExceptionWithMetadata(
-                        message: $"Failed to read config: '{Option.RelativePath}' when reloading, skipping reload.",
+                        message: GetString($"Failed to read config: '{Option.RelativePath}' when reloading, skipping reload."),
                         ex: ex,
                         metadata: [new("PluginFile", Owner.Location.FilePath)]);
                     return;
@@ -268,7 +268,7 @@ namespace UnifierTSL.PluginHost.Configs
                     throw;
                 }
                 Logger.LogHandledExceptionWithMetadata(
-                    message: $"Failed to deserialize config: '{Option.RelativePath}' when reloading, skipping reload.",
+                    message: GetString($"Failed to deserialize config: '{Option.RelativePath}' when reloading, skipping reload."),
                     ex: ex,
                     metadata: [new("PluginFile", Owner.Location.FilePath)]);
             }
@@ -291,7 +291,7 @@ namespace UnifierTSL.PluginHost.Configs
                         throw;
                     }
                     Logger.LogHandledExceptionWithMetadata(
-                        message: $"Failed to read config: '{Option.RelativePath}' when reloading, skipping reload.",
+                        message: GetString($"Failed to read config: '{Option.RelativePath}' when reloading, skipping reload."),
                         ex: ex,
                         metadata: [new("PluginFile", Owner.Location.FilePath)]);
                     return;
@@ -306,7 +306,7 @@ namespace UnifierTSL.PluginHost.Configs
                     throw;
                 }
                 Logger.LogHandledExceptionWithMetadata(
-                    message: $"Failed to deserialize config: '{Option.RelativePath}' when reloading, skipping reload.",
+                    message: GetString($"Failed to deserialize config: '{Option.RelativePath}' when reloading, skipping reload."),
                     ex: ex,
                     metadata: [new("PluginFile", Owner.Location.FilePath)]);
             }

@@ -1,5 +1,6 @@
 using Terraria.Localization;
-using UnifierTSL.CLI;
+using UnifierTSL.Surface.Adapter.Cli.Terminal;
+using UnifierTSL.Surface.Hosting;
 using UnifierTSL.PluginHost;
 
 namespace UnifierTSL
@@ -7,6 +8,7 @@ namespace UnifierTSL
     internal class Program
     {
         private static void Main(string[] args) {
+            LauncherSurfaceConsole.Initialize(new TerminalLauncherSurfaceHost());
             Initializer.InitializeResolver();
             UnifierApi.HandleCommandLinePreRun(args);
             UnifierApi.PrepareRuntime(args);
@@ -38,7 +40,7 @@ Version Info:
   UnifierApi v{version.UnifierApiVersion} & PluginApi v{PluginOrchestrator.ApiVersion}
 Current Process ID: {Environment.ProcessId}"));
 
-            WorkRunner.RunConsoleActivity("Init", GetString("Global initialization started..."), () => {
+            WorkRunner.RunSurfaceActivity("Init", GetString("Global initialization started..."), () => {
                 Initializer.Initialize();
                 UnifierApi.InitializeCore();
             });
@@ -46,7 +48,6 @@ Current Process ID: {Environment.ProcessId}"));
             UnifierApi.CompleteLauncherInitialization();
 
             UnifiedServerCoordinator.Launch(UnifierApi.ListenPort, UnifierApi.ServerPassword);
-            UnifierApi.StartRootConfigMonitoring();
 
             UnifierApi.UpdateTitle();
 

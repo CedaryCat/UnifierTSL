@@ -15,7 +15,7 @@ namespace UnifierTSL.Launcher
             resolveRuntime: LauncherSettingValues.ResolveConfiguredLogMode,
             serializeConfig: LauncherSettingValues.DescribeLogMode,
             readRuntime: static settings => settings.LogMode,
-            writeRuntime: static (settings, value) => settings with { LogMode = value },
+            writeRuntime: static (builder, value) => builder.LogMode = value,
             applyReload: ApplyLogModeReload);
 
         public static ILauncherSettingSpec ListenPort { get; } = new ScalarSettingSpec<int, int>(
@@ -31,7 +31,7 @@ namespace UnifierTSL.Launcher
             resolveRuntime: static value => value,
             serializeConfig: static value => value,
             readRuntime: static settings => settings.ListenPort,
-            writeRuntime: static (settings, value) => settings with { ListenPort = value },
+            writeRuntime: static (builder, value) => builder.ListenPort = value,
             applyReload: ApplyListenPortReload,
             readInteractiveValue: static input => OptionalValue<int>.Some(input.ListenPort));
 
@@ -50,7 +50,7 @@ namespace UnifierTSL.Launcher
             resolveRuntime: static value => value,
             serializeConfig: static value => value,
             readRuntime: static settings => settings.ServerPassword,
-            writeRuntime: static (settings, value) => settings with { ServerPassword = value },
+            writeRuntime: static (builder, value) => builder.ServerPassword = value,
             applyReload: ApplyServerPasswordReload,
             readInteractiveValue: static input => OptionalValue<string?>.Some(input.ServerPassword));
 
@@ -69,7 +69,7 @@ namespace UnifierTSL.Launcher
             resolveRuntime: LauncherSettingValues.ResolveConfiguredJoinServerMode,
             serializeConfig: LauncherSettingValues.DescribeJoinServerMode,
             readRuntime: static settings => settings.JoinServer,
-            writeRuntime: static (settings, value) => settings with { JoinServer = value },
+            writeRuntime: static (builder, value) => builder.JoinServer = value,
             applyReload: ApplyJoinServerReload,
             configEquals: static (left, right) => LauncherSettingValues.OrdinalIgnoreCaseEquals(left, right));
 
@@ -90,7 +90,7 @@ namespace UnifierTSL.Launcher
             resolveRuntime: static value => value,
             serializeConfig: static value => value,
             readRuntime: static settings => settings.ColorfulConsoleStatus,
-            writeRuntime: static (settings, value) => settings with { ColorfulConsoleStatus = value },
+            writeRuntime: static (builder, value) => builder.ColorfulConsoleStatus = value,
             applyReload: ApplyColorfulConsoleStatusReload);
 
         private static OptionalValue<int> ParseListenPortCli(string value) {
@@ -135,8 +135,8 @@ namespace UnifierTSL.Launcher
             return OptionalValue<bool>.None;
         }
 
-        private static LauncherRuntimeSettings ApplyLogModeReload(
-            LauncherRuntimeSettings applied,
+        private static void ApplyLogModeReload(
+            LauncherRuntimeSettings.Builder builder,
             LogPersistenceMode current,
             LogPersistenceMode desired,
             ReloadContext _) {
@@ -147,24 +147,25 @@ namespace UnifierTSL.Launcher
                     category: LauncherCategories.Config);
             }
 
-            return applied;
+            builder.LogMode = desired;
         }
 
-        private static LauncherRuntimeSettings ApplyListenPortReload(
-            LauncherRuntimeSettings applied,
+        private static void ApplyListenPortReload(
+            LauncherRuntimeSettings.Builder builder,
             int current,
             int desired,
             ReloadContext context) {
 
             if (current == desired) {
-                return applied with { ListenPort = desired };
+                builder.ListenPort = desired;
+                return;
             }
 
             if (!LauncherPortRules.IsValidListenPort(desired)) {
                 UnifierApi.Logger.Warning(
                     GetParticularString("{0} is current listen port, {1} is desired listen port, {2} is active listen port", $"launcher.listenPort changed from '{LauncherSettingValues.DescribeListenPort(current)}' to '{LauncherSettingValues.DescribeListenPort(desired)}', but the new value is invalid. Keeping port {UnifiedServerCoordinator.ListenPort}."),
                     category: LauncherCategories.Config);
-                return applied;
+                return;
             }
 
             if (UnifiedServerCoordinator.RebindListener(desired)) {
@@ -172,17 +173,17 @@ namespace UnifierTSL.Launcher
                 UnifierApi.Logger.Info(
                     GetParticularString("{0} is current listen port, {1} is desired listen port", $"launcher.listenPort changed from '{LauncherSettingValues.DescribeListenPort(current)}' to '{LauncherSettingValues.DescribeListenPort(desired)}'. The active listener has been rebound."),
                     category: LauncherCategories.Config);
-                return applied with { ListenPort = desired };
+                builder.ListenPort = desired;
+                return;
             }
 
             UnifierApi.Logger.Warning(
                 GetParticularString("{0} is current listen port, {1} is desired listen port, {2} is active listen port", $"launcher.listenPort changed from '{LauncherSettingValues.DescribeListenPort(current)}' to '{LauncherSettingValues.DescribeListenPort(desired)}', but rebinding failed. Keeping port {UnifiedServerCoordinator.ListenPort}."),
                 category: LauncherCategories.Config);
-            return applied;
         }
 
-        private static LauncherRuntimeSettings ApplyServerPasswordReload(
-            LauncherRuntimeSettings applied,
+        private static void ApplyServerPasswordReload(
+            LauncherRuntimeSettings.Builder builder,
             string? current,
             string? desired,
             ReloadContext context) {
@@ -196,11 +197,11 @@ namespace UnifierTSL.Launcher
                     category: LauncherCategories.Config);
             }
 
-            return applied with { ServerPassword = desiredPassword };
+            builder.ServerPassword = desiredPassword;
         }
 
-        private static LauncherRuntimeSettings ApplyJoinServerReload(
-            LauncherRuntimeSettings applied,
+        private static void ApplyJoinServerReload(
+            LauncherRuntimeSettings.Builder builder,
             JoinServerMode current,
             JoinServerMode desired,
             ReloadContext _) {
@@ -211,11 +212,11 @@ namespace UnifierTSL.Launcher
                     category: LauncherCategories.Config);
             }
 
-            return applied with { JoinServer = desired };
+            builder.JoinServer = desired;
         }
 
-        private static LauncherRuntimeSettings ApplyColorfulConsoleStatusReload(
-            LauncherRuntimeSettings applied,
+        private static void ApplyColorfulConsoleStatusReload(
+            LauncherRuntimeSettings.Builder builder,
             bool current,
             bool desired,
             ReloadContext _) {
@@ -227,7 +228,7 @@ namespace UnifierTSL.Launcher
                     category: LauncherCategories.Config);
             }
 
-            return applied with { ColorfulConsoleStatus = desired };
+            builder.ColorfulConsoleStatus = desired;
         }
 
         private static OptionalValue<T> GetNullableValue<T>(T? value)

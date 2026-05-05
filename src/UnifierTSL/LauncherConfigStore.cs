@@ -11,15 +11,12 @@ namespace UnifierTSL
         };
 
         private readonly Lock ioGate = new();
-        private bool legacyRootConfigWarningIssued;
 
         public const string RootConfigRelativeDir = "config";
         public string RootConfigRelativePath => Path.Combine(RootConfigRelativeDir, "config.json");
-        public string RootConfigPath => Path.Combine(UnifierApi.BaseDirectory, RootConfigRelativePath);
-        private string LegacyRootConfigPath => Path.Combine(UnifierApi.BaseDirectory, "config.json");
+        public string RootConfigPath => UnifierApi.RootConfigPath;
 
         public RootLauncherConfiguration LoadForStartup() {
-            WarnAboutLegacyRootConfigIfPresent();
             EnsureRootConfigDirectoryExists();
 
             if (!File.Exists(RootConfigPath)) {
@@ -96,17 +93,6 @@ namespace UnifierTSL
             }
         }
 
-        private void WarnAboutLegacyRootConfigIfPresent() {
-            if (legacyRootConfigWarningIssued || !File.Exists(LegacyRootConfigPath)) {
-                return;
-            }
-
-            legacyRootConfigWarningIssued = true;
-            UnifierApi.Logger.Warning(
-                GetParticularString("{0} is legacy root config path, {1} is active root config path", $"Legacy root config '{LegacyRootConfigPath}' is ignored. Use '{RootConfigPath}' instead."),
-                category: "Config");
-        }
-
         private void EnsureRootConfigDirectoryExists() {
             string? directory = Path.GetDirectoryName(RootConfigPath);
             if (!string.IsNullOrEmpty(directory)) {
@@ -136,7 +122,7 @@ namespace UnifierTSL
             normalized.Logging ??= new LoggingConfiguration();
             normalized.Launcher ??= new LauncherConfiguration();
             normalized.Launcher.AutoStartServers ??= [];
-            normalized.Launcher.ConsoleStatus ??= new ConsoleStatusConfiguration();
+            normalized.Launcher.ConsoleStatus ??= new StatusProjectionConfiguration();
             normalized.Launcher.ConsoleStatus.BandwidthUnit ??= "bytes";
             return normalized;
         }

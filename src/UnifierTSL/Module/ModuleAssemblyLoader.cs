@@ -182,7 +182,7 @@ namespace UnifierTSL.Module
                 return;
             }
             foreach (LoadedModule m in module.GetDependentOrder(true, false)) {
-                Logger.Debug($"Unloading module {m.Signature.FilePath}");
+                Logger.Debug(GetString($"Unloading module {m.Signature.FilePath}"));
                 m.Unload();
                 moduleCache.Remove(m.Signature.FilePath, out _);
             }
@@ -510,7 +510,7 @@ namespace UnifierTSL.Module
                                             throw ex;
                                         }
                                         else {
-                                            throw new Exception($"Failed to create file '{Path.Combine(moduleDir, newPath)}'");
+                                            throw new Exception(GetString($"Failed to create file '{Path.Combine(moduleDir, newPath)}'"));
                                         }
                                     }
                                     // Copy the file content to the new versioned file
@@ -531,7 +531,7 @@ namespace UnifierTSL.Module
                                 throw ex;
                             }
                             else {
-                                throw new Exception($"Failed to create file '{Path.Combine(moduleDir, relativeDepPath)}'");
+                                throw new Exception(GetString($"Failed to create file '{Path.Combine(moduleDir, relativeDepPath)}'"));
                             }
                         }
                     }

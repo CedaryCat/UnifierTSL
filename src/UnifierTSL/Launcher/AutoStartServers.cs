@@ -449,32 +449,25 @@ namespace UnifierTSL.Launcher
                 }
             }
 
-            public LauncherRuntimeSettings ApplyConfiguredValue(
+            public void ApplyConfiguredValue(
                 RootLauncherConfiguration config,
-                LauncherRuntimeSettings settings) {
-
-                return settings with {
-                    AutoStartServers = CloneList(config.Launcher.AutoStartServers),
-                };
+                LauncherRuntimeSettings.Builder builder) {
+                builder.AutoStartServers = CloneList(config.Launcher.AutoStartServers);
             }
 
-            public LauncherRuntimeSettings ApplyInteractiveInput(
-                LauncherRuntimeSettings settings,
+            public void ApplyInteractiveInput(
+                LauncherRuntimeSettings.Builder builder,
                 InteractiveInput input) {
-
-                return settings;
             }
 
-            public LauncherRuntimeSettings ApplyReload(
-                LauncherRuntimeSettings applied,
+            public void ApplyReload(
+                LauncherRuntimeSettings.Builder builder,
                 LauncherRuntimeSettings current,
                 LauncherRuntimeSettings desired,
                 ReloadContext context) {
 
                 ApplyDiffs(current.AutoStartServers, desired.AutoStartServers);
-                return applied with {
-                    AutoStartServers = CloneList(desired.AutoStartServers),
-                };
+                builder.AutoStartServers = CloneList(desired.AutoStartServers);
             }
         }
     }

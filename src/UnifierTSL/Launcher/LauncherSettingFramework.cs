@@ -13,10 +13,10 @@ namespace UnifierTSL.Launcher
         void CopyConfig(RootLauncherConfiguration source, RootLauncherConfiguration destination);
         bool ConfigEquivalent(RootLauncherConfiguration left, RootLauncherConfiguration right);
         void ApplyOverride(RootLauncherConfiguration config, LauncherCliOverrides overrides);
-        LauncherRuntimeSettings ApplyConfiguredValue(RootLauncherConfiguration config, LauncherRuntimeSettings settings);
-        LauncherRuntimeSettings ApplyInteractiveInput(LauncherRuntimeSettings settings, InteractiveInput input);
-        LauncherRuntimeSettings ApplyReload(
-            LauncherRuntimeSettings applied,
+        void ApplyConfiguredValue(RootLauncherConfiguration config, LauncherRuntimeSettings.Builder builder);
+        void ApplyInteractiveInput(LauncherRuntimeSettings.Builder builder, InteractiveInput input);
+        void ApplyReload(
+            LauncherRuntimeSettings.Builder builder,
             LauncherRuntimeSettings current,
             LauncherRuntimeSettings desired,
             ReloadContext context);
@@ -30,8 +30,8 @@ namespace UnifierTSL.Launcher
         Func<TConfig, TRuntime> resolveRuntime,
         Func<TRuntime, TConfig> serializeConfig,
         Func<LauncherRuntimeSettings, TRuntime> readRuntime,
-        Func<LauncherRuntimeSettings, TRuntime, LauncherRuntimeSettings> writeRuntime,
-        Func<LauncherRuntimeSettings, TRuntime, TRuntime, ReloadContext, LauncherRuntimeSettings> applyReload,
+        Action<LauncherRuntimeSettings.Builder, TRuntime> writeRuntime,
+        Action<LauncherRuntimeSettings.Builder, TRuntime, TRuntime, ReloadContext> applyReload,
         Func<TConfig, TConfig>? cloneConfig = null,
         Func<TConfig, TConfig, bool>? configEquals = null,
         Func<InteractiveInput, OptionalValue<TRuntime>>? readInteractiveValue = null) : ILauncherSettingSpec
@@ -60,33 +60,30 @@ namespace UnifierTSL.Launcher
             }
         }
 
-        public LauncherRuntimeSettings ApplyConfiguredValue(
+        public void ApplyConfiguredValue(
             RootLauncherConfiguration config,
-            LauncherRuntimeSettings settings) {
-
-            return writeRuntime(settings, resolveRuntime(readConfig(config)));
+            LauncherRuntimeSettings.Builder builder) {
+            writeRuntime(builder, resolveRuntime(readConfig(config)));
         }
 
-        public LauncherRuntimeSettings ApplyInteractiveInput(
-            LauncherRuntimeSettings settings,
+        public void ApplyInteractiveInput(
+            LauncherRuntimeSettings.Builder builder,
             InteractiveInput input) {
-
             OptionalValue<TRuntime> interactiveValue = readInteractiveValue(input);
             if (!interactiveValue.HasValue) {
-                return settings;
+                return;
             }
 
-            return writeRuntime(settings, interactiveValue.Value);
+            writeRuntime(builder, interactiveValue.Value);
         }
 
-        public LauncherRuntimeSettings ApplyReload(
-            LauncherRuntimeSettings applied,
+        public void ApplyReload(
+            LauncherRuntimeSettings.Builder builder,
             LauncherRuntimeSettings current,
             LauncherRuntimeSettings desired,
             ReloadContext context) {
-
-            return applyReload(
-                applied,
+            applyReload(
+                builder,
                 readRuntime(current),
                 readRuntime(desired),
                 context);

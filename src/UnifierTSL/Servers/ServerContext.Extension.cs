@@ -43,7 +43,7 @@ namespace UnifierTSL.Servers
 
             lock (s_registrationLock) {
                 if (ExtensionSlotKey<TExtension>.Key != -1)
-                    throw new InvalidOperationException($"Type {typeof(TExtension).FullName} has already been registered.");
+                    throw new InvalidOperationException(GetString($"Type {typeof(TExtension).FullName} has already been registered."));
 
                 int assignedSlot = s_nextSlot++;
                 ExtensionSlotKey<TExtension>.Key = assignedSlot;

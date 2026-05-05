@@ -28,18 +28,18 @@ namespace UnifierTSL.Module.Dependencies
                     Version = new NuGetVersion(version);
                 }
                 else {
-                    throw new InvalidOperationException($"Unable to read assembly identity from embedded resource '{embeddedPath}'. Ensure it is a valid .NET assembly.");
+                    throw new InvalidOperationException(GetString($"Unable to read assembly identity from embedded resource '{embeddedPath}'. Ensure it is a valid .NET assembly."));
                 }
             }
 
             public Stream Extract() {
-                return plugin.GetManifestResourceStream(embeddedPath) ?? throw new FileNotFoundException($"Embedded resource '{embeddedPath}' not found.");
+                return plugin.GetManifestResourceStream(embeddedPath) ?? throw new FileNotFoundException(GetString($"Embedded resource '{embeddedPath}' not found."));
             }
 
             ImmutableArray<LibraryEntry> IDependencyLibraryExtractor.Extract(RoleLogger logger) {
                 return [
                     new LibraryEntry(
-                        new Lazy<Stream>(() => plugin.GetManifestResourceStream(embeddedPath) ?? throw new FileNotFoundException($"Embedded resource '{embeddedPath}' not found.")),
+                        new Lazy<Stream>(() => plugin.GetManifestResourceStream(embeddedPath) ?? throw new FileNotFoundException(GetString($"Embedded resource '{embeddedPath}' not found."))),
                         DependencyKind.ManagedAssembly,
                         Path.Combine("lib", LibraryName + ".dll"),
                         Version,

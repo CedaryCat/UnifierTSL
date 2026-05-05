@@ -27,7 +27,7 @@ namespace UnifierTSL.Reflection.Metadata.DecodeProviders
                 PrimitiveTypeCode.String => typeof(string),
                 PrimitiveTypeCode.Object => typeof(object),
                 PrimitiveTypeCode.TypedReference => typeof(TypedReference),
-                _ => throw new NotSupportedException($"Primitive type {typeCode} not supported")
+                _ => throw new NotSupportedException(GetString($"Primitive type {typeCode} not supported"))
             };
         public Type GetArrayType(Type elementType, ArrayShape shape) => typeof(Array); // Not supported here
         public Type GetByReferenceType(Type elementType) => elementType;

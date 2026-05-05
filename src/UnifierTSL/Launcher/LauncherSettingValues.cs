@@ -59,9 +59,9 @@ namespace UnifierTSL.Launcher
             return enabled ? "true" : "false";
         }
 
-        public static string DescribeConsoleStatusBandwidthUnit(ConsoleStatusBandwidthUnit unit) {
+        public static string DescribeStatusProjectionBandwidthUnit(StatusProjectionBandwidthUnit unit) {
             return unit switch {
-                ConsoleStatusBandwidthUnit.Bits => "bits",
+                StatusProjectionBandwidthUnit.Bits => "bits",
                 _ => "bytes",
             };
         }
@@ -275,42 +275,43 @@ namespace UnifierTSL.Launcher
                 category: category);
         }
 
-        public static bool TryParseConsoleStatusBandwidthUnit(string? value, out ConsoleStatusBandwidthUnit unit) {
+        public static bool TryParseStatusProjectionBandwidthUnit(string? value, out StatusProjectionBandwidthUnit unit) {
             string text = value?.Trim() ?? "";
             if (text.Length == 0 || OrdinalIgnoreCaseEquals(text, "bytes") || OrdinalIgnoreCaseEquals(text, "byte")) {
-                unit = ConsoleStatusBandwidthUnit.Bytes;
+                unit = StatusProjectionBandwidthUnit.Bytes;
                 return true;
             }
 
             if (OrdinalIgnoreCaseEquals(text, "bits") || OrdinalIgnoreCaseEquals(text, "bit")) {
-                unit = ConsoleStatusBandwidthUnit.Bits;
+                unit = StatusProjectionBandwidthUnit.Bits;
                 return true;
             }
 
-            unit = ConsoleStatusBandwidthUnit.Bytes;
+            unit = StatusProjectionBandwidthUnit.Bytes;
             return false;
         }
 
-        public static ConsoleStatusBandwidthUnit ResolveConfiguredConsoleStatusBandwidthUnit(string? value) {
-            if (TryParseConsoleStatusBandwidthUnit(value, out ConsoleStatusBandwidthUnit unit)) {
+        public static StatusProjectionBandwidthUnit ResolveConfiguredStatusProjectionBandwidthUnit(string? value) {
+            if (TryParseStatusProjectionBandwidthUnit(value, out StatusProjectionBandwidthUnit unit)) {
                 return unit;
             }
 
             UnifierApi.Logger.Warning(
                 GetParticularString("{0} is configured launcher.consoleStatus.bandwidthUnit value", $"Invalid launcher.consoleStatus.bandwidthUnit setting '{value}'. Falling back to 'bytes'."),
                 category: LauncherCategories.Config);
-            return ConsoleStatusBandwidthUnit.Bytes;
+            return StatusProjectionBandwidthUnit.Bytes;
         }
 
-        public static double ResolveConfiguredConsoleStatusBandwidthRolloverThreshold(double value) {
+        public static double ResolveConfiguredStatusProjectionBandwidthRolloverThreshold(double value) {
             if (!double.IsFinite(value) || value <= 0d) {
                 UnifierApi.Logger.Warning(
-                    GetParticularString("{0} is configured launcher.consoleStatus.bandwidthRolloverThreshold value", $"Invalid launcher.consoleStatus.bandwidthRolloverThreshold setting '{value}'. Falling back to '{ConsoleStatusSettings.DefaultBandwidthRolloverThreshold}'."),
+                    GetParticularString("{0} is configured launcher.consoleStatus.bandwidthRolloverThreshold value", $"Invalid launcher.consoleStatus.bandwidthRolloverThreshold setting '{value}'. Falling back to '{StatusProjectionSettings.DefaultBandwidthRolloverThreshold}'."),
                     category: LauncherCategories.Config);
-                return ConsoleStatusSettings.DefaultBandwidthRolloverThreshold;
+                return StatusProjectionSettings.DefaultBandwidthRolloverThreshold;
             }
 
             return value;
         }
+
     }
 }

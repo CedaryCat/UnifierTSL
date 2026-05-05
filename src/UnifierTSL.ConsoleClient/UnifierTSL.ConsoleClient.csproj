@@ -5,6 +5,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>UnifierTSL</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnableTerminalDebugTrace Condition="'$(EnableTerminalDebugTrace)' == ''">false</EnableTerminalDebugTrace>
     <DefineConstants Condition="'$(Configuration)' == 'Debug' and '$(EnableTerminalDebugTrace)' == 'true'">$(DefineConstants);UNIFIER_TERMINAL_DEBUG_TRACE</DefineConstants>
@@ -15,6 +16,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="MemoryPack" Version="1.21.4" />
   </ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
+		<LangVersion>14.0</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -24,6 +25,7 @@
 
 		<!-- Include referenced project outputs in the package -->
 		<IncludeBuildOutput>true</IncludeBuildOutput>
+		<ConsoleClientOutputPath>$(MSBuildThisFileDirectory)..\UnifierTSL.ConsoleClient\bin\$(Configuration)\$(TargetFramework)\</ConsoleClientOutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -58,14 +60,14 @@
 	<!-- Include ConsoleClient DLL in the package -->
 	<Target Name="IncludeConsoleClientInPackage" AfterTargets="Build" BeforeTargets="_GetPackageFiles">
 		<ItemGroup>
-			<None Include="$(OutputPath)UnifierTSL.ConsoleClient.dll" Pack="true" PackagePath="lib\$(TargetFramework)\" />
-			<None Include="$(OutputPath)UnifierTSL.ConsoleClient.pdb" Pack="true" PackagePath="lib\$(TargetFramework)\" />
+			<None Include="$(ConsoleClientOutputPath)UnifierTSL.ConsoleClient.dll" Pack="true" PackagePath="lib\$(TargetFramework)\" />
+			<None Include="$(ConsoleClientOutputPath)UnifierTSL.ConsoleClient.pdb" Pack="true" PackagePath="lib\$(TargetFramework)\" />
 		</ItemGroup>
 	</Target>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<ItemGroup>
-			<AppFiles Include="$(OutputPath)UnifierTSL.ConsoleClient.*" />
+			<AppFiles Include="$(ConsoleClientOutputPath)UnifierTSL.ConsoleClient.*" />
 		</ItemGroup>
 		<MakeDir Directories="$(OutputPath)app" />
 		<Copy SourceFiles="@(AppFiles)" DestinationFolder="$(OutputPath)app\" />

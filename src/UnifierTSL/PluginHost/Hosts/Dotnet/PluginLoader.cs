@@ -68,7 +68,13 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                 try {
                     context.Unload();
                 }
-                catch { }
+                catch (Exception unloadEx) {
+                    Logger.LogHandledExceptionWithMetadata(
+                        category: "HotReload",
+                        message: GetParticularString("{0} is plugin file path", $"Failed to unload rejected candidate plugin load context for '{info.Location.FilePath}'."),
+                        metadata: [new("PluginFile", info.Location.FilePath)],
+                        ex: unloadEx);
+                }
                 loadDetails = LoadDetails.Failed;
                 return null;
             }
@@ -91,6 +97,8 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                         $"Plugin '{pluginContainer.Name}' is not a .NET Plugin, skipping."));
                 return;
             }
+
+            host.NotifyManagedAssembliesInvalidating([container]);
             ModuleAssemblyLoader loader = new("plugins");
             loader.ForceUnload(container.Module);
             RemoveUnloadedContainers();
@@ -114,6 +122,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
                 return false;
             }
 
+            host.NotifyManagedAssembliesInvalidating([container]);
             loader.ForceUnload(container.Module);
             RemoveUnloadedContainers();
             return true;
@@ -186,7 +195,7 @@ namespace UnifierTSL.PluginHost.Hosts.Dotnet
         private bool TryCreatePluginInstance(DotnetPluginInfo info, Type type, out IPlugin instance) {
             instance = null!;
             try {
-                object boxed = Activator.CreateInstance(type) ?? throw new InvalidOperationException("Failed to create instance");
+                object boxed = Activator.CreateInstance(type) ?? throw new InvalidOperationException(GetString("Failed to create instance"));
                 if (boxed is not IPlugin plugin) {
                     Logger.WarningWithMetadata(
                         category: "Loading",
