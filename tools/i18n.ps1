@@ -17,6 +17,8 @@ param (
     [Parameter()]
     [switch] $NoTShockSeed,
     [Parameter()]
+    [string] $FallbackI18nPath,
+    [Parameter()]
     [string] $TShockUpstreamPath = $env:TSHOCK_UPSTREAM_PATH
 )
 
@@ -164,10 +166,24 @@ function Get-TShockUpstreamI18nPath {
     return (Join-Path $resolved.Path "i18n")
 }
 
+function Get-FallbackI18nPath {
+    if (!$FallbackI18nPath) {
+        return $null
+    }
+
+    $resolved = Resolve-Path -Path $FallbackI18nPath -ErrorAction SilentlyContinue
+    if (!$resolved) {
+        return $null
+    }
+
+    return $resolved.Path
+}
+
 function Get-DomainLocales {
     param (
         $Config,
-        [string] $TShockUpstreamI18n
+        [string] $TShockUpstreamI18n,
+        [string] $FallbackI18n
     )
 
     $locales = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -175,6 +191,15 @@ function Get-DomainLocales {
 
     if (Test-Path -Path $i18nRoot -PathType Container) {
         foreach ($localeDir in Get-ChildItem -Path $i18nRoot -Directory) {
+            $poPath = Join-Path $localeDir.FullName "$($Config.Name).po"
+            if (Test-Path -Path $poPath -PathType Leaf) {
+                [void] $locales.Add($localeDir.Name)
+            }
+        }
+    }
+
+    if ($FallbackI18n -and (Test-Path -Path $FallbackI18n -PathType Container)) {
+        foreach ($localeDir in Get-ChildItem -Path $FallbackI18n -Directory) {
             $poPath = Join-Path $localeDir.FullName "$($Config.Name).po"
             if (Test-Path -Path $poPath -PathType Leaf) {
                 [void] $locales.Add($localeDir.Name)
@@ -194,6 +219,32 @@ function Get-DomainLocales {
     return @($locales | Sort-Object)
 }
 
+function Merge-PoWithFallback {
+    param (
+        [string] $PrimaryPoPath,
+        [string] $FallbackPoPath
+    )
+
+    if (!(Test-Path -Path $PrimaryPoPath -PathType Leaf) -or !(Test-Path -Path $FallbackPoPath -PathType Leaf)) {
+        return
+    }
+
+    $tempDir = Resolve-RepoPath ".local/i18n-merge"
+    New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
+    $tempName = [System.Guid]::NewGuid().ToString("N")
+    $translatedPath = Join-Path $tempDir "$tempName.translated.po"
+    $mergedPath = Join-Path $tempDir "$tempName.merged.po"
+
+    try {
+        Invoke-NativeCommand -FileName msgattrib -ArgumentList @("--translated", "--no-obsolete", "-o", $translatedPath, $PrimaryPoPath)
+        Invoke-NativeCommand -FileName msgcat -ArgumentList @("--use-first", "-o", $mergedPath, $translatedPath, $FallbackPoPath)
+        Copy-Item -Path $mergedPath -Destination $PrimaryPoPath -Force
+    }
+    finally {
+        Remove-Item -Path $translatedPath, $mergedPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Update-PoFiles {
     param ($Config)
 
@@ -207,9 +258,15 @@ function Update-PoFiles {
     }
 
     $tshockUpstreamI18n = Get-TShockUpstreamI18nPath
-    foreach ($locale in Get-DomainLocales $Config $tshockUpstreamI18n) {
+    $fallbackI18n = Get-FallbackI18nPath
+    foreach ($locale in Get-DomainLocales $Config $tshockUpstreamI18n $fallbackI18n) {
         $localLocaleDir = Resolve-RepoPath (Join-Path "i18n" $locale)
         $poPath = Join-Path $localLocaleDir "$($Config.Name).po"
+        $fallbackPoPath = $null
+        if ($fallbackI18n) {
+            $fallbackPoPath = Join-Path (Join-Path $fallbackI18n $locale) "$($Config.Name).po"
+        }
+
         $compendium = $null
 
         if ($Config.Name -eq "TShockAPI" -and !$NoTShockSeed -and $tshockUpstreamI18n) {
@@ -221,11 +278,21 @@ function Update-PoFiles {
 
         if (!(Test-Path -Path $poPath -PathType Leaf)) {
             if (!$compendium) {
-                continue
+                if (!$fallbackPoPath -or !(Test-Path -Path $fallbackPoPath -PathType Leaf)) {
+                    continue
+                }
             }
 
             New-Item -Path $localLocaleDir -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $compendium -Destination $poPath -Force
+            $sourcePoPath = $compendium
+            if ($fallbackPoPath -and (Test-Path -Path $fallbackPoPath -PathType Leaf)) {
+                $sourcePoPath = $fallbackPoPath
+            }
+
+            Copy-Item -Path $sourcePoPath -Destination $poPath -Force
+        }
+        elseif ($fallbackPoPath -and (Test-Path -Path $fallbackPoPath -PathType Leaf)) {
+            Merge-PoWithFallback $poPath $fallbackPoPath
         }
 
         $mergeArgs = @("--previous", "--no-fuzzy-matching", "--backup=off", "--update")

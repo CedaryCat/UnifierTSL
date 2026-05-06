@@ -80,9 +80,9 @@ jobs:
           ref: ${{ steps.tshock-ref.outputs.commit }}
           path: .local/tshock-upstream
 
-      - name: Extract source templates
+      - name: Extract templates and preserve local translations
         shell: pwsh
-        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -NoPo -NoMo
+        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -NoMo
 
       - name: Check Crowdin input changes
         id: crowdin_inputs
@@ -97,6 +97,10 @@ jobs:
           fi
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && { [ "${{ inputs.force_crowdin_sync }}" = "true" ] || [ "${{ inputs.upload_seed_translations }}" = "true" ]; }; then
+            force_sync=true
+          fi
+
+          if [ "${{ github.event_name }}" = "schedule" ]; then
             force_sync=true
           fi
 
@@ -129,6 +133,14 @@ jobs:
         shell: pwsh
         run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -NoExtract -NoMo
 
+      - name: Save local translation fallback
+        if: steps.crowdin_inputs.outputs.should_sync == 'true'
+        shell: bash
+        run: |
+          rm -rf .local/i18n-fallback
+          mkdir -p .local
+          cp -a i18n .local/i18n-fallback
+
       - name: Synchronize with Crowdin
         if: steps.crowdin_inputs.outputs.should_sync == 'true'
         uses: crowdin/github-action@v2
@@ -151,10 +163,10 @@ jobs:
           sudo chown -R "$(id -u):$(id -g)" i18n
           chmod -R u+rwX i18n
 
-      - name: Re-apply TShock upstream seed to downloaded translations
+      - name: Merge Crowdin translations with local fallback
         if: steps.crowdin_inputs.outputs.should_sync == 'true'
         shell: pwsh
-        run: ./tools/i18n.ps1 -Domain TShockAPI -TShockUpstreamPath .local/tshock-upstream -NoExtract -NoMo
+        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -FallbackI18nPath .local/i18n-fallback -NoExtract -NoMo
 
       - name: Create Pull Request
         if: steps.crowdin_inputs.outputs.should_sync == 'true'
