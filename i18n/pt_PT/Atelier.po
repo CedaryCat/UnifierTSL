@@ -1,0 +1,186 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: unifiertsl\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: Portuguese\n"
+"Language: pt_PT\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: GetText.NET Extractor\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Crowdin-Project: unifiertsl\n"
+"X-Crowdin-Project-ID: 894776\n"
+"X-Crowdin-Language: pt-PT\n"
+"X-Crowdin-File: /i18n/Atelier.template.pot\n"
+"X-Crowdin-File-ID: 11\n"
+
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:94
+msgid ""
+"Atelier can only be opened from the launcher console or a specific server "
+"console."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Context/HostConsole.cs:152
+msgid "Atelier console is not attached to an active REPL window."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:70
+#, csharp-format
+msgid "Atelier generated globals type failed to compile: {0}"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:19
+msgid "Atelier plugin is not initialized."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1785
+msgid "Atelier projection document is missing an editable input node."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1968
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1987
+#, csharp-format
+msgid "Atelier REPL expected active scope mode {0} but found {1}."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1972
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1993
+#, csharp-format
+msgid "Atelier REPL expected active scope type {0} but found {1}."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Window/Formatting/RoslynFormattingWorkspace.cs:22
+msgid "Atelier Roslyn formatting workspace is not initialized."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Roslyn/RoslynHost.cs:61
+#, csharp-format
+msgid "Atelier Roslyn host is missing required assemblies: {0}"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/ReplManager.cs:123
+msgid "Atelier Roslyn prewarm failed."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:94
+msgid "Atelier script host console is no longer active."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Roslyn/ReplRuntime.cs:400
+msgid "Atelier submission compilation is missing an entry point."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Execution/ExecutionSession.cs:196
+#, csharp-format
+msgid "Atelier submission entry method '{0}' was not found."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Roslyn/ReplRuntime.cs:411
+msgid "Atelier submission entry point is missing a containing type."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Execution/ExecutionSession.cs:189
+#, csharp-format
+msgid "Atelier submission entry type '{0}' was not found."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:2059
+msgid "Authoring scope must expose editor interaction events."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Roslyn/ConsolePreprocessor.cs:10
+msgid "Console redirect target expression is required."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:27
+msgid "Duplicate --launcher flag."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:36
+msgid "Duplicate --server flag."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:38
+#, csharp-format
+msgid "Generated Atelier globals type '{0}' could not be instantiated."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:28
+#, csharp-format
+msgid "Generated Atelier globals type '{0}' was not found."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Context/ScriptGlobals.cs:27
+msgid "Host label is required."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Context/ScriptHostContext.cs:26
+msgid "HostOut expression is required."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:41
+msgid "Missing server name after --server."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:62
+msgid "Only one target override can be specified."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:37
+#, csharp-format
+msgid "Opened Atelier REPL on {0} targeting {1}."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:9
+#: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:10
+msgid "Opens the Atelier REPL window."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:70
+msgid "Resolved Atelier invocation host is missing."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:115
+#, csharp-format
+msgid "Server '{0}' not found."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Roslyn/SubmissionProjectChain.cs:35
+msgid "Synthetic Atelier document is missing."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Context/ScriptGlobals.cs:31
+msgid "Target label is required."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Roslyn/CancellationPreprocessor.cs:37
+msgid "Token local name is required."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:23
+msgid "Unable to resolve Atelier target."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:126
+#, csharp-format
+msgid "Unsupported atelier invocation host '{0}'."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/Roslyn/ScriptOptionsFactory.cs:84
+#: ../../src/Plugins/Atelier/Session/Context/HostContextFactory.cs:27
+#, csharp-format
+msgid "Unsupported atelier target profile '{0}'."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Session/ReplSession.cs:357
+#, csharp-format
+msgid "Unsupported session command '{0}'."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:47
+msgid "Usage: atelier [--launcher | --server <name>]"
+msgstr ""
