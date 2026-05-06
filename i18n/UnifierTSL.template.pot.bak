@@ -1,0 +1,1014 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: UnifierTSL\n"
+"POT-Creation-Date: 2025-11-09 00:14:32+0800\n"
+"PO-Revision-Date: 2025-11-09 00:14:32+0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: GetText.NET Extractor\n"
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:120
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' is a core module but has a '{1}' attribute. Skipping it."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Configs\ConfigHandle.cs:61
+#, csharp-format
+msgctxt "{0} is config file path (relative path)"
+msgid "Failed to read modified config '{0}', skipping reload."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:101
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to initialize: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:60
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is not a DotnetPluginInfo, skipping."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:64
+#, csharp-format
+msgctxt "{0} is number of plugins initialized"
+msgid "All plugins ({0}) have been initialized."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Servers\ServerContext.EventHandlers.cs:14
+#, csharp-format
+msgctxt "{0} is server name, {1} is player name, {2} is chat message"
+msgid "[Realm·{0}] <{1}>: {2}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:132
+#, csharp-format
+msgctxt "{0} is user input value for port number"
+msgid "Invalid port number specified: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:50
+msgid "Dependency file missing, removing from configuration for update."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:613
+#, csharp-format
+msgctxt "{0} is client IP address"
+msgid "Accepted connection: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:40
+msgid "Global initialization started..."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:76
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is disabled, skipped."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:104
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is type full name"
+msgid "Failed to create instance of plugin '{0}', type: '{1}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:281
+msgid "Parameter 'name' is required."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:695
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is source server name, {2} is number of players in "
+"current server"
+msgid "Player '{0}' joined from {1}, current players: {2}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Configs\ConfigHandle.cs:49
+#, csharp-format
+msgctxt "{0} is config file path (relative path)"
+msgid "FileWatcher error occurred for config '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:64
+#, csharp-format
+msgctxt "{0} is server password"
+msgid "Server is running with password: '{0}'"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:126
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' with a '{1}' attribute should not specify dependencies. "
+"Skipping it."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:673
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is destination server name, {2} is number of players "
+"in destination server"
+msgid "Player '{0}' transferred to {1}, current players: {2}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:199
+#, csharp-format
+msgctxt "{0} is world name, {1} is server name"
+msgid "World name '{0}' is already in use by server '{1}'"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:231
+#, csharp-format
+msgctxt "{0} is player name, {1} is player UUID, {2} is server name"
+msgid "Player '{0}' ({1}) routed to server '{2}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:132
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' has a '{1}' attribute but no module name specified. Skipping "
+"it."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:180
+#, csharp-format
+msgctxt "{0} is server argument string"
+msgid "Invalid server argument: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:276
+msgid "Parameter 'worldname' is required."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:190
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server name '{0}' is already in use"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:84
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is plugin load status"
+msgid "Plugin '{0}' in status '{1}', skipped."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:546
+#, csharp-format
+msgctxt "{0} is module file path (relative path)"
+msgid "Failed to extract dependencies files of module '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:60
+#, csharp-format
+msgctxt ""
+"{0} is plugin host class name, {1} is current plugin host version (e.g. "
+"1.0.0)"
+msgid ""
+"Plugin host '{0}' is not compatible with current plugin host version '{1}'. "
+"Major version must be equal, minor version of plugin host must be less or "
+"equal."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:26
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:38
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is not a .NET Plugin, skipping."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:629
+msgid "No more slots available, stopping listener"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:181
+msgid ""
+"Expected format: -server name:<name> worldname:<worldname> gamemode:<value> "
+"size:<value> evil:<value> seed:<value>"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:33
+#, csharp-format
+msgid ""
+"Unifier Terraria-Server-Launcher Running\r\n"
+"Version Info:\r\n"
+"  Terraria v{0} & OTAPI v{1}\r\n"
+"  Unified-Server-Process v{2}\r\n"
+"  UnifierApi v{3} & PluginApi v{4}\r\n"
+"Current Process ID: {5}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:93
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:115
+#, csharp-format
+msgctxt "{0} is dependency file path (relative path)"
+msgid "Deleted unused dependencies file '{0}'"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Servers\ServerContext.cs:43
+#, csharp-format
+msgctxt "{0} is class name (SampleServer)"
+msgid ""
+"Under the UnifierTSL API, only instances of ServerContext (or its "
+"derivatives) can be created. To create a sample context, use '{0}' instead."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:402
+#, csharp-format
+msgctxt "{0} is module file path (relative path)"
+msgid "Failed to extract temporary dependencies of module '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\WorkRunner.cs:24
+#: ..\..\..\src\UnifierTSL\WorkRunner.cs:42
+#: ..\..\..\src\UnifierTSL\WorkRunner.cs:62
+#, csharp-format
+msgctxt "{0} is elapsed milliseconds (number format with 2 decimal places)"
+msgid "Done. (used {0:.00}ms)"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:93
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is plugin version, {2} is plugin author name"
+msgid "Plugin '{0}' v{1} (by {2}) initialized."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:265
+#, csharp-format
+msgctxt ""
+"{0} is user input value for server evil (world corruption/crimson type)"
+msgid "Invalid server evil: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:68
+msgid "No plugins have been initialized."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:621
+msgid "Server is full"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:98
+#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:120
+#, csharp-format
+msgctxt "{0} is dependency file path (relative path)"
+msgid ""
+"Failed to delete unused dependencies file '{0}'.\r\n"
+"It is likely that the file is in use by another process. You can try to "
+"delete it manually."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:210
+msgid "No available server found for you."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:208
+msgid "Invalid client UUID."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:181
+#, csharp-format
+msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
+msgid ""
+"Version mismatch from {0}: client='{1}', server='{2}'. Cross-version join "
+"allowed by policy."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:187
+#, csharp-format
+msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
+msgid "Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:214
+#, csharp-format
+msgctxt "{0} is player name, {1} is player UUID"
+msgid "No available server found for player '{0}' ({1}); connection aborted."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:211
+#, csharp-format
+msgctxt "{0} is player name, {1} is player IP address, {2} is invalid raw UUID string"
+msgid "'{0}' ({1}) sent invalid UUID '{2}' before authentication. Kicked."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:386
+#, csharp-format
+msgctxt "{0} is module file path (absolute or relative)"
+msgid ""
+"Module with dependencies must be in the same moduleDirInfo as the module to "
+"store dependencies.\r\n"
+"Module File: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:241
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is player IP address, {2} is packet type number"
+msgid ""
+"'{0}' ({1}) sent invalid packet {2} before name/UUID authentication. Kicked."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:297
+msgid "Enter the port to listen on: "
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:225
+#, csharp-format
+msgctxt "{0} is user input value for server difficulty"
+msgid "Invalid server difficulty: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:246
+msgid ""
+"Expected value: an integer between 0 and 2 (inclusive), or one of the "
+"strings: small, medium, large"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:303
+msgid "Enter the server password: "
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:53
+#, csharp-format
+msgctxt "{0} is server name, {1} is world file name"
+msgid "  {0} Running on world: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:200
+msgid "You are not allowed to join this server."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:73
+#, csharp-format
+msgctxt "{0} is plugin host class name"
+msgid "Failed to create instance of plugin host '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:226
+msgid ""
+"Expected value: an integer between 0 and 3 (inclusive), or one of the "
+"strings: normal, expert, master, creative"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:59
+msgid "UnifierTSL started successfully!"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:63
+msgid "Server is running without a password. Anyone can join."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:245
+#, csharp-format
+msgctxt "{0} is user input value for server size"
+msgid "Invalid server size: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:51
+msgid "Current Servers: "
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:93
+#, csharp-format
+msgctxt "{0} is plugin name (or type name)"
+msgid "Type '{0}' does not implement IPlugin. Skipped."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:700
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Player '{0}' {1} → {2} transferred."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:266
+msgid ""
+"Expected value: an integer between 0 and 2 (inclusive), or one of the "
+"strings: random, corruption, crimson"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherConfigManager.cs:28
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "File watcher error occurred for root config '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherConfigManager.cs:46
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "An unexpected error occurred while reloading root config '{0}'. Keeping the current runtime settings."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:264
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is invalid and will be ignored for this run."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:270
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' could not be read and will be ignored for this run."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:283
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is missing. Keeping the current runtime settings."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:293
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is invalid. Keeping the current runtime settings."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:299
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' could not be read. Keeping the current runtime settings."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:314
+#, csharp-format
+msgctxt "{0} is legacy root config path, {1} is active root config path"
+msgid "Legacy root config '{0}' is ignored. Use '{1}' instead."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:334
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Unable to create default root config at '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:391
+msgid "SQLite log persistence is not implemented yet. Falling back to text logs."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:413
+#, csharp-format
+msgctxt "{0} is log directory path"
+msgid "Failed to initialize text log backend at '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:461
+#, csharp-format
+msgctxt "{0} is current logging mode, {1} is desired logging mode"
+msgid "logging.mode changed from '{0}' to '{1}'. The current logging backend will not change until restart."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:468
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port, {2} is active listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}', but the new value is invalid. Keeping port {2}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:476
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}'. The active listener has been rebound."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:481
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port, {2} is active listen port"
+msgid "launcher.listenPort changed from '{0}' to '{1}', but rebinding failed. Keeping port {2}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:495
+msgid "launcher.serverPassword changed. New connections will use the updated password policy."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:501
+#, csharp-format
+msgctxt "{0} is current join server mode, {1} is desired join server mode"
+msgid "launcher.joinServer changed from '{0}' to '{1}'. Future joins will use the updated policy."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:519
+msgid "current runtime snapshot"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:520
+msgid "reloaded config snapshot"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:526
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server '{0}' was updated in root config, but existing server definitions are not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:538
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server '{0}' was removed from root config, but server removal is not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:552
+#, csharp-format
+msgctxt "{0} is server name, {1} is config snapshot source"
+msgid "Duplicate autoStartServers entry '{0}' was found in the {1}. Later duplicates are ignored for hot reload diffing."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:817
+#, csharp-format
+msgctxt "{0} is configured joinServer value"
+msgid "Invalid joinServer setting '{0}'. Falling back to 'none'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:849
+#, csharp-format
+msgctxt "{0} is configured logging.mode value"
+msgid "Invalid logging.mode setting '{0}'. Falling back to 'txt'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:87
+msgid "Server"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:103
+msgid "Metadata truncated due to per-entry limit"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:146
+#, csharp-format
+msgctxt "{0} is exception text"
+msgid "[Error][LogCore|TextBackend] File logging disabled after I/O failure: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Program.cs:33
+#, csharp-format
+msgid ""
+"Unifier Terraria-Server-Launcher Running\n"
+"Version Info:\n"
+"  Terraria v{0} & Protocol {1}\n"
+"  Unified-Server-Process v{2} & OTAPI v{3}\n"
+"  UnifierApi v{4} & PluginApi v{5}\n"
+"Current Process ID: {6}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:94
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Startup CLI overrides were persisted to '{0}' using the effective launcher snapshot."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:242
+msgid "[Warning][LogCore|DurableQueue] Durable log flush timed out during process exit. Some tail records may be lost."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:209
+#, csharp-format
+msgctxt "{0} is log persistence mode, {1} is log directory path"
+msgid "Failed to initialize '{0}' durable log backend at '{1}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherConfigStore.cs:92
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Unable to persist root config to '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:53
+#, csharp-format
+msgctxt "{0} is user input value for server merge mode"
+msgid "Invalid server merge mode: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:56
+msgid "Expected value: replace (default), overwrite, or append."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:72
+#, csharp-format
+msgctxt "{0} is user input value for join server mode"
+msgid "Invalid join server mode: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:84
+#, csharp-format
+msgctxt "{0} is user input value for log mode"
+msgid "Invalid log mode specified: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:129
+msgid "'-servermerge/--server-merge' was provided without any '-server' arguments. The merge mode was ignored."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:160
+#, csharp-format
+msgctxt "{0} is current logging mode, {1} is desired logging mode"
+msgid "logging.mode changed from '{0}' to '{1}'. Restart is required before this setting takes effect."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:368
+#, csharp-format
+msgctxt "{0} is ignored server name, {1} is kept source, {2} is merge mode"
+msgid "Auto-start server '{0}' from {1} was ignored because a higher-priority entry already exists (kept source: {2}, merge mode: {3})."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:379
+#, csharp-format
+msgctxt "{0} is ignored server name, {1} is world name, {2} is kept server name, {3} is merge mode"
+msgid "Auto-start server '{0}' (world: '{1}') was ignored due to world conflict with higher-priority server '{2}' (merge mode: {3})."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:667
+msgid "Expected value: an integer between 1 and 3 (inclusive), or one of the strings: small, medium, large"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:248
+#, csharp-format
+msgctxt "{0} is player name, {1} is player UUID"
+msgid "No available server found for you."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:363
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Cannot initialize listener to invalid port '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:376
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Cannot rebind listener to invalid port '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:387
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Failed to bind listener to port '{0}'. Keeping the current listener."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:395
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Listener rebound to port '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:416
+msgid "Failed to start server loop thread."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:853
+#, csharp-format
+msgctxt "{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Player '{0}' {1} ? {2} transferred."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\AsyncDurableLogWriter.cs:176
+#, csharp-format
+msgctxt "{0} is durable backlog count, {1} is durable backlog warning threshold"
+msgid "[Warning][LogCore|DurableQueue] Durable backlog is {0} entries (threshold: {1})."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\Logging\LogWriters\AsyncDurableLogWriter.cs:186
+#, csharp-format
+msgctxt "{0} is exception text"
+msgid "[Error][LogCore|DurableQueue] Durable sink disabled after failure: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:117
+msgid "Dotnet hot reload host is not available."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:108
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:17
+msgid "Hot reload request is null."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:74
+msgid "Hot reload was blocked by plugin dependency topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:30
+#, csharp-format
+msgctxt "{0} is error message"
+msgid "Invalid hot reload request: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:100
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "Multiple updated plugin candidates were found for key '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:57
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "No loaded plugin matches hot reload key '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:43
+#, csharp-format
+msgctxt "{0} is plugin entry point"
+msgid "Candidate entry point '{0}' was not found."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:29
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Candidate plugin file '{0}' does not exist."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:65
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Failed to load candidate plugin from '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:122
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:215
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' failed during hot reload prepare."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:270
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected activation."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:204
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected hot reload prepare."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:401
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Failed to unload hot reload candidate '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:91
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "No updated candidate was found for plugin '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:175
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' accepted export but returned no state payload."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:65
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:344
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' failed to recover after hot reload commit failure."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:421
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' has dependent modules. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:302
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' hot reloaded successfully."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:416
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is a satellite module and shares a core module context. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:164
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' rejected hot reload export."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:430
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shares its module with other active plugin entry points. V1 hot reload refuses this topology."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:42
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shutdown completed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:145
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' threw while exporting hot reload state."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:73
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' unload completed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:378
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Rollback failed with an exception for plugin '{0}'."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:256
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Starting hot reload commit for plugin '{0}'. No global isolation gate is enabled; in-flight events may still hit the transition window."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:220
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Candidate plugin '{0}' failed during hot reload prepare: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:311
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Commit stage '{0}' failed for plugin '{1}': {2}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:51
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to shutdown: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:79
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to unload: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:150
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed while exporting hot reload state: {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:383
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Rollback failed for plugin '{0}': {1}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:111
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is load details"
+msgid "Failed to load hot reload candidate for plugin '{0}'. Result: {1}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:293
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is old version, {2} is new version"
+msgid "Hot reload succeeded for plugin '{0}'. {1} -> {2}."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\AnnotatedConsolePromptProvider.cs:39
+msgid "use Tab/Shift+Tab to rotate, Right to accept"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:18
+msgid "use Tab/Shift+Tab to rotate; Right to accept"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:19
+msgid "Enter on empty uses ghost; Ctrl+Enter keeps raw input."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:31
+msgid "Setup Listen Port"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:32
+msgid "Select the launcher listen port"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:58
+msgid "Setup Server Password"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:59
+msgid "Pick a short startup password (plain input)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:62
+msgid "Press Enter to keep your current input (can be empty)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:22
+#, csharp-format
+msgctxt "{0} is error reason"
+msgid "last error: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\CLI\TerminalLauncherConsoleHost.cs:159
+msgid "launcher.colorfulConsoleStatus is enabled, but the current terminal does not support vivid ANSI status rendering. Falling back to the plain status bar palette."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:226
+#, csharp-format
+msgctxt "{0} is current colorfulConsoleStatus value, {1} is desired colorfulConsoleStatus value"
+msgid "launcher.colorfulConsoleStatus changed from '{0}' to '{1}'. Status bar appearance has been refreshed."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:232
+msgid "launcher.consoleStatus changed. Command-line status settings are now using the reloaded values."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:975
+#, csharp-format
+msgctxt "{0} is user input value for colorful console status"
+msgid "Invalid colorful console status value: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:978
+msgid "Expected value: true/false, on/off, 1/0, or use '--no-colorful' to disable."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:446
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is not an integer port."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:452
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is out of range (0~65535)."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:458
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is occupied."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:463
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is available."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:534
+#, csharp-format
+msgctxt "{0} is password text length"
+msgid "password length: {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:535
+#, csharp-format
+msgctxt "{0} is simple password quality level"
+msgid "strength hint : {0}"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:536
+msgid "empty input is allowed for no-password mode"
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:553
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not an integer port."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:557
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is out of range."
+msgstr ""
+
+#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:561
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not available."
+msgstr ""
