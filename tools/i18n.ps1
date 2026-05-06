@@ -64,9 +64,16 @@ function Invoke-NativeCommand {
 
 function Get-CoreAutocrlf {
     try {
-        return (git config --get core.autocrlf)
+        $value = git config --get core.autocrlf 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            $global:LASTEXITCODE = 0
+            return ""
+        }
+
+        return $value
     }
     catch {
+        $global:LASTEXITCODE = 0
         return ""
     }
 }
