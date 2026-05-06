@@ -78,7 +78,7 @@ function Get-CoreAutocrlf {
     }
 }
 
-function Format-To-Unix-Path-Style {
+function Format-GettextFile {
     param ([string] $FilePath)
 
     if (!(Test-Path -Path $FilePath -PathType Leaf)) {
@@ -88,6 +88,8 @@ function Format-To-Unix-Path-Style {
     $regex = [regex]::new("^#:.*", [System.Text.RegularExpressions.RegexOptions]::Multiline)
     $content = Get-Content -Path $FilePath -Raw
     $formatted = $regex.Replace($content, { $args[0].ToString().Replace("\", "/") })
+    $headerNoiseRegex = [regex]::new('^"(POT-Creation-Date|PO-Revision-Date|Last-Translator): .*\\n"$', [System.Text.RegularExpressions.RegexOptions]::Multiline)
+    $formatted = $headerNoiseRegex.Replace($formatted, { "`"$($args[0].Groups[1].Value): \n`"" })
 
     if ((Get-CoreAutocrlf) -eq "true") {
         $formatted = $formatted -replace "((?<!\r)\n|\r(?!\n))", "`r`n"
@@ -141,7 +143,7 @@ function Update-Template {
     }
 
     Ensure-PotFile $templatePath $Config.Name
-    Format-To-Unix-Path-Style $templatePath
+    Format-GettextFile $templatePath
 }
 
 function Get-TShockUpstreamI18nPath {
@@ -234,7 +236,7 @@ function Update-PoFiles {
         $mergeArgs += @($poPath, $templatePath)
         Write-Output "[$($Config.Name)] [$locale] merging..."
         Invoke-NativeCommand -FileName msgmerge -ArgumentList $mergeArgs
-        Format-To-Unix-Path-Style $poPath
+        Format-GettextFile $poPath
     }
 }
 
