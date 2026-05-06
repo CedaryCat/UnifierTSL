@@ -67,7 +67,7 @@ namespace TShockAPI.Commanding
             var server = context.InvocationContext.Server;
             if (server is null) {
                 return CommandParamBindingResult.Failure(CommandOutcome.Error(
-                    GetString("You must use this command in sepcific server.")));
+                    GetString("You must use this command in specific server.")));
             }
 
             var maxInclusive = attribute.Axis == TSTileCoordinateAxis.X

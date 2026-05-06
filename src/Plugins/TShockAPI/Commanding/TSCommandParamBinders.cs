@@ -999,7 +999,7 @@ namespace TShockAPI.Commanding
                     attribute: attribute,
                     propertyName: nameof(NpcRefAttribute.InvalidNpcMessage),
                     customMessage: attribute.InvalidNpcMessage,
-                    defaultOutcome: static _ => CommandOutcome.Error(GetString("Invalid destination server.NPC."))));
+                    defaultOutcome: static _ => CommandOutcome.Error(GetString("Invalid destination NPC."))));
             }
 
             if (matches.Count > 1) {
@@ -1127,7 +1127,7 @@ namespace TShockAPI.Commanding
                 return true;
             }
 
-            failure = CommandOutcome.Error(GetString("You must use this command in sepcific server."));
+            failure = CommandOutcome.Error(GetString("You must use this command in specific server."));
             return false;
         }
 

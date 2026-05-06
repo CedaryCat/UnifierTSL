@@ -221,7 +221,7 @@ namespace TShockAPI
                     executor.SendErrorMessage(GetString("You must use this command in-game."));
                 }
                 else if (!cmd.AllowCoord && executor.SourceServer is null) {
-                    executor.SendErrorMessage(GetString("You must use this command in sepcific server."));
+                    executor.SendErrorMessage(GetString("You must use this command in specific server."));
                 }
                 else {
                     if (cmd.DoLog)

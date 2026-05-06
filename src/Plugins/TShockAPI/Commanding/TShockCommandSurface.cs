@@ -190,7 +190,7 @@ namespace TShockAPI.Commanding
             }
 
             if (action.RequiresServerContext) {
-                return CommandOutcome.Error(GetString("You must use this command in sepcific server."));
+                return CommandOutcome.Error(GetString("You must use this command in specific server."));
             }
 
             return null;

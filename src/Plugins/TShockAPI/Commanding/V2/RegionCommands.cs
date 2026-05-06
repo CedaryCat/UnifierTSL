@@ -40,14 +40,14 @@ namespace TShockAPI.Commanding.V2
         private static string ProtectSummary => GetString("Changes whether a region is protected.");
         private static string StateInvalidTokenMessage => GetString("Invalid region protection state. Expected true/false, on/off, yes/no, y/n, or 1/0.");
         private static string DeleteSummary => GetString("Deletes a region.");
-        private static string ClearSummary => GetString("Clears the temporary region points.");
+        private static string ClearSummary => GetString("clear - Clears the temporary region points.");
         private static string AllowSummary => GetString("Allows a user account to build in a region.");
         private static string RemoveSummary => GetString("Removes a user account from a region.");
         private static string AllowGroupSummary => GetString("Allows a group to build in a region.");
         private static string RemoveGroupSummary => GetString("Removes a group from a region.");
         private static string ListSummary => GetString("Lists all regions in the current world.");
         private static string InfoSummary => GetString("Shows information about a region.");
-        private static string SetZSummary => GetString("Sets the z-order of a region.");
+        private static string SetZSummary => GetString("z <name> <#> - Sets the z-order of the region.");
         private static string ZInvalidTokenMessage => GetString("Invalid region z index.");
         private static string ResizeSummary => GetString("Resizes a region.");
         private static string AmountInvalidTokenMessage => GetString("Invalid region resize amount.");
@@ -432,7 +432,7 @@ namespace TShockAPI.Commanding.V2
                 GetString("remove <user> <region> - Removes a user from a region."),
                 GetString("allowg <group> <region> - Allows a user group to a region."),
                 GetString("removeg <group> <region> - Removes a user group from a region."),
-                GetString("info <region> [page] [-d] - Displays several information about the given region."),
+                GetString("info <region> [-d] - Displays several information about the given region."),
                 GetString("protect <name> <state> - Sets whether the tiles inside the region are protected or not. Accepted values: true/false, on/off, yes/no, y/n, 1/0."),
                 GetString("z <name> <#> - Sets the z-order of the region."),
             ];
@@ -450,7 +450,7 @@ namespace TShockAPI.Commanding.V2
             bool displayBoundaries,
             int pageNumber) {
             if (region is null) {
-                return CommandOutcome.Error(GetString("Invalid syntax. Proper syntax: {0}region info <region> [page] [-d].", Commands.Specifier));
+                return CommandOutcome.Error(GetString("Invalid syntax. Proper syntax: {0}region info <region> [-d] [page].", Commands.Specifier));
             }
 
             if (displayBoundaries) {
@@ -608,7 +608,7 @@ namespace TShockAPI.Commanding.V2
 
         private static PaginationTools.Settings CreateHelpPageSettings() {
             return new PaginationTools.Settings {
-                HeaderFormat = GetString("Available Region Sub-Commands ({0}/{1}):"),
+                HeaderFormat = GetString("Available Region Sub-Commands ({{0}}/{{1}}):"),
                 FooterFormat = GetString("Type {0}region {{0}} for more sub-commands.", Commands.Specifier),
             };
         }

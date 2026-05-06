@@ -38,7 +38,7 @@ namespace TShockAPI.Commanding.V2
             foreach (var player in playersToSave) {
                 TShock.CharacterDB.InsertPlayerData(player, true);
             }
-            return CommandOutcome.Success(GetString("All server-side character data has been saved."));
+            return CommandOutcome.Success(GetString("Your server-side character data has been saved."));
         }
     }
 

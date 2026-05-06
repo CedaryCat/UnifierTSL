@@ -417,7 +417,7 @@ namespace TShockAPI.Commanding
                 return;
             }
 
-            executor.SendLogs(GetString("{0} executed: {1}.", executor.Name, rawInput), Color.PaleVioletRed, executor.IsClient ? executor.Player : null);
+            executor.SendLogs(GetString("{0} executed: {1}{2}.", executor.Name, string.Empty, rawInput), Color.PaleVioletRed, executor.IsClient ? executor.Player : null);
         }
 
         private static string ResolveMatchedPrefix(string rawInput) {

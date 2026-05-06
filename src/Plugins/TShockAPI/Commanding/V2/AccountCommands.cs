@@ -11,9 +11,9 @@ namespace TShockAPI.Commanding.V2
     internal static class LoginCommand
     {
         private static string ControllerSummary => GetString("Logs you into an account.");
-        private static string ExecuteUuidSummary => GetString("Authenticates you using your UUID and character name.");
-        private static string ExecutePasswordSummary => GetString("Authenticates you using your password and character name.");
-        private static string ExecuteNamedSummary => GetString("Authenticates you using an explicit username and password.");
+        private static string ExecuteUuidSummary => GetString("{0}login - Authenticates you using your UUID and character name.", Commands.Specifier);
+        private static string ExecutePasswordSummary => GetString("{0}login <password> - Authenticates you using your password and character name.", Commands.Specifier);
+        private static string ExecuteNamedSummary => GetString("{0}login <username> <password> - Authenticates you using your username and password.", Commands.Specifier);
 
         [CommandAction(Summary = nameof(ExecuteUuidSummary))]
         [LegacyLoginStateGuard]
@@ -261,8 +261,8 @@ namespace TShockAPI.Commanding.V2
     [TSCommandRoot(DoLog = false)]
     internal static class PasswordCommand
     {
-        private static string ControllerSummary => GetString("Changes your account password.");
-        private static string ExecuteSummary => GetString("Changes the password of your logged-in account.");
+        private static string ControllerSummary => GetString("Changes your account's password.");
+        private static string ExecuteSummary => GetString("Changes your account's password.");
 
         [CommandAction(Summary = nameof(ExecuteSummary))]
         [TShockCommand(nameof(Permissions.canchangepassword), PlayerScope = true)]

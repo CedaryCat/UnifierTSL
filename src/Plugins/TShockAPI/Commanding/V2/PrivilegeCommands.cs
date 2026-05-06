@@ -85,7 +85,7 @@ namespace TShockAPI.Commanding.V2
     internal static class SuCommand
     {
         private static string ControllerSummary => GetString("Temporarily elevates you to Super Admin.");
-        private static string ExecuteSummary => GetString("Temporarily elevates your account to Super Admin.");
+        private static string ExecuteSummary => GetString("Temporarily elevates you to Super Admin.");
 
         [CommandAction(Summary = nameof(ExecuteSummary))]
         [IgnoreTrailingArguments]

@@ -244,7 +244,7 @@ namespace UnifierTSL.Commanding.Execution
                 case CommandParamBindingSource.ServerContext:
                     return TryResolveInjectedValue(binding, context.Server, out var serverValue)
                         ? CommandParamBindingResult.Success(serverValue, consumedTokens: 0)
-                        : CommandParamBindingResult.Failure(CommandOutcome.Error(GetString("You must use this command in sepcific server.")));
+                        : CommandParamBindingResult.Failure(CommandOutcome.Error(GetString("You must use this command in specific server.")));
                 case CommandParamBindingSource.AmbientContext:
                     return TryResolveInjectedValue(binding, context.ExecutionContext, out var ambientValue)
                         ? CommandParamBindingResult.Success(ambientValue, consumedTokens: 0)

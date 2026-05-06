@@ -83,7 +83,7 @@ namespace TShockAPI.Commanding.V2
             }
 
             return CommandOutcome.InfoLines([
-                GetString("{0}{1} help:", Commands.Specifier, target.CanonicalPath),
+                GetString("{0}{1} help: ", Commands.Specifier, target.CanonicalPath),
                 .. usageLines,
             ]);
         }
@@ -128,9 +128,9 @@ namespace TShockAPI.Commanding.V2
         private static string RootHelpText => GetString("Manages the REST API.");
         private static string ExecuteSummary => GetString("Shows REST subcommand help.");
         private static string HelpSummary => GetString("Shows REST subcommand help.");
-        private static string ListUsersSummary => GetString("Lists all REST users and their active tokens.");
+        private static string ListUsersSummary => GetString("listusers - Lists all REST users and their current active tokens.");
         private static string PageNumberInvalidTokenMessage(params object?[] args) => GetString("\"{0}\" is not a valid page number.", args);
-        private static string DestroyTokensSummary => GetString("Destroys all active REST tokens.");
+        private static string DestroyTokensSummary => GetString("destroytokens - Destroys all current REST tokens.");
 
         [CommandAction(Summary = nameof(ExecuteSummary))]
         [TShockCommand(RestPermissions.restmanage)]

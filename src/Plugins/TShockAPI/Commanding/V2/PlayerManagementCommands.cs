@@ -336,7 +336,7 @@ namespace TShockAPI.Commanding.V2
         private static string AccountInvalidUserAccountMessage(params object?[] args) => GetString("User {0} does not exist.", args);
 
         private static string ControllerSummary => GetString("Shows information about a user.");
-        private static string ExecuteSummary => GetString("Shows information about a user account.");
+        private static string ExecuteSummary => GetString("Shows information about a user.");
 
         [CommandAction(Summary = nameof(ExecuteSummary))]
         [TShockCommand(nameof(Permissions.checkaccountinfo))]

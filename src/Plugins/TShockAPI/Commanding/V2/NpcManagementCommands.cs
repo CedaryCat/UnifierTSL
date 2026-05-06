@@ -129,7 +129,7 @@ namespace TShockAPI.Commanding.V2
 
             var npcs = Utils.GetNPCByIdOrName(npcSearch);
             if (npcs.Count == 0) {
-                return CommandOutcome.Error(GetString("\"{0}\" is not a valid server.NPC.", npcSearch));
+                return CommandOutcome.Error(GetString("\"{0}\" is not a valid NPC.", npcSearch));
             }
 
             if (npcs.Count > 1) {
@@ -154,10 +154,10 @@ namespace TShockAPI.Commanding.V2
             }
 
             if (context.Silent) {
-                return CommandOutcome.Success(GetPluralString("You butchered {0} server.NPC.", "You butchered {0} NPCs.", kills, kills));
+                return CommandOutcome.Success(GetPluralString("You butchered {0} NPC.", "You butchered {0} NPCs.", kills, kills));
             }
 
-            serverPlayer.BCInfoMessage(GetPluralString("{0} butchered {1} server.NPC.", "{0} butchered {1} NPCs.", kills, context.Executor.Name, kills));
+            serverPlayer.BCInfoMessage(GetPluralString("{0} butchered {1} NPC.", "{0} butchered {1} NPCs.", kills, context.Executor.Name, kills));
             return CommandOutcome.Empty;
         }
 

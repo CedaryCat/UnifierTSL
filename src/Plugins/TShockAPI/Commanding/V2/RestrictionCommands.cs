@@ -15,13 +15,13 @@ namespace TShockAPI.Commanding.V2
         private static string DisallowSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}itemban disallow <item name> <group name>.", args);
 
         private static string ControllerSummary => GetString("Manages item bans.");
-        private static string AddSummary => GetString("Adds an item ban.");
-        private static string AllowSummary => GetString("Allows a group to use a banned item.");
-        private static string DeleteSummary => GetString("Deletes an item ban.");
-        private static string DisallowSummary => GetString("Disallows a group from using a banned item.");
+        private static string AddSummary => GetString("add <item> - Adds an item ban.");
+        private static string AllowSummary => GetString("allow <item> <group> - Allows a group to use an item.");
+        private static string DeleteSummary => GetString("del <item> - Deletes an item ban.");
+        private static string DisallowSummary => GetString("disallow <item> <group> - Disallows a group from using an item.");
         private static string HelpSummary => GetString("Shows item ban subcommand help.");
         private static string PageNumberInvalidTokenMessage(params object?[] args) => GetString("\"{0}\" is not a valid page number.", args);
-        private static string ListSummary => GetString("Lists all item bans.");
+        private static string ListSummary => GetString("list [page] - Lists all item bans.");
 
         [CommandAction("add", Summary = nameof(AddSummary))]
         [RequireUserArgumentCountSyntax(1, nameof(AddSyntaxMessage))]
@@ -201,13 +201,13 @@ namespace TShockAPI.Commanding.V2
         private static string DisallowSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}projban disallow <id> <group name>.", args);
 
         private static string ControllerSummary => GetString("Manages projectile bans.");
-        private static string AddSummary => GetString("Adds a projectile ban.");
-        private static string AllowSummary => GetString("Allows a group to use a banned projectile.");
-        private static string DeleteSummary => GetString("Deletes a projectile ban.");
-        private static string DisallowSummary => GetString("Disallows a group from using a banned projectile.");
+        private static string AddSummary => GetString("add <projectile ID> - Adds a projectile ban.");
+        private static string AllowSummary => GetString("allow <projectile ID> <group> - Allows a group to use a projectile.");
+        private static string DeleteSummary => GetString("del <projectile ID> - Deletes an projectile ban.");
+        private static string DisallowSummary => GetString("disallow <projectile ID> <group> - Disallows a group from using a projectile.");
         private static string HelpSummary => GetString("Shows projectile ban subcommand help.");
         private static string PageNumberInvalidTokenMessage(params object?[] args) => GetString("\"{0}\" is not a valid page number.", args);
-        private static string ListSummary => GetString("Lists all projectile bans.");
+        private static string ListSummary => GetString("list [page] - Lists all projectile bans.");
 
         [CommandAction("add", Summary = nameof(AddSummary))]
         [RequireUserArgumentCountSyntax(1, nameof(AddSyntaxMessage))]
@@ -370,13 +370,13 @@ namespace TShockAPI.Commanding.V2
         private static string DisallowSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}tileban disallow <id> <group name>.", args);
 
         private static string ControllerSummary => GetString("Manages tile bans.");
-        private static string AddSummary => GetString("Adds a tile ban.");
-        private static string AllowSummary => GetString("Allows a group to place a banned tile.");
-        private static string DeleteSummary => GetString("Deletes a tile ban.");
+        private static string AddSummary => GetString("add <tile ID> - Adds a tile ban.");
+        private static string AllowSummary => GetString("allow <tile ID> <group> - Allows a group to place a tile.");
+        private static string DeleteSummary => GetString("del <tile ID> - Deletes a tile ban.");
         private static string DisallowSummary => GetString("Disallows a group from placing a banned tile.");
         private static string HelpSummary => GetString("Shows tile ban subcommand help.");
         private static string PageNumberInvalidTokenMessage(params object?[] args) => GetString("\"{0}\" is not a valid page number.", args);
-        private static string ListSummary => GetString("Lists all tile bans.");
+        private static string ListSummary => GetString("list [page] - Lists all tile bans.");
 
         [CommandAction("add", Summary = nameof(AddSummary))]
         [RequireUserArgumentCountSyntax(1, nameof(AddSyntaxMessage))]

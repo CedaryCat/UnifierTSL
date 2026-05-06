@@ -17,8 +17,8 @@ namespace TShockAPI.Commanding.V2
 
         private static string ControllerSummary => GetString("Manages TShock permission groups.");
         private static string AddSummary => GetString("Adds a new group.");
-        private static string AddPermissionsToAllSummary => GetString("Adds permissions to a group.");
-        private static string AddPermissionsSummary => GetString("Adds permissions to a group.");
+        private static string AddPermissionsToAllSummary => GetString("addperm <group> <permissions...> - Adds permissions to a group.");
+        private static string AddPermissionsSummary => GetString("addperm <group> <permissions...> - Adds permissions to a group.");
         private static string HelpSummary => GetString("Shows group subcommand help.");
         private static string PageNumberInvalidTokenMessage(params object?[] args) => GetString("\"{0}\" is not a valid page number.", args);
         private static string ParentSummary => GetString("Reads or changes a group's parent.");
@@ -27,8 +27,8 @@ namespace TShockAPI.Commanding.V2
         private static string ColorSummary => GetString("Reads or changes a group's chat color.");
         private static string RenameSummary => GetString("Renames a group.");
         private static string DeleteSummary => GetString("Deletes a group.");
-        private static string DeletePermissionsFromAllSummary => GetString("Removes permissions from a group.");
-        private static string DeletePermissionsSummary => GetString("Removes permissions from a group.");
+        private static string DeletePermissionsFromAllSummary => GetString("delperm <group> <permissions...> - Removes permissions from a group.");
+        private static string DeletePermissionsSummary => GetString("delperm <group> <permissions...> - Removes permissions from a group.");
         private static string ListSummary => GetString("Lists groups.");
         private static string ListPermissionsSummary => GetString("Lists a group's permissions.");
 
