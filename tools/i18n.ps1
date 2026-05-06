@@ -13,7 +13,7 @@ param (
     [Parameter()]
     [switch] $NoPo,
     [Parameter()]
-    [switch] $SkipMo,
+    [switch] $NoMo,
     [Parameter()]
     [switch] $NoTShockSeed,
     [Parameter()]
@@ -53,7 +53,6 @@ function Invoke-NativeCommand {
     param (
         [Parameter(Mandatory = $true)]
         [string] $FileName,
-        [Parameter(ValueFromRemainingArguments = $true)]
         [string[]] $ArgumentList
     )
 
@@ -130,7 +129,8 @@ function Update-Template {
 
     if (!$NoExtract) {
         Write-Output "[$($Config.Name)] extracting $($Config.Template)..."
-        Invoke-NativeCommand dotnet tool run GetText.Extractor -u -o -s $projectPath -t $templatePath
+        $extractArgs = @("tool", "run", "GetText.Extractor", "-u", "-o", "-s", $projectPath, "-t", $templatePath)
+        Invoke-NativeCommand -FileName dotnet -ArgumentList $extractArgs
     }
 
     Ensure-PotFile $templatePath $Config.Name
@@ -226,7 +226,7 @@ function Update-PoFiles {
 
         $mergeArgs += @($poPath, $templatePath)
         Write-Output "[$($Config.Name)] [$locale] merging..."
-        Invoke-NativeCommand msgmerge @mergeArgs
+        Invoke-NativeCommand -FileName msgmerge -ArgumentList $mergeArgs
         Format-To-Unix-Path-Style $poPath
     }
 }
@@ -234,7 +234,7 @@ function Update-PoFiles {
 function Update-MoFiles {
     param ($Config)
 
-    if ($SkipMo) {
+    if ($NoMo) {
         return
     }
 
@@ -242,7 +242,8 @@ function Update-MoFiles {
     foreach ($poFile in Get-ChildItem -Path $i18nRoot -Filter "$($Config.Name).po" -Recurse) {
         $moPath = [System.IO.Path]::ChangeExtension($poFile.FullName, ".mo")
         Write-Output "[$($Config.Name)] [$($poFile.Directory.Name)] generating mo..."
-        Invoke-NativeCommand msgfmt -o $moPath $poFile.FullName
+        $formatArgs = @("-o", $moPath, $poFile.FullName)
+        Invoke-NativeCommand -FileName msgfmt -ArgumentList $formatArgs
     }
 }
 
