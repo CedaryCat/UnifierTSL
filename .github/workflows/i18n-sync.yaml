@@ -91,6 +91,12 @@ jobs:
         env:
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
+      - name: Normalize downloaded translation ownership
+        shell: bash
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" i18n
+          chmod -R u+rwX i18n
+
       - name: Re-apply TShock upstream seed to downloaded translations
         shell: pwsh
         run: ./tools/i18n.ps1 -Domain TShockAPI -TShockUpstreamPath .local/tshock-upstream -NoExtract -NoMo
