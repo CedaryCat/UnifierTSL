@@ -237,6 +237,11 @@ function Merge-PoWithFallback {
 
     try {
         Invoke-NativeCommand -FileName msgattrib -ArgumentList @("--translated", "--no-obsolete", "-o", $translatedPath, $PrimaryPoPath)
+        if (!(Test-Path -Path $translatedPath -PathType Leaf)) {
+            Copy-Item -Path $FallbackPoPath -Destination $PrimaryPoPath -Force
+            return
+        }
+
         Invoke-NativeCommand -FileName msgcat -ArgumentList @("--use-first", "-o", $mergedPath, $translatedPath, $FallbackPoPath)
         Copy-Item -Path $mergedPath -Destination $PrimaryPoPath -Force
     }
