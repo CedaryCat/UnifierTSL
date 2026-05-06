@@ -136,12 +136,14 @@ function Update-Template {
 
     $projectPath = Resolve-RepoPath $Config.Project
     $templatePath = Resolve-RepoPath $Config.Template
+    $templateBackupPath = "$templatePath.bak"
     New-Item -Path (Split-Path $templatePath) -ItemType Directory -Force | Out-Null
 
     if (!$NoExtract) {
         Write-Output "[$($Config.Name)] extracting $($Config.Template)..."
         $extractArgs = @("tool", "run", "GetText.Extractor", "-u", "-o", "-s", $projectPath, "-t", $templatePath)
         Invoke-NativeCommand -FileName dotnet -ArgumentList $extractArgs
+        Remove-Item -Path $templateBackupPath -Force -ErrorAction SilentlyContinue
     }
 
     Ensure-PotFile $templatePath $Config.Name
