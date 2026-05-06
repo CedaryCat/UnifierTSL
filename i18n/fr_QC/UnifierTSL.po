@@ -1,14 +1,21 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: UnifierTSL\n"
+"Project-Id-Version: unifiertsl\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
-"Language-Team: \n"
+"Language-Team: French, Quebec\n"
+"Language: fr_QC\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: GetText.NET Extractor\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Crowdin-Project: unifiertsl\n"
+"X-Crowdin-Project-ID: 894776\n"
+"X-Crowdin-Language: fr-QC\n"
+"X-Crowdin-File: /i18n/UnifierTSL.template.pot\n"
+"X-Crowdin-File-ID: 7\n"
 
 #: ../../src/UnifierTSL/Servers/ServerContext.cs:51
 #, csharp-format
@@ -43,7 +50,8 @@ msgstr ""
 msgctxt "{0} is command action name, {1} is enum field name"
 msgid ""
 "Command action '{0}.{1}' maps flags enum member '{2}.{3}' to an invalid "
-"command token. Flag tokens must start with '-' and must not contain whitespace."
+"command token. Flag tokens must start with '-' and must not contain "
+"whitespace."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:578
@@ -58,8 +66,8 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is command action name, {1} is enum field name"
 msgid ""
-"Command action '{0}.{1}' maps zero-valued flags enum member '{2}.{3}'. "
-"Zero-valued members must remain sentinel/default values and cannot be exposed as "
+"Command action '{0}.{1}' maps zero-valued flags enum member '{2}.{3}'. Zero-"
+"valued members must remain sentinel/default values and cannot be exposed as "
 "command flags."
 msgstr ""
 
@@ -127,8 +135,8 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
-"Command action '{0}.{1}' configures fallback token binding for '{2}', but the "
-"parameter has no default value."
+"Command action '{0}.{1}' configures fallback token binding for '{2}', but "
+"the parameter has no default value."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:426
@@ -136,7 +144,8 @@ msgstr ""
 msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' declares binding modifiers on '{2}', but only "
-"parameters backed by a registered binding attribute may use CommandParamModifiers."
+"parameters backed by a registered binding attribute may use "
+"CommandParamModifiers."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:371
@@ -144,8 +153,8 @@ msgstr ""
 msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' declares both CommandParamAttribute and binding "
-"attribute '{2}' on parameter '{3}'. Structured parameters must use the binding "
-"attribute Name property instead of CommandParamAttribute."
+"attribute '{2}' on parameter '{3}'. Structured parameters must use the "
+"binding attribute Name property instead of CommandParamAttribute."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1086
@@ -193,8 +202,8 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
-"Command action '{0}.{1}' declares CommandTokenEnumAttribute on '{2}', but the "
-"parameter type '{3}' is not an enum."
+"Command action '{0}.{1}' declares CommandTokenEnumAttribute on '{2}', but "
+"the parameter type '{3}' is not an enum."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:540
@@ -202,8 +211,9 @@ msgstr ""
 msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' declares unsupported metadata alongside "
-"CommandFlagsAttribute on parameter '{2}'. First-class flag parameters must stand alone "
-"and cannot also be positional, literal, bound, prompt-overridden, or ambient."
+"CommandFlagsAttribute on parameter '{2}'. First-class flag parameters must "
+"stand alone and cannot also be positional, literal, bound, prompt-"
+"overridden, or ambient."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:546
@@ -211,8 +221,8 @@ msgstr ""
 msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' marks '{2}' with CommandFlagsAttribute for enum "
-"'{3}', but the CLR parameter type is '{4}'. The parameter type must match the "
-"declared flags enum exactly."
+"'{3}', but the CLR parameter type is '{4}'. The parameter type must match "
+"the declared flags enum exactly."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:393
@@ -220,7 +230,8 @@ msgstr ""
 msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' marks '{2}' with RemainingTextAttribute, but the "
-"parameter type is neither string nor backed by a registered binding attribute."
+"parameter type is neither string nor backed by a registered binding "
+"attribute."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:419
@@ -242,8 +253,9 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is command action name, {1} is return type name"
 msgid ""
-"Command action '{0}.{1}' uses unsupported return type '{2}'. V2 commands must "
-"return CommandOutcome, Task<CommandOutcome>, or ValueTask<CommandOutcome>."
+"Command action '{0}.{1}' uses unsupported return type '{2}'. V2 commands "
+"must return CommandOutcome, Task<CommandOutcome>, or "
+"ValueTask<CommandOutcome>."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:313
@@ -371,12 +383,13 @@ msgstr ""
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:880
 #, csharp-format
 msgctxt ""
-"{0} is command mismatch handler name, {1} is parameter name, {2} is parameter "
-"type name"
+"{0} is command mismatch handler name, {1} is parameter name, {2} is "
+"parameter type name"
 msgid ""
 "Command mismatch handler '{0}.{1}' declares unsupported parameter '{2}' of "
 "type '{3}'. Use CommandInvocationContext, CommandMismatchContext, "
-"CancellationToken, or mark an injected ambient parameter with FromAmbientContextAttribute."
+"CancellationToken, or mark an injected ambient parameter with "
+"FromAmbientContextAttribute."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:855
@@ -410,8 +423,8 @@ msgctxt ""
 "{0} is command parameter type, {1} is existing command binding attribute "
 "type, {2} is new command binding attribute type"
 msgid ""
-"CLR parameter type '{0}' already has an implicit binding route registered for "
-"binding attribute '{1}'. It cannot also default to '{2}' in the same "
+"CLR parameter type '{0}' already has an implicit binding route registered "
+"for binding attribute '{1}'. It cannot also default to '{2}' in the same "
 "registration scope."
 msgstr ""
 
@@ -530,8 +543,8 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is current listen port, {1} is desired listen port"
 msgid ""
-"launcher.listenPort changed from '{0}' to '{1}'. The active listener has been "
-"rebound."
+"launcher.listenPort changed from '{0}' to '{1}'. The active listener has "
+"been rebound."
 msgstr ""
 
 #: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:146
@@ -549,7 +562,8 @@ msgctxt ""
 "property name, {3} is member name"
 msgid ""
 "Type '{0}' uses '{1}.{2}' member reference '{3}', but no static string "
-"property or method with that name exists on the declaring type or attribute type."
+"property or method with that name exists on the declaring type or attribute "
+"type."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/CommandAttributeText.cs:79
@@ -601,8 +615,7 @@ msgctxt "{0} is elapsed milliseconds (number format with 2 decimal places)"
 msgid "Canceled. (used {0:.00}ms)"
 msgstr ""
 
-#: ../../src/UnifierTSL/WorkRunner.cs:77
-#: ../../src/UnifierTSL/WorkRunner.cs:126
+#: ../../src/UnifierTSL/WorkRunner.cs:77 ../../src/UnifierTSL/WorkRunner.cs:126
 #, csharp-format
 msgctxt "{0} is elapsed milliseconds (number format with 2 decimal places)"
 msgid "Done. (used {0:.00}ms)"
@@ -662,8 +675,8 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is guard type name, {1} is action method name"
 msgid ""
-"Command {0} guard '{1}' returned unsupported decision '{2}' for action "
-"'{3}.{4}'."
+"Command {0} guard '{1}' returned unsupported decision '{2}' for action '{3}."
+"{4}'."
 msgstr ""
 
 #: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:382
@@ -680,8 +693,8 @@ msgctxt ""
 "{0} is ignored server name, {1} is world name, {2} is kept server name, {3} "
 "is merge mode"
 msgid ""
-"Auto-start server '{0}' (world: '{1}') was ignored due to world conflict with "
-"higher-priority server '{2}' (merge mode: {3})."
+"Auto-start server '{0}' (world: '{1}') was ignored due to world conflict "
+"with higher-priority server '{2}' (merge mode: {3})."
 msgstr ""
 
 #: ../../src/UnifierTSL/UnifierApi.Internal.cs:251
@@ -728,8 +741,8 @@ msgstr ""
 msgctxt ""
 "{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
 msgid ""
-"The module '{0}' has a '{1}' attribute but no module name specified. Skipping "
-"it."
+"The module '{0}' has a '{1}' attribute but no module name specified. "
+"Skipping it."
 msgstr ""
 
 #: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:120
@@ -759,16 +772,16 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is parameter name, {1} is method name"
 msgid ""
-"Command parameter '{0}' on method '{1}.{2}' declares multiple prompt override "
-"attributes. Use a single {3} or {4} on the parameter."
+"Command parameter '{0}' on method '{1}.{2}' declares multiple prompt "
+"override attributes. Use a single {3} or {4} on the parameter."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:905
 #, csharp-format
 msgctxt "{0} is parameter name"
 msgid ""
-"Command parameter '{0}' declares multiple binding attributes. Each structured "
-"parameter may only declare one CommandBindingAttribute."
+"Command parameter '{0}' declares multiple binding attributes. Each "
+"structured parameter may only declare one CommandBindingAttribute."
 msgstr ""
 
 #: ../../src/UnifierTSL/UnifierApi.Internal.cs:541
@@ -780,8 +793,8 @@ msgstr ""
 #: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:192
 #, csharp-format
 msgctxt ""
-"{0} is player IP address, {1} is client version string, {2} is server version "
-"string"
+"{0} is player IP address, {1} is client version string, {2} is server "
+"version string"
 msgid ""
 "Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
 msgstr ""
@@ -789,8 +802,8 @@ msgstr ""
 #: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:186
 #, csharp-format
 msgctxt ""
-"{0} is player IP address, {1} is client version string, {2} is server version "
-"string"
+"{0} is player IP address, {1} is client version string, {2} is server "
+"version string"
 msgid ""
 "Version mismatch from {0}: client='{1}', server='{2}'. Cross-version join "
 "allowed by policy."
@@ -1206,8 +1219,8 @@ msgctxt ""
 "{0} is rule endpoint id, {1} is action endpoint id, {2} is command action "
 "name"
 msgid ""
-"Command endpoint action binding rule for '{0}' returned action binding "
-"'{1}.{2}' targeting '{3}'."
+"Command endpoint action binding rule for '{0}' returned action binding '{1}."
+"{2}' targeting '{3}'."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceCatalog.cs:200
@@ -1250,8 +1263,8 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is server name, {1} is config snapshot source"
 msgid ""
-"Duplicate autoStartServers entry '{0}' was found in the {1}. Later duplicates "
-"are ignored for hot reload diffing."
+"Duplicate autoStartServers entry '{0}' was found in the {1}. Later "
+"duplicates are ignored for hot reload diffing."
 msgstr ""
 
 #: ../../src/UnifierTSL/Servers/ServerContext.EventHandlers.cs:16
@@ -1270,8 +1283,8 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is server name"
 msgid ""
-"Server '{0}' was removed from root config, but server removal is not "
-"hot-applied in phase 1. Restart or an explicit lifecycle API is required."
+"Server '{0}' was removed from root config, but server removal is not hot-"
+"applied in phase 1. Restart or an explicit lifecycle API is required."
 msgstr ""
 
 #: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:87
@@ -1323,8 +1336,8 @@ msgstr ""
 #, csharp-format
 msgctxt "{0} is terminal source name, {1} is raw command input"
 msgid ""
-"A pending terminal dispatch for '{0}' returned Handled = false after claiming "
-"'{1}'."
+"A pending terminal dispatch for '{0}' returned Handled = false after "
+"claiming '{1}'."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:118
@@ -2061,8 +2074,8 @@ msgstr ""
 #: ../../src/UnifierTSL/Commanding/SemanticKey.cs:23
 #, csharp-format
 msgid ""
-"Semantic key id '{0}' is invalid. Expected lowercase dot-separated kebab-case "
-"segments."
+"Semantic key id '{0}' is invalid. Expected lowercase dot-separated kebab-"
+"case segments."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/SemanticKey.cs:13
@@ -2246,8 +2259,8 @@ msgstr ""
 #: ../../src/UnifierTSL/Module/Dependencies/ManagedEmbeddedDependency.cs:31
 #, csharp-format
 msgid ""
-"Unable to read assembly identity from embedded resource '{0}'. Ensure it is a "
-"valid .NET assembly."
+"Unable to read assembly identity from embedded resource '{0}'. Ensure it is "
+"a valid .NET assembly."
 msgstr ""
 
 #: ../../src/UnifierTSL/Servers/ServerDispatcher.cs:255
@@ -2328,4 +2341,3 @@ msgstr ""
 #: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:247
 msgid "You must use this command in specific server."
 msgstr ""
-
