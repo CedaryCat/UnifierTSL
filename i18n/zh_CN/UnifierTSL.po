@@ -1,316 +1,597 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: UnifierTSL\n"
-"POT-Creation-Date: 2025-11-08 19:04:30+0800\n"
-"PO-Revision-Date: 2025-11-08 19:04:30+0800\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: GetText.NET Extractor\n"
 
-#: ..\..\..\src\UnifierTSL\Servers\ServerContext.EventHandlers.cs:14
-#, csharp-format
-msgctxt "{0} is server name, {1} is player name, {2} is chat message"
-msgid "[Realm·{0}] <{1}>: {2}"
-msgstr "[域·{0}] <{1}>: {2}"
-
-#: ..\..\..\src\UnifierTSL\Program.cs:52
-msgid "Current Servers: "
-msgstr "当前服务器: "
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:613
-#, csharp-format
-msgctxt "{0} is client IP address"
-msgid "Accepted connection: {0}"
-msgstr "已接受连接: {0}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:93
-#, csharp-format
-msgctxt "{0} is plugin name (or type name)"
-msgid "Type '{0}' does not implement IPlugin. Skipped."
-msgstr "类型'{0}'未实现IPlugin接口。已跳过。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:281
-msgid "Parameter 'name' is required."
-msgstr "参数'name'是必需的。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:673
-#, csharp-format
-msgctxt ""
-"{0} is player name, {1} is destination server name, {2} is number of players "
-"in destination server"
-msgid "Player '{0}' transferred to {1}, current players: {2}"
-msgstr "玩家'{0}'已转移到 {1},当前玩家数: {2}"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:303
-msgid "Enter the server password: "
-msgstr "输入服务器密码: "
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:84
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is plugin load status"
-msgid "Plugin '{0}' in status '{1}', skipped."
-msgstr "插件'{0}'状态为'{1}',已跳过。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:695
-#, csharp-format
-msgctxt ""
-"{0} is player name, {1} is source server name, {2} is number of players in "
-"current server"
-msgid "Player '{0}' joined from {1}, current players: {2}"
-msgstr "玩家'{0}'从 {1} 加入,当前玩家数: {2}"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:629
-msgid "No more slots available, stopping listener"
-msgstr "没有更多可用的玩家槽,停止监听"
-
-#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:50
-msgid "Dependency file missing, removing from configuration for update."
-msgstr "依赖文件缺失,从配置中移除以便更新。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:73
-#, csharp-format
-msgctxt "{0} is plugin host class name"
-msgid "Failed to create instance of plugin host '{0}'."
-msgstr "无法创建插件宿主'{0}'的实例。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:68
-msgid "No plugins have been initialized."
-msgstr "没有初始化任何插件。"
-
-#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:546
-#, csharp-format
-msgctxt "{0} is module file path (relative path)"
-msgid "Failed to extract dependencies files of module '{0}'."
-msgstr "无法提取模块'{0}'的依赖文件。"
-
-#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:120
-#, csharp-format
-msgctxt ""
-"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
-msgid ""
-"The module '{0}' is a core module but has a '{1}' attribute. Skipping it."
-msgstr "模块'{0}'是核心模块但具有'{1}'属性。跳过它。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:297
-msgid "Enter the port to listen on: "
-msgstr "输入要监听的端口: "
-
-#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:126
-#, csharp-format
-msgctxt ""
-"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
-msgid ""
-"The module '{0}' with a '{1}' attribute should not specify dependencies. "
-"Skipping it."
-msgstr "带有'{1}'属性的模块'{0}'不应指定依赖关系。跳过它。"
-
-#: ..\..\..\src\UnifierTSL\Program.cs:54
-#, csharp-format
-msgctxt "{0} is server name, {1} is world file name"
-msgid "  {0} Running on world: {1}"
-msgstr "  {0} 运行在世界: {1}"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:225
-#, csharp-format
-msgctxt "{0} is user input value for server difficulty"
-msgid "Invalid server difficulty: {0}"
-msgstr "无效的服务器难度: {0}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Configs\ConfigHandle.cs:61
-#, csharp-format
-msgctxt "{0} is config file path (relative path)"
-msgid "Failed to read modified config '{0}', skipping reload."
-msgstr "无法读取修改的配置'{0}',跳过重新加载。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:245
-#, csharp-format
-msgctxt "{0} is user input value for server size"
-msgid "Invalid server size: {0}"
-msgstr "无效的服务器大小: {0}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:64
-#, csharp-format
-msgctxt "{0} is number of plugins initialized"
-msgid "All plugins ({0}) have been initialized."
-msgstr "所有插件({0})都已初始化。"
-
-#: ..\..\..\src\UnifierTSL\Program.cs:65
-#, csharp-format
-msgctxt "{0} is server password"
-msgid "Server is running with password: '{0}'"
-msgstr "服务器运行密码为: '{0}'"
-
-#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:386
-#, csharp-format
-msgctxt "{0} is module file path (absolute or relative)"
-msgid ""
-"Module with dependencies must be in the same moduleDirInfo as the module to "
-"store dependencies.\r\n"
-"Module File: {0}"
-msgstr ""
-"带有依赖的模块必须与存储依赖的模块在同一moduleDirInfo中。\r\n"
-"模块文件: {0}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:26
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:38
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' is not a .NET Plugin, skipping."
-msgstr "插件'{0}'不是.NET插件,跳过。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:60
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' is not a DotnetPluginInfo, skipping."
-msgstr "插件'{0}'不是DotnetPluginInfo,跳过。"
-
-#: ..\..\..\src\UnifierTSL\Servers\ServerContext.cs:43
+#: ../../src/UnifierTSL/Servers/ServerContext.cs:51
 #, csharp-format
 msgctxt "{0} is class name (SampleServer)"
 msgid ""
 "Under the UnifierTSL API, only instances of ServerContext (or its "
 "derivatives) can be created. To create a sample context, use '{0}' instead."
 msgstr ""
-"在UnifierTSL API下,只能创建ServerContext(或其派生类)的实例。要创建示例上下文,请改用'{0}'。"
+"在UnifierTSL API下,只能创建ServerContext(或其派生类)的实例。要创建示例上下文,"
+"请改用'{0}'。"
 
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:241
+#: ../../src/UnifierTSL/Launcher/LauncherSettingRegistry.cs:103
+#, csharp-format
+msgctxt "{0} is CLI option name"
+msgid "Duplicate launcher CLI binding registered for '{0}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:820
+#, csharp-format
+msgctxt "{0} is client IP address"
+msgid "Accepted connection: {0}"
+msgstr "已接受连接: {0}"
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:141
+#, csharp-format
+msgctxt "{0} is command action name, {1} is command controller type"
+msgid ""
+"Command method '{0}.{1}' is an instance method. V2 command methods must be "
+"static, and command controllers must not carry instance state."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:584
+#, csharp-format
+msgctxt "{0} is command action name, {1} is enum field name"
+msgid ""
+"Command action '{0}.{1}' maps flags enum member '{2}.{3}' to an invalid "
+"command token. Flag tokens must start with '-' and must not contain "
+"whitespace."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:578
+#, csharp-format
+msgctxt "{0} is command action name, {1} is enum field name"
+msgid ""
+"Command action '{0}.{1}' maps flags enum member '{2}.{3}' without any usable "
+"command tokens."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:591
+#, csharp-format
+msgctxt "{0} is command action name, {1} is enum field name"
+msgid ""
+"Command action '{0}.{1}' maps zero-valued flags enum member '{2}.{3}'. Zero-"
+"valued members must remain sentinel/default values and cannot be exposed as "
+"command flags."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:605
+#, csharp-format
+msgctxt "{0} is command action name, {1} is enum type name"
+msgid ""
+"Command action '{0}.{1}' declares duplicate command flag token '{2}' on enum "
+"'{3}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:822
 #, csharp-format
 msgctxt ""
-"{0} is player name, {1} is player IP address, {2} is packet type number"
+"{0} is command action name, {1} is parameter name, {2} is binding attribute "
+"type, {3} is parameter type name"
 msgid ""
-"'{0}' ({1}) sent invalid packet {2} before name/UUID authentication. Kicked."
+"Command action '{0}.{1}' declares structured parameter '{2}' with binding "
+"attribute '{3}', but no binding rule is registered for CLR type '{4}'."
 msgstr ""
-"'{0}' ({1}) 在名称/UUID身份验证前发送了无效数据包 {2}。已踢出。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:181
-msgid ""
-"Expected format: -server name:<name> worldname:<worldname> gamemode:<value> "
-"size:<value> evil:<value> seed:<value>"
-msgstr ""
-"预期格式: -server name:<name> worldname:<worldname> gamemode:<value> "
-"size:<value> evil:<value> seed:<value>"
-
-#: ..\..\..\src\UnifierTSL\Program.cs:41
-msgid "Global initialization started..."
-msgstr "全局初始化开始..."
-
-#: ..\..\..\src\UnifierTSL\Program.cs:34
-#, csharp-format
-msgid ""
-"Unifier Terraria-Server-Launcher Running\r\n"
-"Version Info:\r\n"
-"  Terraria v{0} & OTAPI v{1}\r\n"
-"  Unified-Server-Process v{2}\r\n"
-"  UnifierApi v{3} & PluginApi v{4}\r\n"
-"Current Process ID: {5}"
-msgstr ""
-"Unifier Terraria服务器启动器 正在运行\r\n"
-"版本信息: \r\n"
-"  Terraria v{0} & OTAPI v{1}\r\n"
-"  Unified-Server-Process v{2}\r\n"
-"  UnifierApi v{3} & PluginApi v{4}\r\n"
-"当前进程ID: {5}"
-
-#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:402
-#, csharp-format
-msgctxt "{0} is module file path (relative path)"
-msgid "Failed to extract temporary dependencies of module '{0}'."
-msgstr "无法提取模块'{0}'的临时依赖。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:265
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1104
 #, csharp-format
 msgctxt ""
-"{0} is user input value for server evil (world corruption/crimson type)"
-msgid "Invalid server evil: {0}"
-msgstr "无效的服务器邪恶类型: {0}"
+"{0} is command action name, {1} is parameter name, {2} is enum type name"
+msgid ""
+"Command action '{0}.{1}' declares CommandTokenEnumAttribute on '{2}', but "
+"enum '{3}' does not expose any [CommandToken] members."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\PluginHost\Configs\ConfigHandle.cs:49
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:433
+#, csharp-format
+msgctxt ""
+"{0} is command action name, {1} is parameter name, {2} is modifier name"
+msgid "Command action '{0}.{1}' marks '{2}' with unsupported modifiers '{3}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:838
+#, csharp-format
+msgctxt ""
+"{0} is command action name, {1} is parameter name, {2} is parameter type name"
+msgid ""
+"Command action '{0}.{1}' declares unsupported parameter '{2}' of type '{3}'. "
+"Use a supported scalar token type, register a binding attribute, or mark the "
+"parameter with FromAmbientContextAttribute."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:411
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' cannot declare user-bound parameter '{2}' after a "
+"tail-consuming parameter."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:799
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' cannot mark '{2}' with both "
+"FromAmbientContextAttribute and RemainingTextAttribute."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1098
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' configures fallback token binding for '{2}', but "
+"the parameter has no default value."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:426
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares binding modifiers on '{2}', but only "
+"parameters backed by a registered binding attribute may use "
+"CommandParamModifiers."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:371
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares both CommandParamAttribute and binding "
+"attribute '{2}' on parameter '{3}'. Structured parameters must use the "
+"binding attribute Name property instead of CommandParamAttribute."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1086
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares both CommandTokenEnumAttribute and binding "
+"attribute '{2}' on '{3}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1092
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares both CommandTokenEnumAttribute and "
+"CommandLiteralAttribute on '{2}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:617
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares CommandFlagsAttribute on '{2}', but enum "
+"'{3}' does not expose any [CommandFlag] members."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:552
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares CommandFlagsAttribute on '{2}', but the "
+"parameter type '{3}' is not a non-nullable [Flags] enum."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:377
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares CommandLiteralAttribute on structured "
+"parameter '{2}'. Choose either literal token binding or a structured binding "
+"route."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1080
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares CommandTokenEnumAttribute on '{2}', but "
+"the parameter type '{3}' is not an enum."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:540
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' declares unsupported metadata alongside "
+"CommandFlagsAttribute on parameter '{2}'. First-class flag parameters must "
+"stand alone and cannot also be positional, literal, bound, prompt-"
+"overridden, or ambient."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:546
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' marks '{2}' with CommandFlagsAttribute for enum "
+"'{3}', but the CLR parameter type is '{4}'. The parameter type must match "
+"the declared flags enum exactly."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:393
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' marks '{2}' with RemainingTextAttribute, but the "
+"parameter type is neither string nor backed by a registered binding "
+"attribute."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:419
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' must enable CommandParamModifiers.All on "
+"PlayerSelectorAttribute for parameter '{2}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:401
+#, csharp-format
+msgctxt "{0} is command action name, {1} is parameter name"
+msgid ""
+"Command action '{0}.{1}' must place tail-consuming parameter '{2}' last."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:254
+#, csharp-format
+msgctxt "{0} is command action name, {1} is return type name"
+msgid ""
+"Command action '{0}.{1}' uses unsupported return type '{2}'. V2 commands "
+"must return CommandOutcome, Task<CommandOutcome>, or "
+"ValueTask<CommandOutcome>."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:313
+#, csharp-format
+msgctxt "{0} is command action name"
+msgid ""
+"Command action '{0}.{1}' declares multiple CommandFlags parameters. Each "
+"action may only expose one first-class flag bag."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:572
+#, csharp-format
+msgctxt "{0} is command action name"
+msgid "Command action '{0}.{1}' is missing the expected dispatch binding."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:282
+#, csharp-format
+msgctxt "{0} is command action name"
+msgid "Command action '{0}' has no declaring type."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/CommandOutcomeWriters.cs:46
+#, csharp-format
+msgctxt "{0} is command attachment metadata json, {1} is sink type name"
+msgid ""
+"No outcome writer attachment handler was found for sink '{0}' and attachment "
+"{1}."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandRegistrationOptions.cs:246
+#, csharp-format
+msgctxt "{0} is command binding attribute type, {1} is command parameter type"
+msgid ""
+"A command binding rule for binding attribute '{0}' and CLR parameter type "
+"'{1}' is already registered in this registration scope."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:87
+#, csharp-format
+msgctxt "{0} is command controller group type"
+msgid "Command controller group '{0}' does not declare any controller types."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:78
+#, csharp-format
+msgctxt "{0} is command controller group type"
+msgid ""
+"Command controller group '{0}' is missing CommandControllerGroupAttribute."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:116
+#, csharp-format
+msgctxt "{0} is command controller type"
+msgid "Command controller '{0}' declared an empty root name."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:156
+#, csharp-format
+msgctxt "{0} is command controller type"
+msgid ""
+"Command controller '{0}' declares multiple CommandMismatchHandler methods. "
+"Only one root mismatch handler is allowed per controller."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:131
+#, csharp-format
+msgctxt "{0} is command controller type"
+msgid "Command controller '{0}' does not declare any CommandAction methods."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:111
+#, csharp-format
+msgctxt "{0} is command controller type"
+msgid "Command controller '{0}' is missing CommandControllerAttribute."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:105
+#, csharp-format
+msgctxt "{0} is command controller type"
+msgid "Command controller '{0}' must be declared as a static class."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceCatalog.cs:223
+#, csharp-format
+msgctxt "{0} is command endpoint id, {1} is command action name"
+msgid ""
+"Command endpoint '{0}' received duplicate bindings for action '{1}.{2}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/CommandDispatchCoordinator.cs:60
+#, csharp-format
+msgctxt "{0} is command endpoint id"
+msgid "Command endpoint '{0}' is not registered."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceCatalog.cs:127
+#, csharp-format
+msgctxt "{0} is command endpoint id"
+msgid "Command endpoint '{0}' is registered more than once."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystem.cs:136
+#, csharp-format
+msgctxt "{0} is command endpoint type"
+msgid "Command endpoint '{0}' could not be constructed."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceCatalog.cs:139
+#, csharp-format
+msgctxt "{0} is command endpoint type"
+msgid ""
+"Command endpoint action binding rule targets endpoint type '{0}', but no "
+"endpoint definition of that type is registered."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:150
+#, csharp-format
+msgctxt "{0} is command method name"
+msgid ""
+"Command method '{0}.{1}' cannot be both a CommandAction and a "
+"CommandMismatchHandler."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:880
+#, csharp-format
+msgctxt ""
+"{0} is command mismatch handler name, {1} is parameter name, {2} is "
+"parameter type name"
+msgid ""
+"Command mismatch handler '{0}.{1}' declares unsupported parameter '{2}' of "
+"type '{3}'. Use CommandInvocationContext, CommandMismatchContext, "
+"CancellationToken, or mark an injected ambient parameter with "
+"FromAmbientContextAttribute."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:855
+#, csharp-format
+msgctxt "{0} is command mismatch handler name, {1} is parameter name"
+msgid ""
+"Command mismatch handler '{0}.{1}' declares unsupported user-bound metadata "
+"on parameter '{2}'. Mismatch handlers may only consume injected context "
+"values."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystem.cs:149
+#, csharp-format
+msgctxt "{0} is command name, {1} is existing root name, {2} is new root name"
+msgid ""
+"Command name '{0}' conflicts with already registered root '{1}' while "
+"installing '{2}' through CommandSystem."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:933
+#, csharp-format
+msgctxt "{0} is command parameter type, {1} is command binding attribute type"
+msgid ""
+"CLR parameter type '{0}' declares implicit binding route '{1}', but no "
+"matching binding rule was registered."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandRegistrationOptions.cs:300
+#, csharp-format
+msgctxt ""
+"{0} is command parameter type, {1} is existing command binding attribute "
+"type, {2} is new command binding attribute type"
+msgid ""
+"CLR parameter type '{0}' already has an implicit binding route registered "
+"for binding attribute '{1}'. It cannot also default to '{2}' in the same "
+"registration scope."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:121
+#, csharp-format
+msgctxt "{0} is command return type"
+msgid ""
+"Unsupported command return type '{0}'. Only CommandOutcome, "
+"Task<CommandOutcome>, and ValueTask<CommandOutcome> are supported in V2."
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:61
+#, csharp-format
+msgctxt "{0} is config file path (relative path)"
+msgid "Failed to read modified config '{0}', skipping reload."
+msgstr "无法读取修改的配置'{0}',跳过重新加载。"
+
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:49
 #, csharp-format
 msgctxt "{0} is config file path (relative path)"
 msgid "FileWatcher error occurred for config '{0}'."
 msgstr "配置'{0}'发生FileWatcher错误。"
 
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:93
+#: ../../src/UnifierTSL/Launcher/LauncherSettingValues.cs:197
 #, csharp-format
-msgctxt "{0} is plugin name, {1} is plugin version, {2} is plugin author name"
-msgid "Plugin '{0}' v{1} (by {2}) initialized."
-msgstr "插件'{0}' v{1} (作者 {2}) 已初始化。"
+msgctxt "{0} is configured joinServer value"
+msgid "Invalid joinServer setting '{0}'. Falling back to 'none'."
+msgstr "无效的 joinServer 设置“{0}”。将回退到 none。"
 
-#: ..\..\..\src\UnifierTSL\WorkRunner.cs:24
-#: ..\..\..\src\UnifierTSL\WorkRunner.cs:42
-#: ..\..\..\src\UnifierTSL\WorkRunner.cs:62
-#, csharp-format
-msgctxt "{0} is elapsed milliseconds (number format with 2 decimal places)"
-msgid "Done. (used {0:.00}ms)"
-msgstr "完成。(耗时 {0:.00}ms)"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:60
+#: ../../src/UnifierTSL/Launcher/LauncherSettingValues.cs:308
 #, csharp-format
 msgctxt ""
-"{0} is plugin host class name, {1} is current plugin host version (e.g. "
-"1.0.0)"
+"{0} is configured launcher.consoleStatus.bandwidthRolloverThreshold value"
 msgid ""
-"Plugin host '{0}' is not compatible with current plugin host version '{1}'. "
-"Major version must be equal, minor version of plugin host must be less or "
-"equal."
+"Invalid launcher.consoleStatus.bandwidthRolloverThreshold setting '{0}'. "
+"Falling back to '{1}'."
 msgstr ""
-"插件宿主'{0}'与当前插件宿主版本'{1}'不兼容。主版本号必须相等,插件宿主的次版本号必须小于或等于当前版本。"
 
-#: ..\..\..\src\UnifierTSL\Module\ModuleAssemblyLoader.cs:132
+#: ../../src/UnifierTSL/Launcher/LauncherSettingValues.cs:300
 #, csharp-format
-msgctxt ""
-"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgctxt "{0} is configured launcher.consoleStatus.bandwidthUnit value"
 msgid ""
-"The module '{0}' has a '{1}' attribute but no module name specified. Skipping "
-"it."
+"Invalid launcher.consoleStatus.bandwidthUnit setting '{0}'. Falling back to "
+"'bytes'."
 msgstr ""
-"模块'{0}'具有'{1}'属性但未指定模块名称。跳过它。"
 
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:76
+#: ../../src/UnifierTSL/Launcher/LauncherSettingValues.cs:229
 #, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' is disabled, skipped."
-msgstr "插件'{0}'已禁用,已跳过。"
+msgctxt "{0} is configured logging.mode value"
+msgid "Invalid logging.mode setting '{0}'. Falling back to 'txt'."
+msgstr "无效的 logging.mode 设置“{0}”。将回退到 txt。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:132
-#, csharp-format
-msgctxt "{0} is user input value for port number"
-msgid "Invalid port number specified: {0}"
-msgstr "指定的端口号无效: {0}"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:700
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:227
 #, csharp-format
 msgctxt ""
-"{0} is player name, {1} is source server name, {2} is destination server name"
-msgid "Player '{0}' {1} → {2} transferred."
-msgstr "玩家'{0}' {1} → {2} 已转移。"
+"{0} is current colorfulConsoleStatus value, {1} is desired "
+"colorfulConsoleStatus value"
+msgid ""
+"launcher.colorfulConsoleStatus changed from '{0}' to '{1}'. Status bar "
+"appearance has been refreshed."
+msgstr ""
+"launcher.colorfulConsoleStatus 已从 '{0}' 更改为 '{1}'。状态栏外观已刷新。"
 
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:104
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:470
 #, csharp-format
-msgctxt "{0} is plugin name, {1} is type full name"
-msgid "Failed to create instance of plugin '{0}', type: '{1}'."
-msgstr "无法创建插件'{0}'的实例,类型: '{1}'。"
+msgctxt "{0} is current input value"
+msgid "input '{0}' is available."
+msgstr "输入 '{0}' 可用。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:199
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:453
 #, csharp-format
-msgctxt "{0} is world name, {1} is server name"
-msgid "World name '{0}' is already in use by server '{1}'"
-msgstr "世界名称'{0}'已被服务器'{1}'使用"
+msgctxt "{0} is current input value"
+msgid "input '{0}' is not an integer port."
+msgstr "输入 '{0}' 不是整数端口。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:276
-msgid "Parameter 'worldname' is required."
-msgstr "参数'worldname'是必需的。"
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:465
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is occupied."
+msgstr "输入 '{0}' 已被占用。"
 
-#: ..\..\..\src\UnifierTSL\Program.cs:60
-msgid "UnifierTSL started successfully!"
-msgstr "UnifierTSL 启动成功!"
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:459
+#, csharp-format
+msgctxt "{0} is current input value"
+msgid "input '{0}' is out of range (0~65535)."
+msgstr "输入 '{0}' 超出范围（0~65535）。"
 
-#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:98
-#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:120
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:211
+#, csharp-format
+msgctxt "{0} is current join server mode, {1} is desired join server mode"
+msgid ""
+"launcher.joinServer changed from '{0}' to '{1}'. Future joins will use the "
+"updated policy."
+msgstr ""
+"`launcher.joinServer` 已从“{0}”变更为“{1}”。后续加入将使用更新后的策略。"
+
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:181
+#, csharp-format
+msgctxt ""
+"{0} is current listen port, {1} is desired listen port, {2} is active listen "
+"port"
+msgid ""
+"launcher.listenPort changed from '{0}' to '{1}', but rebinding failed. "
+"Keeping port {2}."
+msgstr ""
+"`launcher.listenPort` 已从“{0}”变更为“{1}”，但重绑失败。将保留端口 {2}。"
+
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:166
+#, csharp-format
+msgctxt ""
+"{0} is current listen port, {1} is desired listen port, {2} is active listen "
+"port"
+msgid ""
+"launcher.listenPort changed from '{0}' to '{1}', but the new value is "
+"invalid. Keeping port {2}."
+msgstr ""
+"`launcher.listenPort` 已从“{0}”变更为“{1}”，但新值无效。将保留端口 {2}。"
+
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:174
+#, csharp-format
+msgctxt "{0} is current listen port, {1} is desired listen port"
+msgid ""
+"launcher.listenPort changed from '{0}' to '{1}'. The active listener has "
+"been rebound."
+msgstr "`launcher.listenPort` 已从“{0}”变更为“{1}”。当前监听器已重绑。"
+
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:146
+#, csharp-format
+msgctxt "{0} is current logging mode, {1} is desired logging mode"
+msgid ""
+"logging.mode changed from '{0}' to '{1}'. Restart is required before this "
+"setting takes effect."
+msgstr "`logging.mode` 已从“{0}”变更为“{1}”。该设置需重启后生效。"
+
+#: ../../src/UnifierTSL/Commanding/CommandAttributeText.cs:53
+#, csharp-format
+msgctxt ""
+"{0} is declaring type name, {1} is attribute type name, {2} is attribute "
+"property name, {3} is member name"
+msgid ""
+"Type '{0}' uses '{1}.{2}' member reference '{3}', but no static string "
+"property or method with that name exists on the declaring type or attribute "
+"type."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/CommandAttributeText.cs:79
+#: ../../src/UnifierTSL/Commanding/CommandAttributeText.cs:95
+#, csharp-format
+msgctxt "{0} is declaring type name, {1} is member name"
+msgid ""
+"Static member reference '{0}.{1}' must resolve to a parameterless static "
+"string property or a static string method."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/CommandAttributeText.cs:111
+#, csharp-format
+msgctxt "{0} is declaring type name, {1} is member name"
+msgid ""
+"Static member reference '{0}.{1}' must resolve to a parameterless string "
+"method or a string method with a params object?[] parameter."
+msgstr ""
+
+#: ../../src/UnifierTSL/Module/Dependencies/DependenciesConfiguration.cs:93
+#: ../../src/UnifierTSL/Module/Dependencies/DependenciesConfiguration.cs:115
+#, csharp-format
+msgctxt "{0} is dependency file path (relative path)"
+msgid "Deleted unused dependencies file '{0}'"
+msgstr "已删除未使用的依赖文件'{0}'"
+
+#: ../../src/UnifierTSL/Module/Dependencies/DependenciesConfiguration.cs:98
+#: ../../src/UnifierTSL/Module/Dependencies/DependenciesConfiguration.cs:120
 #, csharp-format
 msgctxt "{0} is dependency file path (relative path)"
 msgid ""
@@ -321,254 +602,1705 @@ msgstr ""
 "无法删除未使用的依赖文件'{0}'。\r\n"
 "该文件可能被另一个进程占用。您可以尝试手动删除。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:226
+#: ../../src/UnifierTSL/Logging/LogWriters/AsyncDurableLogWriter.cs:176
+#, csharp-format
+msgctxt ""
+"{0} is durable backlog count, {1} is durable backlog warning threshold"
 msgid ""
-"Expected value: an integer between 0 and 3 (inclusive), or one of the "
-"strings: normal, expert, master, creative"
+"[Warning][LogCore|DurableQueue] Durable backlog is {0} entries (threshold: "
+"{1})."
+msgstr "[Warning][LogCore|DurableQueue] 持久化队列积压为 {0} 条（阈值: {1}）。"
+
+#: ../../src/UnifierTSL/WorkRunner.cs:127
+#, csharp-format
+msgctxt "{0} is elapsed milliseconds (number format with 2 decimal places)"
+msgid "Canceled. (used {0:.00}ms)"
 msgstr ""
-"预期值: 0到3之间的整数(包括0和3),或者以下字符串之一: normal, expert, master, creative"
 
-#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:93
-#: ..\..\..\src\UnifierTSL\Module\Dependencies\DependenciesConfiguration.cs:115
+#: ../../src/UnifierTSL/WorkRunner.cs:77 ../../src/UnifierTSL/WorkRunner.cs:126
 #, csharp-format
-msgctxt "{0} is dependency file path (relative path)"
-msgid "Deleted unused dependencies file '{0}'"
-msgstr "已删除未使用的依赖文件'{0}'"
+msgctxt "{0} is elapsed milliseconds (number format with 2 decimal places)"
+msgid "Done. (used {0:.00}ms)"
+msgstr "完成。(耗时 {0:.00}ms)"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:180
+#: ../../src/UnifierTSL/WorkRunner.cs:128
 #, csharp-format
-msgctxt "{0} is server argument string"
-msgid "Invalid server argument: {0}"
-msgstr "无效的服务器参数: {0}"
+msgctxt "{0} is elapsed milliseconds (number format with 2 decimal places)"
+msgid "Failed. (used {0:.00}ms)"
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:621
-msgid "Server is full"
-msgstr "服务器已满"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.Initialize.cs:101
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandTokenEnumSupport.cs:68
 #, csharp-format
-msgctxt "{0} is plugin name, {1} is error message"
-msgid "Plugin '{0}' failed to initialize: {1}"
-msgstr "插件'{0}'初始化失败: {1}"
+msgctxt "{0} is enum field name"
+msgid "Command token enum member '{0}.{1}' does not declare any usable tokens."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:190
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandTokenEnumSupport.cs:74
 #, csharp-format
-msgctxt "{0} is server name"
-msgid "Server name '{0}' is already in use"
-msgstr "服务器名称'{0}'已被使用"
+msgctxt "{0} is enum field name"
+msgid "Command token enum member '{0}.{1}' resolved to null."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:210
-msgid "No available server found for you."
-msgstr "找不到你的可用服务器。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:214
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandTokenEnumSupport.cs:85
 #, csharp-format
-msgctxt "{0} is player name, {1} is player UUID"
-msgid "No available server found for player '{0}' ({1}); connection aborted."
-msgstr "找不到玩家'{0}' ({1})的可用服务器;连接已中止。"
+msgctxt "{0} is enum type name, {1} is command token"
+msgid "Command token enum '{0}' declares duplicate token '{1}'."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\Program.cs:64
-msgid "Server is running without a password. Anyone can join."
-msgstr "服务器运行无密码。任何人都可以加入。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:200
-msgid "You are not allowed to join this server."
-msgstr "您不被允许加入此服务器。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:266
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandTokenEnumSupport.cs:47
+#, csharp-format
+msgctxt "{0} is enum type name"
 msgid ""
-"Expected value: an integer between 0 and 2 (inclusive), or one of the "
-"strings: random, corruption, crimson"
+"Command token enum support requires an enum CLR type, but '{0}' was "
+"requested."
 msgstr ""
-"预期值: 0到2之间的整数(包括0和2),或者以下字符串之一: random, corruption, crimson"
 
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:231
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:30
+#, csharp-format
+msgctxt "{0} is error message"
+msgid "Invalid hot reload request: {0}"
+msgstr "无效的热重载请求: {0}"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:24
+#, csharp-format
+msgctxt "{0} is error reason"
+msgid "last error: {0}"
+msgstr "上次错误：{0}"
+
+#: ../../src/UnifierTSL/Logging/LogWriters/AsyncDurableLogWriter.cs:186
+#, csharp-format
+msgctxt "{0} is exception text"
+msgid "[Error][LogCore|DurableQueue] Durable sink disabled after failure: {0}"
+msgstr "[Error][LogCore|DurableQueue] 持久化日志 Sink 发生故障后已禁用: {0}"
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:330
+#, csharp-format
+msgctxt "{0} is guard type name, {1} is action method name"
+msgid ""
+"Command {0} guard '{1}' returned unsupported decision '{2}' for action '{3}."
+"{4}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:382
+#, csharp-format
+msgctxt "{0} is ignored server name, {1} is kept source, {2} is merge mode"
+msgid ""
+"Auto-start server '{0}' from {1} was ignored because a higher-priority entry "
+"already exists (kept source: {2}, merge mode: {3})."
+msgstr ""
+"来自 {1} 的自动启动服务器“{0}”被忽略，因为已存在更高优先级条目（保留来源: "
+"{2}，合并模式: {3}）。"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:393
+#, csharp-format
+msgctxt ""
+"{0} is ignored server name, {1} is world name, {2} is kept server name, {3} "
+"is merge mode"
+msgid ""
+"Auto-start server '{0}' (world: '{1}') was ignored due to world conflict "
+"with higher-priority server '{2}' (merge mode: {3})."
+msgstr ""
+"自动启动服务器“{0}”（世界: “{1}”）因与更高优先级服务器“{2}”发生世界冲突而被忽"
+"略（合并模式: {3}）。"
+
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:251
+#, csharp-format
+msgctxt "{0} is log persistence mode, {1} is log directory path"
+msgid "Failed to initialize '{0}' durable log backend at '{1}'."
+msgstr "无法在“{1}”初始化“{0}”持久化日志后端。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:100
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "Multiple updated plugin candidates were found for key '{0}'."
+msgstr "键 '{0}' 匹配到多个已更新的插件候选项。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:57
+#, csharp-format
+msgctxt "{0} is match key"
+msgid "No loaded plugin matches hot reload key '{0}'."
+msgstr "没有已加载插件匹配热重载键 '{0}'。"
+
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:386
+#, csharp-format
+msgctxt "{0} is module file path (absolute or relative)"
+msgid ""
+"Module with dependencies must be in the same moduleDirInfo as the module to "
+"store dependencies.\r\n"
+"Module File: {0}"
+msgstr ""
+"带有依赖的模块必须与存储依赖的模块在同一moduleDirInfo中。\r\n"
+"模块文件: {0}"
+
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:546
+#, csharp-format
+msgctxt "{0} is module file path (relative path)"
+msgid "Failed to extract dependencies files of module '{0}'."
+msgstr "无法提取模块'{0}'的依赖文件。"
+
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:402
+#, csharp-format
+msgctxt "{0} is module file path (relative path)"
+msgid "Failed to extract temporary dependencies of module '{0}'."
+msgstr "无法提取模块'{0}'的临时依赖。"
+
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:132
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' has a '{1}' attribute but no module name specified. "
+"Skipping it."
+msgstr "模块'{0}'具有'{1}'属性但未指定模块名称。跳过它。"
+
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:120
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' is a core module but has a '{1}' attribute. Skipping it."
+msgstr "模块'{0}'是核心模块但具有'{1}'属性。跳过它。"
+
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:126
+#, csharp-format
+msgctxt ""
+"{0} is module file path, {1} is attribute name (RequiresCoreModuleAttribute)"
+msgid ""
+"The module '{0}' with a '{1}' attribute should not specify dependencies. "
+"Skipping it."
+msgstr "带有'{1}'属性的模块'{0}'不应指定依赖关系。跳过它。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.Initialize.cs:64
+#, csharp-format
+msgctxt "{0} is number of plugins initialized"
+msgid "All plugins ({0}) have been initialized."
+msgstr "所有插件({0})都已初始化。"
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1064
+#, csharp-format
+msgctxt "{0} is parameter name, {1} is method name"
+msgid ""
+"Command parameter '{0}' on method '{1}.{2}' declares multiple prompt "
+"override attributes. Use a single {3} or {4} on the parameter."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:905
+#, csharp-format
+msgctxt "{0} is parameter name"
+msgid ""
+"Command parameter '{0}' declares multiple binding attributes. Each "
+"structured parameter may only declare one CommandBindingAttribute."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:541
+#, csharp-format
+msgctxt "{0} is password text length"
+msgid "password length: {0}"
+msgstr "密码长度：{0}"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:192
+#, csharp-format
+msgctxt ""
+"{0} is player IP address, {1} is client version string, {2} is server "
+"version string"
+msgid ""
+"Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
+msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。连接已拒绝。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:186
+#, csharp-format
+msgctxt ""
+"{0} is player IP address, {1} is client version string, {2} is server "
+"version string"
+msgid ""
+"Version mismatch from {0}: client='{1}', server='{2}'. Cross-version join "
+"allowed by policy."
+msgstr ""
+"版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。已按策略允许跨版本加入。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:886
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is destination server name, {2} is number of players "
+"in destination server"
+msgid "Player '{0}' transferred to {1}, current players: {2}"
+msgstr "玩家'{0}'已转移到 {1},当前玩家数: {2}"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:234
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is player IP address, {2} is invalid raw UUID string"
+msgid "'{0}' ({1}) sent invalid UUID '{2}' before authentication. Kicked."
+msgstr "'{0}' ({1}) 在身份验证前发送了无效 UUID '{2}'。已踢出。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:285
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is player IP address, {2} is packet type number"
+msgid ""
+"'{0}' ({1}) sent invalid packet {2} before name/UUID authentication. Kicked."
+msgstr "'{0}' ({1}) 在名称/UUID身份验证前发送了无效数据包 {2}。已踢出。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:275
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID, {2} is server name"
 msgid "Player '{0}' ({1}) routed to server '{2}'."
 msgstr "玩家'{0}' ({1}) 已路由到服务器'{2}'。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:246
-msgid ""
-"Expected value: an integer between 0 and 2 (inclusive), or one of the "
-"strings: small, medium, large"
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:257
+#, csharp-format
+msgctxt "{0} is player name, {1} is player UUID"
+msgid "No available server found for player '{0}' ({1}); connection aborted."
+msgstr "找不到玩家'{0}' ({1})的可用服务器;连接已中止。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:913
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Player '{0}' {1} ? {2} transferred."
+msgstr "玩家“{0}”已从 {1} ? {2} 完成转移。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:908
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is source server name, {2} is number of players in "
+"current server"
+msgid "Player '{0}' joined from {1}, current players: {2}"
+msgstr "玩家'{0}'从 {1} 加入,当前玩家数: {2}"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:43
+#, csharp-format
+msgctxt "{0} is plugin entry point"
+msgid "Candidate entry point '{0}' was not found."
+msgstr "未找到候选入口点 '{0}'。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:29
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Candidate plugin file '{0}' does not exist."
+msgstr "候选插件文件 '{0}' 不存在。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:65
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Failed to load candidate plugin from '{0}'."
+msgstr "无法从 '{0}' 加载候选插件。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:74
+#, csharp-format
+msgctxt "{0} is plugin file path"
+msgid "Failed to unload rejected candidate plugin load context for '{0}'."
 msgstr ""
-"预期值: 0到2之间的整数(包括0和2),或者以下字符串之一: small, medium, large"
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:208
-msgid "Invalid client UUID."
-msgstr "无效的客户端 UUID。"
 
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:211
+#: ../../src/UnifierTSL/PluginHost/PluginOrchestrator.cs:61
 #, csharp-format
-msgctxt "{0} is player name, {1} is player IP address, {2} is invalid raw UUID string"
-msgid "'{0}' ({1}) sent invalid UUID '{2}' before authentication. Kicked."
-msgstr "'{0}' ({1}) 在身份验证前发送了无效 UUID '{2}'。已踢出。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:181
-#, csharp-format
-msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
+msgctxt ""
+"{0} is plugin host class name, {1} is current plugin host version (e.g. "
+"1.0.0)"
 msgid ""
-"Version mismatch from {0}: client='{1}', server='{2}'. Cross-version join "
-"allowed by policy."
-msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。已按策略允许跨版本加入。"
+"Plugin host '{0}' is not compatible with current plugin host version '{1}'. "
+"Major version must be equal, minor version of plugin host must be less or "
+"equal."
+msgstr ""
+"插件宿主'{0}'与当前插件宿主版本'{1}'不兼容。主版本号必须相等,插件宿主的次版本"
+"号必须小于或等于当前版本。"
 
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:187
+#: ../../src/UnifierTSL/PluginHost/PluginOrchestrator.cs:74
 #, csharp-format
-msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
-msgid "Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
-msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。连接已拒绝。"
+msgctxt "{0} is plugin host class name"
+msgid "Failed to create instance of plugin host '{0}'."
+msgstr "无法创建插件宿主'{0}'的实例。"
 
-#: ..\..\..\src\UnifierTSL\LauncherConfigManager.cs:28
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:203
+#, csharp-format
+msgctxt "{0} is plugin name (or type name)"
+msgid "Type '{0}' does not implement IPlugin. Skipped."
+msgstr "类型'{0}'未实现IPlugin接口。已跳过。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:220
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Candidate plugin '{0}' failed during hot reload prepare: {1}"
+msgstr "候选插件 '{0}' 在热重载准备阶段失败: {1}"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:311
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Commit stage '{0}' failed for plugin '{1}': {2}"
+msgstr "插件 '{1}' 的提交阶段 '{0}' 失败: {2}"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.Initialize.cs:101
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to initialize: {1}"
+msgstr "插件'{0}'初始化失败: {1}"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.cs:51
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to shutdown: {1}"
+msgstr "插件 '{0}' 关闭失败: {1}"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.cs:79
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed to unload: {1}"
+msgstr "插件 '{0}' 卸载失败: {1}"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:150
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Plugin '{0}' failed while exporting hot reload state: {1}"
+msgstr "插件 '{0}' 在导出热重载状态时失败: {1}"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:383
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is error message"
+msgid "Rollback failed for plugin '{0}': {1}"
+msgstr "插件 '{0}' 回滚失败: {1}"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:111
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is load details"
+msgid "Failed to load hot reload candidate for plugin '{0}'. Result: {1}."
+msgstr "无法为插件 '{0}' 加载热重载候选项。结果: {1}。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:293
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is old version, {2} is new version"
+msgid "Hot reload succeeded for plugin '{0}'. {1} -> {2}."
+msgstr "插件 '{0}' 热重载成功。{1} -> {2}。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.Initialize.cs:84
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is plugin load status"
+msgid "Plugin '{0}' in status '{1}', skipped."
+msgstr "插件'{0}'状态为'{1}',已跳过。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.Initialize.cs:93
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is plugin version, {2} is plugin author name"
+msgid "Plugin '{0}' v{1} (by {2}) initialized."
+msgstr "插件'{0}' v{1} (作者 {2}) 已初始化。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:215
+#, csharp-format
+msgctxt "{0} is plugin name, {1} is type full name"
+msgid "Failed to create instance of plugin '{0}', type: '{1}'."
+msgstr "无法创建插件'{0}'的实例,类型: '{1}'。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:122
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr "候选插件 '{0}' 未实现 IHotReloadCapablePlugin。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:215
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' failed during hot reload prepare."
+msgstr "候选插件 '{0}' 在热重载准备阶段失败。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:270
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected activation."
+msgstr "候选插件 '{0}' 拒绝激活。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:204
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Candidate plugin '{0}' rejected hot reload prepare."
+msgstr "候选插件 '{0}' 拒绝热重载准备。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:401
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Failed to unload hot reload candidate '{0}'."
+msgstr "无法卸载热重载候选插件 '{0}'。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:91
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "No updated candidate was found for plugin '{0}'."
+msgstr "未找到插件 '{0}' 的已更新候选项。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:175
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' accepted export but returned no state payload."
+msgstr "插件 '{0}' 接受了导出但未返回状态负载。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:65
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' does not implement IHotReloadCapablePlugin."
+msgstr "插件 '{0}' 未实现 IHotReloadCapablePlugin。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:344
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' failed to recover after hot reload commit failure."
+msgstr "插件 '{0}' 在热重载提交失败后恢复失败。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:421
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid ""
+"Plugin '{0}' has dependent modules. V1 hot reload refuses this topology."
+msgstr "插件 '{0}' 存在依赖它的模块。V1 热重载拒绝该拓扑。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:302
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' hot reloaded successfully."
+msgstr "插件 '{0}' 热重载成功。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:416
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid ""
+"Plugin '{0}' is a satellite module and shares a core module context. V1 hot "
+"reload refuses this topology."
+msgstr "插件 '{0}' 是卫星模块并共享核心模块上下文。V1 热重载拒绝该拓扑。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.Initialize.cs:76
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is disabled, skipped."
+msgstr "插件'{0}'已禁用,已跳过。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:97
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:112
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is not a .NET Plugin, skipping."
+msgstr "插件'{0}'不是.NET插件,跳过。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:136
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' is not a DotnetPluginInfo, skipping."
+msgstr "插件'{0}'不是DotnetPluginInfo,跳过。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:164
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' rejected hot reload export."
+msgstr "插件 '{0}' 拒绝热重载导出。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:430
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid ""
+"Plugin '{0}' shares its module with other active plugin entry points. V1 hot "
+"reload refuses this topology."
+msgstr "插件 '{0}' 与其他活动插件入口点共享同一模块。V1 热重载拒绝该拓扑。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.cs:42
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' shutdown completed."
+msgstr "插件 '{0}' 已完成关闭。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:145
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' threw while exporting hot reload state."
+msgstr "插件 '{0}' 在导出热重载状态时抛出异常。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.cs:73
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Plugin '{0}' unload completed."
+msgstr "插件 '{0}' 已完成卸载。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:378
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid "Rollback failed with an exception for plugin '{0}'."
+msgstr "插件 '{0}' 回滚失败并抛出异常。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:256
+#, csharp-format
+msgctxt "{0} is plugin name"
+msgid ""
+"Starting hot reload commit for plugin '{0}'. No global isolation gate is "
+"enabled; in-flight events may still hit the transition window."
+msgstr ""
+"开始为插件 '{0}' 提交热重载。当前未启用全局隔离门，飞行中的事件仍可能命中切换"
+"窗口。"
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:251
+#, csharp-format
+msgctxt "{0} is raw command input"
+msgid "Executing {0}."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:372
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Cannot initialize listener to invalid port '{0}'."
+msgstr "无法将监听器初始化到无效端口“{0}”。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:386
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Cannot rebind listener to invalid port '{0}'."
+msgstr "无法将监听器重绑到无效端口“{0}”。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:397
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Failed to bind listener to port '{0}'. Keeping the current listener."
+msgstr "监听器绑定到端口“{0}”失败。将保留当前监听器。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:405
+#, csharp-format
+msgctxt "{0} is requested listen port"
+msgid "Listener rebound to port '{0}'."
+msgstr "监听器已重绑到端口“{0}”。"
+
+#: ../../src/UnifierTSL/LauncherConfigManager.cs:63
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid ""
+"An unexpected error occurred while reloading root config '{0}'. Keeping the "
+"current runtime settings."
+msgstr "重新加载根配置文件“{0}”时发生未预期错误。将保留当前运行时设置。"
+
+#: ../../src/UnifierTSL/LauncherConfigManager.cs:33
 #, csharp-format
 msgctxt "{0} is root config path"
 msgid "File watcher error occurred for root config '{0}'."
 msgstr "根配置文件“{0}”的文件监视器发生错误。"
 
-#: ..\..\..\src\UnifierTSL\LauncherConfigManager.cs:46
-#, csharp-format
-msgctxt "{0} is root config path"
-msgid "An unexpected error occurred while reloading root config '{0}'. Keeping the current runtime settings."
-msgstr "重新加载根配置文件“{0}”时发生未预期错误。将保留当前运行时设置。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:264
-#, csharp-format
-msgctxt "{0} is root config path"
-msgid "Root config '{0}' is invalid and will be ignored for this run."
-msgstr "根配置文件“{0}”无效，本次启动将忽略该文件。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:270
+#: ../../src/UnifierTSL/LauncherConfigStore.cs:39
 #, csharp-format
 msgctxt "{0} is root config path"
 msgid "Root config '{0}' could not be read and will be ignored for this run."
 msgstr "无法读取根配置文件“{0}”，本次启动将忽略该文件。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:283
+#: ../../src/UnifierTSL/LauncherConfigStore.cs:68
 #, csharp-format
 msgctxt "{0} is root config path"
-msgid "Root config '{0}' is missing. Keeping the current runtime settings."
-msgstr "根配置文件“{0}”缺失。将保留当前运行时设置。"
+msgid ""
+"Root config '{0}' could not be read. Keeping the current runtime settings."
+msgstr "无法读取根配置文件“{0}”。将保留当前运行时设置。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:293
+#: ../../src/UnifierTSL/LauncherConfigStore.cs:33
+#, csharp-format
+msgctxt "{0} is root config path"
+msgid "Root config '{0}' is invalid and will be ignored for this run."
+msgstr "根配置文件“{0}”无效，本次启动将忽略该文件。"
+
+#: ../../src/UnifierTSL/LauncherConfigStore.cs:62
 #, csharp-format
 msgctxt "{0} is root config path"
 msgid "Root config '{0}' is invalid. Keeping the current runtime settings."
 msgstr "根配置文件“{0}”无效。将保留当前运行时设置。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:299
+#: ../../src/UnifierTSL/LauncherConfigStore.cs:52
 #, csharp-format
 msgctxt "{0} is root config path"
-msgid "Root config '{0}' could not be read. Keeping the current runtime settings."
-msgstr "无法读取根配置文件“{0}”。将保留当前运行时设置。"
+msgid "Root config '{0}' is missing. Keeping the current runtime settings."
+msgstr "根配置文件“{0}”缺失。将保留当前运行时设置。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:314
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:106
 #, csharp-format
-msgctxt "{0} is legacy root config path, {1} is active root config path"
-msgid "Legacy root config '{0}' is ignored. Use '{1}' instead."
-msgstr "旧的根配置文件“{0}”已被忽略。请改用“{1}”。"
+msgctxt "{0} is root config path"
+msgid ""
+"Startup CLI overrides were persisted to '{0}' using the effective launcher "
+"snapshot."
+msgstr "启动 CLI 覆盖项已持久化到“{0}”，使用的是生效后的启动器快照。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:334
+#: ../../src/UnifierTSL/LauncherConfigStore.cs:114
 #, csharp-format
 msgctxt "{0} is root config path"
 msgid "Unable to create default root config at '{0}'."
 msgstr "无法在“{0}”创建默认根配置文件。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:391
-msgid "SQLite log persistence is not implemented yet. Falling back to text logs."
-msgstr "SQLite 日志持久化尚未实现。将回退到文本日志。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:413
+#: ../../src/UnifierTSL/LauncherConfigStore.cs:89
 #, csharp-format
-msgctxt "{0} is log directory path"
-msgid "Failed to initialize text log backend at '{0}'."
-msgstr "无法在“{0}”初始化文本日志后端。"
+msgctxt "{0} is root config path"
+msgid "Unable to persist root config to '{0}'."
+msgstr "无法将根配置持久化到“{0}”。"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:461
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceCatalog.cs:207
 #, csharp-format
-msgctxt "{0} is current logging mode, {1} is desired logging mode"
-msgid "logging.mode changed from '{0}' to '{1}'. The current logging backend will not change until restart."
-msgstr "`logging.mode` 已从“{0}”变更为“{1}”。当前日志后端要到重启后才会切换。"
+msgctxt ""
+"{0} is rule endpoint id, {1} is action endpoint id, {2} is command action "
+"name"
+msgid ""
+"Command endpoint action binding rule for '{0}' returned action binding '{1}."
+"{2}' targeting '{3}'."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:468
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceCatalog.cs:200
 #, csharp-format
-msgctxt "{0} is current listen port, {1} is desired listen port, {2} is active listen port"
-msgid "launcher.listenPort changed from '{0}' to '{1}', but the new value is invalid. Keeping port {2}."
-msgstr "`launcher.listenPort` 已从“{0}”变更为“{1}”，但新值无效。将保留端口 {2}。"
+msgctxt ""
+"{0} is rule endpoint id, {1} is binding endpoint id, {2} is command root name"
+msgid ""
+"Command endpoint action binding rule for '{0}' returned root binding '{1}' "
+"targeting '{2}'."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:476
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:203
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Terminal/TerminalLauncherSurfaceHost.cs:124
 #, csharp-format
-msgctxt "{0} is current listen port, {1} is desired listen port"
-msgid "launcher.listenPort changed from '{0}' to '{1}'. The active listener has been rebound."
-msgstr "`launcher.listenPort` 已从“{0}”变更为“{1}”。当前监听器已重绑。"
+msgctxt "{0} is selected task description"
+msgid "Interrupt is already pending for task {0}."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:481
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:199
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Terminal/TerminalLauncherSurfaceHost.cs:118
 #, csharp-format
-msgctxt "{0} is current listen port, {1} is desired listen port, {2} is active listen port"
-msgid "launcher.listenPort changed from '{0}' to '{1}', but rebinding failed. Keeping port {2}."
-msgstr "`launcher.listenPort` 已从“{0}”变更为“{1}”，但重绑失败。将保留端口 {2}。"
+msgctxt "{0} is selected task description"
+msgid "Interrupt requested for task {0}."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:495
-msgid "launcher.serverPassword changed. New connections will use the updated password policy."
-msgstr "`launcher.serverPassword` 已变更。新连接将使用更新后的密码策略。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:501
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:207
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Terminal/TerminalLauncherSurfaceHost.cs:130
 #, csharp-format
-msgctxt "{0} is current join server mode, {1} is desired join server mode"
-msgid "launcher.joinServer changed from '{0}' to '{1}'. Future joins will use the updated policy."
-msgstr "`launcher.joinServer` 已从“{0}”变更为“{1}”。后续加入将使用更新后的策略。"
+msgctxt "{0} is selected task description"
+msgid "Selected task is no longer active: {0}."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:519
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:166
+#, csharp-format
+msgctxt "{0} is server argument string"
+msgid "Invalid server argument: {0}"
+msgstr "无效的服务器参数: {0}"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:417
+#, csharp-format
+msgctxt "{0} is server name, {1} is config snapshot source"
+msgid ""
+"Duplicate autoStartServers entry '{0}' was found in the {1}. Later "
+"duplicates are ignored for hot reload diffing."
+msgstr ""
+"在{1}中发现重复的 autoStartServers 条目“{0}”。后续重复项在热重载差异比较中会"
+"被忽略。"
+
+#: ../../src/UnifierTSL/Servers/ServerContext.EventHandlers.cs:16
+#, csharp-format
+msgctxt "{0} is server name, {1} is player name, {2} is chat message"
+msgid "[Realm·{0}] <{1}>: {2}"
+msgstr "[域·{0}] <{1}>: {2}"
+
+#: ../../src/UnifierTSL/Program.cs:58
+#, csharp-format
+msgctxt "{0} is server name, {1} is world file name"
+msgid "  {0} Running on world: {1}"
+msgstr "  {0} 运行在世界: {1}"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:99
+#, csharp-format
+msgctxt "{0} is server name"
+msgid ""
+"Server '{0}' was removed from root config, but server removal is not hot-"
+"applied in phase 1. Restart or an explicit lifecycle API is required."
+msgstr ""
+"服务器“{0}”已从根配置中移除，但 Phase 1 不会热应用服务器移除。需要重启或显式"
+"生命周期 API。"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:87
+#, csharp-format
+msgctxt "{0} is server name"
+msgid ""
+"Server '{0}' was updated in root config, but existing server definitions are "
+"not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
+msgstr ""
+"服务器“{0}”在根配置中已更新，但 Phase 1 不会热应用已有服务器定义。需要重启或"
+"显式生命周期 API。"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:227
+#, csharp-format
+msgctxt "{0} is server name"
+msgid "Server name '{0}' is already in use"
+msgstr "服务器名称'{0}'已被使用"
+
+#: ../../src/UnifierTSL/Program.cs:69
+#, csharp-format
+msgctxt "{0} is server password"
+msgid "Server is running with password: '{0}'"
+msgstr "服务器运行密码为: '{0}'"
+
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:542
+#, csharp-format
+msgctxt "{0} is simple password quality level"
+msgid "strength hint : {0}"
+msgstr "强度提示：{0}"
+
+#: ../../src/UnifierTSL/Commanding/CommandOutcomeWriters.cs:76
+#, csharp-format
+msgctxt "{0} is sink type name"
+msgid "An outcome writer for sink '{0}' is already registered."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Composition/CommandSystem.cs:85
+#, csharp-format
+msgctxt "{0} is sink type name"
+msgid "No command outcome writer is registered for sink '{0}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:196
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Terminal/TerminalLauncherSurfaceHost.cs:114
+#, csharp-format
+msgctxt "{0} is task category, {1} is task message"
+msgid "[{0}] {1}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:101
+#, csharp-format
+msgctxt "{0} is terminal source name, {1} is raw command input"
+msgid ""
+"A pending terminal dispatch for '{0}' returned Handled = false after "
+"claiming '{1}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:118
+#, csharp-format
+msgctxt "{0} is terminal source name, {1} is raw command input"
+msgid ""
+"An asynchronous terminal dispatch failed for '{0}' while executing '{1}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:109
+#, csharp-format
+msgctxt "{0} is terminal source name, {1} is raw command input"
+msgid ""
+"An asynchronous terminal dispatch was canceled for '{0}' while executing "
+"'{1}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Launcher/LauncherSettingValues.cs:271
+#, csharp-format
+msgctxt "{0} is user input value for colorful console status"
+msgid "Invalid colorful console status value: {0}"
+msgstr "无效的 colorful console status 值：{0}"
+
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:113
+#, csharp-format
+msgctxt "{0} is user input value for join server mode"
+msgid "Invalid join server mode: {0}"
+msgstr "无效的加入服务器模式: {0}"
+
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:124
+#, csharp-format
+msgctxt "{0} is user input value for log mode"
+msgid "Invalid log mode specified: {0}"
+msgstr "指定的日志模式无效: {0}"
+
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:102
+#, csharp-format
+msgctxt "{0} is user input value for port number"
+msgid "Invalid port number specified: {0}"
+msgstr "指定的端口号无效: {0}"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:242
+#, csharp-format
+msgctxt "{0} is user input value for server difficulty"
+msgid "Invalid server difficulty: {0}"
+msgstr "无效的服务器难度: {0}"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:262
+#, csharp-format
+msgctxt ""
+"{0} is user input value for server evil (world corruption/crimson type)"
+msgid "Invalid server evil: {0}"
+msgstr "无效的服务器邪恶类型: {0}"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:31
+#, csharp-format
+msgctxt "{0} is user input value for server merge mode"
+msgid "Invalid server merge mode: {0}"
+msgstr "无效的服务器合并模式: {0}"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:252
+#, csharp-format
+msgctxt "{0} is user input value for server size"
+msgid "Invalid server size: {0}"
+msgstr "无效的服务器大小: {0}"
+
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:560
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not an integer port."
+msgstr "'{0}' 不是整数端口。"
+
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:568
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is not available."
+msgstr "'{0}' 不可用。"
+
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:564
+#, csharp-format
+msgctxt "{0} is user input value"
+msgid "'{0}' is out of range."
+msgstr "'{0}' 超出范围。"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:235
+#, csharp-format
+msgctxt "{0} is world name, {1} is server name"
+msgid "World name '{0}' is already in use by server '{1}'"
+msgstr "世界名称'{0}'已被服务器'{1}'使用"
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:157
+#, csharp-format
+msgid "    {0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:147
+#, csharp-format
+msgid "  availability={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:148
+#, csharp-format
+msgid "  endpoints={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:142
+#, csharp-format
+msgid "  method={0}.{1}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:151
+msgid "  parameters=-"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:154
+#, csharp-format
+msgid "  parameters={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:89
+#, csharp-format
+msgid "  roots: {0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:145
+#, csharp-format
+msgid "  signature={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:146
+#, csharp-format
+msgid "  summary={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:447
+msgid ""
+"'-servermerge/--server-merge' was provided without any '-server' arguments. "
+"The merge mode was ignored."
+msgstr ""
+"提供了 '-servermerge/--server-merge'，但没有任何 '-server' 参数。该合并模式已"
+"被忽略。"
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:192
+#, csharp-format
+msgid "\"{0}\" is not a valid buff ID!"
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:284
+msgid ""
+"[Warning][LogCore|DurableQueue] Durable log flush timed out during process "
+"exit. Some tail records may be lost."
+msgstr ""
+"[Warning][LogCore|DurableQueue] 进程退出时持久化日志刷新超时，尾部部分记录可"
+"能丢失。"
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:214
+#, csharp-format
+msgid "{0} | source={1} | aliases={2} | actions={3} | endpoints={4}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:67
+#, csharp-format
+msgid "{0} accepts ghost completion"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:79
+#, csharp-format
+msgid "{0} inserts newline"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:62
+#, csharp-format
+msgid "{0} rotates suggestions"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:78
+#, csharp-format
+msgid "{0} submits"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:64
+#, csharp-format
+msgid "{0} switches interpretation"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:160
+#, csharp-format
+msgid "{0} was already initialized."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:153
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:156
+#, csharp-format
+msgid "{0} was not initialized."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:72
+#, csharp-format
+msgid "{0}/{1} scroll status"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:74
+#, csharp-format
+msgid "{0}/{1} select task"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/SurfaceClientProcessLauncher.cs:8
+msgid "A pipe name must be provided."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionHost.cs:7
+msgid "A pipe name prefix must be provided."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptRegistry.cs:106
+msgid "A surface prompt command-prefix provider failed."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:138
+#, csharp-format
+msgid "action[{0}] path={1}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:120
+#, csharp-format
+msgid "actions={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/PluginOrchestrator.cs:68
+#, csharp-format
+msgid "Activator.CreateInstance returns null when creating '{0}' instance"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:116
+#, csharp-format
+msgid "aliases={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandRegistrationOptions.cs:101
+msgid "At least one binding candidate is required."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:287
+msgid "batch aborted"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:265
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:308
+msgid "Buffer range exceeds the available data."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:184
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:448
+msgid "Command canceled."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceCatalog.cs:15
+msgid "Command endpoint id must not be empty."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:187
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:310
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:451
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
+msgid "Command failed, check logs for more details."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:176
+msgid "command help - Shows this help page."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:100
+msgid "command info <root-or-alias>"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:175
+msgid ""
+"command info <root-or-alias> - Dumps technical metadata for one registered "
+"command root."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/CommandingModels.cs:20
+msgid "Command invocation target must not be empty."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Jobs/CommandJobModels.cs:10
+msgid "Command job id must not be empty."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:173
+msgid ""
+"command list [filter] - Lists registered command roots with source and "
+"endpoints."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:113
+#, csharp-format
+msgid "Command root {0}:"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:174
+msgid ""
+"command sources [filter] - Lists command registration sources and their root "
+"counts."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:190
+msgid "Completed job retention must be non-negative or infinite."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandRegistrationOptions.cs:105
+msgid "Consumed token count cannot be negative."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:118
+#, csharp-format
+msgid "controller={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:80
 msgid "current runtime snapshot"
 msgstr "当前运行时快照"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:520
-msgid "reloaded config snapshot"
-msgstr "重载后的配置快照"
+#: ../../src/UnifierTSL/Program.cs:56
+msgid "Current Servers: "
+msgstr "当前服务器: "
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:526
+#: ../../src/UnifierTSL/Module/Dependencies/DependenciesConfiguration.cs:50
+msgid "Dependency file missing, removing from configuration for update."
+msgstr "依赖文件缺失,从配置中移除以便更新。"
+
+#: ../../src/UnifierTSL/Module/ModuleLoadContext.cs:31
+msgid "Dispose has already been called."
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/PluginOrchestrator.cs:117
+msgid "Dotnet hot reload host is not available."
+msgstr "Dotnet 热重载宿主不可用。"
+
+#: ../../src/UnifierTSL/Module/Dependencies/NugetPackageCache.cs:34
 #, csharp-format
-msgctxt "{0} is server name"
-msgid "Server '{0}' was updated in root config, but existing server definitions are not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
-msgstr "服务器“{0}”在根配置中已更新，但 Phase 1 不会热应用已有服务器定义。需要重启或显式生命周期 API。"
+msgid "Downloading package: {0} ({1}) from NuGet."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:538
+#: ../../src/UnifierTSL/Module/Dependencies/ManagedEmbeddedDependency.cs:36
+#: ../../src/UnifierTSL/Module/Dependencies/ManagedEmbeddedDependency.cs:42
 #, csharp-format
-msgctxt "{0} is server name"
-msgid "Server '{0}' was removed from root config, but server removal is not hot-applied in phase 1. Restart or an explicit lifecycle API is required."
-msgstr "服务器“{0}”已从根配置中移除，但 Phase 1 不会热应用服务器移除。需要重启或显式生命周期 API。"
+msgid "Embedded resource '{0}' not found."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:552
+#: ../../src/UnifierTSL/UnifierApi.Internal.cs:543
+msgid "empty input is allowed for no-password mode"
+msgstr "允许空输入以启用无密码模式"
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:121
 #, csharp-format
-msgctxt "{0} is server name, {1} is config snapshot source"
-msgid "Duplicate autoStartServers entry '{0}' was found in the {1}. Later duplicates are ignored for hot reload diffing."
-msgstr "在{1}中发现重复的 autoStartServers 条目“{0}”。后续重复项在热重载差异比较中会被忽略。"
+msgid "endpoints={0}"
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:817
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:20
+msgid "Enter on empty uses ghost; Ctrl+Enter keeps raw input."
+msgstr "空输入时按 Enter 接受 ghost 提示；Ctrl+Enter 保留原始输入。"
+
+#: ../../src/UnifierTSL/PluginHost/PluginHotReloadMatchKey.cs:12
+msgid "Entry point cannot be null or empty."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:250
+msgid "Executing command."
+msgstr ""
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:169
+msgid ""
+"Expected format: -server name:<name> worldname:<worldname> gamemode:<value> "
+"size:<value> evil:<value> seed:<value>"
+msgstr ""
+"预期格式: -server name:<name> worldname:<worldname> gamemode:<value> size:"
+"<value> evil:<value> seed:<value>"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:265
+msgid ""
+"Expected value: an integer between 0 and 2 (inclusive), or one of the "
+"strings: random, corruption, crimson"
+msgstr ""
+"预期值: 0到2之间的整数(包括0和2),或者以下字符串之一: random, corruption, "
+"crimson"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:245
+msgid ""
+"Expected value: an integer between 0 and 3 (inclusive), or one of the "
+"strings: normal, expert, master, creative"
+msgstr ""
+"预期值: 0到3之间的整数(包括0和3),或者以下字符串之一: normal, expert, master, "
+"creative"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:255
+msgid ""
+"Expected value: an integer between 1 and 3 (inclusive), or one of the "
+"strings: small, medium, large"
+msgstr "期望值: 1 到 3（含）之间的整数，或字符串之一: small、medium、large"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:34
+msgid "Expected value: replace (default), overwrite, or append."
+msgstr "期望值: replace（默认）、overwrite 或 append。"
+
+#: ../../src/UnifierTSL/Launcher/LauncherSettingValues.cs:274
+msgid ""
+"Expected value: true/false, on/off, 1/0, or use '--no-colorful' to disable."
+msgstr "期望值：true/false、on/off、1/0，或使用 '--no-colorful' 禁用。"
+
+#: ../../src/UnifierTSL/Module/Dependencies/NugetPackageCache.cs:69
 #, csharp-format
-msgctxt "{0} is configured joinServer value"
-msgid "Invalid joinServer setting '{0}'. Falling back to 'none'."
-msgstr "无效的 joinServer 设置“{0}”。将回退到 none。"
+msgid "Extracted package: {0} ({1}) successfully."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:849
+#: ../../src/UnifierTSL/Module/Dependencies/NugetPackageCache.cs:47
 #, csharp-format
-msgctxt "{0} is configured logging.mode value"
-msgid "Invalid logging.mode setting '{0}'. Falling back to 'txt'."
-msgstr "无效的 logging.mode 设置“{0}”。将回退到 txt。"
+msgid "Extracting package: {0} ({1}) to local nuget cache."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:87
-msgid "Server"
-msgstr "服务器"
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:459
+msgid "Failed to cancel listener session token."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:103
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:513
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:534
+#, csharp-format
+msgid "Failed to create file '{0}'"
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/PluginLoader.cs:198
+msgid "Failed to create instance"
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:178
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:271
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:309
+#, csharp-format
+msgid "Failed to deserialize config: '{0}' when reloading, skipping reload."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:486
+msgid "Failed to dispose listener session token source."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:477
+msgid "Failed to dispose listener session."
+msgstr ""
+
+#: ../../src/UnifierTSL/Module/Dependencies/NugetPackageCache.cs:43
+#, csharp-format
+msgid "Failed to download package {0} {1} from NuGet."
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:256
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:294
+#, csharp-format
+msgid "Failed to read config: '{0}' when reloading, skipping reload."
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:146
+#, csharp-format
+msgid "Failed to read config: '{0}' when requesting, return by mode: {1}."
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:119
+#, csharp-format
+msgid "Failed to serialize config: '{0}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:426
+msgid "Failed to start server loop thread."
+msgstr "启动服务器循环线程失败。"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:468
+msgid "Failed to stop listener session."
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:207
+#: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:231
+#, csharp-format
+msgid "Failed to write config: '{0}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Program.cs:43
+msgid "Global initialization started..."
+msgstr "全局初始化开始..."
+
+#: ../../src/UnifierTSL/PluginHost/PluginOrchestrator.cs:108
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:17
+msgid "Hot reload request is null."
+msgstr "热重载请求为空。"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.HotReload.cs:74
+msgid "Hot reload was blocked by plugin dependency topology."
+msgstr "热重载被插件依赖拓扑阻止。"
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:15
+msgid "Inspects registered command roots, actions, and endpoint bindings."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionDriver.cs:551
+msgid "Interaction document kind does not match the active interaction kind."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionDriver.cs:547
+msgid ""
+"Interaction document scope id does not match the active interaction scope."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:231
+msgid "Invalid client UUID."
+msgstr "无效的客户端 UUID。"
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:194
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:207
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:211
+msgid "Invalid command entered."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:274
+#: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:325
+#: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:336
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:326
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:510
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:529
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:537
+#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
+msgid "Invalid command syntax."
+msgstr ""
+
+#: ../../src/UnifierTSL/Logging/LogTrace/SpanId.cs:51
+msgid "Invalid hex format for SpanId."
+msgstr ""
+
+#: ../../src/UnifierTSL/Logging/LogTrace/TraceId.cs:49
+msgid "Invalid hex format for TraceId."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:454
+msgid "Invalid item type!"
+msgstr ""
+
+#: ../../src/UnifierTSL/Module/Dependencies/NugetDependency.cs:70
+msgid "Invalid package structure."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:136
+msgid "Invalid player."
+msgstr ""
+
+#: ../../src/UnifierTSL/Launcher/StatusProjectionSetting.cs:151
+msgid ""
+"launcher.consoleStatus changed. Command-line status settings are now using "
+"the reloaded values."
+msgstr "launcher.consoleStatus 已更改。命令行状态设置现已使用重载后的值。"
+
+#: ../../src/UnifierTSL/Launcher/ScalarSettings.cs:196
+msgid ""
+"launcher.serverPassword changed. New connections will use the updated "
+"password policy."
+msgstr "`launcher.serverPassword` 已变更。新连接将使用更新后的密码策略。"
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:19
+msgid "Lists controller-group registration sources and their registered roots."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:18
+msgid "Lists registered command roots with source and endpoint metadata."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Terminal/LocalPromptReadInteractionDriver.cs:18
+msgid "Local prompt read interactions require an interactive terminal."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:185
+msgid "Maximum retained jobs must be zero or greater."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/CommandGuardAttributes.cs:27
+msgid ""
+"Maximum user-argument count must be greater than or equal to the minimum."
+msgstr ""
+
+#: ../../src/UnifierTSL/Logging/LogWriters/TextDurableSink.cs:70
 msgid "Metadata truncated due to per-entry limit"
 msgstr "元数据因单条上限已被截断"
 
-#: ..\..\..\src\UnifierTSL\Logging\LogWriters\SessionFileLogWriter.cs:146
-#, csharp-format
-msgctxt "{0} is exception text"
-msgid "[Error][LogCore|TextBackend] File logging disabled after I/O failure: {0}"
-msgstr "[Error][LogCore|TextBackend] 文件日志在发生 I/O 故障后已禁用: {0}"
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:124
+msgid "mismatch handler=-"
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\Program.cs:33
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:128
+#, csharp-format
+msgid "mismatch handler={0}.{1} mode={2}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:213
+#, csharp-format
+msgid "Multiple buffs matched: {0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:475
+#, csharp-format
+msgid "Multiple items matched: {0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:145
+#, csharp-format
+msgid "Multiple players matched: {0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:257
+#, csharp-format
+msgid "Multiple prefixes matched: {0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:191
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Terminal/TerminalLauncherSurfaceHost.cs:108
+msgid "No active console task is selected."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:253
+msgid "No available server found for you."
+msgstr "找不到你的可用服务器。"
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:76
+msgid "No command registration sources are currently registered."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:77
+#, csharp-format
+msgid "No command registration sources matched filter \"{0}\"."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:44
+msgid "No command roots are currently registered."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:45
+#, csharp-format
+msgid "No command roots matched filter \"{0}\"."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:837
+msgid "No more slots available, stopping listener"
+msgstr "没有更多可用的玩家槽,停止监听"
+
+#: ../../src/UnifierTSL/PluginHost/Hosts/Dotnet/DotnetPluginHost.Initialize.cs:68
+msgid "No plugins have been initialized."
+msgstr "没有初始化任何插件。"
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:243
+#, csharp-format
+msgid "No prefix matched \"{0}\"."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:108
+#, csharp-format
+msgid "No registered command root or alias matching \"{0}\" was found."
+msgstr ""
+
+#: ../../src/UnifierTSL/Module/Dependencies/NugetPackageCache.cs:30
+#, csharp-format
+msgid "Package: {0} ({1}) found in cache."
+msgstr ""
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:221
+msgid "Parameter 'name' is required."
+msgstr "参数'name'是必需的。"
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:216
+msgid "Parameter 'worldName' is required."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:58
+msgid "Pick a short startup password (plain input)."
+msgstr "设置一个简短的启动密码（明文输入）。"
+
+#: ../../src/UnifierTSL/PluginHost/PluginHotReloadMatchKey.cs:10
+msgid "Plugin file path cannot be null or empty."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:57
+msgid "Press Enter to keep your current input (can be empty)."
+msgstr "按 Enter 保持当前输入（可以为空）。"
+
+#: ../../src/UnifierTSL/Reflection/Metadata/DecodeProviders/SimpleTypeProvider.cs:30
+#, csharp-format
+msgid "Primitive type {0} not supported"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:342
+msgid "Progress total must be greater than or equal to current."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptProjectionDocumentFactory.cs:958
+#, csharp-format
+msgid ""
+"Prompt projection does not define a neutral keyboard gesture mapping for "
+"console key '{0}'."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:49
+#, csharp-format
+msgid "Registered command roots: {0}."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:81
+#, csharp-format
+msgid "Registered command sources: {0}."
+msgstr ""
+
+#: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:81
+msgid "reloaded config snapshot"
+msgstr "重载后的配置快照"
+
+#: ../../src/UnifierTSL/Module/Dependencies/NugetDependency.cs:52
+#, csharp-format
+msgid ""
+"Resolved dependencies for {0} ({1}) successfully: \r\n"
+"{2}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Module/Dependencies/NugetDependency.cs:48
+#, csharp-format
+msgid "Resolving dependencies for {0} ({1})"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:115
+#, csharp-format
+msgid "root={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:21
+msgid "Select the launcher listen port"
+msgstr "选择启动器监听端口"
+
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:17
+msgid "Semantic key display name must not be empty."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:23
+#, csharp-format
+msgid ""
+"Semantic key id '{0}' is invalid. Expected lowercase dot-separated kebab-"
+"case segments."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:13
+msgid "Semantic key id must not be empty."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:124
+#, csharp-format
+msgid "Semantic key member '{0}.{1}' must be a public static {2} field."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:112
+#, csharp-format
+msgid ""
+"Semantic key member '{0}.{1}' must be a readable public static {2} property."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:117
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:129
+#, csharp-format
+msgid "Semantic key member '{0}.{1}' returned null."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:133
+#, csharp-format
+msgid ""
+"Semantic key member '{0}.{1}' was not found. Expected a public static {2} "
+"field or property."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/SemanticKey.cs:102
+#: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:405
+msgid "Semantic key member name must not be empty."
+msgstr ""
+
+#: ../../src/UnifierTSL/Logging/LogWriters/TextDurableSink.cs:52
+msgid "Server"
+msgstr "服务器"
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:828
+msgid "Server is full"
+msgstr "服务器已满"
+
+#: ../../src/UnifierTSL/Program.cs:68
+msgid "Server is running without a password. Anyone can join."
+msgstr "服务器运行无密码。任何人都可以加入。"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:31
+msgid "Setup Listen Port"
+msgstr "设置监听端口"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:54
+msgid "Setup Server Password"
+msgstr "设置服务器密码"
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:20
+msgid "Shows detailed technical metadata for a command root or alias."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:16
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:17
+msgid "Shows management-oriented help for command inspection."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:117
+#, csharp-format
+msgid "source={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:85
+#, csharp-format
+msgid "source={0} roots={1}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Logging/LogTrace/SpanId.cs:46
+#: ../../src/UnifierTSL/Logging/LogTrace/SpanId.cs:96
+#, csharp-format
+msgid "SpanId hex string must be {0} characters."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:119
+#, csharp-format
+msgid "summary={0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Interactions/SurfaceInteractionScope.cs:31
+msgid "Surface interaction kind must be provided."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionDriver.cs:543
+#, csharp-format
+msgid ""
+"Surface session interaction publication only accepts interaction documents. "
+"Actual scope kind: {0}."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionDriver.cs:337
+#, csharp-format
+msgid ""
+"Surface session publication only accepts session-status or interaction "
+"projection scopes. Actual: {0}/{1}."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Hosting/Server/ServerConsoleReadScope.cs:112
+msgid "Surface session read did not produce a buffered character."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptRegistry.cs:173
+msgid "The default surface prompt factory failed."
+msgstr ""
+
+#: ../../src/UnifierTSL/Servers/ServerDispatcher.cs:291
+msgid ""
+"The server dispatcher is unavailable because the server update thread is not "
+"running."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptRegistry.cs:250
+msgid ""
+"The surface prompt runtime resolver failed while computing its revision."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptRegistry.cs:225
+msgid ""
+"The surface prompt runtime resolver failed while producing projection "
+"content."
+msgstr ""
+
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionDriver.cs:128
+msgid "The surface session already has an active interaction scope."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:514
+msgid "This command is not available from the current execution context."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:390
+msgid "This command requires a specific server context."
+msgstr ""
+
+#: ../../src/UnifierTSL/PluginHost/ConfigFormats/TomlFormatter.cs:28
+#, csharp-format
+msgid ""
+"TOML parsing errors: \r\n"
+"{0}"
+msgstr ""
+
+#: ../../src/UnifierTSL/Logging/LogTrace/TraceId.cs:44
+#: ../../src/UnifierTSL/Logging/LogTrace/TraceId.cs:94
+#, csharp-format
+msgid "TraceId hex string must be {0} characters."
+msgstr ""
+
+#: ../../src/UnifierTSL/Servers/ServerContext.Extension.cs:46
+#, csharp-format
+msgid "Type {0} has already been registered."
+msgstr ""
+
+#: ../../src/UnifierTSL/Module/Dependencies/NugetDependency.cs:20
+#: ../../src/UnifierTSL/Module/Dependencies/NugetDependency.cs:25
+#: ../../src/UnifierTSL/Module/Dependencies/NugetDependency.cs:30
+msgid "Unable to determine the target framework for the plugin assembly."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:202
+#, csharp-format
+msgid "Unable to find any buffs named \"{0}\""
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:464
+#, csharp-format
+msgid "Unable to find any items named \"{0}\""
+msgstr ""
+
+#: ../../src/UnifierTSL/Module/Dependencies/NativeEmbeddedDependency.cs:39
+#, csharp-format
+msgid ""
+"Unable to find native library '{0}' for RID '{1}' in embedded resources."
+msgstr ""
+
+#: ../../src/UnifierTSL/Module/Dependencies/ManagedEmbeddedDependency.cs:31
+#, csharp-format
+msgid ""
+"Unable to read assembly identity from embedded resource '{0}'. Ensure it is "
+"a valid .NET assembly."
+msgstr ""
+
+#: ../../src/UnifierTSL/Servers/ServerDispatcher.cs:255
+msgid "Unhandled exception while executing a posted server-dispatch callback."
+msgstr ""
+
+#: ../../src/UnifierTSL/Servers/ServerDispatcher.cs:215
+msgid "Unhandled exception while executing a queued server-dispatch callback."
+msgstr ""
+
+#: ../../src/UnifierTSL/Program.cs:36
 #, csharp-format
 msgid ""
 "Unifier Terraria-Server-Launcher Running\n"
@@ -585,455 +2317,147 @@ msgstr ""
 "  UnifierApi v{4} & PluginApi v{5}\n"
 "当前进程 ID: {6}"
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:94
+#: ../../src/UnifierTSL/Program.cs:64
+msgid "UnifierTSL started successfully!"
+msgstr "UnifierTSL 启动成功!"
+
+#: ../../src/UnifierTSL/Module/ModuleAssemblyLoader.cs:185
 #, csharp-format
-msgctxt "{0} is root config path"
-msgid "Startup CLI overrides were persisted to '{0}' using the effective launcher snapshot."
-msgstr "启动 CLI 覆盖项已持久化到“{0}”，使用的是生效后的启动器快照。"
+msgid "Unloading module {0}"
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:242
-msgid "[Warning][LogCore|DurableQueue] Durable log flush timed out during process exit. Some tail records may be lost."
-msgstr "[Warning][LogCore|DurableQueue] 进程退出时持久化日志刷新超时，尾部部分记录可能丢失。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:209
+#: ../../src/UnifierTSL/Reflection/Metadata/AttributeParser.cs:118
 #, csharp-format
-msgctxt "{0} is log persistence mode, {1} is log directory path"
-msgid "Failed to initialize '{0}' durable log backend at '{1}'."
-msgstr "无法在“{1}”初始化“{0}”持久化日志后端。"
+msgid "Unsupported ElementType code: 0x{0:X2}"
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\LauncherConfigStore.cs:92
+#: ../../src/UnifierTSL/Reflection/Metadata/AttributeParser.cs:100
 #, csharp-format
-msgctxt "{0} is root config path"
-msgid "Unable to persist root config to '{0}'."
-msgstr "无法将根配置持久化到“{0}”。"
+msgid "Unsupported fixed argument type: {0}"
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:53
+#: ../../src/UnifierTSL/Reflection/Metadata/AttributeParser.cs:75
 #, csharp-format
-msgctxt "{0} is user input value for server merge mode"
-msgid "Invalid server merge mode: {0}"
-msgstr "无效的服务器合并模式: {0}"
+msgid "Unsupported handle kind: {0}"
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:56
-msgid "Expected value: replace (default), overwrite, or append."
-msgstr "期望值: replace（默认）、overwrite 或 append。"
+#: ../../src/UnifierTSL/ResolveHelpers.cs:45
+#: ../../src/UnifierTSL/FileSystem/FileSystemHelper.cs:11
+#: ../../src/UnifierTSL/FileSystem/FileSystemHelper.cs:16
+msgid "Unsupported OS platform"
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:72
+#: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionConnection.cs:60
 #, csharp-format
-msgctxt "{0} is user input value for join server mode"
-msgid "Invalid join server mode: {0}"
-msgstr "无效的加入服务器模式: {0}"
+msgid "Unsupported surface-client wire packet id: 0x{0:X2}."
+msgstr ""
 
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:84
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:19
+#: ../../src/UnifierTSL/Surface/Prompting/Startup/LauncherStartupPromptFactory.cs:56
+msgid "use Tab to rotate; Right to accept"
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Builtin/CommandInspectionCommand.cs:172
+msgid "UTSL command inspector"
+msgstr ""
+
+#: ../../src/UnifierTSL/Performance/ServerPerformance.Queries.cs:44
+msgid "Window must be greater than zero."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:243
+msgid "You are not allowed to join this server."
+msgstr "您不被允许加入此服务器。"
+
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:513
+msgid "You do not have access to this command."
+msgstr ""
+
+#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:247
+msgid "You must use this command in specific server."
+msgstr ""
+
+#~ msgid "Enter the server password: "
+#~ msgstr "输入服务器密码: "
+
+#~ msgid "Enter the port to listen on: "
+#~ msgstr "输入要监听的端口: "
+
 #, csharp-format
-msgctxt "{0} is user input value for log mode"
-msgid "Invalid log mode specified: {0}"
-msgstr "指定的日志模式无效: {0}"
+#~ msgid ""
+#~ "Unifier Terraria-Server-Launcher Running\r\n"
+#~ "Version Info:\r\n"
+#~ "  Terraria v{0} & OTAPI v{1}\r\n"
+#~ "  Unified-Server-Process v{2}\r\n"
+#~ "  UnifierApi v{3} & PluginApi v{4}\r\n"
+#~ "Current Process ID: {5}"
+#~ msgstr ""
+#~ "Unifier Terraria服务器启动器 正在运行\r\n"
+#~ "版本信息: \r\n"
+#~ "  Terraria v{0} & OTAPI v{1}\r\n"
+#~ "  Unified-Server-Process v{2}\r\n"
+#~ "  UnifierApi v{3} & PluginApi v{4}\r\n"
+#~ "当前进程ID: {5}"
 
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:129
-msgid "'-servermerge/--server-merge' was provided without any '-server' arguments. The merge mode was ignored."
-msgstr "提供了 '-servermerge/--server-merge'，但没有任何 '-server' 参数。该合并模式已被忽略。"
-
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:160
 #, csharp-format
-msgctxt "{0} is current logging mode, {1} is desired logging mode"
-msgid "logging.mode changed from '{0}' to '{1}'. Restart is required before this setting takes effect."
-msgstr "`logging.mode` 已从“{0}”变更为“{1}”。该设置需重启后生效。"
+#~ msgctxt ""
+#~ "{0} is player name, {1} is source server name, {2} is destination server "
+#~ "name"
+#~ msgid "Player '{0}' {1} → {2} transferred."
+#~ msgstr "玩家'{0}' {1} → {2} 已转移。"
 
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:368
+#~ msgid "Parameter 'worldname' is required."
+#~ msgstr "参数'worldname'是必需的。"
+
+#~ msgid ""
+#~ "Expected value: an integer between 0 and 2 (inclusive), or one of the "
+#~ "strings: small, medium, large"
+#~ msgstr ""
+#~ "预期值: 0到2之间的整数(包括0和2),或者以下字符串之一: small, medium, large"
+
 #, csharp-format
-msgctxt "{0} is ignored server name, {1} is kept source, {2} is merge mode"
-msgid "Auto-start server '{0}' from {1} was ignored because a higher-priority entry already exists (kept source: {2}, merge mode: {3})."
-msgstr "来自 {1} 的自动启动服务器“{0}”被忽略，因为已存在更高优先级条目（保留来源: {2}，合并模式: {3}）。"
+#~ msgctxt "{0} is legacy root config path, {1} is active root config path"
+#~ msgid "Legacy root config '{0}' is ignored. Use '{1}' instead."
+#~ msgstr "旧的根配置文件“{0}”已被忽略。请改用“{1}”。"
 
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:379
+#~ msgid ""
+#~ "SQLite log persistence is not implemented yet. Falling back to text logs."
+#~ msgstr "SQLite 日志持久化尚未实现。将回退到文本日志。"
+
 #, csharp-format
-msgctxt "{0} is ignored server name, {1} is world name, {2} is kept server name, {3} is merge mode"
-msgid "Auto-start server '{0}' (world: '{1}') was ignored due to world conflict with higher-priority server '{2}' (merge mode: {3})."
-msgstr "自动启动服务器“{0}”（世界: “{1}”）因与更高优先级服务器“{2}”发生世界冲突而被忽略（合并模式: {3}）。"
+#~ msgctxt "{0} is log directory path"
+#~ msgid "Failed to initialize text log backend at '{0}'."
+#~ msgstr "无法在“{0}”初始化文本日志后端。"
 
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:667
-msgid "Expected value: an integer between 1 and 3 (inclusive), or one of the strings: small, medium, large"
-msgstr "期望值: 1 到 3（含）之间的整数，或字符串之一: small、medium、large"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:248
 #, csharp-format
-msgctxt "{0} is player name, {1} is player UUID"
-msgid "No available server found for you."
-msgstr "未找到可用服务器。"
+#~ msgctxt "{0} is current logging mode, {1} is desired logging mode"
+#~ msgid ""
+#~ "logging.mode changed from '{0}' to '{1}'. The current logging backend "
+#~ "will not change until restart."
+#~ msgstr ""
+#~ "`logging.mode` 已从“{0}”变更为“{1}”。当前日志后端要到重启后才会切换。"
 
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:363
 #, csharp-format
-msgctxt "{0} is requested listen port"
-msgid "Cannot initialize listener to invalid port '{0}'."
-msgstr "无法将监听器初始化到无效端口“{0}”。"
+#~ msgctxt "{0} is exception text"
+#~ msgid ""
+#~ "[Error][LogCore|TextBackend] File logging disabled after I/O failure: {0}"
+#~ msgstr "[Error][LogCore|TextBackend] 文件日志在发生 I/O 故障后已禁用: {0}"
 
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:376
 #, csharp-format
-msgctxt "{0} is requested listen port"
-msgid "Cannot rebind listener to invalid port '{0}'."
-msgstr "无法将监听器重绑到无效端口“{0}”。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:387
-#, csharp-format
-msgctxt "{0} is requested listen port"
-msgid "Failed to bind listener to port '{0}'. Keeping the current listener."
-msgstr "监听器绑定到端口“{0}”失败。将保留当前监听器。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:395
-#, csharp-format
-msgctxt "{0} is requested listen port"
-msgid "Listener rebound to port '{0}'."
-msgstr "监听器已重绑到端口“{0}”。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:416
-msgid "Failed to start server loop thread."
-msgstr "启动服务器循环线程失败。"
-
-#: ..\..\..\src\UnifierTSL\UnifiedServerCoordinator.cs:853
-#, csharp-format
-msgctxt "{0} is player name, {1} is source server name, {2} is destination server name"
-msgid "Player '{0}' {1} ? {2} transferred."
-msgstr "玩家“{0}”已从 {1} ? {2} 完成转移。"
-
-#: ..\..\..\src\UnifierTSL\Logging\LogWriters\AsyncDurableLogWriter.cs:176
-#, csharp-format
-msgctxt "{0} is durable backlog count, {1} is durable backlog warning threshold"
-msgid "[Warning][LogCore|DurableQueue] Durable backlog is {0} entries (threshold: {1})."
-msgstr "[Warning][LogCore|DurableQueue] 持久化队列积压为 {0} 条（阈值: {1}）。"
-
-#: ..\..\..\src\UnifierTSL\Logging\LogWriters\AsyncDurableLogWriter.cs:186
-#, csharp-format
-msgctxt "{0} is exception text"
-msgid "[Error][LogCore|DurableQueue] Durable sink disabled after failure: {0}"
-msgstr "[Error][LogCore|DurableQueue] 持久化日志 Sink 发生故障后已禁用: {0}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:117
-msgid "Dotnet hot reload host is not available."
-msgstr "Dotnet 热重载宿主不可用。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\PluginOrchestrator.cs:108
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:17
-msgid "Hot reload request is null."
-msgstr "热重载请求为空。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:74
-msgid "Hot reload was blocked by plugin dependency topology."
-msgstr "热重载被插件依赖拓扑阻止。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:30
-#, csharp-format
-msgctxt "{0} is error message"
-msgid "Invalid hot reload request: {0}"
-msgstr "无效的热重载请求: {0}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:100
-#, csharp-format
-msgctxt "{0} is match key"
-msgid "Multiple updated plugin candidates were found for key '{0}'."
-msgstr "键 '{0}' 匹配到多个已更新的插件候选项。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:57
-#, csharp-format
-msgctxt "{0} is match key"
-msgid "No loaded plugin matches hot reload key '{0}'."
-msgstr "没有已加载插件匹配热重载键 '{0}'。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:43
-#, csharp-format
-msgctxt "{0} is plugin entry point"
-msgid "Candidate entry point '{0}' was not found."
-msgstr "未找到候选入口点 '{0}'。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:29
-#, csharp-format
-msgctxt "{0} is plugin file path"
-msgid "Candidate plugin file '{0}' does not exist."
-msgstr "候选插件文件 '{0}' 不存在。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\PluginLoader.cs:65
-#, csharp-format
-msgctxt "{0} is plugin file path"
-msgid "Failed to load candidate plugin from '{0}'."
-msgstr "无法从 '{0}' 加载候选插件。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:122
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Candidate plugin '{0}' does not implement IHotReloadCapablePlugin."
-msgstr "候选插件 '{0}' 未实现 IHotReloadCapablePlugin。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:215
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Candidate plugin '{0}' failed during hot reload prepare."
-msgstr "候选插件 '{0}' 在热重载准备阶段失败。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:270
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Candidate plugin '{0}' rejected activation."
-msgstr "候选插件 '{0}' 拒绝激活。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:204
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Candidate plugin '{0}' rejected hot reload prepare."
-msgstr "候选插件 '{0}' 拒绝热重载准备。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:401
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Failed to unload hot reload candidate '{0}'."
-msgstr "无法卸载热重载候选插件 '{0}'。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:91
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "No updated candidate was found for plugin '{0}'."
-msgstr "未找到插件 '{0}' 的已更新候选项。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:175
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' accepted export but returned no state payload."
-msgstr "插件 '{0}' 接受了导出但未返回状态负载。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:65
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' does not implement IHotReloadCapablePlugin."
-msgstr "插件 '{0}' 未实现 IHotReloadCapablePlugin。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:344
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' failed to recover after hot reload commit failure."
-msgstr "插件 '{0}' 在热重载提交失败后恢复失败。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:421
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' has dependent modules. V1 hot reload refuses this topology."
-msgstr "插件 '{0}' 存在依赖它的模块。V1 热重载拒绝该拓扑。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:302
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' hot reloaded successfully."
-msgstr "插件 '{0}' 热重载成功。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:416
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' is a satellite module and shares a core module context. V1 hot reload refuses this topology."
-msgstr "插件 '{0}' 是卫星模块并共享核心模块上下文。V1 热重载拒绝该拓扑。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:164
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' rejected hot reload export."
-msgstr "插件 '{0}' 拒绝热重载导出。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:430
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' shares its module with other active plugin entry points. V1 hot reload refuses this topology."
-msgstr "插件 '{0}' 与其他活动插件入口点共享同一模块。V1 热重载拒绝该拓扑。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:42
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' shutdown completed."
-msgstr "插件 '{0}' 已完成关闭。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:145
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' threw while exporting hot reload state."
-msgstr "插件 '{0}' 在导出热重载状态时抛出异常。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:73
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Plugin '{0}' unload completed."
-msgstr "插件 '{0}' 已完成卸载。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:378
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Rollback failed with an exception for plugin '{0}'."
-msgstr "插件 '{0}' 回滚失败并抛出异常。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:256
-#, csharp-format
-msgctxt "{0} is plugin name"
-msgid "Starting hot reload commit for plugin '{0}'. No global isolation gate is enabled; in-flight events may still hit the transition window."
-msgstr "开始为插件 '{0}' 提交热重载。当前未启用全局隔离门，飞行中的事件仍可能命中切换窗口。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:220
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is error message"
-msgid "Candidate plugin '{0}' failed during hot reload prepare: {1}"
-msgstr "候选插件 '{0}' 在热重载准备阶段失败: {1}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:311
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is error message"
-msgid "Commit stage '{0}' failed for plugin '{1}': {2}"
-msgstr "插件 '{1}' 的提交阶段 '{0}' 失败: {2}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:51
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is error message"
-msgid "Plugin '{0}' failed to shutdown: {1}"
-msgstr "插件 '{0}' 关闭失败: {1}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.cs:79
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is error message"
-msgid "Plugin '{0}' failed to unload: {1}"
-msgstr "插件 '{0}' 卸载失败: {1}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:150
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is error message"
-msgid "Plugin '{0}' failed while exporting hot reload state: {1}"
-msgstr "插件 '{0}' 在导出热重载状态时失败: {1}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:383
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is error message"
-msgid "Rollback failed for plugin '{0}': {1}"
-msgstr "插件 '{0}' 回滚失败: {1}"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:111
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is load details"
-msgid "Failed to load hot reload candidate for plugin '{0}'. Result: {1}."
-msgstr "无法为插件 '{0}' 加载热重载候选项。结果: {1}。"
-
-#: ..\..\..\src\UnifierTSL\PluginHost\Hosts\Dotnet\DotnetPluginHost.HotReload.cs:293
-#, csharp-format
-msgctxt "{0} is plugin name, {1} is old version, {2} is new version"
-msgid "Hot reload succeeded for plugin '{0}'. {1} -> {2}."
-msgstr "插件 '{0}' 热重载成功。{1} -> {2}。"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\AnnotatedConsolePromptProvider.cs:39
-msgid "use Tab/Shift+Tab to rotate, Right to accept"
-msgstr "使用 Tab/Shift+Tab 轮换，按右方向键接受"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:18
-msgid "use Tab/Shift+Tab to rotate; Right to accept"
-msgstr "使用 Tab/Shift+Tab 轮换；按右方向键接受"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:19
-msgid "Enter on empty uses ghost; Ctrl+Enter keeps raw input."
-msgstr "空输入时按 Enter 接受 ghost 提示；Ctrl+Enter 保留原始输入。"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:31
-msgid "Setup Listen Port"
-msgstr "设置监听端口"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:32
-msgid "Select the launcher listen port"
-msgstr "选择启动器监听端口"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:58
-msgid "Setup Server Password"
-msgstr "设置服务器密码"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:59
-msgid "Pick a short startup password (plain input)."
-msgstr "设置一个简短的启动密码（明文输入）。"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:62
-msgid "Press Enter to keep your current input (can be empty)."
-msgstr "按 Enter 保持当前输入（可以为空）。"
-
-#: ..\..\..\src\UnifierTSL\CLI\Prompting\Startup\LauncherStartupPromptFactory.cs:22
-#, csharp-format
-msgctxt "{0} is error reason"
-msgid "last error: {0}"
-msgstr "上次错误：{0}"
-
-#: ..\..\..\src\UnifierTSL\CLI\TerminalLauncherConsoleHost.cs:159
-msgid "launcher.colorfulConsoleStatus is enabled, but the current terminal does not support vivid ANSI status rendering. Falling back to the plain status bar palette."
-msgstr "launcher.colorfulConsoleStatus 已启用，但当前终端不支持鲜艳 ANSI 状态渲染。将回退到纯色状态栏配色。"
-
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:226
-#, csharp-format
-msgctxt "{0} is current colorfulConsoleStatus value, {1} is desired colorfulConsoleStatus value"
-msgid "launcher.colorfulConsoleStatus changed from '{0}' to '{1}'. Status bar appearance has been refreshed."
-msgstr "launcher.colorfulConsoleStatus 已从 '{0}' 更改为 '{1}'。状态栏外观已刷新。"
-
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:232
-msgid "launcher.consoleStatus changed. Command-line status settings are now using the reloaded values."
-msgstr "launcher.consoleStatus 已更改。命令行状态设置现已使用重载后的值。"
-
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:975
-#, csharp-format
-msgctxt "{0} is user input value for colorful console status"
-msgid "Invalid colorful console status value: {0}"
-msgstr "无效的 colorful console status 值：{0}"
-
-#: ..\..\..\src\UnifierTSL\LauncherRuntimeOps.cs:978
-msgid "Expected value: true/false, on/off, 1/0, or use '--no-colorful' to disable."
-msgstr "期望值：true/false、on/off、1/0，或使用 '--no-colorful' 禁用。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:446
-#, csharp-format
-msgctxt "{0} is current input value"
-msgid "input '{0}' is not an integer port."
-msgstr "输入 '{0}' 不是整数端口。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:452
-#, csharp-format
-msgctxt "{0} is current input value"
-msgid "input '{0}' is out of range (0~65535)."
-msgstr "输入 '{0}' 超出范围（0~65535）。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:458
-#, csharp-format
-msgctxt "{0} is current input value"
-msgid "input '{0}' is occupied."
-msgstr "输入 '{0}' 已被占用。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:463
-#, csharp-format
-msgctxt "{0} is current input value"
-msgid "input '{0}' is available."
-msgstr "输入 '{0}' 可用。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:534
-#, csharp-format
-msgctxt "{0} is password text length"
-msgid "password length: {0}"
-msgstr "密码长度：{0}"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:535
-#, csharp-format
-msgctxt "{0} is simple password quality level"
-msgid "strength hint : {0}"
-msgstr "强度提示：{0}"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:536
-msgid "empty input is allowed for no-password mode"
-msgstr "允许空输入以启用无密码模式"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:553
-#, csharp-format
-msgctxt "{0} is user input value"
-msgid "'{0}' is not an integer port."
-msgstr "'{0}' 不是整数端口。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:557
-#, csharp-format
-msgctxt "{0} is user input value"
-msgid "'{0}' is out of range."
-msgstr "'{0}' 超出范围。"
-
-#: ..\..\..\src\UnifierTSL\UnifierApi.Internal.cs:561
-#, csharp-format
-msgctxt "{0} is user input value"
-msgid "'{0}' is not available."
-msgstr "'{0}' 不可用。"
+#~ msgctxt "{0} is player name, {1} is player UUID"
+#~ msgid "No available server found for you."
+#~ msgstr "未找到可用服务器。"
+
+#~ msgid "use Tab/Shift+Tab to rotate, Right to accept"
+#~ msgstr "使用 Tab/Shift+Tab 轮换，按右方向键接受"
+
+#~ msgid "use Tab/Shift+Tab to rotate; Right to accept"
+#~ msgstr "使用 Tab/Shift+Tab 轮换；按右方向键接受"
+
+#~ msgid ""
+#~ "launcher.colorfulConsoleStatus is enabled, but the current terminal does "
+#~ "not support vivid ANSI status rendering. Falling back to the plain status "
+#~ "bar palette."
+#~ msgstr ""
+#~ "launcher.colorfulConsoleStatus 已启用，但当前终端不支持鲜艳 ANSI 状态渲"
+#~ "染。将回退到纯色状态栏配色。"
