@@ -20,7 +20,12 @@ using UnifierTSL.TextEditing;
 
 namespace Atelier.Presentation.Window
 {
-    internal sealed partial class ReplWindowAdapter : IDisposable
+    internal sealed partial class ReplWindowAdapter :
+        IMetaCommandState,
+        IMetaCommandOutput,
+        IMetaCommandEditor,
+        IMetaCommandExecution,
+        IDisposable
     {
         #region State And Lifecycle
 
@@ -422,66 +427,9 @@ namespace Atelier.Presentation.Window
         }
 
         private async Task ProcessMetaCommandAsync(long sourceClientBufferRevision, MetaCommand command, CancellationToken cancellationToken) {
-            var draftCleared = false;
-            switch (command.Kind) {
-                case MetaCommandKind.Help:
-                    PublishMetaCommandHelp();
-                    break;
-
-                case MetaCommandKind.Reset:
-                    var resetPublication = await session.ResetAsync(cancellationToken).ConfigureAwait(false);
-                    PublishStreamLine(resetPublication.Invalidation is null
-                        ? "Session reset."
-                        : resetPublication.Invalidation.Reason);
-                    break;
-
-                case MetaCommandKind.Clear:
-                    surfaceSession.PublishSurfaceOperation(SurfaceOperations.Stream(StreamPayloadKind.Clear, channel: StreamChannel.Transcript));
-                    break;
-
-                case MetaCommandKind.Imports:
-                    PublishImportState();
-                    break;
-
-                case MetaCommandKind.Target:
-                    PublishStreamLine($"Target: {options.TargetProfile.Label}");
-                    PublishStreamLine($"Host: {options.InvocationHost.Label}");
-                    break;
-
-                case MetaCommandKind.Paste:
-                    ProcessPasteModeCommand(command);
-                    break;
-
-                case MetaCommandKind.Transient:
-                    PublishStreamLine("Running transient code.");
-                    RunResult? runResult = null;
-                    ResetTemporarySubmitKeyMode();
-                    EnterBlockingExecutionState();
-                    try {
-                        runResult = await session.QueueTransientRunAsync(command.TransientCode, cancellationToken).ConfigureAwait(false);
-                        PublishTransientRunResult(runResult);
-                        PublishHostClearDraftProposal(sourceClientBufferRevision);
-                        TrackBackgroundTask(runResult);
-                        draftCleared = true;
-                    }
-                    catch (Exception ex) when (!processingCancellation.IsCancellationRequested) {
-                        PublishErrorBox("Execution", [ex.Message]);
-                    }
-                    finally {
-                        EndConsoleInteraction();
-                        ExitBlockingExecutionState();
-                    }
-                    break;
-
-                default:
-                    const string guidanceHint = "Type ':' for command suggestions, or run :help for usage guidance.";
-                    PublishStreamLine(string.IsNullOrWhiteSpace(command.Name)
-                        ? "Unknown command. " + guidanceHint
-                        : $"Unknown command ':{command.Name}'. {guidanceHint}");
-                    break;
-            }
-
-            if (command.Kind != MetaCommandKind.Reset && !draftCleared) {
+            var context = new MetaCommandExecutionContext(this, this, this, this);
+            var result = await MetaCommands.ExecuteAsync(context, command, cancellationToken).ConfigureAwait(false);
+            if (result.ClearDraft) {
                 PublishHostClearDraftProposal(sourceClientBufferRevision);
             }
         }
@@ -517,78 +465,20 @@ namespace Atelier.Presentation.Window
             }
         }
 
-        private void PublishMetaCommandHelp() {
-            PublishStreamLine("Atelier REPL quick help:");
-            PublishStreamLine("  Mental model:");
-            PublishStreamLine("    Atelier is a Roslyn C# script session, not a line-by-line shell.");
-            PublishStreamLine("    The editor analyzes committed history plus the current draft as one synthetic script.");
-            PublishStreamLine("    Normal submissions that change state are committed to session history.");
-            PublishStreamLine("    Later drafts see earlier declarations, imports, references, and loaded submissions.");
-            PublishStreamLine("    Meta commands start with ':' and are intercepted before C# compilation.");
-            PublishStreamLine("    :transient compiles against the current session, runs as a probe, then discards its changes.");
-            PublishStreamLine("  Async and cancellation:");
-            PublishStreamLine("    Top-level await may keep running in background after the prompt returns.");
-            PublishStreamLine("    Background execution Tasks are available as PendingTasks; LastTask is the newest one.");
-            PublishStreamLine("    An unfinished Task returned as the result is also tracked by the window indicator.");
-            PublishStreamLine("    The session Cancellation token is available as Cancellation.");
-            PublishStreamLine("    Cancellation injection mainly prevents runaway loops from surviving a closed session.");
-            PublishStreamLine("    Loops check Cancellation automatically, so intentional long-running loops can stop on close.");
-            PublishStreamLine("    Token-aware calls may get Cancellation appended automatically when a safe overload exists.");
-            PublishStreamLine("    Task.Run/Thread/Timer callbacks are guarded so detached work also observes cancellation.");
-            PublishStreamLine("    Blocking APIs that ignore tokens still need explicit cancellation-aware design.");
-            PublishStreamLine("  Lifetime:");
-            PublishStreamLine("    Closing the REPL releases the surface and session automatically.");
-            PublishStreamLine("    Session disposal cancels pending work, clears PendingTasks, and unloads script contexts.");
-            PublishStreamLine("    Reset clears committed history and restores baseline imports.");
-            PublishStreamLine("  Editing:");
-            PublishStreamLine("    Enter follows Roslyn's complete-submission check; unfinished blocks stay open.");
-            PublishStreamLine("    Shift+Enter always inserts a line; paste mode uses Ctrl+Enter to submit once.");
-            PublishStreamLine("    Diagnostics, completions, and signature help describe the draft in accumulated context.");
-            PublishStreamLine("    Pair closers can stay virtual until typed through.");
-            PublishStreamLine("    Shift+Tab formats the draft without submitting.");
-        }
-
-        private void ProcessPasteModeCommand(MetaCommand command) {
-            if (!TryResolvePasteMode(command.HeaderRemainder, out var mode, out var autoReset)) {
-                PublishStreamLine("Usage: :paste [on|off]");
-                return;
-            }
-
-            SetSubmitKeyMode(mode, autoReset);
-            PublishStreamLine(mode == EditorSubmitKeyMode.CtrlEnter
-                ? "Paste mode enabled for the next submit. Enter inserts new lines; Ctrl+Enter submits."
-                : "Paste mode disabled. Enter uses smart submit; Shift+Enter inserts new lines.");
-        }
-
-        private bool TryResolvePasteMode(string text, out EditorSubmitKeyMode mode, out bool autoReset) {
-            var value = (text ?? string.Empty).Trim();
-            if (value.Length == 0) {
-                var pasteModeActive = GetSubmitKeyMode() == EditorSubmitKeyMode.CtrlEnter;
-                mode = pasteModeActive ? EditorSubmitKeyMode.Enter : EditorSubmitKeyMode.CtrlEnter;
-                autoReset = !pasteModeActive;
-                return true;
-            }
-
-            switch (value.ToLowerInvariant()) {
-                case "on":
-                case "ctrl":
-                case "ctrl-enter":
-                case "ctrl+enter":
-                    mode = EditorSubmitKeyMode.CtrlEnter;
-                    autoReset = true;
-                    return true;
-                case "off":
-                case "enter":
-                case "normal":
-                    mode = EditorSubmitKeyMode.Enter;
-                    autoReset = false;
-                    return true;
-                default:
-                    mode = default;
-                    autoReset = false;
-                    return false;
-            }
-        }
+        ReplSession IMetaCommandState.Session => session;
+        OpenOptions IMetaCommandState.Options => options;
+        EditorSubmitKeyMode IMetaCommandEditor.SubmitKeyMode => GetSubmitKeyMode();
+        void IMetaCommandEditor.SetSubmitKeyMode(EditorSubmitKeyMode mode, bool autoReset) => SetSubmitKeyMode(mode, autoReset);
+        void IMetaCommandEditor.ResetTemporarySubmitKeyMode() => ResetTemporarySubmitKeyMode();
+        void IMetaCommandExecution.EnterBlockingExecutionState() => EnterBlockingExecutionState();
+        void IMetaCommandExecution.EndConsoleInteraction() => EndConsoleInteraction();
+        void IMetaCommandExecution.ExitBlockingExecutionState() => ExitBlockingExecutionState();
+        void IMetaCommandExecution.PublishTransientRunResult(RunResult runResult) => PublishTransientRunResult(runResult);
+        void IMetaCommandExecution.TrackBackgroundTask(RunResult runResult) => TrackBackgroundTask(runResult);
+        void IMetaCommandOutput.PublishLine(string text) => PublishStreamLine(text);
+        void IMetaCommandOutput.PublishClearTranscript() => ClearTranscript();
+        void IMetaCommandOutput.PublishValueList(IReadOnlyList<string> values) => PublishValueList(values);
+        void IMetaCommandOutput.PublishErrorBox(string title, IReadOnlyList<string> lines) => PublishErrorBox(title, lines);
 
         private EditorSubmitKeyMode GetSubmitKeyMode() {
             lock (sync) {
@@ -616,23 +506,13 @@ namespace Atelier.Presentation.Window
             }
 
             if (changed) {
-                PublishStreamLine("Paste mode disabled. Enter uses smart submit; Shift+Enter inserts new lines.");
+                PublishStreamLine(GetString("Paste mode disabled. Enter uses smart submit; Shift+Enter inserts new lines."));
             }
-        }
-
-        private void PublishImportState() {
-            var importState = session.ImportState;
-            PublishStreamLine($"BaselineImports ({importState.BaselineImports.Length}):");
-            PublishValueList(importState.BaselineImports);
-            PublishStreamLine($"EffectiveImports ({importState.EffectiveImports.Length}):");
-            PublishValueList(importState.EffectiveImports);
-            PublishStreamLine($"ReferencePaths ({importState.ReferencePaths.Length}):");
-            PublishValueList(importState.ReferencePaths);
         }
 
         private void PublishValueList(IReadOnlyList<string> values) {
             if (values.Count == 0) {
-                PublishStreamLine("  (none)");
+                PublishStreamLine(GetString("  (none)"));
                 return;
             }
 
