@@ -140,9 +140,9 @@ namespace UnifierTSL.Commanding.Prompting
 
             return new PromptSemanticSpec {
                 StatusLabel = "cmd",
-                LiteralExpectationLabel = "command",
-                ModifierLabel = "flag",
-                OverflowExpectationLabel = "no more args",
+                LiteralExpectationLabel = GetString("command"),
+                ModifierLabel = GetString("flag"),
+                OverflowExpectationLabel = GetString("no more args"),
                 ActivationPrefixes = [.. activationPrefixes
                     .Where(static prefix => !string.IsNullOrWhiteSpace(prefix))
                     .Select(static prefix => prefix.Trim())

@@ -28,11 +28,11 @@ public sealed record PromptSemanticSpec
 {
     public string StatusLabel { get; init; } = "ctx";
 
-    public string LiteralExpectationLabel { get; init; } = "literal";
+    public string LiteralExpectationLabel { get; init; } = GetString("literal");
 
-    public string ModifierLabel { get; init; } = "modifiers";
+    public string ModifierLabel { get; init; } = GetString("modifier");
 
-    public string OverflowExpectationLabel { get; init; } = "no more input";
+    public string OverflowExpectationLabel { get; init; } = GetString("no more input");
 
     public ImmutableArray<string> ActivationPrefixes { get; init; } = [];
 

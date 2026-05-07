@@ -147,7 +147,7 @@ internal static class PromptSemanticCompletion
     private static IReadOnlyList<string> BuildVisibleStatusBodyLines(
         IReadOnlyList<string> baseStatusBodyLines,
         bool includeInterpretationSwitchHint) {
-        if (baseStatusBodyLines.Count == 0 || !LooksLikeCommandAssistHintLine(baseStatusBodyLines[0])) {
+        if (baseStatusBodyLines.Count == 0 || !PromptEditorKeymaps.IsCommandAssistHintLine(baseStatusBodyLines[0])) {
             return baseStatusBodyLines;
         }
 
@@ -159,12 +159,6 @@ internal static class PromptSemanticCompletion
         List<string> rewritten = [assistHintLine];
         rewritten.AddRange(baseStatusBodyLines.Skip(1));
         return rewritten;
-    }
-
-    private static bool LooksLikeCommandAssistHintLine(string? line) {
-        return !string.IsNullOrWhiteSpace(line)
-            && line.Contains("rotates suggestions", StringComparison.OrdinalIgnoreCase)
-            && line.Contains("accepts ghost completion", StringComparison.OrdinalIgnoreCase);
     }
 
     private static PromptInterpretationState ResolveVisibleInterpretationState(
@@ -547,16 +541,16 @@ internal static class PromptSemanticCompletion
     private static string ResolveExpectationLabel(PromptSemanticSpec? spec, PromptSemanticAnalysis analysis) {
         return analysis.AcceptExpectation.Kind switch {
             PromptFocusKind.Literal => string.IsNullOrWhiteSpace(spec?.LiteralExpectationLabel)
-                ? "literal"
+                ? GetString("literal")
                 : spec!.LiteralExpectationLabel.Trim(),
             PromptFocusKind.Slot when analysis.AcceptExpectation.Slot is PromptSlotSegmentSpec slot => ResolveSlotLabel(
                 slot,
                 ResolveDisplaySlotOrdinal(analysis.AcceptExpectation.SegmentIndex, analysis.ActiveAlternative)),
             PromptFocusKind.Modifier => string.IsNullOrWhiteSpace(spec?.ModifierLabel)
-                ? "modifier"
+                ? GetString("modifier")
                 : spec!.ModifierLabel.Trim(),
             PromptFocusKind.Overflow or PromptFocusKind.None => string.IsNullOrWhiteSpace(spec?.OverflowExpectationLabel)
-                ? "no more input"
+                ? GetString("no more input")
                 : spec!.OverflowExpectationLabel.Trim(),
             _ => string.Empty,
         };
@@ -593,7 +587,7 @@ internal static class PromptSemanticCompletion
         PromptStyledText expectation = BuildExpectationSectionText(context.SemanticSpec, analysis);
         if (!string.IsNullOrWhiteSpace(expectation.Text)) {
             sections.Add(new PromptInterpretationSection {
-                Label = "expect",
+                Label = GetString("expect"),
                 Lines = [expectation],
             });
         }
@@ -601,7 +595,7 @@ internal static class PromptSemanticCompletion
         PromptStyledText resolution = BuildActiveResolutionSectionText(context, analysis, state, scenario, analysis.Diagnostics, out remainingDiagnostics);
         if (!string.IsNullOrWhiteSpace(resolution.Text)) {
             sections.Add(new PromptInterpretationSection {
-                Label = "resolved",
+                Label = GetString("resolved"),
                 Lines = [resolution],
             });
         }
@@ -693,7 +687,7 @@ internal static class PromptSemanticCompletion
             .Distinct(StringComparer.OrdinalIgnoreCase));
         return string.IsNullOrWhiteSpace(content)
             ? string.Empty
-            : $" - flag[{content}]";
+            : GetString(" - flag[{0}]", content);
     }
 
     private static List<DisplaySegmentDescriptor> BuildDisplaySegments(PromptAlternativeSpec alternative) {
@@ -943,65 +937,59 @@ internal static class PromptSemanticCompletion
         IReadOnlyList<string> diagnostics,
         out IReadOnlyList<string> remainingDiagnostics) {
         remainingDiagnostics = diagnostics;
-        var displayText = ResolveActiveSlotDisplayText(status.ExplainResult);
-        if (string.IsNullOrWhiteSpace(displayText)) {
-            return string.Empty;
+        var result = status.ExplainResult;
+        if (result.State == PromptParamExplainState.Invalid
+            && TryTakeInvalidDiagnostic(diagnostics, out var invalidDetail, out remainingDiagnostics)) {
+            result = result with {
+                DetailText = MergeExplainDetail(result.DetailText, invalidDetail),
+            };
         }
 
-        if (status.ExplainResult.State == PromptParamExplainState.Invalid) {
-            var invalidDiagnostics = diagnostics
-                .Where(IsActiveSlotInvalidDiagnostic)
-                .ToArray();
-            if (invalidDiagnostics.Length > 0) {
-                remainingDiagnostics = diagnostics
-                    .Where(diagnostic => !IsActiveSlotInvalidDiagnostic(diagnostic))
-                    .ToArray();
-                displayText = MergeInvalidStatusDisplayText(displayText, invalidDiagnostics[0]);
-            }
+        var displayText = ResolveActiveSlotDisplayText(result);
+        if (string.IsNullOrWhiteSpace(displayText)) {
+            return string.Empty;
         }
 
         return $"{status.ExplainContext.RawToken} -> {displayText}";
     }
 
     private static string ResolveActiveSlotDisplayText(PromptParamExplainResult result) {
-        if (!string.IsNullOrWhiteSpace(result.DisplayText)) {
-            return result.DisplayText.Trim();
-        }
-
-        return result.State switch {
-            PromptParamExplainState.Ambiguous => "ambiguous",
-            PromptParamExplainState.Invalid => "invalid",
-            _ => string.Empty,
-        };
+        return result.FormatDisplayText();
     }
 
-    private static bool IsActiveSlotInvalidDiagnostic(string diagnostic) {
-        return !string.IsNullOrWhiteSpace(diagnostic)
-            && diagnostic.TrimStart().StartsWith("invalid", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string MergeInvalidStatusDisplayText(string displayText, string diagnostic) {
-        var detailText = string.IsNullOrWhiteSpace(displayText)
-            ? "invalid"
-            : displayText.Trim();
-        var diagnosticText = diagnostic?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(diagnosticText)
-            || diagnosticText.Equals("invalid", StringComparison.OrdinalIgnoreCase)
-            || diagnosticText.Equals(detailText, StringComparison.OrdinalIgnoreCase)) {
-            return detailText;
-        }
-
-        if (detailText.StartsWith("invalid", StringComparison.OrdinalIgnoreCase)) {
-            if (diagnosticText.StartsWith("invalid", StringComparison.OrdinalIgnoreCase)) {
-                return diagnosticText.Length > detailText.Length ? diagnosticText : detailText;
+    private static bool TryTakeInvalidDiagnostic(
+        IReadOnlyList<string> diagnostics,
+        out string detail,
+        out IReadOnlyList<string> remainingDiagnostics) {
+        detail = string.Empty;
+        List<string> remaining = [];
+        var matched = false;
+        foreach (var diagnostic in diagnostics) {
+            if (!matched && PromptParamExplainResult.TryParseInvalidDiagnostic(diagnostic, out detail)) {
+                matched = true;
+                continue;
             }
 
-            return detailText + " - " + diagnosticText;
+            remaining.Add(diagnostic);
         }
 
-        return diagnosticText.StartsWith("invalid", StringComparison.OrdinalIgnoreCase)
-            ? diagnosticText
-            : detailText + " - " + diagnosticText;
+        remainingDiagnostics = remaining;
+        return matched;
+    }
+
+    private static string MergeExplainDetail(string currentDetail, string diagnosticDetail) {
+        var normalizedCurrent = currentDetail?.Trim() ?? string.Empty;
+        var normalizedDiagnostic = diagnosticDetail?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedCurrent)) {
+            return normalizedDiagnostic;
+        }
+
+        if (string.IsNullOrWhiteSpace(normalizedDiagnostic)
+            || normalizedDiagnostic.Equals(normalizedCurrent, StringComparison.OrdinalIgnoreCase)) {
+            return normalizedCurrent;
+        }
+
+        return normalizedCurrent + " - " + normalizedDiagnostic;
     }
 
     private readonly record struct ActiveSlotStatus(
@@ -1029,14 +1017,14 @@ internal static class PromptSemanticCompletion
 
         var completionKindId = slot.CompletionKindId?.Trim();
         if (string.Equals(completionKindId, PromptSuggestionKindIds.Boolean, StringComparison.Ordinal)) {
-            return "bool";
+            return GetString("bool");
         }
 
         if (string.Equals(completionKindId, PromptSuggestionKindIds.Enum, StringComparison.Ordinal)) {
-            return "enum";
+            return GetString("enum");
         }
 
-        return preferArgFallback ? "arg" + (fallbackIndex + 1) : "plain";
+        return preferArgFallback ? GetString("arg{0}", fallbackIndex + 1) : string.Empty;
     }
 
     private static string? FormatParameterName(string? name) {

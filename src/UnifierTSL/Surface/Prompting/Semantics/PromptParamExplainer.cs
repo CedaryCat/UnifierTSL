@@ -40,9 +40,77 @@ public readonly record struct PromptParamExplainContext(
 
 public readonly record struct PromptParamExplainResult(
     PromptParamExplainState State,
-    string DisplayText)
+    string DisplayText,
+    string DetailText = "")
 {
     public static PromptParamExplainResult None { get; } = new(PromptParamExplainState.None, string.Empty);
+
+    public static PromptParamExplainResult Resolved(string? displayText) {
+        return string.IsNullOrWhiteSpace(displayText)
+            ? Invalid()
+            : new PromptParamExplainResult(PromptParamExplainState.Resolved, displayText.Trim());
+    }
+
+    public static PromptParamExplainResult Ambiguous(string? detailText = null) {
+        return new PromptParamExplainResult(
+            PromptParamExplainState.Ambiguous,
+            string.Empty,
+            detailText?.Trim() ?? string.Empty);
+    }
+
+    public static PromptParamExplainResult Invalid(string? detailText = null) {
+        return new PromptParamExplainResult(
+            PromptParamExplainState.Invalid,
+            string.Empty,
+            detailText?.Trim() ?? string.Empty);
+    }
+
+    public string FormatDisplayText() {
+        if (State == PromptParamExplainState.Resolved) {
+            return DisplayText?.Trim() ?? string.Empty;
+        }
+
+        var label = State switch {
+            PromptParamExplainState.Ambiguous => GetString("ambiguous"),
+            PromptParamExplainState.Invalid => GetString("invalid"),
+            _ => string.Empty,
+        };
+        if (string.IsNullOrWhiteSpace(label)) {
+            return string.Empty;
+        }
+
+        var detail = DetailText?.Trim() ?? string.Empty;
+        return string.IsNullOrWhiteSpace(detail)
+            ? label
+            : GetString("{0}: {1}", label, detail);
+    }
+
+    public string ToDiagnosticText() {
+        return State == PromptParamExplainState.Invalid
+            ? FormatDisplayText()
+            : string.Empty;
+    }
+
+    public static bool TryParseInvalidDiagnostic(string? diagnostic, out string detail) {
+        detail = string.Empty;
+        if (string.IsNullOrWhiteSpace(diagnostic)) {
+            return false;
+        }
+
+        var trimmed = diagnostic.Trim();
+        var label = GetString("invalid");
+        if (trimmed.Equals(label, StringComparison.OrdinalIgnoreCase)) {
+            return true;
+        }
+
+        var prefix = label + ": ";
+        if (!trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) {
+            return false;
+        }
+
+        detail = trimmed[prefix.Length..].Trim();
+        return true;
+    }
 }
 
 public readonly record struct PromptParamCandidateContext(

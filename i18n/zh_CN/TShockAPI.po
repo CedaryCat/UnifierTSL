@@ -4120,8 +4120,8 @@ msgstr "无效的boss类型。"
 
 #: ../../src/Plugins/TShockAPI/Commands.cs:206
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
 #: ../../src/Plugins/TShockAPI/Commanding/TShockTerminalCommandDispatchAdapter.cs:71
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:148
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:337
 #, csharp-format
@@ -6591,8 +6591,8 @@ msgstr "魔法海螺"
 msgid "The message was broadcasted successfully"
 msgstr "消息已成功广播"
 
-#: ../../src/Plugins/TShockAPI/PaginationTools.cs:185
 #: ../../src/Plugins/TShockAPI/CommandExecutor.cs:342
+#: ../../src/Plugins/TShockAPI/PaginationTools.cs:185
 msgid "The method referenced by LineFormatter has thrown an exception. See inner exception for details."
 msgstr "属性LineFormatter中的代码抛出了异常，查看异常以获取详情。"
 
@@ -7561,9 +7561,9 @@ msgstr "你死了。因为封禁失败，你被踢出了服务器。"
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandRefResolver.cs:150
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:367
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:390
-#: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:540
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:407
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:429
+#: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:540
 msgid "You do not have access to this command."
 msgstr "你没有权限使用该指令。"
 

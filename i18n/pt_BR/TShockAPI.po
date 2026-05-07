@@ -4127,8 +4127,8 @@ msgstr "Tipo de chefe Inválido."
 
 #: ../../src/Plugins/TShockAPI/Commands.cs:206
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
 #: ../../src/Plugins/TShockAPI/Commanding/TShockTerminalCommandDispatchAdapter.cs:71
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:148
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:337
 #, csharp-format
@@ -6600,8 +6600,8 @@ msgstr "O Concha Mágica"
 msgid "The message was broadcasted successfully"
 msgstr "A mensagem foi transmitida com sucesso"
 
-#: ../../src/Plugins/TShockAPI/PaginationTools.cs:185
 #: ../../src/Plugins/TShockAPI/CommandExecutor.cs:342
+#: ../../src/Plugins/TShockAPI/PaginationTools.cs:185
 msgid "The method referenced by LineFormatter has thrown an exception. See inner exception for details."
 msgstr "O método referenciado pelo LineFormatter lançou uma exceção. Consulte a exceção interna para obter detalhes."
 
@@ -7571,9 +7571,9 @@ msgstr "Você morreu! Normalmente, você seria banido."
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandRefResolver.cs:150
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:367
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:390
-#: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:540
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:407
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:429
+#: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:540
 msgid "You do not have access to this command."
 msgstr "Você não tem acesso a este comando."
 

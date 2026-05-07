@@ -390,8 +390,8 @@ msgstr "未知命令“:{0}”。输入 ':' 可查看命令建议，或运行 :h
 msgid "Unknown command. Type ':' for command suggestions, or run :help for usage guidance."
 msgstr "未知命令。输入 ':' 可查看命令建议，或运行 :help 查看使用说明。"
 
-#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:126
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:126
 #, csharp-format
 msgid "Unsupported atelier invocation host '{0}'."
 msgstr "不支持的 Atelier 调用宿主“{0}”。"

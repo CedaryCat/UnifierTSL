@@ -651,13 +651,11 @@ public static partial class CommandPromptCommonObjects
     }
 
     private static PromptParamExplainResult Resolved(string? displayText) {
-        return string.IsNullOrWhiteSpace(displayText)
-            ? Invalid()
-            : new PromptParamExplainResult(PromptParamExplainState.Resolved, displayText.Trim());
+        return PromptParamExplainResult.Resolved(displayText);
     }
 
     private static PromptParamExplainResult Invalid()
-        => new(PromptParamExplainState.Invalid, "invalid");
+        => PromptParamExplainResult.Invalid();
 
     private static PromptParamExplainResult Ambiguous(IEnumerable<string> displayValues) {
         List<string> candidates = [];
@@ -689,9 +687,7 @@ public static partial class CommandPromptCommonObjects
             preview += ", ...";
         }
 
-        return new PromptParamExplainResult(
-            PromptParamExplainState.Ambiguous,
-            "ambiguous: " + preview);
+        return PromptParamExplainResult.Ambiguous(preview);
     }
 
     private static long GetPlayerRevision(PromptParamExplainContext context) {

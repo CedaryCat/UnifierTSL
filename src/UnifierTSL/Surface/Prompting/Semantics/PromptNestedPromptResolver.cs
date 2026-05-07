@@ -81,19 +81,17 @@ namespace UnifierTSL.Surface.Prompting.Semantics
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .Take(3));
                 if (string.IsNullOrWhiteSpace(preview)) {
-                    return new PromptParamExplainResult(PromptParamExplainState.Ambiguous, "ambiguous");
+                    return PromptParamExplainResult.Ambiguous();
                 }
 
                 if (alternatives > 3) {
                     preview += ", ...";
                 }
 
-                return new PromptParamExplainResult(PromptParamExplainState.Ambiguous, "ambiguous: " + preview);
+                return PromptParamExplainResult.Ambiguous(preview);
             }
 
-            return new PromptParamExplainResult(
-                PromptParamExplainState.Resolved,
-                ResolveDisplayText(resolution.Analysis.ActiveAlternative));
+            return PromptParamExplainResult.Resolved(ResolveDisplayText(resolution.Analysis.ActiveAlternative));
         }
 
         public static PromptComputation TranslateComputation(

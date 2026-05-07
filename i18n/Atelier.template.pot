@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Atelier\n"
-"POT-Creation-Date: 2026-05-07 22:03:10+0800\n"
-"PO-Revision-Date: 2026-05-07 22:03:10+0800\n"
+"POT-Creation-Date: 2026-05-07 23:46:13+0800\n"
+"PO-Revision-Date: 2026-05-07 23:46:13+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -423,8 +423,8 @@ msgid ""
 "guidance."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:126
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
+#: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:126
 #, csharp-format
 msgid "Unsupported atelier invocation host '{0}'."
 msgstr ""

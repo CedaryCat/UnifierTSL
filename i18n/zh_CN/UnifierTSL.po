@@ -1259,6 +1259,11 @@ msgstr "  signature={0}"
 msgid "  summary={0}"
 msgstr "  summary={0}"
 
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:690
+#, csharp-format
+msgid " - flag[{0}]"
+msgstr " - 标志[{0}]"
+
 #: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:447
 msgid "'-servermerge/--server-merge' was provided without any '-server' arguments. The merge mode was ignored."
 msgstr "提供了 '-servermerge/--server-merge'，但没有任何 '-server' 参数。该合并模式已被忽略。"
@@ -1277,49 +1282,54 @@ msgstr "[Warning][LogCore|DurableQueue] 进程退出时持久化日志刷新超�
 msgid "{0} | source={1} | aliases={2} | actions={3} | endpoints={4}"
 msgstr "{0} | source={1} | aliases={2} | actions={3} | endpoints={4}"
 
-#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:67
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:74
 #, csharp-format
 msgid "{0} accepts ghost completion"
 msgstr "{0} 接受幽灵补全"
 
-#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:79
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:86
 #, csharp-format
 msgid "{0} inserts newline"
 msgstr "{0} 插入换行"
 
-#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:62
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:69
 #, csharp-format
 msgid "{0} rotates suggestions"
 msgstr "{0} 切换建议项"
 
-#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:78
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:85
 #, csharp-format
 msgid "{0} submits"
 msgstr "{0} 提交"
 
-#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:64
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:71
 #, csharp-format
 msgid "{0} switches interpretation"
-msgstr "{0} 切换解释方式"
+msgstr "{0} 切换重载解释"
 
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:160
 #, csharp-format
 msgid "{0} was already initialized."
 msgstr "{0} 已初始化。"
 
-#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:153
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:156
 #, csharp-format
 msgid "{0} was not initialized."
 msgstr "{0} 尚未初始化。"
 
-#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:72
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptParamExplainer.cs:85
+#, csharp-format
+msgid "{0}: {1}"
+msgstr "{0}: {1}"
+
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:79
 #, csharp-format
 msgid "{0}/{1} scroll status"
 msgstr "{0}/{1} 滚动状态"
 
-#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:74
+#: ../../src/UnifierTSL/Surface/Prompting/PromptEditorKeymaps.cs:81
 #, csharp-format
 msgid "{0}/{1} select task"
 msgstr "{0}/{1} 选择任务"
@@ -1356,6 +1366,19 @@ msgstr "创建“{0}”实例时 Activator.CreateInstance 返回了 null"
 msgid "aliases={0}"
 msgstr "aliases={0}"
 
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptParamExplainer.cs:74
+msgid "ambiguous"
+msgstr "有歧义"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticAnalyzer.cs:1440
+msgid "arg"
+msgstr "参数"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:1027
+#, csharp-format
+msgid "arg{0}"
+msgstr "参数{0}"
+
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandRegistrationOptions.cs:101
 msgid "At least one binding candidate is required."
 msgstr "至少需要一个绑定候选项。"
@@ -1364,10 +1387,19 @@ msgstr "至少需要一个绑定候选项。"
 msgid "batch aborted"
 msgstr "批处理已中止"
 
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:1020
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticAnalyzer.cs:1429
+msgid "bool"
+msgstr "布尔"
+
 #: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:265
 #: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:308
 msgid "Buffer range exceeds the available data."
 msgstr "缓冲区范围超出了可用数据。"
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:143
+msgid "command"
+msgstr "命令"
 
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:184
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:448
@@ -1378,8 +1410,8 @@ msgstr "命令已取消。"
 msgid "Command endpoint id must not be empty."
 msgstr "命令端点 ID 不能为空。"
 
-#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:187
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:310
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:451
 msgid "Command failed, check logs for more details."
@@ -1479,13 +1511,35 @@ msgstr "输入为空时按 Enter 接受幽灵提示；按 Ctrl+Enter 保留原�
 msgid "Entry point cannot be null or empty."
 msgstr "入口点不能为 null 或空。"
 
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:1024
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticAnalyzer.cs:1433
+msgid "enum"
+msgstr "枚举"
+
 #: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:250
 msgid "Executing command."
 msgstr "正在执行命令。"
 
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:590
+msgid "expect"
+msgstr "期望"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticAnalyzer.cs:1069
+msgid "expected boolean"
+msgstr "应为布尔值"
+
 #: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:169
 msgid "Expected format: -server name:<name> worldname:<worldname> gamemode:<value> size:<value> evil:<value> seed:<value>"
 msgstr "预期格式: -server name:<name> worldname:<worldname> gamemode:<value> size:<value> evil:<value> seed:<value>"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticAnalyzer.cs:1081
+msgid "expected hh:mm"
+msgstr "应为 hh:mm"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticAnalyzer.cs:1093
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticAnalyzer.cs:1146
+msgid "expected integer"
+msgstr "应为整数"
 
 #: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:265
 msgid "Expected value: an integer between 0 and 2 (inclusive), or one of the strings: random, corruption, crimson"
@@ -1581,6 +1635,10 @@ msgstr "停止监听器会话失败。"
 msgid "Failed to write config: '{0}'."
 msgstr "写入配置“{0}”失败。"
 
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:144
+msgid "flag"
+msgstr "标志"
+
 #: ../../src/UnifierTSL/Program.cs:43
 msgid "Global initialization started..."
 msgstr "全局初始化开始..."
@@ -1598,6 +1656,10 @@ msgstr "热重载被插件依赖拓扑阻止。"
 msgid "Inspects registered command roots, actions, and endpoint bindings."
 msgstr "检查已注册的命令根、动作和端点绑定。"
 
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticAnalyzer.cs:1439
+msgid "int"
+msgstr "整数"
+
 #: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionDriver.cs:551
 msgid "Interaction document kind does not match the active interaction kind."
 msgstr "交互文档类型与活动交互类型不匹配。"
@@ -1605,6 +1667,11 @@ msgstr "交互文档类型与活动交互类型不匹配。"
 #: ../../src/UnifierTSL/Surface.Adapter/Cli/Sessions/PipeSurfaceSessionDriver.cs:547
 msgid "Interaction document scope id does not match the active interaction scope."
 msgstr "交互文档作用域 ID 与活动交互作用域不匹配。"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptParamExplainer.cs:75
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptParamExplainer.cs:101
+msgid "invalid"
+msgstr "无效"
 
 #: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:231
 msgid "Invalid client UUID."
@@ -1663,6 +1730,11 @@ msgstr "列出控制器组注册来源及其已注册根命令。"
 msgid "Lists registered command roots with source and endpoint metadata."
 msgstr "列出已注册命令根及其来源和端点元数据。"
 
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticModels.cs:31
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:544
+msgid "literal"
+msgstr "字面量"
+
 #: ../../src/UnifierTSL/Surface.Adapter/Cli/Terminal/LocalPromptReadInteractionDriver.cs:18
 msgid "Local prompt read interactions require an interactive terminal."
 msgstr "本地提示读取交互需要交互式终端。"
@@ -1687,6 +1759,11 @@ msgstr "mismatch handler=-"
 #, csharp-format
 msgid "mismatch handler={0}.{1} mode={2}"
 msgstr "mismatch handler={0}.{1} mode={2}"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticModels.cs:33
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:550
+msgid "modifier"
+msgstr "修饰符"
 
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:213
 #, csharp-format
@@ -1734,6 +1811,15 @@ msgstr "当前没有已注册的命令根。"
 #, csharp-format
 msgid "No command roots matched filter \"{0}\"."
 msgstr "没有命令根匹配过滤器“{0}”。"
+
+#: ../../src/UnifierTSL/Commanding/Prompting/CommandPrompting.cs:145
+msgid "no more args"
+msgstr "不再接受参数"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticModels.cs:35
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:553
+msgid "no more input"
+msgstr "不再接受输入"
 
 #: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:837
 msgid "No more slots available, stopping listener"
@@ -1805,6 +1891,10 @@ msgstr "已注册命令来源：{0}。"
 #: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:81
 msgid "reloaded config snapshot"
 msgstr "重载后的配置快照"
+
+#: ../../src/UnifierTSL/Surface/Prompting/Semantics/PromptSemanticCompletion.cs:598
+msgid "resolved"
+msgstr "已解析"
 
 #: ../../src/UnifierTSL/Module/Dependencies/NugetDependency.cs:52
 #, csharp-format

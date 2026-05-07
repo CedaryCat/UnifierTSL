@@ -1066,7 +1066,7 @@ internal static class PromptSemanticAnalyzer
                     []);
             }
 
-            return RouteTokenMatch.Incompatible(["invalid: expected boolean"]);
+            return RouteTokenMatch.Incompatible([PromptParamExplainResult.Invalid(GetString("expected boolean")).ToDiagnosticText()]);
         }
 
         if (IsTimeOnlyRoute(slot)) {
@@ -1078,7 +1078,7 @@ internal static class PromptSemanticAnalyzer
                 return new RouteTokenMatch(true, ResolveDefaultRouteSpecificity(slot) + rawText.Length, []);
             }
 
-            return RouteTokenMatch.Incompatible(["invalid: expected hh:mm"]);
+            return RouteTokenMatch.Incompatible([PromptParamExplainResult.Invalid(GetString("expected hh:mm")).ToDiagnosticText()]);
         }
 
         if (IsIntegerRoute(slot)) {
@@ -1090,7 +1090,7 @@ internal static class PromptSemanticAnalyzer
                 return new RouteTokenMatch(true, ResolveDefaultRouteSpecificity(slot) + rawText.Length, []);
             }
 
-            return RouteTokenMatch.Incompatible(["invalid: expected integer"]);
+            return RouteTokenMatch.Incompatible([PromptParamExplainResult.Invalid(GetString("expected integer")).ToDiagnosticText()]);
         }
 
         if (TryExplainRouteValue(context, state, scenario, alternative, slot, rawText, out var explainResult)) {
@@ -1110,7 +1110,7 @@ internal static class PromptSemanticAnalyzer
                 }
 
                 return explainResult.State == PromptParamExplainState.Invalid
-                    ? RouteTokenMatch.Incompatible(["invalid"])
+                    ? RouteTokenMatch.Incompatible([PromptParamExplainResult.Invalid().ToDiagnosticText()])
                     : RouteTokenMatch.Incompatible([]);
             }
 
@@ -1124,7 +1124,7 @@ internal static class PromptSemanticAnalyzer
                         true,
                         ResolveDefaultRouteSpecificity(slot) + 120 + rawText.Length,
                         []),
-                    PromptParamExplainState.Invalid => RouteTokenMatch.Incompatible(["invalid"]),
+                    PromptParamExplainState.Invalid => RouteTokenMatch.Incompatible([PromptParamExplainResult.Invalid().ToDiagnosticText()]),
                     _ => new RouteTokenMatch(true, ResolveDefaultRouteSpecificity(slot) + rawText.Length, []),
                 };
             }
@@ -1143,7 +1143,7 @@ internal static class PromptSemanticAnalyzer
                 return new RouteTokenMatch(true, ResolveDefaultRouteSpecificity(slot) + rawText.Length, []);
             }
 
-            return RouteTokenMatch.Incompatible(["invalid: expected integer"]);
+            return RouteTokenMatch.Incompatible([PromptParamExplainResult.Invalid(GetString("expected integer")).ToDiagnosticText()]);
         }
 
         return new RouteTokenMatch(true, ResolveDefaultRouteSpecificity(slot) + rawText.Length, []);
@@ -1426,18 +1426,18 @@ internal static class PromptSemanticAnalyzer
 
         var completionKindId = slot.CompletionKindId?.Trim();
         if (string.Equals(completionKindId, PromptSuggestionKindIds.Boolean, StringComparison.Ordinal)) {
-            return "bool";
+            return GetString("bool");
         }
 
         if (string.Equals(completionKindId, PromptSuggestionKindIds.Enum, StringComparison.Ordinal)) {
-            return "enum";
+            return GetString("enum");
         }
 
         return IsTimeOnlyRoute(slot)
             ? "hh:mm"
             : IsIntegerRoute(slot)
-                ? "int"
-                : "arg";
+                ? GetString("int")
+                : GetString("arg");
     }
 
     private static string? FormatParameterName(string? name) {

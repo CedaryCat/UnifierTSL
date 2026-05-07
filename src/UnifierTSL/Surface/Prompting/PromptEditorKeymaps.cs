@@ -1,7 +1,5 @@
 using System.Collections.Immutable;
-using System.Diagnostics;
 using UnifierTSL.Contracts.Terminal;
-using static UnifierTSL.I18n;
 
 namespace UnifierTSL.Surface.Prompting
 {
@@ -56,6 +54,15 @@ namespace UnifierTSL.Surface.Prompting
 
         public static string CreateCommandAssistHintLine(bool includeInterpretationSwitchHint) {
             return CreateCommandAssistHintLine(CreateSingleLine(), includeInterpretationSwitchHint);
+        }
+
+        public static bool IsCommandAssistHintLine(string? line) {
+            return !string.IsNullOrWhiteSpace(line)
+                && (
+                    string.Equals(line, CreateCommandAssistHintLine(CreateSingleLine(), includeInterpretationSwitchHint: true), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(line, CreateCommandAssistHintLine(CreateSingleLine(), includeInterpretationSwitchHint: false), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(line, CreateCommandAssistHintLine(CreateMultiLine(), includeInterpretationSwitchHint: true), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(line, CreateCommandAssistHintLine(CreateMultiLine(), includeInterpretationSwitchHint: false), StringComparison.OrdinalIgnoreCase));
         }
 
         private static string CreateCommandAssistHintLine(EditorKeymap keymap, bool includeInterpretationSwitchHint) {
