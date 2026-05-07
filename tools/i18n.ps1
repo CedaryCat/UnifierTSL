@@ -238,13 +238,13 @@ function Merge-PoWithFallback {
     $mergedPath = Join-Path $tempDir "$tempName.merged.po"
 
     try {
-        Invoke-NativeCommand -FileName msgattrib -ArgumentList @("--translated", "--no-obsolete", "-o", $translatedPath, $PrimaryPoPath)
+        Invoke-NativeCommand -FileName msgattrib -ArgumentList @("--no-wrap", "--translated", "--no-obsolete", "-o", $translatedPath, $PrimaryPoPath)
         if (!(Test-Path -Path $translatedPath -PathType Leaf)) {
             Copy-Item -Path $FallbackPoPath -Destination $PrimaryPoPath -Force
             return
         }
 
-        Invoke-NativeCommand -FileName msgcat -ArgumentList @("--use-first", "-o", $mergedPath, $translatedPath, $FallbackPoPath)
+        Invoke-NativeCommand -FileName msgcat -ArgumentList @("--no-wrap", "--use-first", "-o", $mergedPath, $translatedPath, $FallbackPoPath)
         Copy-Item -Path $mergedPath -Destination $PrimaryPoPath -Force
     }
     finally {
@@ -302,7 +302,7 @@ function Update-PoFiles {
             Merge-PoWithFallback $poPath $fallbackPoPath
         }
 
-        $mergeArgs = @("--previous", "--no-fuzzy-matching", "--backup=off", "--update")
+        $mergeArgs = @("--no-wrap", "--previous", "--no-fuzzy-matching", "--backup=off", "--update")
         if ($compendium) {
             $mergeArgs += "--compendium=$compendium"
         }
