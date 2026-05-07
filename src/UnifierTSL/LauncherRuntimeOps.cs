@@ -13,8 +13,6 @@ namespace UnifierTSL
             LauncherCliOverrides overrides,
             out bool configChanged) {
 
-            ArgumentNullException.ThrowIfNull(config);
-            ArgumentNullException.ThrowIfNull(overrides);
 
             RootLauncherConfiguration effective = LauncherSettingRegistry.CloneConfig(config);
             LauncherSettingRegistry.ApplyOverrides(effective, overrides);
@@ -32,8 +30,6 @@ namespace UnifierTSL
             Action<int> applyListenPort,
             Action<string> applyServerPassword) {
 
-            ArgumentNullException.ThrowIfNull(applyListenPort);
-            ArgumentNullException.ThrowIfNull(applyServerPassword);
 
             return LauncherSettingRegistry.ApplyReload(
                 current,

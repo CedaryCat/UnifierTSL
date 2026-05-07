@@ -27,9 +27,12 @@ using System.Text;
 using HttpServer;
 using Rests;
 using Terraria;
+using TShockAPI.Commanding;
 using TShockAPI.DB;
 using Newtonsoft.Json;
 using UnifierTSL;
+using UnifierTSL.Commanding;
+using UnifierTSL.Commanding.Composition;
 using UnifierTSL.Servers;
 using System.Diagnostics.CodeAnalysis;
 
@@ -309,13 +312,30 @@ namespace TShockAPI
 		[Token]
 		private object ServerCommandV3(RestRequestArgs args)
 		{
-			if (string.IsNullOrWhiteSpace(args.Parameters["cmd"]))
+			string? commandText = args.Parameters["cmd"];
+			if (string.IsNullOrWhiteSpace(commandText))
 				return RestMissingParam("cmd");
 
 			Group restPlayerGroup = TShock.Groups.GetGroupByName(args.TokenData.UserGroupName);
 
 			var tr = new TSRestPlayer(args.TokenData.Username, restPlayerGroup);
-			Commands.HandleCommand(new CommandExecutor(null, byte.MaxValue, tr), args.Parameters["cmd"]);
+			CommandExecutor executor = CommandExecutor.ForRest(tr);
+			var normalizedInput = TSCommandBridge.EnsureCommandPrefix(commandText);
+			var request = TSCommandBridge.CreateDispatchRequest(
+				executor,
+				TShockCommandEndpoints.Rest,
+				normalizedInput,
+				TSCommandBridge.IsSilentInvocation(normalizedInput));
+			var result = CommandDispatchCoordinator.DispatchAsync(request)
+				.GetAwaiter()
+				.GetResult();
+			if (result.Matched) {
+				TSCommandBridge.AuditDispatch(executor, request, result);
+				CommandSystem.GetOutcomeWriter<CommandExecutor>().Write(executor, result.Outcome ?? CommandOutcome.Empty);
+			}
+			else {
+				CommandSystem.GetOutcomeWriter<CommandExecutor>().Write(executor, CommandOutcome.Error(GetString("Invalid command entered. Type {0}help for a list of valid commands.", Commands.Specifier)));
+			}
 			return new RestObject()
 			{
 				{"response", tr.GetCommandOutput()}

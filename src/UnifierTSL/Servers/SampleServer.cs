@@ -1,5 +1,5 @@
 using Terraria.IO;
-using UnifiedServerProcess;
+using UnifierTSL.Surface.Hosting.Server;
 
 namespace UnifierTSL.Servers
 {
@@ -21,6 +21,6 @@ namespace UnifierTSL.Servers
             Main.player[Terraria.Main.myPlayer] = new();
         }
         protected sealed override void InitializeExtension() { }
-        protected sealed override ConsoleSystemContext CreateConsoleService() => new(this);
+        protected sealed override ServerSurfaceConsole CreateSurfaceConsole() => new HeadlessServerSurfaceConsole(this);
     }
 }

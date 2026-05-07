@@ -102,6 +102,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
       - name: Check docs metadata sync
         shell: pwsh
         run: ./tools/sync-doc-metadata.ps1 -Mode check
@@ -128,6 +131,28 @@ jobs:
           echo "Minor: ${{ steps.gitversion.outputs.minor }}"
           echo "Patch: ${{ steps.gitversion.outputs.patch }}"
           echo "InformationalVersion: ${{ steps.gitversion.outputs.informationalVersion }}"
+
+      - name: Resolve TShock upstream commit
+        id: tshock-ref
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content src/Plugins/TShockAPI/TShockAPI.csproj
+          $commit = @($project.Project.PropertyGroup | ForEach-Object { $_.MainlineSyncCommit } | Where-Object { $_ })[0]
+          if (!$commit) {
+            throw "MainlineSyncCommit was not found in src/Plugins/TShockAPI/TShockAPI.csproj."
+          }
+          "commit=$commit" >> $env:GITHUB_OUTPUT
+
+      - name: Checkout TShock upstream baseline
+        uses: actions/checkout@v4
+        with:
+          repository: Pryaxis/TShock
+          ref: ${{ steps.tshock-ref.outputs.commit }}
+          path: .local/tshock-upstream
+
+      - name: Prepare i18n catalogs for build
+        shell: pwsh
+        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -NoMo
 
       - name: Build Publisher
         run: dotnet build --no-restore ${{ env.PUBLISHER_PATH }} -c Release

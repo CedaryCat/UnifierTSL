@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Plugins/">
+    <Project Path="Plugins/Atelier/Atelier.csproj" />
     <Project Path="Plugins/CommandTeleport/CommandTeleport.csproj" />
     <Project Path="Plugins/ExamplePlugin.Features/ExamplePlugin.Features.csproj" />
     <Project Path="Plugins/ExamplePlugin/ExamplePlugin.csproj" />

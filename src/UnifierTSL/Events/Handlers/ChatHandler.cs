@@ -10,8 +10,9 @@ using Terraria.Localization;
 using Terraria.UI.Chat;
 using TrProtocol.NetPackets.Modules;
 using UnifiedServerProcess;
-using UnifierTSL.CLI;
-using UnifierTSL.ConsoleClient.Shell;
+using UnifierTSL.Surface.Hosting;
+using UnifierTSL.Surface.Prompting;
+using UnifierTSL.Terminal;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Extensions;
 using UnifierTSL.Localization.Terraria;
@@ -34,7 +35,7 @@ namespace UnifierTSL.Events.Handlers
             if (SourceServer is null) {
                 string safe = AnsiSanitizer.SanitizeEscapes(message) + Environment.NewLine;
                 string ansi = AnsiColorCodec.Wrap(safe, color.ToConsoleColor(), ConsoleColor.Black);
-                ConsoleInput.WriteAnsi(ansi);
+                Console.WriteAnsi(ansi);
             }
             else if (UserId == byte.MaxValue) {
                 SourceServer.Console.ForegroundColor = color.ToConsoleColor();
@@ -62,8 +63,8 @@ namespace UnifierTSL.Events.Handlers
             }
 
             while (true) {
-                string input = ConsoleInput.ReadLine(
-                    ConsolePromptRegistry.CreateDefaultCommandPromptSpec(server: null),
+                string input = Console.ReadLine(
+                    PromptRegistry.CreateDefaultCommandPromptSpec(server: null),
                     trim: true);
                 if (string.IsNullOrWhiteSpace(input)) {
                     continue;

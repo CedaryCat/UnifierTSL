@@ -31,20 +31,17 @@ namespace UnifierTSL.Performance
             }
 
             public static PerformanceSnapshot GetSnapshot(ServerContext server, TimeSpan window) {
-                ArgumentNullException.ThrowIfNull(server);
                 return GetSnapshotCore(server, server.DetailedFPS, window);
             }
 
             public static PerformanceSnapshot GetSnapshot(DetailedFPSSystemContext detailedFps, TimeSpan window) {
-                ArgumentNullException.ThrowIfNull(detailedFps);
                 return GetSnapshotCore(detailedFps.root.ToServer(), detailedFps, window);
             }
 
             private static PerformanceSnapshot GetSnapshotCore(ServerContext server, DetailedFPSSystemContext detailedFps, TimeSpan window) {
-                ArgumentNullException.ThrowIfNull(server);
 
                 if (window <= TimeSpan.Zero) {
-                    throw new ArgumentOutOfRangeException(nameof(window), window, "Window must be greater than zero.");
+                    throw new ArgumentOutOfRangeException(nameof(window), window, GetString("Window must be greater than zero."));
                 }
 
                 long requestedWindowTicks = ToStopwatchTicks(window);

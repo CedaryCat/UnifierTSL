@@ -25,7 +25,7 @@ namespace UnifierTSL.PluginHost.ConfigFormats
                      .Where(d => d.Kind == DiagnosticMessageKind.Error)
                      .Select(d => d.ToString());
 
-                throw new Exception($"TOML parsing errors: \r\n{string.Join("\r\n\r\n", errors)}");
+                throw new Exception(GetString($"TOML parsing errors: \r\n{string.Join("\r\n\r\n", errors)}"));
             }
             return doc.ToModel<TConfig>();
         }

@@ -36,7 +36,7 @@ namespace UnifierTSL.Module.Dependencies
             }
 
             if (embeddedPath is null || fileNameWithExt is null || rid is null) {
-                throw new Exception($"Unable to find native library '{libraryName}' for RID '{currentRid}' in embedded resources.");
+                throw new Exception(GetString($"Unable to find native library '{libraryName}' for RID '{currentRid}' in embedded resources."));
             }
 
             LibraryExtractor = new EmbeddedLibraryResolver(plugin, libraryVersion, rid, fileNameWithExt, libraryName, embeddedPath);

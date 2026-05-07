@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using UnifierTSL.CLI;
-using UnifierTSL.ConsoleClient.Shell;
+using UnifierTSL.Surface.Hosting;
+using UnifierTSL.Terminal;
 using UnifierTSL.Logging.Formatters.ConsoleLog;
 
 namespace UnifierTSL.Logging.LogWriters
@@ -27,7 +27,7 @@ namespace UnifierTSL.Logging.LogWriters
             int count = input.Length;
             if (count == 0) return;
             string ansiText = BuildAnsiLine(input);
-            ConsoleInput.WriteAnsi(ansiText);
+            Console.WriteAnsi(ansiText);
         }
     }
 }

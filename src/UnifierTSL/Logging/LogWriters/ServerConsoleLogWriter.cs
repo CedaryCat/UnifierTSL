@@ -1,5 +1,3 @@
-using UnifierTSL.CLI;
-using UnifierTSL.ConsoleClient.Shell;
 using UnifierTSL.Logging.Formatters.ConsoleLog;
 using UnifierTSL.Servers;
 
@@ -15,12 +13,7 @@ namespace UnifierTSL.Logging.LogWriters
             }
 
             string ansiText = ConsoleLogWriter.BuildAnsiLine(input);
-            if (server.Console is RemoteConsoleService launcher) {
-                launcher.WriteAnsi(ansiText);
-                return;
-            }
-
-            server.Console.Write(AnsiSanitizer.StripAnsi(ansiText));
+            server.Console.WriteAnsi(ansiText);
         }
     }
 }

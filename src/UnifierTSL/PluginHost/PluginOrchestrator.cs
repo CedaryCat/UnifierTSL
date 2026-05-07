@@ -65,7 +65,7 @@ namespace UnifierTSL.PluginHost
 
                     IPluginHost pluginHost;
                     try {
-                        pluginHost = (IPluginHost)(Activator.CreateInstance(type) ?? throw new InvalidOperationException($"Activator.CreateInstance returns null when creating '{type.FullName}' instance"));
+                        pluginHost = (IPluginHost)(Activator.CreateInstance(type) ?? throw new InvalidOperationException(GetString($"Activator.CreateInstance returns null when creating '{type.FullName}' instance")));
                     }
                     catch (Exception ex) {
                         Logger.LogHandledExceptionWithMetadata(

@@ -42,7 +42,7 @@ namespace UnifierTSL
             string extension = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll" :
                 RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? ".so" :
                 RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib" :
-                throw new PlatformNotSupportedException("Unsupported OS platform");
+                throw new PlatformNotSupportedException(GetString("Unsupported OS platform"));
 
             HashSet<string> nativeNames = [];
             if (!string.IsNullOrWhiteSpace(unmanagedDllName)) {

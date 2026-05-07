@@ -2,13 +2,15 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Collections.Immutable;
 using Terraria.Localization;
 using Terraria.Utilities;
-using UnifierTSL.CLI;
-using UnifierTSL.CLI.Prompting;
-using UnifierTSL.CLI.Prompting.Startup;
-using UnifierTSL.ConsoleClient.Shared.ConsolePrompting;
+using UnifierTSL.Surface.Adapter.Cli.Terminal;
+using UnifierTSL.Surface.Hosting;
+using UnifierTSL.Surface.Prompting;
+using UnifierTSL.Surface.Prompting.Startup;
+using UnifierTSL.Commanding;
+using UnifierTSL.Commanding.Composition;
+using UnifierTSL.Surface.Prompting.Model;
 using UnifierTSL.Events.Core;
 using UnifierTSL.Events.Handlers;
 using UnifierTSL.Extensions;
@@ -73,8 +75,7 @@ namespace UnifierTSL
         private static readonly LauncherConfigStore rootConfigStore = new();
         private static readonly LauncherRuntimeOps runtimeOps = new();
         private static readonly LauncherConfigManager rootConfigManager = new(rootConfigStore, ReloadRootConfigFromWatch);
-        private static long consolePromptAppearanceRevision;
-        internal static event Action? ConsoleAppearanceChanged;
+        internal static LauncherConfigManager RootConfigManager => rootConfigManager;
 
         static UnifierApi() {
             logCore = new();
@@ -82,6 +83,7 @@ namespace UnifierTSL
         }
 
         internal static void Initialize(string[] launcherArgs) {
+            LauncherSurfaceConsole.Initialize(new TerminalLauncherSurfaceHost());
             PrepareRuntime(launcherArgs);
             InitializeCore();
             CompleteLauncherInitialization();
@@ -106,6 +108,7 @@ namespace UnifierTSL
             }
 
             runtimeSettings = runtimeOps.ResolveRuntimeSettingsFromConfig(effectiveConfig);
+            LauncherSurfaceConsole.ApplyRuntimeSettings(runtimeSettings, notify: false);
             ConfigureDurableLogging(runtimeSettings.LogMode);
 
             runtimePrepared = true;
@@ -113,15 +116,19 @@ namespace UnifierTSL
 
         internal static void InitializeCore() {
             EventHub = new();
+            CommandingBootstrap.Install();
 
             pluginHosts = new();
             PluginHosts.InitializeAllAsync()
                 .GetAwaiter()
                 .GetResult();
 
-            ConsoleInput.ConfigureHost(
-                EventHub.Launcher.InvokeCreateLauncherConsoleHost()
-                ?? new TerminalLauncherConsoleHost());
+            // Keep the bootstrap host unless a custom replacement is explicitly provided.
+            // Recreating the default host here would orphan any in-flight launcher activity footer.
+            ILauncherSurfaceHost? launcherHost = EventHub.Launcher.InvokeCreateLauncherSurfaceHost();
+            if (launcherHost is not null) {
+                LauncherSurfaceConsole.ConfigureHost(launcherHost);
+            }
 
             ApplyResolvedLauncherSettings();
         }
@@ -129,29 +136,24 @@ namespace UnifierTSL
         internal static void CompleteLauncherInitialization() {
             ReadLauncherArgs();
             SyncRuntimeSettingsFromInteractiveInput();
+
+            RootConfigManager.StartMonitoring();
+
+            Volatile.Write(ref currentPhase, (int)LifecyclePhase.Initialized);
             EventHub.Launcher.InitializedEvent.Invoke(new());
         }
 
-        internal static ConsoleStatusSettings GetConsoleStatus() {
-            return runtimeSettings.ConsoleStatus;
+        private static int currentPhase = (int)LifecyclePhase.Bootstrap;
+        public enum LifecyclePhase
+        {
+            Bootstrap = 0,
+            Initialized = 1,
+            Running = 2,
         }
 
-        internal static bool UseColorfulConsoleStatus() {
-            return runtimeSettings.ColorfulConsoleStatus;
-        }
-
-        internal static ConsolePromptTheme GetConsolePromptTheme() {
-            return ConsolePromptTheme.Default with {
-                UseVividStatusBar = runtimeSettings.ColorfulConsoleStatus,
-            };
-        }
-
-        internal static long GetConsolePromptAppearanceRevision() {
-            return Interlocked.Read(ref consolePromptAppearanceRevision);
-        }
-
-        internal static void StartRootConfigMonitoring() {
-            rootConfigManager.StartMonitoring();
+        public static LifecyclePhase CurrentPhase => (LifecyclePhase)Volatile.Read(ref currentPhase);
+        internal static void MarkRunning() {
+            Volatile.Write(ref currentPhase, (int)LifecyclePhase.Running);
         }
 
         internal static void HandleCommandLinePreRun(string[] launcherArgs) {
@@ -311,6 +313,7 @@ namespace UnifierTSL
                 runtimeSettings,
                 ListenPort,
                 serverPassword);
+            LauncherSurfaceConsole.ApplyRuntimeSettings(runtimeSettings, notify: false);
         }
 
         private static void ReloadRootConfigFromWatch() {
@@ -328,9 +331,7 @@ namespace UnifierTSL
                     serverPassword = password;
                     UnifiedServerCoordinator.ServerPassword = password;
                 });
-            ConsoleInput.RefreshAppearanceSettings();
-            Interlocked.Increment(ref consolePromptAppearanceRevision);
-            ConsoleAppearanceChanged?.Invoke();
+            LauncherSurfaceConsole.ApplyRuntimeSettings(runtimeSettings, notify: true);
         }
 
         private static bool IsPortBindable(int port) {
@@ -391,7 +392,7 @@ namespace UnifierTSL
             return candidates;
         }
 
-        private static IReadOnlyList<ConsoleSuggestion> BuildPortSuggestionItems(string input) {
+        private static IReadOnlyList<PromptSuggestion> BuildPortSuggestionItems(string input) {
             string normalizedInput = (input ?? string.Empty).Trim();
 
             int preferred = 7777;
@@ -401,7 +402,7 @@ namespace UnifierTSL
 
             List<int> candidates = BuildPortCandidates(preferred, maxCount: 10);
             return candidates
-                .Select(port => new ConsoleSuggestion(
+                .Select(port => new PromptSuggestion(
                     Value: port.ToString(),
                     Weight: CalculatePortSuggestionWeight(port, normalizedInput, preferred)))
                 .OrderByDescending(static item => item.Weight)
@@ -440,7 +441,7 @@ namespace UnifierTSL
             return weight;
         }
 
-        private static IReadOnlyList<string> BuildPortReactiveStatus(ConsoleInputState state) {
+        private static IReadOnlyList<string> BuildPortReactiveStatus(PromptInputState state) {
             string input = (state.InputText ?? string.Empty).Trim();
 
             if (string.IsNullOrEmpty(input)) {
@@ -486,14 +487,14 @@ namespace UnifierTSL
             return [.. set];
         }
 
-        private static IReadOnlyList<ConsoleSuggestion> BuildPasswordSuggestionItems(string input, IReadOnlyList<string> seedCandidates) {
+        private static IReadOnlyList<PromptSuggestion> BuildPasswordSuggestionItems(string input, IReadOnlyList<string> seedCandidates) {
             string prefix = input ?? string.Empty;
-            List<ConsoleSuggestion> items = [];
+            List<PromptSuggestion> items = [];
 
             if (string.IsNullOrEmpty(prefix)) {
                 int rank = 0;
                 foreach (string candidate in seedCandidates.Where(static value => !string.IsNullOrWhiteSpace(value))) {
-                    items.Add(new ConsoleSuggestion(
+                    items.Add(new PromptSuggestion(
                         Value: candidate,
                         Weight: 500 - (rank * 10)));
                     rank += 1;
@@ -505,7 +506,7 @@ namespace UnifierTSL
             int targetLength = Math.Clamp(Math.Max(prefix.Length + 4, 8), 8, 16);
             for (int index = 0; index < 6; index++) {
                 string candidate = BuildDeterministicPasswordVariant(prefix, index, targetLength);
-                items.Add(new ConsoleSuggestion(
+                items.Add(new PromptSuggestion(
                     Value: candidate,
                     Weight: 420 - (index * 8)));
             }
@@ -527,7 +528,7 @@ namespace UnifierTSL
             return buffer.ToString();
         }
 
-        private static IReadOnlyList<string> BuildPasswordReactiveStatus(ConsoleInputState state) {
+        private static IReadOnlyList<string> BuildPasswordReactiveStatus(PromptInputState state) {
             int length = (state.InputText ?? string.Empty).Length;
             string quality = length switch {
                 <= 0 => "empty",
@@ -547,13 +548,13 @@ namespace UnifierTSL
             string lastPortError = string.Empty;
             while (!LauncherPortRules.IsValidListenPort(ListenPort)) {
                 List<int> portCandidates = BuildPortCandidates();
-                ConsolePromptSpec context = LauncherStartupPromptFactory.CreateListenPortPrompt(
+                PromptSurfaceSpec context = LauncherStartupPromptFactory.CreateListenPortPrompt(
                     lastPortError,
                     portCandidates,
                     state => BuildPortSuggestionItems(state.InputText),
                     BuildPortReactiveStatus);
 
-                string input = ConsoleInput.ReadLine(context, trim: true);
+                string input = Console.ReadLine(context, trim: true);
 
                 if (!int.TryParse(input, out int port)) {
                     lastPortError = GetParticularString("{0} is user input value", $"'{input}' is not an integer port.");
@@ -573,12 +574,12 @@ namespace UnifierTSL
 
             if (serverPassword is null) {
                 List<string> passwordCandidates = BuildPasswordCandidates();
-                ConsolePromptSpec context = LauncherStartupPromptFactory.CreateServerPasswordPrompt(
+                PromptSurfaceSpec context = LauncherStartupPromptFactory.CreateServerPasswordPrompt(
                     passwordCandidates,
                     state => BuildPasswordSuggestionItems(state.InputText, passwordCandidates),
                     BuildPasswordReactiveStatus);
 
-                string input = ConsoleInput.ReadLine(context, trim: true);
+                string input = Console.ReadLine(context, trim: true);
                 serverPassword = input;
             }
         }

@@ -72,7 +72,7 @@ namespace UnifierTSL.Reflection.Metadata
                 sigReader = reader.GetBlobReader(methodDef.Signature);
             }
             else {
-                throw new NotSupportedException($"Unsupported handle kind: {ctorHandle.Kind}");
+                throw new NotSupportedException(GetString($"Unsupported handle kind: {ctorHandle.Kind}"));
             }
 
             SignatureDecoder<Type, object?> decoder = new(new SimpleTypeProvider(), reader, genericContext: null);
@@ -97,7 +97,7 @@ namespace UnifierTSL.Reflection.Metadata
                 return reader.ReadInt32();
 
             // Fallback
-            throw new NotSupportedException($"Unsupported fixed argument type: {type}");
+            throw new NotSupportedException(GetString($"Unsupported fixed argument type: {type}"));
         }
 
         private static Type GetTypeFromElementType(byte typeCode) {
@@ -115,7 +115,7 @@ namespace UnifierTSL.Reflection.Metadata
                 0x0c => typeof(float),
                 0x0d => typeof(double),
                 0x0e => typeof(string),
-                _ => throw new NotSupportedException($"Unsupported ElementType code: 0x{typeCode:X2}")
+                _ => throw new NotSupportedException(GetString($"Unsupported ElementType code: 0x{typeCode:X2}"))
             };
         }
     }
