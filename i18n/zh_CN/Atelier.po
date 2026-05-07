@@ -309,8 +309,8 @@ msgstr "已在 {0} 上打开 Atelier REPL，目标为 {1}。"
 msgid "Opens the Atelier REPL window."
 msgstr "打开 Atelier REPL 窗口。"
 
-#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:287
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:509
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:287
 msgid "Paste mode disabled. Enter uses smart submit; Shift+Enter inserts new lines."
 msgstr "粘贴模式已关闭。Enter 使用智能提交；Shift+Enter 插入新行。"
 
@@ -396,8 +396,8 @@ msgstr "未知命令。输入 ':' 可查看命令建议，或运行 :help 查看
 msgid "Unsupported atelier invocation host '{0}'."
 msgstr "不支持的 Atelier 调用宿主“{0}”。"
 
-#: ../../src/Plugins/Atelier/Session/Context/HostContextFactory.cs:27
 #: ../../src/Plugins/Atelier/Session/Roslyn/ScriptOptionsFactory.cs:84
+#: ../../src/Plugins/Atelier/Session/Context/HostContextFactory.cs:27
 #, csharp-format
 msgid "Unsupported atelier target profile '{0}'."
 msgstr "不支持的 Atelier 目标配置“{0}”。"

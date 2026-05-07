@@ -234,16 +234,16 @@ msgstr "\"{0}\" 不是一个有效的NPC。"
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandingAttributes.cs:42
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandOutcome.cs:208
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:14
-#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:132
+#: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
-#: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:209
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:378
-#: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
+#: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
+#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:456
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
 #, csharp-format
 msgid "\"{0}\" is not a valid page number."
 msgstr "“{0}”不是一个有效的页码。"
@@ -3166,19 +3166,19 @@ msgstr "示例用法: {0}"
 msgid "Example usage: {0} \"{1}\" \"{2}\""
 msgstr "示例用法: {0} \"{1}\"{2}\""
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163
-#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:119
+#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:795
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:809
+#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163
 #, csharp-format
 msgid "Example usage: {0} {1}"
 msgstr "示例用法: {0} {1}"
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:145
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:170
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:414
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:415
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:170
 #, csharp-format
 msgid "Example usage: {0} {1} {2}"
 msgstr "示例用法: {0} {1} {2}"
@@ -4118,8 +4118,8 @@ msgstr "无效的boss数量。"
 msgid "Invalid boss type!"
 msgstr "无效的boss类型。"
 
-#: ../../src/Plugins/TShockAPI/Commands.cs:206
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
+#: ../../src/Plugins/TShockAPI/Commands.cs:206
 #: ../../src/Plugins/TShockAPI/Commanding/TShockTerminalCommandDispatchAdapter.cs:71
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:148
@@ -4166,6 +4166,8 @@ msgstr "无效的入侵事件类型。有效的类型: {0}。"
 msgid "Invalid invasion type. Valid invasion types: goblins, snowmen, pirates, pumpkinmoon, frostmoon, martians."
 msgstr "无效的入侵类型。有效类型：goblins、snowmen、pirates、pumpkinmoon、frostmoon、martians。"
 
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1213
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1222
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:12
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:13
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:14
@@ -4173,8 +4175,6 @@ msgstr "无效的入侵类型。有效类型：goblins、snowmen、pirates、pum
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:97
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:101
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:105
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1213
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1222
 msgid "Invalid item type!"
 msgstr "物品不存在！"
 
@@ -5120,9 +5120,9 @@ msgstr "未授权：该授权令牌所对应的用户组已不存在，请创建
 msgid "Not authorized. The specified API endpoint requires a token, but the provided token was not valid."
 msgstr "未授权：指定的API端点需要授权令牌，但使用的令牌无效。"
 
+#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:95
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:101
-#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 msgid "Not authorized. The specified API endpoint requires a token."
 msgstr "未授权。指定的 API 终结点需要一个令牌。"
 
@@ -6928,8 +6928,8 @@ msgstr "TShock / OnChat 正在截断来自 {2} 的超长聊天消息，长度 {0
 msgid "TShock Ban Help"
 msgstr "TShock Ban帮助"
 
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandGuardAttributes.cs:223
 #: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:113
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandGuardAttributes.cs:223
 msgid "TShock command permission tokens cannot be empty."
 msgstr "TShock 命令权限标记不能为空。"
 
@@ -7208,9 +7208,9 @@ msgstr "无法添加用户{0}，请查看控制台获取更多信息。"
 msgid "User {0} could not be added. Check console for details."
 msgstr "无法添加用户{0}。请查看控制台获取更多信息。"
 
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:336
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:468
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:610
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:336
 #, csharp-format
 msgid "User {0} does not exist."
 msgstr "用户 {0} 不存在。"
@@ -7619,8 +7619,8 @@ msgstr "你没有权限攻击城镇NPC。"
 msgid "You do not have permission to modify a Hat Rack in a protected area!"
 msgstr "你没有权限修改受保护区域内的帽架！"
 
-#: ../../src/Plugins/TShockAPI/Handlers/DisplayDollItemSyncHandler.cs:25
 #: ../../src/Plugins/TShockAPI/Handlers/RequestTileEntityInteractionHandler.cs:25
+#: ../../src/Plugins/TShockAPI/Handlers/DisplayDollItemSyncHandler.cs:25
 msgid "You do not have permission to modify a Mannequin in a protected area!"
 msgstr "你没有权限修改受保护区域内的人体模型！"
 
@@ -7934,8 +7934,8 @@ msgid "You must spawn the Wall of Flesh in hell."
 msgstr "只有在地狱中才能生成血肉墙。"
 
 #: ../../src/Plugins/TShockAPI/Commands.cs:224
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandValuePolicies.cs:70
 #: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:193
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandValuePolicies.cs:70
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1130
 msgid "You must use this command in specific server."
 msgstr "你必须在具体服务器中使用此命令。"
