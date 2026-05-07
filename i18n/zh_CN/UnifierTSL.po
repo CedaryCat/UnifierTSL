@@ -1313,8 +1313,8 @@ msgid "{0} was already initialized."
 msgstr "{0} 已初始化。"
 
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:153
-#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:156
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #, csharp-format
 msgid "{0} was not initialized."
 msgstr "{0} 尚未初始化。"
@@ -1411,9 +1411,9 @@ msgid "Command endpoint id must not be empty."
 msgstr "命令端点 ID 不能为空。"
 
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:187
-#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:310
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:451
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 msgid "Command failed, check logs for more details."
 msgstr "命令失败，请查看日志获取更多详情。"
 
@@ -1686,11 +1686,11 @@ msgstr "输入的命令无效。"
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:274
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:325
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:336
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:326
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:510
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:529
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:537
 #: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
-#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:326
 msgid "Invalid command syntax."
 msgstr "命令语法无效。"
 
@@ -1953,8 +1953,8 @@ msgstr "语义键成员“{0}.{1}”返回了 null。"
 msgid "Semantic key member '{0}.{1}' was not found. Expected a public static {2} field or property."
 msgstr "未找到语义键成员“{0}.{1}”。应为 public static {2} 字段或属性。"
 
-#: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:405
 #: ../../src/UnifierTSL/Commanding/SemanticKey.cs:102
+#: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:405
 msgid "Semantic key member name must not be empty."
 msgstr "语义键成员名不能为空。"
 

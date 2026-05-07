@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: UnifierTSL\n"
-"POT-Creation-Date: 2026-05-07 23:46:08+0800\n"
-"PO-Revision-Date: 2026-05-07 23:46:08+0800\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1517,8 +1517,8 @@ msgid "{0} was already initialized."
 msgstr ""
 
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:153
-#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:156
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #, csharp-format
 msgid "{0} was not initialized."
 msgstr ""
@@ -1615,9 +1615,9 @@ msgid "Command endpoint id must not be empty."
 msgstr ""
 
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:187
-#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:310
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:451
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 msgid "Command failed, check logs for more details."
 msgstr ""
 
@@ -1906,11 +1906,11 @@ msgstr ""
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:274
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:325
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:336
+#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:326
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:510
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:529
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:537
 #: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
-#: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:326
 msgid "Invalid command syntax."
 msgstr ""
 
@@ -2183,8 +2183,8 @@ msgid ""
 "field or property."
 msgstr ""
 
-#: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:405
 #: ../../src/UnifierTSL/Commanding/SemanticKey.cs:102
+#: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:405
 msgid "Semantic key member name must not be empty."
 msgstr ""
 

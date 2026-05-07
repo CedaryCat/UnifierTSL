@@ -234,16 +234,16 @@ msgstr "\"{0}\" non è un NPC valido."
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandingAttributes.cs:42
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandOutcome.cs:208
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:14
-#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:132
+#: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
-#: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:209
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:378
-#: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
+#: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
+#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:456
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
 #, csharp-format
 msgid "\"{0}\" is not a valid page number."
 msgstr "\"{0}\" non è un numero di pagina valido."
@@ -3171,19 +3171,19 @@ msgstr ""
 msgid "Example usage: {0} \"{1}\" \"{2}\""
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163
-#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:119
+#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:795
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:809
+#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163
 #, csharp-format
 msgid "Example usage: {0} {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:145
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:170
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:414
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:415
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:170
 #, csharp-format
 msgid "Example usage: {0} {1} {2}"
 msgstr ""
@@ -4125,8 +4125,8 @@ msgstr ""
 msgid "Invalid boss type!"
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/Commands.cs:206
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
+#: ../../src/Plugins/TShockAPI/Commands.cs:206
 #: ../../src/Plugins/TShockAPI/Commanding/TShockTerminalCommandDispatchAdapter.cs:71
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:148
@@ -4173,6 +4173,8 @@ msgstr ""
 msgid "Invalid invasion type. Valid invasion types: goblins, snowmen, pirates, pumpkinmoon, frostmoon, martians."
 msgstr ""
 
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1213
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1222
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:12
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:13
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:14
@@ -4180,8 +4182,6 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:97
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:101
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:105
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1213
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1222
 msgid "Invalid item type!"
 msgstr ""
 
@@ -5123,9 +5123,9 @@ msgstr ""
 msgid "Not authorized. The specified API endpoint requires a token, but the provided token was not valid."
 msgstr ""
 
+#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:95
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:101
-#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 msgid "Not authorized. The specified API endpoint requires a token."
 msgstr ""
 
@@ -6933,8 +6933,8 @@ msgstr ""
 msgid "TShock Ban Help"
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandGuardAttributes.cs:223
 #: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:113
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandGuardAttributes.cs:223
 msgid "TShock command permission tokens cannot be empty."
 msgstr ""
 
@@ -7213,9 +7213,9 @@ msgstr ""
 msgid "User {0} could not be added. Check console for details."
 msgstr ""
 
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:336
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:468
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:610
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:336
 #, csharp-format
 msgid "User {0} does not exist."
 msgstr ""
@@ -7625,8 +7625,8 @@ msgstr ""
 msgid "You do not have permission to modify a Hat Rack in a protected area!"
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/Handlers/DisplayDollItemSyncHandler.cs:25
 #: ../../src/Plugins/TShockAPI/Handlers/RequestTileEntityInteractionHandler.cs:25
+#: ../../src/Plugins/TShockAPI/Handlers/DisplayDollItemSyncHandler.cs:25
 msgid "You do not have permission to modify a Mannequin in a protected area!"
 msgstr ""
 
@@ -7940,8 +7940,8 @@ msgid "You must spawn the Wall of Flesh in hell."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commands.cs:224
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandValuePolicies.cs:70
 #: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:193
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandValuePolicies.cs:70
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1130
 msgid "You must use this command in specific server."
 msgstr ""

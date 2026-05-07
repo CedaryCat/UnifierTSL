@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Atelier\n"
-"POT-Creation-Date: 2026-05-07 23:46:13+0800\n"
-"PO-Revision-Date: 2026-05-07 23:46:13+0800\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -335,8 +335,8 @@ msgstr ""
 msgid "Opens the Atelier REPL window."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:287
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:509
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:287
 msgid ""
 "Paste mode disabled. Enter uses smart submit; Shift+Enter inserts new lines."
 msgstr ""
@@ -429,8 +429,8 @@ msgstr ""
 msgid "Unsupported atelier invocation host '{0}'."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Session/Context/HostContextFactory.cs:27
 #: ../../src/Plugins/Atelier/Session/Roslyn/ScriptOptionsFactory.cs:84
+#: ../../src/Plugins/Atelier/Session/Context/HostContextFactory.cs:27
 #, csharp-format
 msgid "Unsupported atelier target profile '{0}'."
 msgstr ""
