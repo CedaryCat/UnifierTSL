@@ -272,17 +272,17 @@ msgstr "\"{0}\" itu bukan NPC yang valid."
 #: ../../src/Plugins/TShockAPI/Commands.cs:317
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandingAttributes.cs:42
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandOutcome.cs:208
+#: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:14
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:132
-#: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
+#: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:209
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:378
-#: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
-#: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:456
 #: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
+#: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:456
 #, csharp-format
 msgid "\"{0}\" is not a valid page number."
 msgstr "\"{0}\" itu bukan nomor halaman yang valid."
@@ -3449,8 +3449,8 @@ msgstr "Contoh penggunaan: {0}"
 msgid "Example usage: {0} \"{1}\" \"{2}\""
 msgstr "Contoh penggunaan: {0} \"{1}\" \"{2}\""
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:119
+#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:795
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:809
 #: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163

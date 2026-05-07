@@ -17,7 +17,9 @@ msgctxt "{0} is class name (SampleServer)"
 msgid ""
 "Under the UnifierTSL API, only instances of ServerContext (or its "
 "derivatives) can be created. To create a sample context, use '{0}' instead."
-msgstr "在 UnifierTSL API 下，只能创建 ServerContext（或其派生类）的实例。要创建示例上下文，请改用“{0}”。"
+msgstr ""
+"在 UnifierTSL API 下，只能创建 ServerContext（或其派生类）的实例。要创建示例"
+"上下文，请改用“{0}”。"
 
 #: ../../src/UnifierTSL/Launcher/LauncherSettingRegistry.cs:103
 #, csharp-format
@@ -37,7 +39,9 @@ msgctxt "{0} is command action name, {1} is command controller type"
 msgid ""
 "Command method '{0}.{1}' is an instance method. V2 command methods must be "
 "static, and command controllers must not carry instance state."
-msgstr "命令方法“{0}.{1}”是实例方法。V2 命令方法必须为静态方法，命令控制器也不能携带实例状态。"
+msgstr ""
+"命令方法“{0}.{1}”是实例方法。V2 命令方法必须为静态方法，命令控制器也不能携带"
+"实例状态。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:584
 #, csharp-format
@@ -46,7 +50,9 @@ msgid ""
 "Command action '{0}.{1}' maps flags enum member '{2}.{3}' to an invalid "
 "command token. Flag tokens must start with '-' and must not contain "
 "whitespace."
-msgstr "命令动作“{0}.{1}”将标志枚举成员“{2}.{3}”映射到了无效的命令标记。标志标记必须以“-”开头，且不能包含空白字符。"
+msgstr ""
+"命令动作“{0}.{1}”将标志枚举成员“{2}.{3}”映射到了无效的命令标记。标志标记必须"
+"以“-”开头，且不能包含空白字符。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:578
 #, csharp-format
@@ -63,7 +69,9 @@ msgid ""
 "Command action '{0}.{1}' maps zero-valued flags enum member '{2}.{3}'. Zero-"
 "valued members must remain sentinel/default values and cannot be exposed as "
 "command flags."
-msgstr "命令动作“{0}.{1}”映射了零值标志枚举成员“{2}.{3}”。零值成员只能作为哨兵值或默认值保留，不能作为命令标志公开。"
+msgstr ""
+"命令动作“{0}.{1}”映射了零值标志枚举成员“{2}.{3}”。零值成员只能作为哨兵值或默"
+"认值保留，不能作为命令标志公开。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:605
 #, csharp-format
@@ -81,7 +89,9 @@ msgctxt ""
 msgid ""
 "Command action '{0}.{1}' declares structured parameter '{2}' with binding "
 "attribute '{3}', but no binding rule is registered for CLR type '{4}'."
-msgstr "命令动作“{0}.{1}”为结构化参数“{2}”声明了绑定特性“{3}”，但没有为 CLR 类型“{4}”注册绑定规则。"
+msgstr ""
+"命令动作“{0}.{1}”为结构化参数“{2}”声明了绑定特性“{3}”，但没有为 CLR 类"
+"型“{4}”注册绑定规则。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1104
 #, csharp-format
@@ -90,7 +100,9 @@ msgctxt ""
 msgid ""
 "Command action '{0}.{1}' declares CommandTokenEnumAttribute on '{2}', but "
 "enum '{3}' does not expose any [CommandToken] members."
-msgstr "命令动作“{0}.{1}”在“{2}”上声明了 CommandTokenEnumAttribute，但枚举“{3}”没有公开任何 [CommandToken] 成员。"
+msgstr ""
+"命令动作“{0}.{1}”在“{2}”上声明了 CommandTokenEnumAttribute，但枚举“{3}”没有公"
+"开任何 [CommandToken] 成员。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:433
 #, csharp-format
@@ -107,7 +119,9 @@ msgid ""
 "Command action '{0}.{1}' declares unsupported parameter '{2}' of type '{3}'. "
 "Use a supported scalar token type, register a binding attribute, or mark the "
 "parameter with FromAmbientContextAttribute."
-msgstr "命令动作“{0}.{1}”声明了类型为“{3}”的不支持参数“{2}”。请使用受支持的标量标记类型、注册绑定特性，或用 FromAmbientContextAttribute 标记该参数。"
+msgstr ""
+"命令动作“{0}.{1}”声明了类型为“{3}”的不支持参数“{2}”。请使用受支持的标量标记类"
+"型、注册绑定特性，或用 FromAmbientContextAttribute 标记该参数。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:411
 #, csharp-format
@@ -123,7 +137,9 @@ msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' cannot mark '{2}' with both "
 "FromAmbientContextAttribute and RemainingTextAttribute."
-msgstr "命令动作“{0}.{1}”不能同时用 FromAmbientContextAttribute 和 RemainingTextAttribute 标记“{2}”。"
+msgstr ""
+"命令动作“{0}.{1}”不能同时用 FromAmbientContextAttribute 和 "
+"RemainingTextAttribute 标记“{2}”。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1098
 #, csharp-format
@@ -140,7 +156,9 @@ msgid ""
 "Command action '{0}.{1}' declares binding modifiers on '{2}', but only "
 "parameters backed by a registered binding attribute may use "
 "CommandParamModifiers."
-msgstr "命令动作“{0}.{1}”在“{2}”上声明了绑定修饰符，但只有由已注册绑定特性支持的参数才能使用 CommandParamModifiers。"
+msgstr ""
+"命令动作“{0}.{1}”在“{2}”上声明了绑定修饰符，但只有由已注册绑定特性支持的参数"
+"才能使用 CommandParamModifiers。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:371
 #, csharp-format
@@ -150,7 +168,8 @@ msgid ""
 "attribute '{2}' on parameter '{3}'. Structured parameters must use the "
 "binding attribute Name property instead of CommandParamAttribute."
 msgstr ""
-"命令动作“{0}.{1}”在参数“{3}”上同时声明了 CommandParamAttribute 和绑定特性“{2}”。结构化参数应使用绑定特性的 Name 属性，而不是 CommandParamAttribute。"
+"命令动作“{0}.{1}”在参数“{3}”上同时声明了 CommandParamAttribute 和绑定特"
+"性“{2}”。结构化参数应使用绑定特性的 Name 属性，而不是 CommandParamAttribute。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1086
 #, csharp-format
@@ -158,7 +177,9 @@ msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' declares both CommandTokenEnumAttribute and binding "
 "attribute '{2}' on '{3}'."
-msgstr "命令动作“{0}.{1}”在“{3}”上同时声明了 CommandTokenEnumAttribute 和绑定特性“{2}”。"
+msgstr ""
+"命令动作“{0}.{1}”在“{3}”上同时声明了 CommandTokenEnumAttribute 和绑定特"
+"性“{2}”。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1092
 #, csharp-format
@@ -166,7 +187,9 @@ msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' declares both CommandTokenEnumAttribute and "
 "CommandLiteralAttribute on '{2}'."
-msgstr "命令动作“{0}.{1}”在“{2}”上同时声明了 CommandTokenEnumAttribute 和 CommandLiteralAttribute。"
+msgstr ""
+"命令动作“{0}.{1}”在“{2}”上同时声明了 CommandTokenEnumAttribute 和 "
+"CommandLiteralAttribute。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:617
 #, csharp-format
@@ -174,7 +197,9 @@ msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' declares CommandFlagsAttribute on '{2}', but enum "
 "'{3}' does not expose any [CommandFlag] members."
-msgstr "命令动作“{0}.{1}”在“{2}”上声明了 CommandFlagsAttribute，但枚举“{3}”没有公开任何 [CommandFlag] 成员。"
+msgstr ""
+"命令动作“{0}.{1}”在“{2}”上声明了 CommandFlagsAttribute，但枚举“{3}”没有公开任"
+"何 [CommandFlag] 成员。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:552
 #, csharp-format
@@ -182,7 +207,9 @@ msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' declares CommandFlagsAttribute on '{2}', but the "
 "parameter type '{3}' is not a non-nullable [Flags] enum."
-msgstr "命令动作“{0}.{1}”在“{2}”上声明了 CommandFlagsAttribute，但参数类型“{3}”不是非可空的 [Flags] 枚举。"
+msgstr ""
+"命令动作“{0}.{1}”在“{2}”上声明了 CommandFlagsAttribute，但参数类型“{3}”不是非"
+"可空的 [Flags] 枚举。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:377
 #, csharp-format
@@ -191,7 +218,9 @@ msgid ""
 "Command action '{0}.{1}' declares CommandLiteralAttribute on structured "
 "parameter '{2}'. Choose either literal token binding or a structured binding "
 "route."
-msgstr "命令动作“{0}.{1}”在结构化参数“{2}”上声明了 CommandLiteralAttribute。请在字面量标记绑定和结构化绑定路径之间选择其一。"
+msgstr ""
+"命令动作“{0}.{1}”在结构化参数“{2}”上声明了 CommandLiteralAttribute。请在字面"
+"量标记绑定和结构化绑定路径之间选择其一。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:1080
 #, csharp-format
@@ -199,7 +228,9 @@ msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' declares CommandTokenEnumAttribute on '{2}', but "
 "the parameter type '{3}' is not an enum."
-msgstr "命令动作“{0}.{1}”在“{2}”上声明了 CommandTokenEnumAttribute，但参数类型“{3}”不是枚举。"
+msgstr ""
+"命令动作“{0}.{1}”在“{2}”上声明了 CommandTokenEnumAttribute，但参数类型“{3}”不"
+"是枚举。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:540
 #, csharp-format
@@ -210,7 +241,9 @@ msgid ""
 "stand alone and cannot also be positional, literal, bound, prompt-"
 "overridden, or ambient."
 msgstr ""
-"命令动作“{0}.{1}”在参数“{2}”的 CommandFlagsAttribute 旁声明了不支持的元数据。一等标志参数必须独立存在，不能同时作为位置参数、字面量、绑定参数、提示覆盖参数或环境参数。"
+"命令动作“{0}.{1}”在参数“{2}”的 CommandFlagsAttribute 旁声明了不支持的元数据。"
+"一等标志参数必须独立存在，不能同时作为位置参数、字面量、绑定参数、提示覆盖参"
+"数或环境参数。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:546
 #, csharp-format
@@ -219,7 +252,9 @@ msgid ""
 "Command action '{0}.{1}' marks '{2}' with CommandFlagsAttribute for enum "
 "'{3}', but the CLR parameter type is '{4}'. The parameter type must match "
 "the declared flags enum exactly."
-msgstr "命令动作“{0}.{1}”为“{2}”标记了面向枚举“{3}”的 CommandFlagsAttribute，但 CLR 参数类型为“{4}”。参数类型必须与声明的标志枚举完全一致。"
+msgstr ""
+"命令动作“{0}.{1}”为“{2}”标记了面向枚举“{3}”的 CommandFlagsAttribute，但 CLR "
+"参数类型为“{4}”。参数类型必须与声明的标志枚举完全一致。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:393
 #, csharp-format
@@ -228,7 +263,9 @@ msgid ""
 "Command action '{0}.{1}' marks '{2}' with RemainingTextAttribute, but the "
 "parameter type is neither string nor backed by a registered binding "
 "attribute."
-msgstr "命令动作“{0}.{1}”用 RemainingTextAttribute 标记了“{2}”，但该参数既不是 string，也没有由已注册绑定特性支持。"
+msgstr ""
+"命令动作“{0}.{1}”用 RemainingTextAttribute 标记了“{2}”，但该参数既不是 "
+"string，也没有由已注册绑定特性支持。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:419
 #, csharp-format
@@ -236,7 +273,9 @@ msgctxt "{0} is command action name, {1} is parameter name"
 msgid ""
 "Command action '{0}.{1}' must enable CommandParamModifiers.All on "
 "PlayerSelectorAttribute for parameter '{2}'."
-msgstr "命令动作“{0}.{1}”必须为参数“{2}”上的 PlayerSelectorAttribute 启用 CommandParamModifiers.All。"
+msgstr ""
+"命令动作“{0}.{1}”必须为参数“{2}”上的 PlayerSelectorAttribute 启用 "
+"CommandParamModifiers.All。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:401
 #, csharp-format
@@ -253,7 +292,8 @@ msgid ""
 "must return CommandOutcome, Task<CommandOutcome>, or "
 "ValueTask<CommandOutcome>."
 msgstr ""
-"命令动作“{0}.{1}”使用了不支持的返回类型“{2}”。V2 命令必须返回 CommandOutcome、Task<CommandOutcome> 或 ValueTask<CommandOutcome>。"
+"命令动作“{0}.{1}”使用了不支持的返回类型“{2}”。V2 命令必须返回 "
+"CommandOutcome、Task<CommandOutcome> 或 ValueTask<CommandOutcome>。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:313
 #, csharp-format
@@ -261,7 +301,9 @@ msgctxt "{0} is command action name"
 msgid ""
 "Command action '{0}.{1}' declares multiple CommandFlags parameters. Each "
 "action may only expose one first-class flag bag."
-msgstr "命令动作“{0}.{1}”声明了多个 CommandFlags 参数。每个动作只能公开一个一等标志集合。"
+msgstr ""
+"命令动作“{0}.{1}”声明了多个 CommandFlags 参数。每个动作只能公开一个一等标志集"
+"合。"
 
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:572
 #, csharp-format
@@ -289,7 +331,8 @@ msgctxt "{0} is command binding attribute type, {1} is command parameter type"
 msgid ""
 "A command binding rule for binding attribute '{0}' and CLR parameter type "
 "'{1}' is already registered in this registration scope."
-msgstr "绑定特性“{0}”与 CLR 参数类型“{1}”的命令绑定规则已在此注册作用域中存在。"
+msgstr ""
+"绑定特性“{0}”与 CLR 参数类型“{1}”的命令绑定规则已在此注册作用域中存在。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:87
 #, csharp-format
@@ -316,7 +359,9 @@ msgctxt "{0} is command controller type"
 msgid ""
 "Command controller '{0}' declares multiple CommandMismatchHandler methods. "
 "Only one root mismatch handler is allowed per controller."
-msgstr "命令控制器“{0}”声明了多个 CommandMismatchHandler 方法。每个控制器只能有一个根级不匹配处理器。"
+msgstr ""
+"命令控制器“{0}”声明了多个 CommandMismatchHandler 方法。每个控制器只能有一个根"
+"级不匹配处理器。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:131
 #, csharp-format
@@ -375,7 +420,8 @@ msgctxt "{0} is command method name"
 msgid ""
 "Command method '{0}.{1}' cannot be both a CommandAction and a "
 "CommandMismatchHandler."
-msgstr "命令方法“{0}.{1}”不能同时作为 CommandAction 和 CommandMismatchHandler。"
+msgstr ""
+"命令方法“{0}.{1}”不能同时作为 CommandAction 和 CommandMismatchHandler。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:880
 #, csharp-format
@@ -388,7 +434,9 @@ msgid ""
 "CancellationToken, or mark an injected ambient parameter with "
 "FromAmbientContextAttribute."
 msgstr ""
-"命令不匹配处理器“{0}.{1}”声明了类型为“{3}”的不支持参数“{2}”。请使用 CommandInvocationContext、CommandMismatchContext、CancellationToken，或用 FromAmbientContextAttribute 标记注入的环境参数。"
+"命令不匹配处理器“{0}.{1}”声明了类型为“{3}”的不支持参数“{2}”。请使用 "
+"CommandInvocationContext、CommandMismatchContext、CancellationToken，或用 "
+"FromAmbientContextAttribute 标记注入的环境参数。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:855
 #, csharp-format
@@ -397,7 +445,9 @@ msgid ""
 "Command mismatch handler '{0}.{1}' declares unsupported user-bound metadata "
 "on parameter '{2}'. Mismatch handlers may only consume injected context "
 "values."
-msgstr "命令不匹配处理器“{0}.{1}”在参数“{2}”上声明了不支持的用户绑定元数据。不匹配处理器只能消费注入的上下文值。"
+msgstr ""
+"命令不匹配处理器“{0}.{1}”在参数“{2}”上声明了不支持的用户绑定元数据。不匹配处"
+"理器只能消费注入的上下文值。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystem.cs:149
 #, csharp-format
@@ -424,7 +474,9 @@ msgid ""
 "CLR parameter type '{0}' already has an implicit binding route registered "
 "for binding attribute '{1}'. It cannot also default to '{2}' in the same "
 "registration scope."
-msgstr "CLR 参数类型“{0}”已经为绑定特性“{1}”注册了隐式绑定路径，不能在同一注册作用域中同时默认使用“{2}”。"
+msgstr ""
+"CLR 参数类型“{0}”已经为绑定特性“{1}”注册了隐式绑定路径，不能在同一注册作用域"
+"中同时默认使用“{2}”。"
 
 #: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:121
 #, csharp-format
@@ -432,7 +484,9 @@ msgctxt "{0} is command return type"
 msgid ""
 "Unsupported command return type '{0}'. Only CommandOutcome, "
 "Task<CommandOutcome>, and ValueTask<CommandOutcome> are supported in V2."
-msgstr "不支持的命令返回类型“{0}”。V2 仅支持 CommandOutcome、Task<CommandOutcome> 和 ValueTask<CommandOutcome>。"
+msgstr ""
+"不支持的命令返回类型“{0}”。V2 仅支持 CommandOutcome、Task<CommandOutcome> 和 "
+"ValueTask<CommandOutcome>。"
 
 #: ../../src/UnifierTSL/PluginHost/Configs/ConfigHandle.cs:61
 #, csharp-format
@@ -459,7 +513,9 @@ msgctxt ""
 msgid ""
 "Invalid launcher.consoleStatus.bandwidthRolloverThreshold setting '{0}'. "
 "Falling back to '{1}'."
-msgstr "无效的 launcher.consoleStatus.bandwidthRolloverThreshold 设置“{0}”。将回退到“{1}”。"
+msgstr ""
+"无效的 launcher.consoleStatus.bandwidthRolloverThreshold 设置“{0}”。将回退"
+"到“{1}”。"
 
 #: ../../src/UnifierTSL/Launcher/LauncherSettingValues.cs:300
 #, csharp-format
@@ -467,7 +523,8 @@ msgctxt "{0} is configured launcher.consoleStatus.bandwidthUnit value"
 msgid ""
 "Invalid launcher.consoleStatus.bandwidthUnit setting '{0}'. Falling back to "
 "'bytes'."
-msgstr "无效的 launcher.consoleStatus.bandwidthUnit 设置“{0}”。将回退到“bytes”。"
+msgstr ""
+"无效的 launcher.consoleStatus.bandwidthUnit 设置“{0}”。将回退到“bytes”。"
 
 #: ../../src/UnifierTSL/Launcher/LauncherSettingValues.cs:229
 #, csharp-format
@@ -566,7 +623,9 @@ msgid ""
 "Type '{0}' uses '{1}.{2}' member reference '{3}', but no static string "
 "property or method with that name exists on the declaring type or attribute "
 "type."
-msgstr "类型“{0}”使用了“{1}.{2}”成员引用“{3}”，但声明类型或特性类型上不存在同名的静态字符串属性或方法。"
+msgstr ""
+"类型“{0}”使用了“{1}.{2}”成员引用“{3}”，但声明类型或特性类型上不存在同名的静态"
+"字符串属性或方法。"
 
 #: ../../src/UnifierTSL/Commanding/CommandAttributeText.cs:79
 #: ../../src/UnifierTSL/Commanding/CommandAttributeText.cs:95
@@ -583,7 +642,9 @@ msgctxt "{0} is declaring type name, {1} is member name"
 msgid ""
 "Static member reference '{0}.{1}' must resolve to a parameterless string "
 "method or a string method with a params object?[] parameter."
-msgstr "静态成员引用“{0}.{1}”必须解析为无参字符串方法，或带 params object?[] 参数的字符串方法。"
+msgstr ""
+"静态成员引用“{0}.{1}”必须解析为无参字符串方法，或带 params object?[] 参数的字"
+"符串方法。"
 
 #: ../../src/UnifierTSL/Module/Dependencies/DependenciesConfiguration.cs:93
 #: ../../src/UnifierTSL/Module/Dependencies/DependenciesConfiguration.cs:115
@@ -784,7 +845,9 @@ msgctxt "{0} is parameter name, {1} is method name"
 msgid ""
 "Command parameter '{0}' on method '{1}.{2}' declares multiple prompt "
 "override attributes. Use a single {3} or {4} on the parameter."
-msgstr "方法“{1}.{2}”上的命令参数“{0}”声明了多个提示覆盖特性。请在该参数上只使用一个 {3} 或 {4}。"
+msgstr ""
+"方法“{1}.{2}”上的命令参数“{0}”声明了多个提示覆盖特性。请在该参数上只使用一个 "
+"{3} 或 {4}。"
 
 #: ../../src/UnifierTSL/Commanding/Composition/CommandSystemDiscovery.cs:905
 #, csharp-format
@@ -792,7 +855,9 @@ msgctxt "{0} is parameter name"
 msgid ""
 "Command parameter '{0}' declares multiple binding attributes. Each "
 "structured parameter may only declare one CommandBindingAttribute."
-msgstr "命令参数“{0}”声明了多个绑定特性。每个结构化参数只能声明一个 CommandBindingAttribute。"
+msgstr ""
+"命令参数“{0}”声明了多个绑定特性。每个结构化参数只能声明一个 "
+"CommandBindingAttribute。"
 
 #: ../../src/UnifierTSL/UnifierApi.Internal.cs:541
 #, csharp-format
@@ -903,7 +968,9 @@ msgid ""
 "Plugin host '{0}' is not compatible with current plugin host version '{1}'. "
 "Major version must be equal, minor version of plugin host must be less or "
 "equal."
-msgstr "插件宿主“{0}”与当前插件宿主版本“{1}”不兼容。主版本号必须相同，插件宿主的次版本号必须小于或等于当前版本。"
+msgstr ""
+"插件宿主“{0}”与当前插件宿主版本“{1}”不兼容。主版本号必须相同，插件宿主的次版"
+"本号必须小于或等于当前版本。"
 
 #: ../../src/UnifierTSL/PluginHost/PluginOrchestrator.cs:74
 #, csharp-format
@@ -1547,8 +1614,8 @@ msgstr "{0} 切换解释方式"
 msgid "{0} was already initialized."
 msgstr "{0} 已初始化。"
 
-#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:153
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:156
 #, csharp-format
 msgid "{0} was not initialized."
@@ -1741,13 +1808,16 @@ msgstr ""
 msgid ""
 "Expected value: an integer between 0 and 2 (inclusive), or one of the "
 "strings: random, corruption, crimson"
-msgstr "预期值：0 到 2（含）之间的整数，或字符串之一：random、corruption、crimson"
+msgstr ""
+"预期值：0 到 2（含）之间的整数，或字符串之一：random、corruption、crimson"
 
 #: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:245
 msgid ""
 "Expected value: an integer between 0 and 3 (inclusive), or one of the "
 "strings: normal, expert, master, creative"
-msgstr "预期值：0 到 3（含）之间的整数，或字符串之一：normal、expert、master、creative"
+msgstr ""
+"预期值：0 到 3（含）之间的整数，或字符串之一：normal、expert、master、"
+"creative"
 
 #: ../../src/UnifierTSL/Launcher/AutoStartServers.cs:255
 msgid ""
@@ -2076,7 +2146,9 @@ msgstr "重载后的配置快照"
 msgid ""
 "Resolved dependencies for {0} ({1}) successfully: \r\n"
 "{2}"
-msgstr "已成功解析 {0} ({1}) 的依赖项：\r\n{2}"
+msgstr ""
+"已成功解析 {0} ({1}) 的依赖项：\r\n"
+"{2}"
 
 #: ../../src/UnifierTSL/Module/Dependencies/NugetDependency.cs:48
 #, csharp-format
@@ -2246,7 +2318,9 @@ msgstr "此命令需要具体服务器上下文。"
 msgid ""
 "TOML parsing errors: \r\n"
 "{0}"
-msgstr "TOML 解析错误：\r\n{0}"
+msgstr ""
+"TOML 解析错误：\r\n"
+"{0}"
 
 #: ../../src/UnifierTSL/Logging/LogTrace/TraceId.cs:44
 #: ../../src/UnifierTSL/Logging/LogTrace/TraceId.cs:94

@@ -17,6 +17,170 @@ msgstr ""
 "X-Crowdin-File: /i18n/Atelier.template.pot\n"
 "X-Crowdin-File-ID: 11\n"
 
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:200
+msgid ""
+"    :transient compiles against the current session, runs as a probe, then "
+"discards its changes."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:207
+#, csharp-format
+msgid "    {0} - {1}"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:213
+msgid ""
+"    An unfinished Task returned as the result is also tracked by the window "
+"indicator."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:195
+msgid "    Atelier is a Roslyn C# script session, not a line-by-line shell."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:212
+msgid ""
+"    Background execution Tasks are available as PendingTasks; LastTask is "
+"the newest one."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:219
+msgid ""
+"    Blocking APIs that ignore tokens still need explicit cancellation-aware "
+"design."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:215
+msgid ""
+"    Cancellation injection mainly prevents runaway loops from surviving a "
+"closed session."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:221
+msgid "    Closing the REPL releases the surface and session automatically."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:227
+msgid ""
+"    Diagnostics, completions, and signature help describe the draft in "
+"accumulated context."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:225
+msgid ""
+"    Enter follows Roslyn's complete-submission check; unfinished blocks stay "
+"open."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:198
+msgid ""
+"    Later drafts see earlier declarations, imports, references, and loaded "
+"submissions."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:216
+msgid ""
+"    Loops check Cancellation automatically, so intentional long-running "
+"loops can stop on close."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:199
+msgid ""
+"    Meta commands start with ':' and are intercepted before C# compilation."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:197
+msgid ""
+"    Normal submissions that change state are committed to session history."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:228
+msgid "    Pair closers can stay virtual until typed through."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:223
+msgid "    Reset clears committed history and restores baseline imports."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:222
+msgid ""
+"    Session disposal cancels pending work, clears PendingTasks, and unloads "
+"script contexts."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:226
+msgid ""
+"    Shift+Enter always inserts a line; paste mode uses Ctrl+Enter to submit "
+"once."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:229
+msgid "    Shift+Tab formats the draft without submitting."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:218
+msgid ""
+"    Task.Run/Thread/Timer callbacks are guarded so detached work also "
+"observes cancellation."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:196
+msgid ""
+"    The editor analyzes committed history plus the current draft as one "
+"synthetic script."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:214
+msgid "    The session Cancellation token is available as Cancellation."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:217
+msgid ""
+"    Token-aware calls may get Cancellation appended automatically when a "
+"safe overload exists."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:211
+msgid ""
+"    Top-level await may keep running in background after the prompt returns."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:515
+msgid "  (none)"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:210
+msgid "  Async and cancellation:"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:201
+msgid "  Commands:"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:224
+msgid "  Editing:"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:220
+msgid "  Lifetime:"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:194
+msgid "  Mental model:"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:143
+msgid "[on|off]"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:153
+msgid "<code>"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Prompt/PromptProjectionBuilder.cs:368
+msgid "argument"
+msgstr ""
+
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:94
 msgid ""
 "Atelier can only be opened from the launcher console or a specific server "
@@ -36,20 +200,24 @@ msgstr ""
 msgid "Atelier plugin is not initialized."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1785
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1665
 msgid "Atelier projection document is missing an editable input node."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1968
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1987
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1848
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1867
 #, csharp-format
 msgid "Atelier REPL expected active scope mode {0} but found {1}."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1972
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1993
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1852
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1873
 #, csharp-format
 msgid "Atelier REPL expected active scope type {0} but found {1}."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:193
+msgid "Atelier REPL quick help:"
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Presentation/Window/Formatting/RoslynFormattingWorkspace.cs:22
@@ -87,12 +255,29 @@ msgstr ""
 msgid "Atelier submission entry type '{0}' was not found."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:2059
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1939
 msgid "Authoring scope must expose editor interaction events."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:257
+#, csharp-format
+msgid "BaselineImports ({0}):"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:123
+msgid "Clear transcript output and redraw current frame."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Presentation/Prompt/PromptProjectionBuilder.cs:339
+msgid "command"
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/ConsolePreprocessor.cs:10
 msgid "Console redirect target expression is required."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:147
+msgid "Disable paste mode and restore smart submit."
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:27
@@ -101,6 +286,19 @@ msgstr ""
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:36
 msgid "Duplicate --server flag."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:259
+#, csharp-format
+msgid "EffectiveImports ({0}):"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:146
+msgid "Enable paste mode for the next submit."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:305
+msgid "Execution"
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:38
@@ -115,6 +313,11 @@ msgstr ""
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptGlobals.cs:27
 msgid "Host label is required."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:271
+#, csharp-format
+msgid "Host: {0}"
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptHostContext.cs:26
@@ -139,13 +342,58 @@ msgstr ""
 msgid "Opens the Atelier REPL window."
 msgstr ""
 
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:509
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:287
+msgid ""
+"Paste mode disabled. Enter uses smart submit; Shift+Enter inserts new lines."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:286
+msgid ""
+"Paste mode enabled for the next submit. Enter inserts new lines; Ctrl+Enter "
+"submits."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:261
+#, csharp-format
+msgid "ReferencePaths ({0}):"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:116
+msgid "Reset session runtime state and draft."
+msgstr ""
+
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:70
 msgid "Resolved Atelier invocation host is missing."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:154
+msgid "Run transient code without committing."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:295
+msgid "Running transient code."
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:115
 #, csharp-format
 msgid "Server '{0}' not found."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:239
+msgid "Session reset."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:130
+msgid "Show baseline/effective imports and reference paths."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:137
+msgid "Show current target and host."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:109
+msgid "Show REPL usage guidance."
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/SubmissionProjectChain.cs:35
@@ -156,12 +404,30 @@ msgstr ""
 msgid "Target label is required."
 msgstr ""
 
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:270
+#, csharp-format
+msgid "Target: {0}"
+msgstr ""
+
 #: ../../src/Plugins/Atelier/Session/Roslyn/CancellationPreprocessor.cs:37
 msgid "Token local name is required."
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:23
 msgid "Unable to resolve Atelier target."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:321
+#, csharp-format
+msgid ""
+"Unknown command ':{0}'. Type ':' for command suggestions, or run :help for "
+"usage guidance."
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:320
+msgid ""
+"Unknown command. Type ':' for command suggestions, or run :help for usage "
+"guidance."
 msgstr ""
 
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
@@ -181,6 +447,14 @@ msgstr ""
 msgid "Unsupported session command '{0}'."
 msgstr ""
 
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:280
+msgid "Usage: :paste [on|off]"
+msgstr ""
+
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:47
 msgid "Usage: atelier [--launcher | --server <name>]"
+msgstr ""
+
+#: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:144
+msgid "Use Ctrl+Enter as submit for the next pasted source block."
 msgstr ""
