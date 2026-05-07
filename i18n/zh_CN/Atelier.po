@@ -21,166 +21,166 @@ msgstr ""
 msgid ""
 "Atelier can only be opened from the launcher console or a specific server "
 "console."
-msgstr ""
+msgstr "Atelier 只能从启动器控制台或某个具体服务器的控制台打开。"
 
 #: ../../src/Plugins/Atelier/Session/Context/HostConsole.cs:152
 msgid "Atelier console is not attached to an active REPL window."
-msgstr ""
+msgstr "Atelier 控制台尚未附加到活动的 REPL 窗口。"
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:70
 #, csharp-format
 msgid "Atelier generated globals type failed to compile: {0}"
-msgstr ""
+msgstr "Atelier 生成的全局类型编译失败：{0}"
 
 #: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:19
 msgid "Atelier plugin is not initialized."
-msgstr ""
+msgstr "Atelier 插件尚未初始化。"
 
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1785
 msgid "Atelier projection document is missing an editable input node."
-msgstr ""
+msgstr "Atelier 投影文档缺少可编辑的输入节点。"
 
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1968
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1987
 #, csharp-format
 msgid "Atelier REPL expected active scope mode {0} but found {1}."
-msgstr ""
+msgstr "Atelier REPL 期望活动作用域模式为 {0}，但实际为 {1}。"
 
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1972
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:1993
 #, csharp-format
 msgid "Atelier REPL expected active scope type {0} but found {1}."
-msgstr ""
+msgstr "Atelier REPL 期望活动作用域类型为 {0}，但实际为 {1}。"
 
 #: ../../src/Plugins/Atelier/Presentation/Window/Formatting/RoslynFormattingWorkspace.cs:22
 msgid "Atelier Roslyn formatting workspace is not initialized."
-msgstr ""
+msgstr "Atelier Roslyn 格式化工作区尚未初始化。"
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/RoslynHost.cs:61
 #, csharp-format
 msgid "Atelier Roslyn host is missing required assemblies: {0}"
-msgstr ""
+msgstr "Atelier Roslyn 宿主缺少必需程序集：{0}"
 
 #: ../../src/Plugins/Atelier/Session/ReplManager.cs:123
 msgid "Atelier Roslyn prewarm failed."
-msgstr ""
+msgstr "Atelier Roslyn 预热失败。"
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:94
 msgid "Atelier script host console is no longer active."
-msgstr ""
+msgstr "Atelier 脚本宿主控制台已不再处于活动状态。"
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/ReplRuntime.cs:400
 msgid "Atelier submission compilation is missing an entry point."
-msgstr ""
+msgstr "Atelier 提交内容的编译结果缺少入口点。"
 
 #: ../../src/Plugins/Atelier/Session/Execution/ExecutionSession.cs:196
 #, csharp-format
 msgid "Atelier submission entry method '{0}' was not found."
-msgstr ""
+msgstr "未找到 Atelier 提交入口方法“{0}”。"
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/ReplRuntime.cs:411
 msgid "Atelier submission entry point is missing a containing type."
-msgstr ""
+msgstr "Atelier 提交入口点缺少所属类型。"
 
 #: ../../src/Plugins/Atelier/Session/Execution/ExecutionSession.cs:189
 #, csharp-format
 msgid "Atelier submission entry type '{0}' was not found."
-msgstr ""
+msgstr "未找到 Atelier 提交入口类型“{0}”。"
 
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:2059
 msgid "Authoring scope must expose editor interaction events."
-msgstr ""
+msgstr "创作作用域必须公开编辑器交互事件。"
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/ConsolePreprocessor.cs:10
 msgid "Console redirect target expression is required."
-msgstr ""
+msgstr "必须提供控制台重定向目标表达式。"
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:27
 msgid "Duplicate --launcher flag."
-msgstr ""
+msgstr "重复指定了 --launcher 标志。"
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:36
 msgid "Duplicate --server flag."
-msgstr ""
+msgstr "重复指定了 --server 标志。"
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:38
 #, csharp-format
 msgid "Generated Atelier globals type '{0}' could not be instantiated."
-msgstr ""
+msgstr "无法实例化生成的 Atelier 全局类型“{0}”。"
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptHostTypeFactory.cs:28
 #, csharp-format
 msgid "Generated Atelier globals type '{0}' was not found."
-msgstr ""
+msgstr "未找到生成的 Atelier 全局类型“{0}”。"
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptGlobals.cs:27
 msgid "Host label is required."
-msgstr ""
+msgstr "必须提供宿主标签。"
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptHostContext.cs:26
 msgid "HostOut expression is required."
-msgstr ""
+msgstr "必须提供 HostOut 表达式。"
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:41
 msgid "Missing server name after --server."
-msgstr ""
+msgstr "--server 后缺少服务器名称。"
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:62
 msgid "Only one target override can be specified."
-msgstr ""
+msgstr "只能指定一个目标覆盖项。"
 
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:37
 #, csharp-format
 msgid "Opened Atelier REPL on {0} targeting {1}."
-msgstr ""
+msgstr "已在 {0} 上打开 Atelier REPL，目标为 {1}。"
 
 #: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:9
 #: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:10
 msgid "Opens the Atelier REPL window."
-msgstr ""
+msgstr "打开 Atelier REPL 窗口。"
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:70
 msgid "Resolved Atelier invocation host is missing."
-msgstr ""
+msgstr "解析出的 Atelier 调用宿主缺失。"
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:115
 #, csharp-format
 msgid "Server '{0}' not found."
-msgstr ""
+msgstr "未找到服务器“{0}”。"
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/SubmissionProjectChain.cs:35
 msgid "Synthetic Atelier document is missing."
-msgstr ""
+msgstr "合成的 Atelier 文档缺失。"
 
 #: ../../src/Plugins/Atelier/Session/Context/ScriptGlobals.cs:31
 msgid "Target label is required."
-msgstr ""
+msgstr "必须提供目标标签。"
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/CancellationPreprocessor.cs:37
 msgid "Token local name is required."
-msgstr ""
+msgstr "必须提供令牌局部变量名。"
 
 #: ../../src/Plugins/Atelier/Commanding/OpenCommand.cs:23
 msgid "Unable to resolve Atelier target."
-msgstr ""
+msgstr "无法解析 Atelier 目标。"
 
 #: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:126
 #, csharp-format
 msgid "Unsupported atelier invocation host '{0}'."
-msgstr ""
+msgstr "不支持的 Atelier 调用宿主“{0}”。"
 
 #: ../../src/Plugins/Atelier/Session/Roslyn/ScriptOptionsFactory.cs:84
 #: ../../src/Plugins/Atelier/Session/Context/HostContextFactory.cs:27
 #, csharp-format
 msgid "Unsupported atelier target profile '{0}'."
-msgstr ""
+msgstr "不支持的 Atelier 目标配置“{0}”。"
 
 #: ../../src/Plugins/Atelier/Session/ReplSession.cs:357
 #, csharp-format
 msgid "Unsupported session command '{0}'."
-msgstr ""
+msgstr "不支持的会话命令“{0}”。"
 
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:47
 msgid "Usage: atelier [--launcher | --server <name>]"
-msgstr ""
+msgstr "用法：atelier [--launcher | --server <名称>]"
