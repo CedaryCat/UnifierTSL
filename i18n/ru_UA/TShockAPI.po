@@ -10,9 +10,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: GetText.NET Extractor\n"
-"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 "
-"&& n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 "
-"&& n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: tshock\n"
 "X-Crowdin-Project-ID: 544368\n"
 "X-Crowdin-Language: ru-UA\n"
@@ -41,10 +39,7 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:103
 #, csharp-format
 msgctxt "{0} is command action name, {1} is parameter name"
-msgid ""
-"Command action '{0}.{1}' marks parameter '{2}' with '{3}.{4}', but its "
-"TShockCommandAttribute does not enable ServerScope or PlayerScope. Parameter-"
-"level server scoping does not implicitly upgrade action availability."
+msgid "Command action '{0}.{1}' marks parameter '{2}' with '{3}.{4}', but its TShockCommandAttribute does not enable ServerScope or PlayerScope. Parameter-level server scoping does not implicitly upgrade action availability."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:406
@@ -103,9 +98,7 @@ msgid "Executing {0}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:163
-msgid ""
-"     'basic', 'sakura', 'willow', 'boreal', 'mahogany', 'ebonwood', "
-"'shadewood', 'pearlwood'."
+msgid "     'basic', 'sakura', 'willow', 'boreal', 'mahogany', 'ebonwood', 'shadewood', 'pearlwood'."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:169
@@ -117,14 +110,12 @@ msgid "     'palm', 'corruptpalm', 'crimsonpalm', 'hallowpalm'."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:167
-msgid ""
-"     'topaz', 'amethyst', 'sapphire', 'emerald', 'ruby', 'diamond', 'amber'."
+msgid "     'topaz', 'amethyst', 'sapphire', 'emerald', 'ruby', 'diamond', 'amber'."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:819
 #, csharp-format
-msgid ""
-"   {0}{1} \"{2}\" (Find the IP associated with the offline target's account)"
+msgid "   {0}{1} \"{2}\" (Find the IP associated with the offline target's account)"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:817
@@ -139,9 +130,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:823
 #, csharp-format
-msgid ""
-"   {0}{1} {2}{3} {4} {5} (Permanently bans the online player by Account, "
-"UUID, and IP)"
+msgid "   {0}{1} {2}{3} {4} {5} (Permanently bans the online player by Account, UUID, and IP)"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:820
@@ -156,9 +145,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:785
 #, csharp-format
-msgid ""
-"   Flags may appear anywhere after the target and do not consume the {0} or "
-"{1} slots."
+msgid "   Flags may appear anywhere after the target and do not consume the {0} or {1} slots."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:787
@@ -172,9 +159,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:786
 #, csharp-format
-msgid ""
-"   Unless {0} is passed to the command, {1} is assumed to be a player or "
-"player index"
+msgid "   Unless {0} is passed to the command, {1} is assumed to be a player or player index"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:320
@@ -184,22 +169,17 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:794
 #, csharp-format
-msgid ""
-"- {0} are provided when you add a ban, and can also be viewed with the {1} "
-"command."
+msgid "- {0} are provided when you add a ban, and can also be viewed with the {1} command."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:808
 #, csharp-format
-msgid ""
-"- {0} are provided when you add a ban, and can be found with the {1} command."
+msgid "- {0} are provided when you add a ban, and can be found with the {1} command."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:784
 #, csharp-format
-msgid ""
-"- {0}: -a (account name), -u (UUID), -n (character name), -ip (IP address), -"
-"e (exact, {1} will be treated as identifier)"
+msgid "- {0}: -a (account name), -u (UUID), -n (character name), -ip (IP address), -e (exact, {1} will be treated as identifier)"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:781
@@ -228,9 +208,7 @@ msgid "- Gem trees :"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:801
-msgid ""
-"- Lists active bans. Color trends towards green as the ban approaches "
-"expiration"
+msgid "- Lists active bans. Color trends towards green as the ban approaches expiration"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:168
@@ -256,16 +234,16 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandingAttributes.cs:42
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandOutcome.cs:208
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:14
+#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:132
-#: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
+#: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
+#: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:209
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:378
-#: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
-#: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
+#: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:456
-#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
 #, csharp-format
 msgid "\"{0}\" is not a valid page number."
 msgstr ""
@@ -321,9 +299,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:97
 #, csharp-format
-msgid ""
-"{0} ({1}) had {2} or more invalid login attempts and was kicked "
-"automatically."
+msgid "{0} ({1}) had {2} or more invalid login attempts and was kicked automatically."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:786
@@ -442,8 +418,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:39
 #, csharp-format
-msgid ""
-"{0} attempted to use the initial setup system even though it's disabled."
+msgid "{0} attempted to use the initial setup system even though it's disabled."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:405
@@ -721,9 +696,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:388
 #, csharp-format
-msgid ""
-"{0} has SSC data in the database, but has the tshock.ignore.ssc permission. "
-"This means their SSC data is being ignored."
+msgid "{0} has SSC data in the database, but has the tshock.ignore.ssc permission. This means their SSC data is being ignored."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldCommands.cs:408
@@ -1157,17 +1130,13 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:15
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:221
 #, csharp-format
-msgid ""
-"{0}login <password> - Authenticates you using your password and character "
-"name."
+msgid "{0}login <password> - Authenticates you using your password and character name."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:16
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:218
 #, csharp-format
-msgid ""
-"{0}login <username> <password> - Authenticates you using your username and "
-"password."
+msgid "{0}login <username> <password> - Authenticates you using your username and password."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:74
@@ -1290,15 +1259,11 @@ msgid "A group with the same name already exists."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/RegionManager.cs:75
-msgid ""
-"A lot of things will fail because of this. You must manually delete and re-"
-"create the allowed field."
+msgid "A lot of things will fail because of this. You must manually delete and re-create the allowed field."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:152
-msgid ""
-"A malicious server can easily steal a user's UUID. You may consider turning "
-"this option off if you run a public server."
+msgid "A malicious server can easily steal a user's UUID. You may consider turning this option off if you run a public server."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:523
@@ -1319,9 +1284,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:120
 #, csharp-format
-msgid ""
-"A REST login from {0} was blocked as it currently has {1} rate-limit tokens "
-"and is at the RESTMaximumRequestsPerInterval threshold."
+msgid "A REST login from {0} was blocked as it currently has {1} rate-limit tokens and is at the RESTMaximumRequestsPerInterval threshold."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:528
@@ -1452,9 +1415,7 @@ msgid "Aliases of {0}{1}: {0}{2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:170
-msgid ""
-"All alive NPCs (excluding town NPCs) on the server will be killed if you do "
-"not input a name or ID."
+msgid "All alive NPCs (excluding town NPCs) on the server will be killed if you do not input a name or ID."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:384
@@ -1510,9 +1471,7 @@ msgid "Amethyst Gemtree"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:162
-msgid ""
-"An account has been detected in the user database, but setup-code.txt is "
-"still present."
+msgid "An account has been detected in the user database, but setup-code.txt is still present."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:442
@@ -1542,9 +1501,7 @@ msgid "An identifier for an IP Address in octet format. e.g., '{0}'."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/MaintenanceCommands.cs:41
-msgid ""
-"An update check has been queued. If an update is available, you will be "
-"notified shortly."
+msgid "An update check has been queued. If an update is available, you will be notified shortly."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:62
@@ -1587,8 +1544,7 @@ msgid "Arguments: add [warp name], del [warp name], list [page]."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:456
-msgid ""
-"Arguments: send [player] [warp name], hide [warp name] [Enable(true/false)]."
+msgid "Arguments: send [player] [warp name], hide [warp name] [Enable(true/false)]."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:404
@@ -1814,8 +1770,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3389
 #, csharp-format
-msgid ""
-"Bouncer / OnDisplayJarTryPlacing rejected item not placed by hand from {0}"
+msgid "Bouncer / OnDisplayJarTryPlacing rejected item not placed by hand from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3408
@@ -1835,9 +1790,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3287
 #, csharp-format
-msgid ""
-"Bouncer / OnFishOutNPC rejected for not finding active bobber projectile! - "
-"From {0}"
+msgid "Bouncer / OnFishOutNPC rejected for not finding active bobber projectile! - From {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3281
@@ -1847,9 +1800,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3293
 #, csharp-format
-msgid ""
-"Bouncer / OnFishOutNPC rejected for the NPC not being on the fishable NPCs "
-"list! - From {0}"
+msgid "Bouncer / OnFishOutNPC rejected for the NPC not being on the fishable NPCs list! - From {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3305
@@ -1869,8 +1820,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3332
 #, csharp-format
-msgid ""
-"Bouncer / OnFoodPlatterTryPlacing rejected item not placed by hand from {0}"
+msgid "Bouncer / OnFoodPlatterTryPlacing rejected item not placed by hand from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3350
@@ -1885,8 +1835,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3325
 #, csharp-format
-msgid ""
-"Bouncer / OnFoodPlatterTryPlacing rejected tile placement valid from {0}"
+msgid "Bouncer / OnFoodPlatterTryPlacing rejected tile placement valid from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3037
@@ -1930,8 +1879,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2551
 #, csharp-format
-msgid ""
-"Bouncer / OnHealOtherPlayer rejected heal other threshold from {0} {1}/{2}"
+msgid "Bouncer / OnHealOtherPlayer rejected heal other threshold from {0} {1}/{2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2525
@@ -1940,16 +1888,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1390
 #, csharp-format
-msgid ""
-"Bouncer / OnItemDrop force kicked (attempted to set position to infinity or "
-"NaN) from {0}"
+msgid "Bouncer / OnItemDrop force kicked (attempted to set position to infinity or NaN) from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1398
 #, csharp-format
-msgid ""
-"Bouncer / OnItemDrop force kicked (attempted to set velocity to infinity or "
-"NaN) from {0}"
+msgid "Bouncer / OnItemDrop force kicked (attempted to set velocity to infinity or NaN) from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1407
@@ -1964,9 +1908,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1458
 #, csharp-format
-msgid ""
-"Bouncer / OnItemDrop rejected from drop item ban check / max stack check / "
-"min stack check from {0}"
+msgid "Bouncer / OnItemDrop rejected from drop item ban check / max stack check / min stack check from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1428
@@ -2071,16 +2013,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1676
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile please report to tshock about this! normally this "
-"is a reject from {0} {1}"
+msgid "Bouncer / OnNewProjectile please report to tshock about this! normally this is a reject from {0} {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1632
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile please report to tshock about this! normally this "
-"is a reject from {0} {1} (golf)"
+msgid "Bouncer / OnNewProjectile please report to tshock about this! normally this is a reject from {0} {1} (golf)"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1531
@@ -2095,9 +2033,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1725
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile rejected from bouncer modified Zenith projectile "
-"from {0}."
+msgid "Bouncer / OnNewProjectile rejected from bouncer modified Zenith projectile from {0}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1551
@@ -2122,30 +2058,22 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1586
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile rejected from portal gate from {0} (invalid angle: "
-"{1})"
+msgid "Bouncer / OnNewProjectile rejected from portal gate from {0} (invalid angle: {1})"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1600
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile rejected from portal gate from {0} (missing active "
-"Portal Gun bolt)"
+msgid "Bouncer / OnNewProjectile rejected from portal gate from {0} (missing active Portal Gun bolt)"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1696
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile rejected from projectile create threshold from {0} "
-"{1}/{2}"
+msgid "Bouncer / OnNewProjectile rejected from projectile create threshold from {0} {1}/{2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1574
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile rejected from projectile damage limit from {0} {1}/"
-"{2}"
+msgid "Bouncer / OnNewProjectile rejected from projectile damage limit from {0} {1}/{2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1651
@@ -2160,21 +2088,17 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1517
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile rejected set position to infinity or NaN from {0}"
+msgid "Bouncer / OnNewProjectile rejected set position to infinity or NaN from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1524
 #, csharp-format
-msgid ""
-"Bouncer / OnNewProjectile rejected set velocity to infinity or NaN from {0}"
+msgid "Bouncer / OnNewProjectile rejected set velocity to infinity or NaN from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2467
 #, csharp-format
-msgid ""
-"Bouncer / OnNPCAddBuff rejected abnormal buff ({0}, last for {4}) added to "
-"{1} ({2}) from {3}."
+msgid "Bouncer / OnNPCAddBuff rejected abnormal buff ({0}, last for {4}) added to {1} ({2}) from {3}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2421
@@ -2269,14 +2193,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2741
 #, csharp-format
-msgid ""
-"Bouncer / OnPlaceObject rejected {0} due to invalid critter anchor style {1}"
+msgid "Bouncer / OnPlaceObject rejected {0} due to invalid critter anchor style {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2731
 #, csharp-format
-msgid ""
-"Bouncer / OnPlaceObject rejected {0} due to invalid kite anchor style {1}"
+msgid "Bouncer / OnPlaceObject rejected {0} due to invalid kite anchor style {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2692
@@ -2311,16 +2233,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2794
 #, csharp-format
-msgid ""
-"Bouncer / OnPlaceObject rejected object placement with invalid style {1} "
-"(expected {2}) from {0}"
+msgid "Bouncer / OnPlaceObject rejected object placement with invalid style {1} (expected {2}) from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2772
 #, csharp-format
-msgid ""
-"Bouncer / OnPlaceObject rejected object placement with invalid tile type {1} "
-"(expected {2}) from {0}"
+msgid "Bouncer / OnPlaceObject rejected object placement with invalid tile type {1} (expected {2}) from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2660
@@ -2345,9 +2263,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2720
 #, csharp-format
-msgid ""
-"Bouncer / OnPlaceObject rejected rubblemaker I can't believe it's not "
-"rubble! from {0}"
+msgid "Bouncer / OnPlaceObject rejected rubblemaker I can't believe it's not rubble! from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2848
@@ -2392,72 +2308,52 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2385
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: buff cannot be applied for that long"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: buff cannot be applied for that long"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2367
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: buff cannot be applied to non-senders"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: buff cannot be applied to non-senders"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2376
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: buff cannot be applied without pvp"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: buff cannot be applied without pvp"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2358
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: buff is not whitelisted"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: buff is not whitelisted"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2318
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: invalid buff type"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: invalid buff type"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2327
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: sender is being disabled"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: sender is being disabled"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2336
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: sender is being throttled"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: sender is being throttled"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2349
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: sender is not in range of target"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: sender is not in range of target"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2300
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: target ID out of bounds"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: target ID out of bounds"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2309
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} "
-"ticks: target is null"
+msgid "Bouncer / OnPlayerBuff rejected {0} ({1}) applying buff {2} to {3} for {4} ticks: target is null"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:3205
@@ -2506,42 +2402,32 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2972
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerPortalTeleport rejected teleport out of bounds from {0}"
+msgid "Bouncer / OnPlayerPortalTeleport rejected teleport out of bounds from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2961
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerPortalTeleport rejected untargetable teleport from {0}"
+msgid "Bouncer / OnPlayerPortalTeleport rejected untargetable teleport from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:710
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerUpdate force kicked (attempted to set position to infinity "
-"or NaN) from {0}"
+msgid "Bouncer / OnPlayerUpdate force kicked (attempted to set position to infinity or NaN) from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:702
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerUpdate force kicked (attempted to set velocity +/- 50000) "
-"from {0}"
+msgid "Bouncer / OnPlayerUpdate force kicked (attempted to set velocity +/- 50000) from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:686
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerUpdate force kicked (attempted to set velocity to "
-"infinity) from {0}"
+msgid "Bouncer / OnPlayerUpdate force kicked (attempted to set velocity to infinity) from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:694
 #, csharp-format
-msgid ""
-"Bouncer / OnPlayerUpdate force kicked (attempted to set velocity to NaN) "
-"from {0}"
+msgid "Bouncer / OnPlayerUpdate force kicked (attempted to set velocity to NaN) from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:769
@@ -2586,8 +2472,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1833
 #, csharp-format
-msgid ""
-"Bouncer / OnProjectileKill rejected from negative projectile index from {0}"
+msgid "Bouncer / OnProjectileKill rejected from negative projectile index from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:637
@@ -2637,15 +2522,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1050
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected {0} from placing non-herb tile {1} using {2}"
+msgid "Bouncer / OnTileEdit rejected {0} from placing non-herb tile {1} using {2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1062
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected {0} from planting herb on invalid tile {1} "
-"using {2}"
+msgid "Bouncer / OnTileEdit rejected {0} from planting herb on invalid tile {1} using {2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:954
@@ -2670,9 +2552,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1022
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from (inconceivable rope coil) {0} {1} {2} "
-"selectedItem:{3} itemCreateTile:{4}"
+msgid "Bouncer / OnTileEdit rejected from (inconceivable rope coil) {0} {1} {2} selectedItem:{3} itemCreateTile:{4}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1033
@@ -2693,9 +2573,7 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:929
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:940
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from (placestyle) {0} {1} {2} placeStyle: {3} "
-"expectedStyle: {4}"
+msgid "Bouncer / OnTileEdit rejected from (placestyle) {0} {1} {2} placeStyle: {3} expectedStyle: {4}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:907
@@ -2710,8 +2588,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1156
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from actuator/presserator from {0} {1} {2}"
+msgid "Bouncer / OnTileEdit rejected from actuator/presserator from {0} {1} {2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:836
@@ -2756,42 +2633,32 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1230
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from tile kill threshold from {0}, (value: {1})"
+msgid "Bouncer / OnTileEdit rejected from tile kill threshold from {0}, (value: {1})"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1248
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from tile place threshold from {0}, (value: "
-"{1})"
+msgid "Bouncer / OnTileEdit rejected from tile place threshold from {0}, (value: {1})"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1092
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from tile placement not matching selected item "
-"createTile {0} {1} {2} selectedItemID:{3} createTile:{4}"
+msgid "Bouncer / OnTileEdit rejected from tile placement not matching selected item createTile {0} {1} {2} selectedItemID:{3} createTile:{4}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1073
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from using ice rod but not placing ice block "
-"{0} {1} {2}"
+msgid "Bouncer / OnTileEdit rejected from using ice rod but not placing ice block {0} {1} {2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1103
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from wall placement not matching selected item "
-"createWall {0} {1} {2} selectedItemID:{3} createWall:{4}"
+msgid "Bouncer / OnTileEdit rejected from wall placement not matching selected item createWall {0} {1} {2} selectedItemID:{3} createWall:{4}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1288
 #, csharp-format
-msgid ""
-"Bouncer / OnTileEdit rejected from weird confusing flow control from {0}"
+msgid "Bouncer / OnTileEdit rejected from weird confusing flow control from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1145
@@ -2844,9 +2711,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/SendTileRectHandler.cs:439
 #, csharp-format
-msgid ""
-"Bouncer / SendTileRect rejected from out of bounds / build permission from "
-"{0}"
+msgid "Bouncer / SendTileRect rejected from out of bounds / build permission from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/SendTileRectHandler.cs:456
@@ -2881,8 +2746,7 @@ msgid "Butcher Syntax and Example"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:387
-msgid ""
-"Bypass SSC is enabled for your account. SSC data will not be loaded or saved."
+msgid "Bypass SSC is enabled for your account. SSC data will not be loaded or saved."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:287
@@ -3019,9 +2883,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/MaintenanceCommands.cs:102
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:379
-msgid ""
-"Configuration, permissions, and regions reload complete. Some changes may "
-"require a server restart."
+msgid "Configuration, permissions, and regions reload complete. Some changes may require a server restart."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:485
@@ -3089,9 +2951,7 @@ msgid "Could not find the region {0}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:644
-msgid ""
-"Could not find the target specified. Check that you have the correct "
-"spelling."
+msgid "Could not find the target specified. Check that you have the correct spelling."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:214
@@ -3100,9 +2960,7 @@ msgid "Could not rename {0}!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:244
-msgid ""
-"Creates a reference tables for Terraria data types and the TShock permission "
-"system in the server folder."
+msgid "Creates a reference tables for Terraria data types and the TShock permission system in the server folder."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:243
@@ -3114,21 +2972,16 @@ msgid "Creates Terraria and permission reference dumps in the server folder."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:75
-msgid ""
-"Creates: <username> with the password <password> as part of the owner group."
+msgid "Creates: <username> with the password <password> as part of the owner group."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/NetModules/CreativePowerHandler.cs:25
-msgid ""
-"CreativePowerHandler received permission check request for unknown creative "
-"power"
+msgid "CreativePowerHandler received permission check request for unknown creative power"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/NetModules/CreativeUnlocksHandler.cs:32
 #, csharp-format
-msgid ""
-"CreativeUnlocksHandler received spoofed player slot request. PlayerSlot: "
-"{0}, Sender: {1} ({2})"
+msgid "CreativeUnlocksHandler received spoofed player slot request. PlayerSlot: {0}, Sender: {1} ({2})"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:262
@@ -3270,8 +3123,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:207
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:337
-msgid ""
-"disallow <projectile ID> <group> - Disallows a group from using a projectile."
+msgid "disallow <projectile ID> <group> - Disallows a group from using a projectile."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:506
@@ -3329,19 +3181,19 @@ msgstr ""
 msgid "Example usage: {0} \"{1}\" \"{2}\""
 msgstr ""
 
+#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:119
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:795
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:809
-#: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163
 #, csharp-format
 msgid "Example usage: {0} {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:145
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:170
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:414
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:415
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:170
 #, csharp-format
 msgid "Example usage: {0} {1} {2}"
 msgstr ""
@@ -3449,9 +3301,7 @@ msgid "Failed to update user password ({0})"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:124
-msgid ""
-"Failed to upload your character data to the server. Are you logged-in to an "
-"account?"
+msgid "Failed to upload your character data to the server. Are you logged-in to an account?"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/UserManager.cs:259
@@ -3468,8 +3318,7 @@ msgid "Firework Syntax"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:427
-msgid ""
-"For example, 1d and 10h-30m+2m are both valid time strings, but 2 is not."
+msgid "For example, 1d and 10h-30m+2m are both valid time strings, but 2 is not."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:772
@@ -3511,9 +3360,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:917
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleChestActive rejected build permission and region "
-"check {0}"
+msgid "GetDataHandlers / HandleChestActive rejected build permission and region check {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:897
@@ -3548,9 +3395,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:745
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleNpcItemStrike surprise packet! Someone tell the "
-"TShock team! {0}"
+msgid "GetDataHandlers / HandleNpcItemStrike surprise packet! Someone tell the TShock team! {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:809
@@ -3580,9 +3425,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1811
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleNpcTeleportPortal rejected not thinking with portals "
-"{0}"
+msgid "GetDataHandlers / HandleNpcTeleportPortal rejected not thinking with portals {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1805
@@ -3592,9 +3435,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1716
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleNumberOfAnglerQuestsCompleted surprise packet! "
-"Someone tell the TShock team! {0}"
+msgid "GetDataHandlers / HandleNumberOfAnglerQuestsCompleted surprise packet! Someone tell the TShock team! {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1839
@@ -3619,9 +3460,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1493
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandlePaintTile rejected throttle/permission/range check "
-"{0}"
+msgid "GetDataHandlers / HandlePaintTile rejected throttle/permission/range check {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1514
@@ -3636,8 +3475,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1538
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandlePaintWall rejected throttle/permission/range {0}"
+msgid "GetDataHandlers / HandlePaintWall rejected throttle/permission/range {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1232
@@ -3647,9 +3485,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1219
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandlePlayerBuffList zeroed player buff due to below state "
-"awaiting player information {0} {1}"
+msgid "GetDataHandlers / HandlePlayerBuffList zeroed player buff due to below state awaiting player information {0} {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:677
@@ -3700,9 +3536,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1135
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandlePlayerTeam rejected from (pvp mode disallows teams) "
-"{0}"
+msgid "GetDataHandlers / HandlePlayerTeam rejected from (pvp mode disallows teams) {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1126
@@ -3716,9 +3550,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1144
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandlePlayerTeam super accepted from (initial team change) "
-"{0}"
+msgid "GetDataHandlers / HandlePlayerTeam super accepted from (initial team change) {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:655
@@ -3732,9 +3564,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:843
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleProjectileKill permitted skeletron prime exemption "
-"{0}"
+msgid "GetDataHandlers / HandleProjectileKill permitted skeletron prime exemption {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:847
@@ -3804,34 +3634,27 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1292
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSpecial rejected enchanted moondial permission "
-"(ForceTime) {0}"
+msgid "GetDataHandlers / HandleSpecial rejected enchanted moondial permission (ForceTime) {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1287
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSpecial rejected enchanted moondial permission {0}"
+msgid "GetDataHandlers / HandleSpecial rejected enchanted moondial permission {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1270
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSpecial rejected enchanted sundial permission "
-"(ForceTime) {0}"
+msgid "GetDataHandlers / HandleSpecial rejected enchanted sundial permission (ForceTime) {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1265
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSpecial rejected enchanted sundial permission {0}"
+msgid "GetDataHandlers / HandleSpecial rejected enchanted sundial permission {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1754
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSyncExtraValue rejected expert/master mode check {0}"
+msgid "GetDataHandlers / HandleSyncExtraValue rejected expert/master mode check {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1749
@@ -3841,22 +3664,17 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1759
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSyncExtraValue rejected npc id out of bounds check - "
-"NPC ID: {0}"
+msgid "GetDataHandlers / HandleSyncExtraValue rejected npc id out of bounds check - NPC ID: {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1765
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSyncExtraValue rejected npc is null - NPC ID: {0}"
+msgid "GetDataHandlers / HandleSyncExtraValue rejected npc is null - NPC ID: {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1772
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSyncExtraValue rejected range check {0},{1} vs {2},"
-"{3} which is {4}"
+msgid "GetDataHandlers / HandleSyncExtraValue rejected range check {0},{1} vs {2},{3} which is {4}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1942
@@ -3866,9 +3684,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1934
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleSyncLoadout rejected loadout index sync out of "
-"bounds {0}"
+msgid "GetDataHandlers / HandleSyncLoadout rejected loadout index sync out of bounds {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1594
@@ -3883,8 +3699,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1606
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleTeleport rejected p2p wormhole permission {0} {1}"
+msgid "GetDataHandlers / HandleTeleport rejected p2p wormhole permission {0} {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1586
@@ -3897,15 +3712,12 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1683
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1699
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleTeleportationPotion rejected not holding the correct "
-"item {0} {1}"
+msgid "GetDataHandlers / HandleTeleportationPotion rejected not holding the correct item {0} {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1642
 #, csharp-format
-msgid ""
-"GetDataHandlers / HandleTeleportationPotion rejected permissions {0} {1}"
+msgid "GetDataHandlers / HandleTeleportationPotion rejected permissions {0} {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1822
@@ -3928,9 +3740,7 @@ msgid "GetDataHandlers / OnPlayerUpdate rejected from null player."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:136
-msgid ""
-"GetDataHandlers / rejecting player for name prefix starting with tsi: or "
-"tsn:."
+msgid "GetDataHandlers / rejecting player for name prefix starting with tsi: or tsn:."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1327
@@ -3948,9 +3758,7 @@ msgid "Gives another player a buff or debuff for an amount of time."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ModerationCommands.cs:170
-msgid ""
-"Gives another player a buff or debuff for an amount of time. Putting -1 for "
-"time will set it to 415 days."
+msgid "Gives another player a buff or debuff for an amount of time. Putting -1 for time will set it to 415 days."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:111
@@ -3974,9 +3782,7 @@ msgid "Gives yourself a buff or debuff for an amount of time."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ModerationCommands.cs:143
-msgid ""
-"Gives yourself a buff or debuff for an amount of time. Putting -1 for time "
-"will set it to 415 days."
+msgid "Gives yourself a buff or debuff for an amount of time. Putting -1 for time will set it to 415 days."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:19
@@ -4001,9 +3807,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/LandGolfBallInCupHandler.cs:114
 #, csharp-format
-msgid ""
-"GolfPacketHandler: Player did not have create a golf club projectile the "
-"last 5 seconds! - From {0}"
+msgid "GolfPacketHandler: Player did not have create a golf club projectile the last 5 seconds! - From {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:139
@@ -4023,15 +3827,11 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:583
 #, csharp-format
-msgid ""
-"Group \"{0}\" is referencing parent group {1} which is already part of the "
-"parent chain. Parent reference removed."
+msgid "Group \"{0}\" is referencing parent group {1} which is already part of the parent chain. Parent reference removed."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:528
-msgid ""
-"Group \"superadmin\" is defined in the database even though it's a reserved "
-"group name."
+msgid "Group \"superadmin\" is defined in the database even though it's a reserved group name."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:642
@@ -4091,16 +3891,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:571
 #, csharp-format
-msgid ""
-"Group {0} is referencing a non existent parent group {1}, parent reference "
-"was removed."
+msgid "Group {0} is referencing a non existent parent group {1}, parent reference was removed."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:576
 #, csharp-format
-msgid ""
-"Group {0} is referencing itself as parent group; parent reference was "
-"removed."
+msgid "Group {0} is referencing itself as parent group; parent reference was removed."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:24
@@ -4140,9 +3936,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1918
 #, csharp-format
-msgid ""
-"HandleSyncCavernMonsterType: Player is trying to modify NPC "
-"cavernMonsterType; this is a crafted packet! - From {0}"
+msgid "HandleSyncCavernMonsterType: Player is trying to modify NPC cavernMonsterType; this is a crafted packet! - From {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:571
@@ -4207,64 +4001,44 @@ msgid "ID: {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1789
-msgid ""
-"If this player wasn't hacking, please report the damage threshold they were "
-"disabled for to TShock so we can improve this!"
+msgid "If this player wasn't hacking, please report the damage threshold they were disabled for to TShock so we can improve this!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2552
-msgid ""
-"If this player wasn't hacking, please report the HealOtherPlayer threshold "
-"they were disabled for to TShock so we can improve this!"
+msgid "If this player wasn't hacking, please report the HealOtherPlayer threshold they were disabled for to TShock so we can improve this!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1697
-msgid ""
-"If this player wasn't hacking, please report the projectile create threshold "
-"they were disabled for to TShock so we can improve this!"
+msgid "If this player wasn't hacking, please report the projectile create threshold they were disabled for to TShock so we can improve this!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1231
-msgid ""
-"If this player wasn't hacking, please report the tile kill threshold they "
-"were disabled for to TShock so we can improve this!"
+msgid "If this player wasn't hacking, please report the tile kill threshold they were disabled for to TShock so we can improve this!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2117
-msgid ""
-"If this player wasn't hacking, please report the tile liquid threshold they "
-"were disabled for to TShock so we can improve this!"
+msgid "If this player wasn't hacking, please report the tile liquid threshold they were disabled for to TShock so we can improve this!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1249
-msgid ""
-"If this player wasn't hacking, please report the tile place threshold they "
-"were disabled for to TShock so we can improve this!"
+msgid "If this player wasn't hacking, please report the tile place threshold they were disabled for to TShock so we can improve this!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:844
-msgid ""
-"If this was not skeletron prime related, please report to TShock what "
-"happened."
+msgid "If this was not skeletron prime related, please report to TShock what happened."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:397
 #, csharp-format
-msgid ""
-"If username differs from player name, use {0}register <username> <password> "
-"instead."
+msgid "If username differs from player name, use {0}register <username> <password> instead."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:37
-msgid ""
-"If you are locked out of all admin accounts, ask for help on https://tshock."
-"co/"
+msgid "If you are locked out of all admin accounts, ask for help on https://tshock.co/"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:416
-msgid ""
-"If you do not specify a radius, it will use a default radius of 50 around "
-"your character."
+msgid "If you do not specify a radius, it will use a default radius of 50 around your character."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:224
@@ -4273,21 +4047,15 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:78
 #, csharp-format
-msgid ""
-"If you understand, please {0}login <username> <password> now, and then type "
-"{0}setup."
+msgid "If you understand, please {0}login <username> <password> now, and then type {0}setup."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1289
-msgid ""
-"If you're seeing this message and you know what that player did, please "
-"report it to TShock for further investigation."
+msgid "If you're seeing this message and you know what that player did, please report it to TShock for further investigation."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:112
-msgid ""
-"Ignores unsupported trailing arguments and falls back to the base give "
-"behavior."
+msgid "Ignores unsupported trailing arguments and falls back to the base give behavior."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:1735
@@ -4300,9 +4068,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/EmojiHandler.cs:17
 #, csharp-format
-msgid ""
-"IllegalPerSe: Emoji packet rejected for ID spoofing. Expected {0}, received "
-"{1} from {2}."
+msgid "IllegalPerSe: Emoji packet rejected for ID spoofing. Expected {0}, received {1} from {2}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:250
@@ -4324,8 +4090,7 @@ msgid "Infinite group parenting ({0})"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:435
-msgid ""
-"info <region> [-d] - Displays several information about the given region."
+msgid "info <region> [-d] - Displays several information about the given region."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:633
@@ -4348,29 +4113,21 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:755
 #, csharp-format
-msgid ""
-"Invalid Ban Add syntax. Refer to {0} for details on how to use the {1} "
-"command"
+msgid "Invalid Ban Add syntax. Refer to {0} for details on how to use the {1} command"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:756
 #, csharp-format
-msgid ""
-"Invalid Ban Del syntax. Refer to {0} for details on how to use the {1} "
-"command"
+msgid "Invalid Ban Del syntax. Refer to {0} for details on how to use the {1} command"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:757
 #, csharp-format
-msgid ""
-"Invalid Ban Details syntax. Refer to {0} for details on how to use the {1} "
-"command"
+msgid "Invalid Ban Details syntax. Refer to {0} for details on how to use the {1} command"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/UserManager.cs:483
-msgid ""
-"Invalid BCrypt work factor in config file! Creating new hash using default "
-"work factor."
+msgid "Invalid BCrypt work factor in config file! Creating new hash using default work factor."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:301
@@ -4382,10 +4139,10 @@ msgstr ""
 msgid "Invalid boss type!"
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
 #: ../../src/Plugins/TShockAPI/Commands.cs:206
-#: ../../src/Plugins/TShockAPI/Commanding/TShockTerminalCommandDispatchAdapter.cs:71
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
+#: ../../src/Plugins/TShockAPI/Commanding/TShockTerminalCommandDispatchAdapter.cs:71
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:148
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:337
 #, csharp-format
@@ -4427,13 +4184,9 @@ msgid "Invalid invasion type. Valid invasion types: {0}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldCommands.cs:95
-msgid ""
-"Invalid invasion type. Valid invasion types: goblins, snowmen, pirates, "
-"pumpkinmoon, frostmoon, martians."
+msgid "Invalid invasion type. Valid invasion types: goblins, snowmen, pirates, pumpkinmoon, frostmoon, martians."
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1213
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1222
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:12
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:13
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:14
@@ -4441,6 +4194,8 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:97
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:101
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ItemCommands.cs:105
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1213
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1222
 msgid "Invalid item type!"
 msgstr ""
 
@@ -4524,9 +4279,7 @@ msgid "Invalid region point selection. Expected 1 or 2."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:41
-msgid ""
-"Invalid region protection state. Expected true/false, on/off, yes/no, y/n, "
-"or 1/0."
+msgid "Invalid region protection state. Expected true/false, on/off, yes/no, y/n, or 1/0."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:53
@@ -4534,9 +4287,7 @@ msgid "Invalid region resize amount."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:883
-msgid ""
-"Invalid region resize direction. Expected one of: u/up, r/right, d/down, l/"
-"left."
+msgid "Invalid region resize direction. Expected one of: u/up, r/right, d/down, l/left."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:51
@@ -4567,16 +4318,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:374
 #, csharp-format
-msgid ""
-"Invalid subcommand! Type {0}group help for more information on valid "
-"commands."
+msgid "Invalid subcommand! Type {0}group help for more information on valid commands."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:545
 #, csharp-format
-msgid ""
-"Invalid subcommand. Type {0}{1} help for more information on valid "
-"subcommands."
+msgid "Invalid subcommand. Type {0}{1} help for more information on valid subcommands."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:234
@@ -4589,9 +4336,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldCommands.cs:575
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax:  {0}worldevent invasion [invasion type] "
-"[invasion wave]."
+msgid "Invalid syntax. Proper syntax:  {0}worldevent invasion [invasion type] [invasion wave]."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:402
@@ -4609,17 +4354,13 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:75
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:95
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}group addperm <group name> <permissions..."
-">."
+msgid "Invalid syntax. Proper syntax: {0}group addperm <group name> <permissions...>."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:14
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:222
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}group color <group name> [new "
-"color(000,000,000)]."
+msgid "Invalid syntax. Proper syntax: {0}group color <group name> [new color(000,000,000)]."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:272
@@ -4632,9 +4373,7 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:298
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:318
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}group delperm <group name> <permissions..."
-">."
+msgid "Invalid syntax. Proper syntax: {0}group delperm <group name> <permissions...>."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:359
@@ -4644,15 +4383,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:133
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}group parent <group name> [new parent "
-"group name]."
+msgid "Invalid syntax. Proper syntax: {0}group parent <group name> [new parent group name]."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:193
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}group prefix <group name> [new prefix]."
+msgid "Invalid syntax. Proper syntax: {0}group prefix <group name> [new prefix]."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:254
@@ -4662,8 +4398,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:165
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}group suffix <group name> [new suffix]."
+msgid "Invalid syntax. Proper syntax: {0}group suffix <group name> [new suffix]."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:76
@@ -4678,8 +4413,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:12
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}itemban allow <item name> <group name>."
+msgid "Invalid syntax. Proper syntax: {0}itemban allow <item name> <group name>."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:14
@@ -4689,8 +4423,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:15
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}itemban disallow <item name> <group name>."
+msgid "Invalid syntax. Proper syntax: {0}itemban disallow <item name> <group name>."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:213
@@ -4755,9 +4488,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:168
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}region protect <name> <state>. Accepted "
-"values: true/false, on/off, yes/no, y/n, 1/0."
+msgid "Invalid syntax. Proper syntax: {0}region protect <name> <state>. Accepted values: true/false, on/off, yes/no, y/n, 1/0."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:232
@@ -4778,8 +4509,7 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:514
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:523
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}region resize <region> <u/d/l/r> <amount>"
+msgid "Invalid syntax. Proper syntax: {0}region resize <region> <u/d/l/r> <amount>"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:405
@@ -4799,8 +4529,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:219
 #, csharp-format
-msgid ""
-"Invalid syntax. Proper syntax: {0}renameNPC <guide, nurse, etc.> <newname>"
+msgid "Invalid syntax. Proper syntax: {0}renameNPC <guide, nurse, etc.> <newname>"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/MaintenanceCommands.cs:109
@@ -4933,8 +4662,7 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:704
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:739
 #, csharp-format
-msgid ""
-"Invalid Ticket Number. Refer to {0} for details on how to use the {1} command"
+msgid "Invalid Ticket Number. Refer to {0} for details on how to use the {1} command"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:937
@@ -4944,9 +4672,7 @@ msgid "Invalid tile ID."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:426
-msgid ""
-"Invalid time string! Proper format: _d_h_m_s, with at least one time "
-"specifier."
+msgid "Invalid time string! Proper format: _d_h_m_s, with at least one time specifier."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandGuardAttributes.cs:177
@@ -4975,9 +4701,7 @@ msgid "Invalid user syntax. Try {0}user help."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:372
-msgid ""
-"Invalid warp name. The names 'list', 'hide', 'del' and 'add' are reserved "
-"for commands."
+msgid "Invalid warp name. The names 'list', 'hide', 'del' and 'add' are reserved for commands."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:667
@@ -5020,9 +4744,7 @@ msgid "IPv6 address '{0}' is not supported by Terraria. Skipping check."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:659
-msgid ""
-"IPv6 addresses are not supported as of yet by TShock. This rule will have no "
-"effect for now. Adding anyways."
+msgid "IPv6 addresses are not supported as of yet by TShock. This rule will have no effect for now. Adding anyways."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:174
@@ -5065,8 +4787,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/LandGolfBallInCupHandler.cs:106
 #, csharp-format
-msgid ""
-"LandGolfBallInCupHandler: Invalid golf ball projectile ID {0}! - From {1}"
+msgid "LandGolfBallInCupHandler: Invalid golf ball projectile ID {0}! - From {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/LandGolfBallInCupHandler.cs:120
@@ -5076,22 +4797,17 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/LandGolfBallInCupHandler.cs:87
 #, csharp-format
-msgid ""
-"LandGolfBallInCupHandler: Packet rejected for ID spoofing. Expected {0}, "
-"received {1} from {2}."
+msgid "LandGolfBallInCupHandler: Packet rejected for ID spoofing. Expected {0}, received {1} from {2}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/LandGolfBallInCupHandler.cs:100
 #, csharp-format
-msgid ""
-"LandGolfBallInCupHandler: Tile at packet position X:{0} Y:{1} is not a golf "
-"hole! - From {2}"
+msgid "LandGolfBallInCupHandler: Tile at packet position X:{0} Y:{1} is not a golf hole! - From {2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/LandGolfBallInCupHandler.cs:94
 #, csharp-format
-msgid ""
-"LandGolfBallInCupHandler: X and Y position is out of world bounds! - From {0}"
+msgid "LandGolfBallInCupHandler: X and Y position is out of world bounds! - From {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldCommands.cs:565
@@ -5349,9 +5065,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/NetModules/CreativeUnlocksHandler.cs:23
 #, csharp-format
-msgid ""
-"NetModuleHandler received attempt to unlock sacrifice while not in journey "
-"mode from {0}"
+msgid "NetModuleHandler received attempt to unlock sacrifice while not in journey mode from {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:899
@@ -5416,34 +5130,27 @@ msgid "No such group \"{0}\"."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:194
-msgid ""
-"Not authorized. The provided token became invalid due to group changes, "
-"please create a new token."
+msgid "Not authorized. The provided token became invalid due to group changes, please create a new token."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:186
-msgid ""
-"Not authorized. The specified API endpoint requires a token, but the "
-"provided token was not valid."
+msgid "Not authorized. The specified API endpoint requires a token, but the provided token was not valid."
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:95
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:101
+#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 msgid "Not authorized. The specified API endpoint requires a token."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:200
 #, csharp-format
-msgid ""
-"Not authorized. User \"{0}\" has no access to use the specified API endpoint."
+msgid "Not authorized. User \"{0}\" has no access to use the specified API endpoint."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:305
 #, csharp-format
-msgid ""
-"Not logged in or Invalid syntax. Proper syntax: {0}password <oldpassword> "
-"<newpassword>."
+msgid "Not logged in or Invalid syntax. Proper syntax: {0}password <oldpassword> <newpassword>."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/UserManager.cs:458
@@ -5481,8 +5188,7 @@ msgid "Overrides one player's server-side character data."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:51
-msgid ""
-"Overrides server-side character data from a player's current local state."
+msgid "Overrides server-side character data from a player's current local state."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/PaginationTools.cs:105
@@ -5510,9 +5216,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:575
 #, csharp-format
-msgid ""
-"Password change attempt for {0} failed for an unknown reason. Check the "
-"server console for more details."
+msgid "Password change attempt for {0} failed for an unknown reason. Check the server console for more details."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:564
@@ -5568,9 +5272,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:72
 #, csharp-format
-msgid ""
-"Player \"{0}\" has to reconnect first, because they need to delete their "
-"trash."
+msgid "Player \"{0}\" has to reconnect first, because they need to delete their trash."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:64
@@ -5652,9 +5354,7 @@ msgid "Please close NPC windows before logging out."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Whitelist.cs:89
-msgid ""
-"Please report this to the TShock team if needed: https://github.com/Pryaxis/"
-"TShock/issues"
+msgid "Please report this to the TShock team if needed: https://github.com/Pryaxis/TShock/issues"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:364
@@ -5718,9 +5418,7 @@ msgid "Projectile damage is higher than {0}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:436
-msgid ""
-"protect <name> <state> - Sets whether the tiles inside the region are "
-"protected or not. Accepted values: true/false, on/off, yes/no, y/n, 1/0."
+msgid "protect <name> <state> - Sets whether the tiles inside the region are protected or not. Accepted values: true/false, on/off, yes/no, y/n, 1/0."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/RegionHandler.cs:151
@@ -5843,8 +5541,7 @@ msgid "Region owner: {0}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:134
-msgid ""
-"Region points need to be defined first. Use /region set 1 and /region set 2."
+msgid "Region points need to be defined first. Use /region set 1 and /region set 2."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:389
@@ -5990,10 +5687,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/RequestTileEntityInteractionHandler.cs:31
 #, csharp-format
-msgid ""
-"RequestTileEntityInteractionHandler: Rejected packet due to lack of building "
-"permissions! - From {0} | Position X:{1} Y:{2}, TileEntity type: {3}, Tile "
-"type: {4}"
+msgid "RequestTileEntityInteractionHandler: Rejected packet due to lack of building permissions! - From {0} | Position X:{1} Y:{2}, TileEntity type: {3}, Tile type: {4}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:146
@@ -6154,15 +5848,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:811
 #, csharp-format
-msgid ""
-"Server side characters is enabled! Please {0}register or {0}login to play!"
+msgid "Server side characters is enabled! Please {0}register or {0}login to play!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:76
 #, csharp-format
-msgid ""
-"Server-side character data from \"{0}\" has been replaced by their current "
-"local data."
+msgid "Server-side character data from \"{0}\" has been replaced by their current local data."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:60
@@ -6247,9 +5938,7 @@ msgid "Shadewood Tree"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:51
-msgid ""
-"Share your server, talk with admins, and chill on GitHub & Discord. -- "
-"https://tshock.co/"
+msgid "Share your server, talk with admins, and chill on GitHub & Discord. -- https://tshock.co/"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:498
@@ -6439,9 +6128,7 @@ msgid "Skipping SSC save (due to tshock.ignore.ssc) for {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldCommands.cs:494
-msgid ""
-"Slime rain cannot be activated during normal rain. Stop the normal rainstorm "
-"and try again."
+msgid "Slime rain cannot be activated during normal rain. Stop the normal rainstorm and try again."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:363
@@ -6503,9 +6190,7 @@ msgid "Spawns mobs around your current location."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Rest/Rest.cs:434
-msgid ""
-"Specified API endpoint doesn't exist. Refer to the documentation for a list "
-"of valid endpoints."
+msgid "Specified API endpoint doesn't exist. Refer to the documentation for a list of valid endpoints."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:88
@@ -6528,8 +6213,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:623
 #, csharp-format
-msgid ""
-"Stack cheat detected. Remove Defender's Forge item {0} ({1}) and then rejoin."
+msgid "Stack cheat detected. Remove Defender's Forge item {0} ({1}) and then rejoin."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:524
@@ -6714,8 +6398,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/SyncTilePickingHandler.cs:21
 #, csharp-format
-msgid ""
-"SyncTilePickingHandler: X and Y position is out of world bounds! - From {0}"
+msgid "SyncTilePickingHandler: X and Y position is out of world bounds! - From {0}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1655
@@ -6817,8 +6500,7 @@ msgid "Temporary region set points have been removed."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:72
-msgid ""
-"Temporary system access has been given to you, so you can run one command."
+msgid "Temporary system access has been given to you, so you can run one command."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:52
@@ -6830,8 +6512,7 @@ msgid "That group does not exist."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/BanManager.cs:244
-msgid ""
-"The ban is invalid because a current ban for this identifier already exists."
+msgid "The ban is invalid because a current ban for this identifier already exists."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/BanManager.cs:272
@@ -6852,9 +6533,7 @@ msgid "The default usergroup could not be found."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:235
-msgid ""
-"The default usergroup could not be found. This may indicate a typo in the "
-"configuration file, or that the group was renamed or deleted."
+msgid "The default usergroup could not be found. This may indicate a typo in the configuration file, or that the group was renamed or deleted."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1692
@@ -6908,9 +6587,7 @@ msgid "The guest group could not be found."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:230
-msgid ""
-"The guest group could not be found. This may indicate a typo in the "
-"configuration file, or that the group was renamed or deleted."
+msgid "The guest group could not be found. This may indicate a typo in the configuration file, or that the group was renamed or deleted."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:518
@@ -6937,17 +6614,13 @@ msgstr ""
 msgid "The message was broadcasted successfully"
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:342
 #: ../../src/Plugins/TShockAPI/PaginationTools.cs:185
-msgid ""
-"The method referenced by LineFormatter has thrown an exception. See inner "
-"exception for details."
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:342
+msgid "The method referenced by LineFormatter has thrown an exception. See inner exception for details."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/PaginationTools.cs:247
-msgid ""
-"The method represented by termFormatter has thrown an exception. See inner "
-"exception for details."
+msgid "The method represented by termFormatter has thrown an exception. See inner exception for details."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:469
@@ -6967,9 +6640,7 @@ msgid "The permissions have been removed from all of the groups in the system."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:128
-msgid ""
-"The player's character data was successfully uploaded from their initial "
-"connection."
+msgid "The player's character data was successfully uploaded from their initial connection."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Whitelist.cs:81
@@ -7018,9 +6689,7 @@ msgid "The target player has not logged in yet."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:114
-msgid ""
-"The targeted user cannot have their data uploaded, because they are not a "
-"player."
+msgid "The targeted user cannot have their data uploaded, because they are not a player."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:449
@@ -7103,8 +6772,7 @@ msgid "There is already a Wall of Flesh."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:205
-msgid ""
-"There was an error processing your login or authentication related request."
+msgid "There was an error processing your login or authentication related request."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:185
@@ -7150,16 +6818,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:171
 #, csharp-format
-msgid ""
-"To get rid of NPCs without making them drop items, use the {0} command "
-"instead."
+msgid "To get rid of NPCs without making them drop items, use the {0} command instead."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:265
 #, csharp-format
-msgid ""
-"To mute a player without broadcasting to chat, use the command with {0} "
-"instead of {1}"
+msgid "To mute a player without broadcasting to chat, use the command with {0} instead of {1}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:177
@@ -7280,8 +6944,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:623
 #, csharp-format
-msgid ""
-"TShock / OnChat truncating excessive chat message length of {0}/{1} from {2}"
+msgid "TShock / OnChat truncating excessive chat message length of {0}/{1} from {2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:765
@@ -7294,15 +6957,11 @@ msgid "TShock command permission tokens cannot be empty."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:185
-msgid ""
-"TShock Notice: setup-code.txt is still present, and the code located in that "
-"file will be used."
+msgid "TShock Notice: setup-code.txt is still present, and the code located in that file will be used."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:163
-msgid ""
-"TShock will now disable the initial setup system and remove setup-code.txt "
-"as it is no longer needed."
+msgid "TShock will now disable the initial setup system and remove setup-code.txt as it is no longer needed."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:25
@@ -7449,14 +7108,11 @@ msgid "Unable to parse command '{0}' from player {1}."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:666
-msgid ""
-"Unable to parse command. Please contact an administrator for assistance."
+msgid "Unable to parse command. Please contact an administrator for assistance."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:595
-msgid ""
-"Unable to spawn a Wall of Flesh based on its current state or your current "
-"location."
+msgid "Unable to spawn a Wall of Flesh based on its current state or your current location."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/UserManager.cs:609
@@ -7498,9 +7154,7 @@ msgid "Unrecognized player direction"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1303
-msgid ""
-"Unrecognized special effect (Packet 51). Please report this to the TShock "
-"developers."
+msgid "Unrecognized special effect (Packet 51). Please report this to the TShock developers."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/UserManager.cs:244
@@ -7512,8 +7166,7 @@ msgid "Uploads another player's join-state SSC data."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:91
-msgid ""
-"Uploads player join-state local data into server-side character storage."
+msgid "Uploads player join-state local data into server-side character storage."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:92
@@ -7551,9 +7204,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/CommandExecutor.cs:278
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:2109
-msgid ""
-"Use tsi:[number] or tsn:[username] to distinguish between user IDs and "
-"usernames."
+msgid "Use tsi:[number] or tsn:[username] to distinguish between user IDs and usernames."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:11
@@ -7580,9 +7231,9 @@ msgstr ""
 msgid "User {0} could not be added. Check console for details."
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:336
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:468
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:610
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:336
 #, csharp-format
 msgid "User {0} does not exist."
 msgstr ""
@@ -7612,9 +7263,7 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:138
 #: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:144
 #: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:152
-msgid ""
-"Username or password may be incorrect or this account may not have "
-"sufficient privileges."
+msgid "Username or password may be incorrect or this account may not have sufficient privileges."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Bouncer.cs:2216
@@ -7938,9 +7587,9 @@ msgstr ""
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandRefResolver.cs:150
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:367
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:390
+#: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:540
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:407
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:429
-#: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:540
 msgid "You do not have access to this command."
 msgstr ""
 
@@ -7996,8 +7645,8 @@ msgstr ""
 msgid "You do not have permission to modify a Hat Rack in a protected area!"
 msgstr ""
 
-#: ../../src/Plugins/TShockAPI/Handlers/RequestTileEntityInteractionHandler.cs:25
 #: ../../src/Plugins/TShockAPI/Handlers/DisplayDollItemSyncHandler.cs:25
+#: ../../src/Plugins/TShockAPI/Handlers/RequestTileEntityInteractionHandler.cs:25
 msgid "You do not have permission to modify a Mannequin in a protected area!"
 msgstr ""
 
@@ -8014,9 +7663,7 @@ msgid "You do not have permission to modify the rain strength of the server."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/NetModules/CreativePowerHandler.cs:87
-msgid ""
-"You do not have permission to modify the tile placement range of your "
-"character."
+msgid "You do not have permission to modify the tile placement range of your character."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/NetModules/CreativePowerHandler.cs:80
@@ -8032,8 +7679,7 @@ msgid "You do not have permission to modify the wind strength of the server."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Handlers/NetModules/CreativePowerHandler.cs:88
-msgid ""
-"You do not have permission to modify the world difficulty of the server."
+msgid "You do not have permission to modify the world difficulty of the server."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:233
@@ -8157,9 +7803,7 @@ msgid "You do not have permission to toggle godmode."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:88
-msgid ""
-"You do not have permission to upload another player's character join-state "
-"server-side-character data."
+msgid "You do not have permission to upload another player's character join-state server-side-character data."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1372
@@ -8180,9 +7824,7 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commands.cs:178
 #, csharp-format
-msgid ""
-"You entered a space after {0} instead of a command. Type {0}help for a list "
-"of valid commands."
+msgid "You entered a space after {0} instead of a command. Type {0}help for a list of valid commands."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:280
@@ -8221,8 +7863,7 @@ msgid "You have changed {0}'s group to {1} for {2}"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1907
-msgid ""
-"You have fallen in hardcore mode, and your items have been lost forever."
+msgid "You have fallen in hardcore mode, and your items have been lost forever."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:103
@@ -8295,9 +7936,7 @@ msgid "You may now receive whispers from other players."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:389
-msgid ""
-"You may wish to consider removing the tshock.ignore.ssc permission or "
-"negating it for this player."
+msgid "You may wish to consider removing the tshock.ignore.ssc permission or negating it for this player."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/RegionManager.cs:648
@@ -8309,13 +7948,11 @@ msgid "You must provide a setup code!"
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1297
-msgid ""
-"You must set ForceTime to normal via config to use the Enchanted Moondial."
+msgid "You must set ForceTime to normal via config to use the Enchanted Moondial."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1275
-msgid ""
-"You must set ForceTime to normal via config to use the Enchanted Sundial."
+msgid "You must set ForceTime to normal via config to use the Enchanted Sundial."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:459
@@ -8323,8 +7960,8 @@ msgid "You must spawn the Wall of Flesh in hell."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commands.cs:224
-#: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:193
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandValuePolicies.cs:70
+#: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:193
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1130
 msgid "You must use this command in specific server."
 msgstr ""
@@ -8399,15 +8036,12 @@ msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:251
 #: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:253
-msgid ""
-"Your account's group could not be loaded. Please contact server "
-"administrators about this."
+msgid "Your account's group could not be loaded. Please contact server administrators about this."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:618
 #, csharp-format
-msgid ""
-"Your chat message exceeds the maximum length of {1} characters. ({0}/{1})."
+msgid "Your chat message exceeds the maximum length of {1} characters. ({0}/{1})."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:597
@@ -8419,9 +8053,7 @@ msgid "Your client sent a blank character name."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/MiscHandler.cs:512
-msgid ""
-"Your client sent a blank UUID. Configure it to send one or use a different "
-"client."
+msgid "Your client sent a blank UUID. Configure it to send one or use a different client."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/DB/RegionManager.cs:74
@@ -8443,16 +8075,12 @@ msgid "Your inventory seems full."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerDataCommands.cs:131
-msgid ""
-"Your local character data, from your initial connection, has been uploaded "
-"to the server."
+msgid "Your local character data, from your initial connection, has been uploaded to the server."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:49
 #, csharp-format
-msgid ""
-"Your new account has been verified, and the {0}setup system has been turned "
-"off."
+msgid "Your new account has been verified, and the {0}setup system has been turned off."
 msgstr ""
 
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:1006
