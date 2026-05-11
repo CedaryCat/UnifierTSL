@@ -77,6 +77,8 @@ These are reachable directions, even though the launcher does not currently ship
 | 🛡 **Bundled TShock port** | Ships with a USP-adapted TShock baseline ready for use |
 | 💻 **Per-context console isolation** | Independent, auto-reconnecting console I/O windows for each world context, plus semantic readline prompts and live status bars |
 | 🚀 **RID-targeted publishing** | Publisher produces reproducible, runtime-specific directory trees |
+| ⚡ **Command System V2** | A brand-new declarative command framework — 200+ TShock commands already migrated, with smart context-aware completion built in. Plugins define commands as structured declarations; the framework handles binding, permissions, output, and audit logging across terminal, player, and REST endpoints |
+| 🧪 **Atelier REPL** | A Roslyn-powered C# workspace running inside the live runtime. Write and run code against real server state, get IDE-quality completion and diagnostics, and iterate without restarting — a proper workbench for operators and developers alike |
 
 ---
 
@@ -555,6 +557,8 @@ graph LR
 | **Config registration** | Configs stored in `config/<PluginName>/`, supports auto-reload (`TriggerReloadOnExternalChange(true)`) |
 | **Collectible contexts** | `ModuleLoadContext` enables unloadable plugin domains |
 
+Command System V2 is the recommended way to expose commands from plugins. Controllers are declared with attributes, and the framework handles discovery, endpoint binding, parameter parsing, and permission checks automatically. The same declaration also drives completion candidates, help text generation, and audit logging — so there is no separate usage string to maintain.
+
 → Full guide: [Plugin Development Guide](./docs/dev-plugin.md)
 
 ---
@@ -595,6 +599,8 @@ This table reflects the currently maintained/documented packaging targets, not e
 | `linux-arm64` | ❌ Not supported yet |
 | `linux-arm` | ⚠️ Partial support / needs manual verification |
 | `osx-x64` | ✅ Supported |
+
+If you want to inspect or script against a running world without writing a full plugin, Atelier REPL gives you a Roslyn workspace attached to the live runtime. You can run persistent C# sessions, query server state, call plugin APIs, and run background tasks — all without restarting. See [docs/dev-overview.md](./docs/dev-overview.md#28-atelier-repl) for session setup and meta-command reference.
 
 ---
 

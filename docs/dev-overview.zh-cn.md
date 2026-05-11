@@ -15,6 +15,8 @@
   - [2.4 网络和协调器](#24-networking--coordinator)
   - [2.5 日志记录基础设施](#25-logging-infrastructure)
   - [2.6 配置服务](#26-configuration-service)
+  - [2.7 命令系统 V2](#27-命令系统-v2)
+  - [2.8 Atelier REPL](#28-atelier-repl)
 - [3. USP 集成点](#3-usp-integration-points)
 - [4. 公共 API 接口](#4-public-api-surface)
   - [4.1 门面 (`UnifierApi`)](#41-facade-unifierapi)
@@ -59,6 +61,8 @@
 - `ModuleAssemblyLoader` – 负责模块暂存、依赖项提取、可收集的加载上下文和卸载顺序。
 - `EventHub` – 中央事件注册表，将 MonoMod detour 接入按优先级排序的事件管道。
 - `Logging` 子系统 – 轻量级、分配友好的日志记录，具有元数据注入和可插拔写入器。
+- `CommandSystem` – 声明式命令框架：命令目录、端点编译器、分发器、Prompt 投影以及审计日志集成。
+- `AtelierPlugin` + `ReplSession` – 基于 Roslyn 的交互式 REPL，提供持久会话、实时诊断、代码补全以及基于 Surface 的窗口化交互界面。
 
 <a id="2-core-services--subsystems"></a>
 ## 2. 核心服务和子系统
@@ -1506,8 +1510,171 @@ Output in Server1's console window with server-specific colors
 - 启动器设置的启动优先级是 `config/config.json` -> CLI 覆盖 -> 缺失端口/密码时的交互式补全，并会把启动阶段生效快照回写到 `config/config.json`。启动完成后，对 `config/config.json` 的修改会应用到支持热重载的启动器设置。
 - 根配置热重载会应用 `launcher.serverPassword`、`launcher.joinServer`、追加式 `launcher.autoStartServers`、通过重绑监听器实现的 `launcher.listenPort`、`launcher.colorfulConsoleStatus`，以及 `launcher.consoleStatus`。
 
-<a id="3-usp-integration-points"></a>
-## 3. USP 集成点
+<a id="27-命令系统-v2"></a>
+### 2.7 命令系统 V2
+
+命令系统 v2 用声明式、属性驱动的框架取代了传统的字符串回调模式。控制器是 `static` 类，动作是静态方法。框架在安装时完成发现，将命令编译为各端点专属的目录，并统一处理分发、参数绑定、权限检查和输出格式化——这一切都来自同一套声明。
+
+<details>
+<summary><strong>展开命令系统 V2 实现细节深挖</strong></summary>
+
+#### 架构概述
+
+整个系统分为五个层次，各自负责不同的关切点：
+
+**发现层**（`src/UnifierTSL/Commanding`）：`CommandSystemDiscovery` 通过反射扫描控制器类型，构建 `CommandCatalog`——一份包含所有已注册命令、动作路径、参数签名和元数据的不可变快照。反射只在安装时发生一次，运行时分发不再触碰它。
+
+**编译层**（`src/UnifierTSL/Commanding/Endpoints`）：`CommandEndpointCatalogCompiler` 将通用目录编译为各端点专属的绑定。每种端点类型（终端、TShock 玩家、REST）都有自己的上下文要求。不满足端点约束的动作会在编译阶段就被排除，而不是等到分发时才处理。
+
+**分发层**（`src/UnifierTSL/Commanding/Execution`）：`CommandDispatchCoordinator` 接收原始输入，通过 `CommandLineLexer` 进行词法分析，路由到匹配的根命令和动作，执行守卫检查，绑定参数，调用动作，并将 `CommandOutcome` 交给相应的输出写入器。
+
+**Prompt 层**（`src/UnifierTSL/Commanding/Prompting`）：`CommandPrompting` 将端点绑定投影为 `PromptAlternativeSpec` 对象。驱动执行的同一份命令定义，同样驱动补全候选、语义高亮和参数提示。
+
+**TShock 层**（`src/Plugins/TShockAPI/Commanding`）：添加了 TShock 专属的端点类型、权限模型、领域绑定器（玩家、组、区域、warp 等）以及审计日志集成。核心层保持通用性，TShock 语义完全留在插件层。更重要的是，这里是对 Command System V2 的接入与扩展，而不是另一套平行命令栈；因此面向 TShock 的插件通常可以直接复用这层现成表面，而不必自己再发明一座命令桥。
+
+落到职责划分上，UTSL-TS 这一层的命令架构大致分成三段：
+
+- **UTSL core 拥有中立命令引擎**：发现、目录构建、端点编译、分发、通用绑定规则和 Prompt 投影。
+- **TShock 拥有面向游戏/管理的适配层**：玩家/REST 端点、TShock 权限语义、领域绑定器，以及 TShock 专属的结果输出与审计行为。
+- **插件作者选择最贴近需求的现成表面**：如果你做的是 TShock 风格的管理/游戏命令，通常就应当直接挂在 TShock 这一层，而不是再用原始 V2 基元把同一套语义重写一遍。
+
+#### 数据流动
+
+```
+CommandSystem.Install(configure)
+    ↓
+CommandSystemDiscovery → CommandCatalog（不可变快照）
+    ↓
+CommandEndpointCatalogCompiler → 各端点的根命令/动作绑定
+    ↓
+CommandPrompting → PromptAlternativeSpec（补全 / 高亮）
+
+[用户输入到达]
+    ↓
+CommandDispatchCoordinator
+    ↓
+CommandLineLexer：词法分析 → 前缀、根命令、参数
+    ↓
+CommandEndpointDispatcher：路径匹配 → 守卫检查 → 参数绑定
+    ↓
+动作被调用 → CommandOutcome
+    ↓
+OutcomeWriter：receipt + attachment + log → 终端 / 玩家 / REST
+```
+
+#### 不可变目录与原子替换
+
+`CommandSystem` 内部维护一个注册字典。每次安装或卸载时，都会在注册锁内重新构建 `CommandSystemState`，然后替换当前快照。外部读取者通过 `Volatile.Read` 消费该快照，因此始终能看到一致状态。注册 ID 保证了跨重建的排序稳定性，这对帮助文本和补全候选的稳定性很重要。
+
+`ValidateConflicts` 在安装阶段运行，在任何用户触发歧义之前就捕获重复的根命令名称和别名。
+
+#### 静态控制器与无状态原则
+
+`CommandSystemDiscovery` 要求控制器必须是带静态方法的 `static` 类。这是一个有意为之的约束：控制器是声明容器，而不是服务实例。运行时状态通过注入参数流入（`CommandInvocationContext`、`CancellationToken`，以及像 `ServerContext`、`TSExecutionContext` 这样的 `[FromAmbientContext]` 值）。这使得目录易于快照、重建和卸载，同时防止插件将可变实例状态塞进命令生命周期。
+
+#### 端点绑定校验
+
+端点编译器在编译阶段就验证参数约束。如果某个动作要求服务器作用域的 ambient 值，例如 `[FromAmbientContext] ServerContext`，但端点无法提供该上下文，编译会在安装时就失败，而不是等到分发时才暴露问题。
+
+#### Mismatch Handler
+
+每个控制器最多可以挂载一个 `[MismatchHandler]`。当根命令匹配但动作路径或参数不匹配时，它会被触发。Mismatch handler 只能消费注入值，不能声明用户绑定的参数——这防止了错误处理演变成第二套命令解析逻辑。
+
+#### 参数绑定来源
+
+| 来源 | 说明 |
+|------|------|
+| 用户 token | 命令行中的位置参数 |
+| 剩余文本 / 参数 | 最后一个绑定 token 之后的所有内容，可以是字符串或 `string[]` |
+| Flags | 从 token 列表任意位置提取的命名选项 |
+| 调用上下文 | `CommandInvocationContext` |
+| 取消令牌 | 用于长时间运行或后台操作 |
+| Ambient context | 通过 `[FromAmbientContext]` 获取的值，例如 `ServerContext`、`TSExecutionContext` 和后台活动反馈对象 |
+
+标量类型（`string`、`bool`、`int`、数值类型、`enum`）直接从 token 绑定，无需额外属性。复杂类型使用 `CommandBindingAttribute` 子类。TShock 为 `TSPlayer`、`Group`、`Region`、`Warp`、`UserAccount` 等添加了领域专属绑定器。`CommandInvocationContext` 和 `CancellationToken` 会被隐式识别；其他运行时值则通过显式标注从 ambient execution context 注入。
+
+</details>
+
+#### 最佳实践
+
+1. **保持控制器无状态** — 通过参数注入上下文，而不是字段
+2. **在 TShock 动作上声明权限** — 分发器会在绑定之前强制检查
+3. **如果目标表面就是 TShock，就优先复用 TShock 集成** — 像 `CommandTeleport` 这样的插件可以直接使用 TShock 面向 V2 的设施，而不是再搭第二层命令接入
+4. **对常用领域类型使用隐式绑定** — 在绑定注册表中注册一次即可
+5. **添加 mismatch handler** — 它是命令树面向用户的错误界面
+6. **让目录驱动帮助文本** — 不要单独维护 usage 字符串
+7. **在安装阶段验证** — 声明上下文要求，让编译器尽早捕获不匹配
+
+<a id="28-atelier-repl"></a>
+### 2.8 Atelier REPL
+
+Atelier 是一个基于 Roslyn 编译器平台、深度嵌入 Unifier 运行时的交互式 C# 工作台。它远不止"执行一段脚本"——它提供了持久会话与增量编译、实时诊断、代码补全、签名提示、语义高亮、虚拟括号配对、控制台输出重定向、后台任务追踪，以及基于 Surface 的窗口化交互界面。
+
+<details>
+<summary><strong>展开 Atelier REPL 实现细节深挖</strong></summary>
+
+#### 会话模型
+
+`ReplSession`（`src/Plugins/Atelier/Session`）维护一个随每次提交增量增长的 Roslyn `ScriptState`。支持两种执行模式：
+
+- **持久提交**：在当前 state 基础上编译并更新会话状态。变量、导入和定义在提交之间持续存在。
+- **瞬态运行**：在当前 state 基础上执行，但丢弃结果。适合一次性查询或验证，不污染会话状态。
+
+会话可以面向启动器上下文或某个正在运行的特定服务器。目标决定了哪些全局对象在作用域内——每个会话都会得到 `Launcher`、`Log`、`HostLabel`、`TargetLabel`、`Cancellation`、`PendingTasks` 和 `LastTask`；如果目标是服务器，还会额外得到 `Server`，它是对目标 `ServerContext` 的包装，并提供 dispatcher、peer 和 snapshot 等辅助访问。
+
+#### Roslyn Workspace 集成
+
+REPL 在执行状态旁边维护一个 Roslyn workspace（`src/Plugins/Atelier/Session/Roslyn`）。Workspace 追踪当前文档并提供语言服务：
+
+- **诊断**：输入时实时显示错误/警告标记，在提交之前就能发现问题
+- **补全**：由 `.` 或手动请求触发的上下文感知候选列表
+- **签名帮助**：打开方法调用括号时显示重载列表
+- **语义高亮**：超越语法层面的类型感知着色
+
+初始化后会启动一次预热，预加载 Roslyn 的核心程序集，减少首次使用的延迟。
+
+#### Draft 与 Source 的分离
+
+REPL 维护两个文本缓冲区：
+
+- **Draft**：用户看到的内容，包含虚拟括号提示等视觉辅助元素
+- **Source**：用于编译和执行的实际源代码文本
+
+这种分离让 UI 可以提供丰富的视觉反馈，同时不破坏 Roslyn 实际编译的代码。
+
+#### Surface 窗口生命周期
+
+REPL 窗口使用 `ISurfaceSession` 和交互作用域（`src/Plugins/Atelier/Presentation/Window`）。关闭时，系统会依次终止作用域、解除事件订阅、解绑控制台、取消 pending reads、排空命令队列、取消处理、释放 surface session，最后释放 `ReplSession`。这个序列确保了资源的干净释放，不留悬挂引用。
+
+#### 插件程序集引用
+
+REPL 可以引用当前加载的插件程序集，让脚本直接访问插件的公开 API。当被引用的程序集发生变化（插件重载或卸载）时，会话被标记为失效。用户会看到说明原因的提示，可以针对更新后的程序集重新打开会话。
+
+#### 元命令系统
+
+元命令以 `:` 开头，用于控制 REPL 本身而不是执行 C# 代码：
+
+| 命令 | 效果 |
+|------|------|
+| `:help` | 显示可用元命令 |
+| `:reset` | 重置会话状态 |
+| `:clear` | 清空输出区域 |
+| `:imports` | 列出 baseline/effective imports 与引用路径 |
+| `:target` | 显示当前 target 与 invocation host |
+| `:paste [on|off]` | 为多行提交切换粘贴模式 |
+| `:transient <code>` | 执行但不提交瞬态代码 |
+
+后台工作通过 `PendingTasks` 和 `LastTask` 跟踪；当前实现没有单独的 `:jobs` 或 `:cancel` 元命令。
+
+</details>
+
+#### 最佳实践
+
+1. **查询时使用瞬态模式** — 不污染会话状态
+2. **选择正确的目标上下文** — 全局状态用启动器上下文，世界相关操作用服务器上下文
+3. **留意会话失效** — 插件重载会让你的会话变为过期状态
+4. **长时间操作使用后台任务** — REPL 在任务运行期间保持响应
+5. **优先用 `:reset` 而不是关闭重开** — 只需要干净状态时，这样更快
 
 - `ServerContext` 继承了 USP 的 `RootContext`，将 Unifier 服务插入上下文（自定义控制台、数据包接收器、记录元数据）。涉及泰拉瑞亚世界/游戏状态的所有内容都会经过此上下文。
 - 网络修补程序 (`UnifiedNetworkPatcher`) 对 `NetplaySystemContext` 函数做 detour，以共享缓冲区并协调跨服务器发送/接收路径。

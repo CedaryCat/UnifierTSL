@@ -38,6 +38,14 @@
   - [8.2 发布附加模块](#82-shipping-additional-modules)
   - [8.3 多服务器协调](#83-multi-server-coordination)
   - [8.4 测试策略](#84-testing-strategies)
+- [9. 命令系统 V2](#9-命令系统-v2)
+  - [9.1 声明控制器](#91-声明控制器)
+  - [9.2 参数绑定](#92-参数绑定)
+  - [9.3 Flags](#93-flags)
+  - [9.4 守卫与权限](#94-守卫与权限)
+  - [9.5 TShock 专属绑定](#95-tshock-专属绑定)
+  - [9.6 安装与卸载](#96-安装与卸载)
+- [10. Atelier REPL](#10-atelier-repl)
 
 <a id="important-best-practices"></a>
 ## 重要实践建议
@@ -642,4 +650,266 @@ log.Info("Teleporting player", metadata: stackalloc[]
 - 使用事件提供程序来模拟玩家加入、数据包流或隔离的协调器切换。
 - 一旦根据存储库指南创建了 xUnit 项目，请考虑在 `tests/` 下构建集成测试工具。
 
+<a id="9-命令系统-v2"></a>
+## 9. 命令系统 V2
 
+命令系统 v2 提供了一种结构化、声明式的命令定义方式。你不再需要注册字符串回调，而是通过属性标注静态控制器类和方法来描述命令的结构。框架负责发现、参数绑定、权限检查、帮助文本生成、Prompt 补全以及审计日志——这一切都来自同一套声明。
+
+<a id="91-声明控制器"></a>
+### 9.1 声明控制器
+
+控制器必须是 `static` 类，动作必须是静态方法。这是有意为之的设计：控制器是声明容器，而不是服务实例。
+
+```csharp
+[CommandController("greet")]
+[Aliases("g")]
+public static class GreetCommand
+{
+    [CommandAction("player")]
+    [TShockCommand("myplugin.greet")]
+    public static CommandOutcome Player(
+        [TSPlayerRef] TSPlayer target,
+        [RemainingText] string? message = null)
+    {
+        var text = message ?? $"Hello, {target.Name}!";
+        return CommandOutcome.Success(text);
+    }
+
+    [MismatchHandler]
+    public static CommandOutcome OnMismatch()
+        => CommandOutcome.Usage("greet player <玩家名> [消息]");
+}
+```
+
+这里有几点值得注意。控制器本身只声明根命令和动作；分组是在单独的类型上通过 `[ControllerGroup(typeof(GreetCommand), ...)]` 完成的，然后再把这个组作为一个单元安装。`[TerminalCommand]` 和 `[TShockCommand]` 可以把动作暴露到不同端点，但只有当参数列表能被所有目标端点满足时才应该组合使用。`[MismatchHandler]` 在根命令匹配但动作路径或参数不匹配时触发；它只能消费注入值，不能声明用户绑定的参数。
+
+从架构上说，TShock 不是一套与 Command System V2 平行存在、彼此独立的命令栈。它是在 V2 通用设施之上完成接入和扩展，补上了 TShock 专属的端点、权限、绑定器、Prompt 行为和审计集成。因此插件作者通常不应该再自己从头搭一层玩家命令接入。如果你的目标就是 TShock 风格的命令执行，优先直接使用仓库里已经接好的 TShock 设施和模式。
+
+<a id="92-参数绑定"></a>
+### 9.2 参数绑定
+
+参数根据类型和属性从不同来源绑定：
+
+**标量类型**直接从位置 token 绑定，无需属性：
+
+```csharp
+[CommandAction("set")]
+public static CommandOutcome Set(CommandInvocationContext ctx, string key, int value) { ... }
+```
+
+**剩余文本**收集最后一个绑定 token 之后的所有内容：
+
+```csharp
+[CommandAction("say")]
+public static CommandOutcome Say(
+    [FromAmbientContext] TSExecutionContext exec,
+    [RemainingText] string message) { ... }
+```
+
+**剩余参数**以数组形式提供 token：
+
+```csharp
+[CommandAction("run")]
+public static CommandOutcome Run(CommandInvocationContext ctx, [RemainingArgs] string[] args) { ... }
+```
+
+**注入的上下文**值来自 ambient execution context。`CommandInvocationContext` 和 `CancellationToken` 会被隐式识别；其他 ambient 值应通过 `[FromAmbientContext]` 显式标注：
+
+```csharp
+[CommandAction("info")]
+public static CommandOutcome Info(
+    CommandInvocationContext ctx,   // 命令元数据、原始输入
+    [FromAmbientContext] ServerContext server,
+    [FromAmbientContext] TSExecutionContext exec,
+    CancellationToken ct)           // 用于长时间运行的操作
+{ ... }
+```
+
+<a id="93-flags"></a>
+### 9.3 Flags
+
+`CommandFlagsAttribute<TEnum>` 将 flags enum 映射到命令行 token。Flags 可以出现在命令的任意位置——它们在位置参数绑定之前就被提取出来。
+
+```csharp
+[Flags]
+public enum KickFlags
+{
+    None = 0,
+    [CommandFlag("-s")] Silent = 1,
+    [CommandFlag("-b")] Ban = 2,
+}
+
+[CommandAction("kick")]
+[TShockCommand("myplugin.kick")]
+public static CommandOutcome Kick(
+    [FromAmbientContext] TSExecutionContext exec,
+    [TSPlayerRef] TSPlayer target,
+    [CommandFlags<KickFlags>] KickFlags flags,
+    [RemainingText] string reason)
+{
+    var silent = flags.HasFlag(KickFlags.Silent);
+    // ...
+    return CommandOutcome.Success($"已踢出 {target.Name}");
+}
+```
+
+<a id="94-守卫与权限"></a>
+### 9.4 守卫与权限
+
+前置守卫会在参数绑定之前运行，后置守卫会在绑定完成但动作体执行之前运行。它们适合用于上下文可用性检查，或依赖注入上下文而不是用户输入的早期门控。
+
+```csharp
+[CommandAction("reload")]
+[TerminalCommand(AllowLauncherConsole = false)]
+[RequireRunningServer]
+public static CommandOutcome Reload([FromAmbientContext] ServerContext server) { ... }
+
+public sealed class RequireRunningServerAttribute : PreBindGuardAttribute
+{
+    public override CommandGuardResult Evaluate(CommandInvocationContext context)
+        => context.Server?.IsRunning == true
+            ? CommandGuardResult.Continue()
+            : CommandGuardResult.Fail(CommandOutcome.Error("当前没有正在运行的服务器。"));
+}
+```
+
+对于 TShock 端点，`[TShockCommand("permission.node")]` 或 `[TShockCommand(nameof(Permissions.somePermission))]` 通常已经足够——分发器会在绑定之前检查权限。守卫适用于检查依赖注入上下文而非玩家权限集的场景。
+
+<a id="95-tshock-专属绑定"></a>
+### 9.5 TShock 专属绑定
+
+TShock 为其领域类型注册了隐式绑定，因此可以直接在签名中使用：
+
+```csharp
+[CommandAction("group add")]
+[TShockCommand("tshock.group.add")]
+public static CommandOutcome GroupAdd(
+    [FromAmbientContext] TSExecutionContext exec,
+    Group group,
+    TSPlayer target)
+{ ... }
+```
+
+常用的 TShock 领域类型（如 `TSPlayer`、`Group`、`Warp`、`Region`、`UserAccount`）已经注册了隐式绑定。额外的显式绑定器包括 `[TSItemRef]`、`[NpcRef]`、`[ProjectileRef]`、`[TileRef]`、`[PageRef]`、`[CommandRef]` 和 `[WorldTime]`。是否支持贪婪短语匹配取决于具体类型或属性选项——例如 `RegionRef` 默认就是贪婪匹配，而玩家/物品绑定则可以通过属性配置切换消费模式。
+
+对于大多数游戏管理类插件，这就是默认应该走的接入路径。TShock 已经把 Command System V2 桥接到了玩家命令执行、权限检查、REST 暴露、补全/提示行为以及结果格式化这些能力上。除非你真的需要完全不同的一套表面或策略模型，否则更推荐像 `src/Plugins/CommandTeleport` 那样直接建立在 TShock 设施之上，而不是再自行设计一层命令接入。
+
+换一种更直观的说法就是：
+
+- **UTSL V2 提供中立的通用机械结构**。
+- **TShock 把这套机械结构接成 TShock 原生命令表面**。
+- **你的插件多数情况下应该直接接到这层 TShock 原生命令表面，而不是重搭一遍**。
+
+正是这种分层，让下层仍然保持通用，同时又能给插件作者提供一条“开箱即用”的高层路径来实现常见的管理/游戏命令。
+
+<a id="96-安装与卸载"></a>
+### 9.6 安装与卸载
+
+用 `[ControllerGroup]` 将控制器分组，然后在 `InitializeAsync` 中安装：
+
+```csharp
+[ControllerGroup(typeof(GreetCommand), typeof(KickCommand))]
+public sealed partial class MyCommandGroup { }
+
+// 在你的插件中：
+IDisposable? _commandRegistration;
+
+public override Task InitializeAsync(
+    IPluginConfigRegistrar configRegistrar,
+    ImmutableArray<PluginInitInfo> priorInitializations,
+    CancellationToken cancellationToken = default)
+{
+    _commandRegistration = CommandSystem.Install(static context =>
+        context.AddControllerGroup<MyCommandGroup>());
+    return Task.CompletedTask;
+}
+
+public override ValueTask DisposeAsync(bool isDisposing)
+{
+    if (isDisposing) {
+        _commandRegistration?.Dispose();
+        _commandRegistration = null;
+    }
+
+    return base.DisposeAsync(isDisposing);
+}
+```
+
+`CommandSystem.Install` 返回 `CommandInstallHandle`，也可以按 `IDisposable` 保存。对它调用 `Dispose()` 时，只会移除你的插件注册进去的那部分命令，其他命令不受影响。
+
+<a id="10-atelier-repl"></a>
+## 10. Atelier REPL
+
+Atelier 是一个运行在 Unifier 进程内部的 Roslyn 交互式 C# 工作台。它不是 IDE 的替代品，而是一个运行时探索、诊断和临时自动化的工作台。你可以访问实时的服务器状态、调用插件 API，并针对运行中的系统执行任意 C# 代码。
+
+### 打开会话
+
+从启动器控制台或某个服务器控制台使用终端命令 `repl`。当前实现只暴露终端入口，并且可以按需覆盖默认目标：
+
+```
+repl                  # 启动器控制台 -> 目标是 launcher；服务器控制台 -> 目标是当前服务器
+repl --server MyWorld # 指向一个正在运行的指定服务器
+repl --launcher       # 从服务器控制台切回 launcher 作用域
+```
+
+### 持久执行与瞬态执行
+
+默认情况下，提交是**持久的**——变量和定义在提交之间累积：
+
+```csharp
+// 第一次提交
+var serverNames = Launcher.RunningServers
+    .Select(s => s.Name)
+    .ToList();
+
+// 第二次提交——serverNames 仍然在作用域内
+serverNames.Count
+```
+
+使用 `:transient <code>` 可以进行**瞬态**执行——结果会显示，但不会写回会话状态。这很适合做一次性的探针查询，而不污染当前会话。
+
+### 访问运行时状态
+
+REPL 会注入一个 `ScriptGlobals` 主机对象。每个会话都会得到 `Launcher`、`Log`、`HostLabel`、`TargetLabel`、`Cancellation`、`PendingTasks` 和 `LastTask`。如果目标是服务器，还会额外得到 `Server`，其 `Context` 属性就是底层的 `ServerContext`。
+
+```csharp
+// 列出运行中的服务器
+Launcher.RunningServers.Select(s => s.Name)
+
+// 查看当前服务器目标
+Server?.Name
+Server?.Snapshot(TimeSpan.FromSeconds(10))
+```
+
+### 元命令
+
+元命令以 `:` 开头，用于控制 REPL 本身：
+
+| 命令 | 效果 |
+|------|------|
+| `:help` | 列出可用元命令 |
+| `:reset` | 清除会话状态（变量、导入） |
+| `:clear` | 清空输出显示 |
+| `:imports` | 显示 baseline/effective imports 与引用路径 |
+| `:target` | 显示当前 target 与 invocation host |
+| `:paste [on|off]` | 为多行源码输入切换粘贴模式 |
+| `:transient <code>` | 执行但不提交瞬态代码 |
+
+### 后台任务
+
+长时间运行的操作可以在后台执行，让 REPL 保持响应：
+
+```csharp
+var job = Task.Run(async () => {
+    await Task.Delay(5000, Cancellation);
+    return "完成";
+}, Cancellation);
+```
+
+后台任务会通过 `PendingTasks` 和 `LastTask` 暴露出来；长时间运行的代码也应该遵守 `Cancellation`。当前实现没有单独的 `:jobs` 或 `:cancel` 元命令。
+
+### 使用建议
+
+- **查询时使用瞬态模式** — `:transient <code>` 不污染会话状态
+- **留意会话失效** — 如果你引用的插件重载了，会话会被标记为过期，需要重新打开
+- **将有效的片段提炼为命令** — 一旦某个 REPL 片段被反复使用并证明有效，可以考虑将它固化为一个 `CommandAction`，让所有运维人员都能使用
