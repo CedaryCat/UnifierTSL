@@ -77,6 +77,8 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 | 🛡 **内置 TShock 移植基线** | 内置适配 USP 的 TShock 基线，开箱可用 |
 | 💻 **上下文级控制台隔离** | 默认为每个世界实例提供独立、自动重连的控制台窗口 IO，以及语义化 readline 提示与实时状态栏 |
 | 🚀 **按 RID 发布** | Publisher 生成可复现、面向目标运行时的目录结构 |
+| ⚡ **命令系统 V2** | 全新声明式命令体系——200+ 条 TShock 命令已完成迁移，并内置智能上下文感知补全。插件通过属性标注声明命令结构，框架统一处理绑定、权限、输出和审计日志，覆盖终端、玩家和 REST 三类入口 |
+| 🧪 **Atelier REPL** | 直接运行在运行时内部的 Roslyn C# 工作台。针对真实服务器状态编写并执行代码，享有媲美 IDE 的补全与诊断体验，无需重启即可迭代——运维和开发都能用得上的正经工具 |
 
 ---
 
@@ -556,6 +558,8 @@ graph LR
 | **配置注册** | 配置存放在 `config/<PluginName>/`，支持自动重载（`TriggerReloadOnExternalChange(true)`） |
 | **可回收上下文** | `ModuleLoadContext` 支持可卸载的插件域 |
 
+命令系统 V2 是插件暴露命令的推荐方式。控制器通过属性标注声明，框架负责发现、端点绑定、参数解析和权限检查，同一份声明还会自动派生出补全候选、帮助文本和审计日志，不需要单独维护 usage 字符串。完整的 API 参考和代码示例可以在插件开发指南里找到。
+
 → 完整指南：[插件开发指南](./dev-plugin.zh-cn.md)
 
 ---
@@ -596,6 +600,8 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 | `linux-arm64` | ❌ 暂不支持 |
 | `linux-arm` | ⚠️ 部分支持 / 仍需人工验证 |
 | `osx-x64` | ✅ 支持 |
+
+如果你想在不写完整插件的情况下探索或操作运行中的世界，Atelier REPL 提供了一个直接附着在运行时上的 Roslyn 工作台。你可以在持久会话里逐步构建脚本、查询服务器状态、调用插件 API，也可以把长时间运行的操作放到后台执行——整个过程不需要重启。会话配置和元命令参考可以在 [dev-overview.zh-cn.md](./dev-overview.zh-cn.md#28-atelier-repl) 里找到。
 
 ---
 

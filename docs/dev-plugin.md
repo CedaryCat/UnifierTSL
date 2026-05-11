@@ -38,6 +38,14 @@ This guide explains how to build plugins for UnifierTSL, how to take advantage o
   - [8.2 Shipping Additional Modules](#82-shipping-additional-modules)
   - [8.3 Multi-Server Coordination](#83-multi-server-coordination)
   - [8.4 Testing Strategies](#84-testing-strategies)
+- [9. Command System V2](#9-command-system-v2)
+  - [9.1 Declaring a Controller](#91-declaring-a-controller)
+  - [9.2 Parameter Binding](#92-parameter-binding)
+  - [9.3 Flags](#93-flags)
+  - [9.4 Guards and Permissions](#94-guards-and-permissions)
+  - [9.5 TShock-Specific Bindings](#95-tshock-specific-bindings)
+  - [9.6 Installing and Uninstalling](#96-installing-and-uninstalling)
+- [10. Atelier REPL](#10-atelier-repl)
 
 ## Important Best Practices
 
@@ -608,3 +616,260 @@ log.Info("Teleporting player", metadata: stackalloc[]
 - Instantiate `ServerContext` in headless tests to validate migrations against USP without running the full launcher.
 - Use event providers to simulate player joins, packet flows, or coordinator switches in isolation.
 - Consider building an integration test harness under `tests/` once the xUnit project is created per the repository guidelines.
+
+## 9. Command System V2
+
+The command system v2 gives you a structured, declarative way to define commands. Instead of registering string callbacks, you annotate static controller classes and methods with attributes. The framework handles discovery, parameter binding, permission checks, help text generation, Prompt completion, and audit logging — all from the same declarations.
+
+### 9.1 Declaring a Controller
+
+Controllers must be `static` classes. Actions must be static methods. This is intentional: controllers are declaration containers, not service instances.
+
+```csharp
+[CommandController("greet")]
+[Aliases("g")]
+public static class GreetCommand
+{
+    [CommandAction("player")]
+    [TShockCommand("myplugin.greet")]
+    public static CommandOutcome Player(
+        [TSPlayerRef] TSPlayer target,
+        [RemainingText] string? message = null)
+    {
+        var text = message ?? $"Hello, {target.Name}!";
+        return CommandOutcome.Success(text);
+    }
+
+    [MismatchHandler]
+    public static CommandOutcome OnMismatch()
+        => CommandOutcome.Usage("greet player <name> [message]");
+}
+```
+
+A few things worth noting here. The controller only declares the root and its actions; grouping happens on a separate type via `[ControllerGroup(typeof(GreetCommand), ...)]`, which you install as a unit. `[TerminalCommand]` and `[TShockCommand]` expose actions to different endpoints — you can combine them, but only when the parameter list can be satisfied by every endpoint you expose. `[MismatchHandler]` fires when the root matches but the action path or parameters don't; it can only consume injected values, not user-bound parameters.
+
+Architecturally, TShock is not a parallel command stack that happens to coexist with Command System V2. It plugs into and extends the V2 infrastructure with TShock-specific endpoints, permissions, binders, prompt behaviors, and audit integration. That means plugin authors usually should not build a separate adapter layer from scratch for player commands. If you are targeting TShock-style command execution, start from the TShock-facing facilities and patterns that already exist.
+
+### 9.2 Parameter Binding
+
+Parameters are bound from several sources depending on their type and attributes:
+
+**Scalar types** bind directly from positional tokens — no attribute needed:
+
+```csharp
+[CommandAction("set")]
+public static CommandOutcome Set(CommandInvocationContext ctx, string key, int value) { ... }
+```
+
+**Remaining text** collects everything after the last bound token:
+
+```csharp
+[CommandAction("say")]
+public static CommandOutcome Say(
+    [FromAmbientContext] TSExecutionContext exec,
+    [RemainingText] string message) { ... }
+```
+
+**Remaining args** gives you the tokens as an array:
+
+```csharp
+[CommandAction("run")]
+public static CommandOutcome Run(CommandInvocationContext ctx, [RemainingArgs] string[] args) { ... }
+```
+
+**Injected context** values come from the ambient execution context. `CommandInvocationContext` and `CancellationToken` are implicit; other ambient values should be marked with `[FromAmbientContext]`:
+
+```csharp
+[CommandAction("info")]
+public static CommandOutcome Info(
+    CommandInvocationContext ctx,   // command metadata, raw input
+    [FromAmbientContext] ServerContext server,
+    [FromAmbientContext] TSExecutionContext exec,
+    CancellationToken ct)           // for long-running ops
+{ ... }
+```
+
+### 9.3 Flags
+
+`CommandFlagsAttribute<TEnum>` maps a flags enum to command-line tokens. Flags can appear anywhere in the command — they're extracted before positional binding.
+
+```csharp
+[Flags]
+public enum KickFlags
+{
+    None = 0,
+    [CommandFlag("-s")] Silent = 1,
+    [CommandFlag("-b")] Ban = 2,
+}
+
+[CommandAction("kick")]
+[TShockCommand("myplugin.kick")]
+public static CommandOutcome Kick(
+    [FromAmbientContext] TSExecutionContext exec,
+    [TSPlayerRef] TSPlayer target,
+    [CommandFlags<KickFlags>] KickFlags flags,
+    [RemainingText] string reason)
+{
+    var silent = flags.HasFlag(KickFlags.Silent);
+    // ...
+    return CommandOutcome.Success($"Kicked {target.Name}");
+}
+```
+
+### 9.4 Guards and Permissions
+
+Pre-bind guards run before parameter binding, and post-bind guards run after binding but before the action body. They're useful for context availability checks or early permission gates that don't depend on user input.
+
+```csharp
+[CommandAction("reload")]
+[TerminalCommand(AllowLauncherConsole = false)]
+[RequireRunningServer]
+public static CommandOutcome Reload([FromAmbientContext] ServerContext server) { ... }
+
+public sealed class RequireRunningServerAttribute : PreBindGuardAttribute
+{
+    public override CommandGuardResult Evaluate(CommandInvocationContext context)
+        => context.Server?.IsRunning == true
+            ? CommandGuardResult.Continue()
+            : CommandGuardResult.Fail(CommandOutcome.Error("No server is currently running."));
+}
+```
+
+For TShock endpoints, `[TShockCommand("permission.node")]` or `[TShockCommand(nameof(Permissions.somePermission))]` is usually sufficient — the dispatcher checks permissions before binding. Guards are for cases where the check depends on injected context rather than the player's permission set.
+
+### 9.5 TShock-Specific Bindings
+
+TShock registers implicit bindings for its domain types, so you can use them directly in signatures:
+
+```csharp
+[CommandAction("group add")]
+[TShockCommand("tshock.group.add")]
+public static CommandOutcome GroupAdd(
+    [FromAmbientContext] TSExecutionContext exec,
+    Group group,
+    TSPlayer target)
+{ ... }
+```
+
+Implicit bindings are registered for common TShock domain types such as `TSPlayer`, `Group`, `Warp`, `Region`, and `UserAccount`. Additional explicit binders include `[TSItemRef]`, `[NpcRef]`, `[ProjectileRef]`, `[TileRef]`, `[PageRef]`, `[CommandRef]`, and `[WorldTime]`. Greedy phrase matching is type-specific or opt-in — for example, `RegionRef` is greedy by default, while player/item bindings expose options to switch consumption mode when you need names with spaces.
+
+For most gameplay/admin plugins, this is the default integration path you want. TShock already bridges Command System V2 into player-facing command execution, permissions, REST exposure, prompt/completion behavior, and outcome formatting. Unless you have a genuinely different surface or policy model, prefer building on the TShock facilities the same way `src/Plugins/CommandTeleport` does instead of designing your own command-access layer.
+
+Another way to think about the architecture is:
+
+- **UTSL V2 provides the neutral machinery**.
+- **TShock turns that machinery into a TShock-native command surface**.
+- **Your plugin should usually plug into that TShock-native surface, not rebuild it**.
+
+That separation is what keeps the lower layer generic while still giving plugin authors a high-level, batteries-included path for common admin/gameplay commands.
+
+### 9.6 Installing and Uninstalling
+
+Group your controllers with `[ControllerGroup]` and install them in `InitializeAsync`:
+
+```csharp
+[ControllerGroup(typeof(GreetCommand), typeof(KickCommand))]
+public sealed partial class MyCommandGroup { }
+
+// In your plugin:
+IDisposable? _commandRegistration;
+
+public override Task InitializeAsync(
+    IPluginConfigRegistrar configRegistrar,
+    ImmutableArray<PluginInitInfo> priorInitializations,
+    CancellationToken cancellationToken = default)
+{
+    _commandRegistration = CommandSystem.Install(static context =>
+        context.AddControllerGroup<MyCommandGroup>());
+    return Task.CompletedTask;
+}
+
+public override ValueTask DisposeAsync(bool isDisposing)
+{
+    if (isDisposing) {
+        _commandRegistration?.Dispose();
+        _commandRegistration = null;
+    }
+
+    return base.DisposeAsync(isDisposing);
+}
+```
+
+`CommandSystem.Install` returns a `CommandInstallHandle` (or can be held as `IDisposable`). Disposing it removes exactly the commands your plugin contributed, leaving everything else intact.
+
+## 10. Atelier REPL
+
+Atelier is a Roslyn-based interactive C# workspace that runs inside the Unifier process. It's not a replacement for your IDE — it's a runtime workbench for exploration, diagnostics, and one-off automation. You can access live server state, call plugin APIs, and run arbitrary C# against the running system.
+
+### Opening a Session
+
+Use the `repl` terminal command from the launcher console or a per-server console. The command is terminal-only in the current build, and you can optionally override the default target:
+
+```
+repl                  # launcher console -> launcher target; server console -> current server target
+repl --server MyWorld # target a specific running server
+repl --launcher       # from a server console, switch the REPL target back to launcher scope
+```
+
+### Persistent vs. Transient Execution
+
+By default, submissions are **persistent** — variables and definitions accumulate across submissions:
+
+```csharp
+// Submission 1
+var serverNames = Launcher.RunningServers
+    .Select(s => s.Name)
+    .ToList();
+
+// Submission 2 — serverNames is still in scope
+serverNames.Count
+```
+
+Run `:transient <code>` to execute code **transiently** — the result is shown, but session state is unchanged. This is useful for one-off probes you don't want to commit to the running session.
+
+### Accessing Runtime State
+
+The REPL injects a `ScriptGlobals` host object. Every session gets `Launcher`, `Log`, `HostLabel`, `TargetLabel`, `Cancellation`, `PendingTasks`, and `LastTask`. Server-targeted sessions additionally expose `Server`, whose `Context` property is the underlying `ServerContext`.
+
+```csharp
+// List running servers
+Launcher.RunningServers.Select(s => s.Name)
+
+// Inspect the current server target
+Server?.Name
+Server?.Snapshot(TimeSpan.FromSeconds(10))
+```
+
+### Meta-Commands
+
+Meta-commands start with `:` and control the REPL itself:
+
+| Command | Effect |
+|---------|--------|
+| `:help` | List available meta-commands |
+| `:reset` | Clear session state (variables, imports) |
+| `:clear` | Clear the output display |
+| `:imports` | Show baseline/effective imports and reference paths |
+| `:target` | Show the current target and invocation host |
+| `:paste [on|off]` | Toggle paste mode for multi-line source entry |
+| `:transient <code>` | Run transient code without committing it |
+
+### Background Tasks
+
+Long-running operations can run in the background so the REPL stays responsive:
+
+```csharp
+// Start a background task
+var job = Task.Run(async () => {
+    await Task.Delay(5000, Cancellation);
+    return "done";
+}, Cancellation);
+```
+
+Background tasks are surfaced through `PendingTasks` and `LastTask`, and long-running code should honor `Cancellation`. The current build does not expose separate `:jobs` or `:cancel` meta-commands.
+
+### Tips
+
+- **Use transient mode for queries** — `:transient <code>` doesn't pollute session state
+- **Watch for session invalidation** — if a plugin you referenced reloads, your session is marked stale and you'll need to reopen it
+- **Promote to a command** — once a REPL snippet proves useful, consider turning it into a proper `CommandAction` so it's available to all operators
