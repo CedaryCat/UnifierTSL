@@ -97,7 +97,6 @@ namespace UnifierTSL.Logging
         }
 
         internal int ReplayHistory(ulong afterSequenceExclusive, int maxCount, ILogHistorySink sink) {
-            ArgumentNullException.ThrowIfNull(sink);
             ArgumentOutOfRangeException.ThrowIfNegative(maxCount);
 
             lock (publishSync) {
@@ -110,8 +109,6 @@ namespace UnifierTSL.Logging
         }
 
         internal int AttachHistoryWriter(ILogWriter writer, ILogHistorySink historySink, ulong afterSequenceExclusive = 0, int maxCount = int.MaxValue) {
-            ArgumentNullException.ThrowIfNull(writer);
-            ArgumentNullException.ThrowIfNull(historySink);
             ArgumentOutOfRangeException.ThrowIfNegative(maxCount);
 
             lock (publishSync) {

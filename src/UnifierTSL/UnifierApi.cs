@@ -1,5 +1,7 @@
 using System.Globalization;
 using Terraria.Localization;
+using UnifierTSL.Surface;
+using UnifierTSL.Surface.Hosting;
 using UnifierTSL.Extensions;
 using UnifierTSL.Logging;
 
@@ -19,8 +21,15 @@ namespace UnifierTSL
         }
         public static string LibraryDirectory => AppContext.BaseDirectory;
         public static string BaseDirectory => Directory.GetCurrentDirectory();
+        public static string RootConfigPath => Path.Combine(BaseDirectory, "config", "config.json");
         public static string TranslationsDirectory => Path.Combine(BaseDirectory, "i18n");
-        public static CultureInfo TranslationCultureInfo 
-            => LanguageManager.Instance.ActiveCulture.RedirectedCultureInfo();
+        public static bool IsInteractiveConsole => Console.IsInteractive;
+        public static bool UseColorfulConsoleStatus => SurfaceRuntimeOptions.UseColorfulStatus;
+        public static CultureInfo TranslationCultureInfo {
+            get {
+                var activeCulture = LanguageManager.Instance.ActiveCulture;
+                return activeCulture?.RedirectedCultureInfo() ?? CultureInfo.InvariantCulture;
+            }
+        }
     }
 }

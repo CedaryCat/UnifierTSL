@@ -15,6 +15,8 @@ Welcome! This doc walks you through how the UnifierTSL runtime is put together o
   - [2.4 Networking & Coordinator](#24-networking--coordinator)
   - [2.5 Logging Infrastructure](#25-logging-infrastructure)
   - [2.6 Configuration Service](#26-configuration-service)
+  - [2.7 Command System V2](#27-command-system-v2)
+  - [2.8 Atelier REPL](#28-atelier-repl)
 - [3. USP Integration Points](#3-usp-integration-points)
 - [4. Public API Surface](#4-public-api-surface)
   - [4.1 Facade (`UnifierApi`)](#41-facade-unifierapi)
@@ -55,6 +57,8 @@ Welcome! This doc walks you through how the UnifierTSL runtime is put together o
 - `ModuleAssemblyLoader` – takes care of module staging, dependency extraction, collectible load contexts, and unload order.
 - `EventHub` – the central event registry that bridges MonoMod detours into priority-sorted event pipelines.
 - `Logging` subsystem – lightweight, allocation-friendly logging with metadata injection and pluggable writers.
+- `CommandSystem` – the declarative command framework: catalog, endpoint compiler, dispatcher, Prompt projection, and audit integration.
+- `AtelierPlugin` + `ReplSession` – the Roslyn-based interactive REPL, providing persistent sessions, real-time diagnostics, code completion, and a Surface-based windowed UI.
 
 ## 2. Core Services & Subsystems
 
@@ -1495,7 +1499,171 @@ For more logging examples, see `src/Plugins/TShockAPI/TShock.cs` and `src/Unifie
 - Startup precedence for launcher settings is `config/config.json` -> CLI overrides -> interactive fallback for missing port/password, and the effective startup snapshot is persisted back to `config/config.json`. After startup, edits to `config/config.json` apply to the launcher settings that support reload.
 - Root-config hot reload applies `launcher.serverPassword`, `launcher.joinServer`, additive `launcher.autoStartServers`, `launcher.listenPort` (via listener rebind), `launcher.colorfulConsoleStatus`, and `launcher.consoleStatus`.
 
-## 3. USP Integration Points
+<a id="27-command-system-v2"></a>
+### 2.7 Command System V2
+
+The command system v2 replaces the traditional string-callback model with a declarative, attribute-driven framework. Controllers are `static` classes; actions are static methods. The framework discovers these at install time, compiles them into endpoint-specific catalogs, and handles dispatch, parameter binding, permission checks, and output formatting — all from the same set of declarations.
+
+<details>
+<summary><strong>Expand Command System V2 implementation deep dive</strong></summary>
+
+#### Architecture Overview
+
+The system has five distinct layers, each handling a specific concern:
+
+**Discovery layer** (`src/UnifierTSL/Commanding`): `CommandSystemDiscovery` reflects over controller types to build a `CommandCatalog` — an immutable snapshot of all registered commands, their action paths, parameter signatures, and metadata. Reflection only happens at install time; runtime dispatch never touches it again.
+
+**Compilation layer** (`src/UnifierTSL/Commanding/Endpoints`): `CommandEndpointCatalogCompiler` takes the generic catalog and produces endpoint-specific bindings. Each endpoint type (terminal, TShock player, REST) has its own context requirements. Actions that don't satisfy an endpoint's constraints are excluded from that endpoint's catalog at compile time, not at dispatch time.
+
+**Dispatch layer** (`src/UnifierTSL/Commanding/Execution`): `CommandDispatchCoordinator` receives raw input, tokenizes it via `CommandLineLexer`, routes to the matching root and action, runs guard checks, binds parameters, invokes the action, and hands the `CommandOutcome` to the appropriate outcome writer.
+
+**Prompt layer** (`src/UnifierTSL/Commanding/Prompting`): `CommandPrompting` projects endpoint bindings into `PromptAlternativeSpec` objects. The same command definition that drives execution also drives completion candidates, semantic highlighting, and parameter hints.
+
+**TShock layer** (`src/Plugins/TShockAPI/Commanding`): Adds TShock-specific endpoint types, permission model, domain binders (player, group, region, warp, etc.), and audit log integration. The core layer stays generic; TShock semantics live entirely in the plugin. Importantly, this is an integration and extension of Command System V2 rather than a separate parallel stack, so TShock-oriented plugins can usually build directly on that existing surface instead of inventing their own command bridge.
+
+In practice, the UTSL-TS command architecture is split by ownership:
+
+- **UTSL core owns the neutral command engine**: discovery, catalog building, endpoint compilation, dispatch, generic binding rules, and prompt projection.
+- **TShock owns the game/admin-facing adaptation**: player/REST-facing endpoints, TShock permission semantics, domain binders, and TShock-specific outcome/audit behavior.
+- **Plugins choose the highest-level surface that already matches their needs**: if you are building a TShock-style admin/gameplay command, you usually attach at the TShock layer instead of re-expressing those same semantics from scratch over raw V2 primitives.
+
+#### Data Flow
+
+```
+CommandSystem.Install(configure)
+    ↓
+CommandSystemDiscovery → CommandCatalog (immutable snapshot)
+    ↓
+CommandEndpointCatalogCompiler → per-endpoint root/action bindings
+    ↓
+CommandPrompting → PromptAlternativeSpec (completion / highlighting)
+
+[User input arrives]
+    ↓
+CommandDispatchCoordinator
+    ↓
+CommandLineLexer: tokenize → prefix, root, args
+    ↓
+CommandEndpointDispatcher: path match → guard checks → parameter binding
+    ↓
+Action invoked → CommandOutcome
+    ↓
+OutcomeWriter: receipt + attachment + log → terminal / player / REST
+```
+
+#### Immutable Catalog and Atomic Swap
+
+`CommandSystem` maintains a registration dictionary. Each install or uninstall rebuilds `CommandSystemState` under the registration lock, then replaces the current snapshot. External readers consume that snapshot through `Volatile.Read`, so they always see a consistent state. Registration IDs keep ordering stable across rebuilds, which matters for help text and completion candidate stability.
+
+`ValidateConflicts` runs during install to catch duplicate root names and aliases before any user can hit the ambiguity at runtime.
+
+#### Static Controllers and the No-State Rule
+
+`CommandSystemDiscovery` requires controllers to be `static` classes with static methods. This is a deliberate constraint: controllers are declaration containers, not service instances. Runtime state flows in through injected parameters (`CommandInvocationContext`, `CancellationToken`, and `[FromAmbientContext]` values such as `ServerContext` or `TSExecutionContext`). This makes the catalog easy to snapshot, rebuild, and unload, and it prevents plugins from smuggling mutable instance state into the command lifecycle.
+
+#### Endpoint Binding Validation
+
+The endpoint compiler validates parameter constraints at compile time. If an action requires a server-scoped ambient value such as `[FromAmbientContext] ServerContext`, but the endpoint can't provide one, the compile fails at install time rather than at dispatch time. This catches mismatches before any user can trigger them.
+
+#### Mismatch Handlers
+
+Each controller can have at most one `[MismatchHandler]`. It fires when the root matches but the action path or parameters don't. Mismatch handlers can only consume injected values — they can't declare user-bound parameters. This prevents error handling from becoming a second command parser.
+
+#### Parameter Binding Sources
+
+| Source | Description |
+|--------|-------------|
+| User tokens | Positional arguments from the command line |
+| Remaining text / args | Everything after the last bound token, as string or `string[]` |
+| Flags | Named options extracted from any position in the token list |
+| Invocation context | `CommandInvocationContext` |
+| Cancellation token | For long-running or background operations |
+| Ambient context | `[FromAmbientContext]` values such as `ServerContext`, `TSExecutionContext`, and background activity feedback objects |
+
+Scalar types (`string`, `bool`, `int`, numeric types, `enum`) bind directly from tokens. Complex types use `CommandBindingAttribute` subclasses. TShock adds domain-specific binders for `TSPlayer`, `Group`, `Region`, `Warp`, `UserAccount`, and more. `CommandInvocationContext` and `CancellationToken` are recognized implicitly; other runtime values come from the ambient execution context when explicitly marked.
+
+</details>
+
+#### Best Practices
+
+1. **Keep controllers stateless** — inject context through parameters, not fields
+2. **Declare permissions on TShock actions** — the dispatcher enforces them before binding
+3. **Prefer the TShock integration when that's your target surface** — plugins like `CommandTeleport` can use the TShock-facing V2 facilities directly instead of building a second command-access layer
+4. **Use implicit bindings for common domain types** — register them once in the binding registry
+5. **Add a mismatch handler** — it's the user-facing error surface for your command tree
+6. **Let the catalog drive help text** — don't maintain separate usage strings
+7. **Validate at install time** — declare context requirements so the compiler catches mismatches early
+
+<a id="28-atelier-repl"></a>
+### 2.8 Atelier REPL
+
+Atelier is a Roslyn-based interactive C# workspace embedded in the Unifier runtime. It goes well beyond "run a script" — it provides persistent sessions with incremental compilation, real-time diagnostics, code completion, signature help, semantic highlighting, virtual bracket pairing, console output redirection, background task tracking, and a Surface-based windowed UI.
+
+<details>
+<summary><strong>Expand Atelier REPL implementation deep dive</strong></summary>
+
+#### Session Model
+
+`ReplSession` (`src/Plugins/Atelier/Session`) maintains a Roslyn `ScriptState` that grows incrementally with each submission. Two execution modes are available:
+
+- **Persistent submit**: compiles on top of the current state and updates session state. Variables, imports, and definitions persist across submissions.
+- **Transient run**: executes against the current state but discards the result. Useful for one-off queries or validation without polluting session state.
+
+Sessions can target the launcher context or a specific running server. The target determines which globals are in scope — every session gets `Launcher`, `Log`, `HostLabel`, `TargetLabel`, `Cancellation`, `PendingTasks`, and `LastTask`, while server-targeted sessions additionally expose `Server`, a wrapper around the target `ServerContext` with dispatcher, peer, and snapshot helpers.
+
+#### Roslyn Workspace Integration
+
+The REPL maintains a Roslyn workspace alongside the execution state (`src/Plugins/Atelier/Session/Roslyn`). The workspace tracks the current document and provides language services:
+
+- **Diagnostics**: real-time error/warning markers as you type, before you submit
+- **Completion**: context-aware candidate lists triggered by `.` or manual request
+- **Signature help**: method overload display when you open a call's parenthesis
+- **Semantic highlighting**: type-aware coloring beyond syntax
+
+A warmup pass runs after initialization to pre-load Roslyn's core assemblies, reducing first-use latency.
+
+#### Draft vs. Source
+
+The REPL maintains two text buffers:
+
+- **Draft**: what the user sees, including virtual bracket hints and other visual aids
+- **Source**: the actual source text used for compilation and execution
+
+This separation lets the UI provide rich visual feedback without corrupting the code that Roslyn actually compiles.
+
+#### Surface Window Lifecycle
+
+The REPL window uses `ISurfaceSession` and an interaction scope (`src/Plugins/Atelier/Presentation/Window`). On close, the system terminates the scope, unsubscribes events, unbinds the console, cancels pending reads, drains the command queue, cancels processing, disposes the surface session, and finally releases the `ReplSession`. This sequence ensures clean resource release with no dangling references.
+
+#### Plugin Assembly References
+
+The REPL can reference currently loaded plugin assemblies, giving scripts direct access to plugin public APIs. When a referenced assembly changes (plugin reload or unload), the session is marked invalid. Users see a prompt explaining why and can open a fresh session against the updated assemblies.
+
+#### Meta-Commands
+
+Meta-commands start with `:` and control the REPL itself rather than executing C# code:
+
+| Command | Effect |
+|---------|--------|
+| `:help` | Show available meta-commands |
+| `:reset` | Reset session state |
+| `:clear` | Clear the output area |
+| `:imports` | List baseline/effective imports and reference paths |
+| `:target` | Show the current target and invocation host |
+| `:paste [on|off]` | Toggle paste mode for multi-line submissions |
+| `:transient <code>` | Run transient code without committing it |
+
+Background work is tracked through `PendingTasks` and `LastTask`; there is no separate `:jobs` or `:cancel` meta-command in the current implementation.
+
+</details>
+
+#### Best Practices
+
+1. **Use transient mode for queries** — it doesn't pollute session state
+2. **Target the right context** — launcher context for global state, server context for world-specific operations
+3. **Watch for session invalidation** — plugin reloads will mark your session stale
+4. **Use background tasks for long operations** — the REPL stays responsive while they run
+5. **Prefer `:reset` over closing and reopening** — it's faster when you just want a clean slate
 
 - `ServerContext` inherits USP's `RootContext`, plugging Unifier services into the context (custom console, packet receiver, logging metadata). Everything that touches Terraria world/game state goes through this context.
 - The networking patcher (`UnifiedNetworkPatcher`) detours `NetplaySystemContext` functions to share buffers and coordinate send/receive paths across servers.

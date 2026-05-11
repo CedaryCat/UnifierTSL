@@ -1,4 +1,4 @@
-﻿# UnifierTSL
+# UnifierTSL
 
 > Languages: [English](../README.md) | [简体中文](./README.zh-cn.md)
 
@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <em>在一个启动器进程里运行多个 Terraria 世界，<br>保持世界级隔离，并基于 OTAPI USP 用插件和发布工具链持续扩展能力。</em>
+  <em>在一个启动器里托管多个 Terraria 世界，<br>让每个世界在独立上下文里并行运行，并把路由、数据互通和插件扩展都留在同一个 OTAPI USP 运行时里处理。</em>
 </p>
 
 ---
@@ -34,8 +34,9 @@
 
 - [概览](#overview)
 - [核心能力](#core-capabilities)
+- [多世界架构横向比对](#architecture-tradeoffs)
 - [版本矩阵](#version-matrix)
-- [架构](#architecture)
+- [运行架构](#architecture)
 - [快速开始](#quick-start)
 - [启动器参考](#launcher-reference)
 - [Publisher 参考](#publisher-reference)
@@ -51,15 +52,14 @@
 
 UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) 封装成可直接使用的运行时，让你在**一个启动器进程里托管多个 Terraria 世界**。
 
-启动器负责世界启停、玩家入服路由，并为每个世界上下文拉起独立控制台客户端，保证各世界 I/O 互不干扰。
-这些控制台会话现在通过 ANSI 安全的提示/状态协议工作，因此启动器与各世界控制台可以维护语义化 readline 状态、回放状态栏帧，并在重连后平滑恢复，而不只是简单的纯文本管道。
-和经典单世界服务器、或基于数据包路由的多进程多世界方案相比，Unifier 把入服路由、世界切换和扩展钩子都放在同一个运行时平面里，不需要把关键逻辑拆到进程边界外。
-`UnifiedServerCoordinator` 负责总体协调，`UnifierApi.EventHub` 传递事件流，`PluginHost.PluginOrchestrator` 负责插件宿主编排。
-这种共享连接与状态平面的方式，既方便统一运维和跨世界联动，也保留了策略化路由与转服钩子，方便按世界做兜底策略。
+在传统的多进程多世界架构中，构建彼此协作的世界集群通常意味着额外的跨进程路由、状态同步和序列化设计。玩家在实例间迁移往往依赖数据包中转和额外信道；当需要跨世界共享插件附加数据、临时状态或运行时对象时，也常常要把原本进程内可以直接处理的问题改写成协议和同步流程。
 
-如果继续把这套模型往前推，你可以做出更偏玩法的形态：完全互通的多实例世界集群、按需加载/卸载区域分片的弹性世界，或为单个玩家定制逻辑和资源预算的私人世界。
-这些是可达方向，不是开箱即用的默认能力。
-这类较重实现不一定会放进启动器核心，但后续可以期待在 `plugins/` 里陆续补上对应的可用示例插件。
+相比将这些协调逻辑放到进程边界之外的方案，Unifier 基于 OTAPI USP 把入服路由、世界切换和扩展钩子收敛在同一个运行时平面内，在设计之初就将世界间协调作为一等公民来实现。启动器负责统一管理多世界生命周期，让每个世界在各自的 `ServerContext` 中独立并行运行，并为每个世界切分出独立的控制台以保证 I/O 隔离。
+`UnifiedServerCoordinator` 负责总体协调，`UnifierApi.EventHub` 传递事件流，`PluginHost.PluginOrchestrator` 负责插件宿主编排。
+这种共享监听入口与协调平面的方式，减少了跨进程中转带来的额外开销与复杂度，既方便建立跨世界联动、数据互通和统一运维，也保留了足够的路由控制空间，用于定义默认入服目标并接管后续的世界切换流程。
+
+从玩家视角看，它依然像一个普通的 Terraria 服务器入口：客户端只需要连到同一个监听端口，随后由 `UnifiedServerCoordinator` 在同一进程内把连接路由到目标世界；如果继续把这套模型往前推，你可以做出更偏玩法的形态：完全互通的多实例世界集群、按需加载/卸载区域分片的弹性世界，或为单个玩家定制逻辑和资源预算的私人世界。
+这些是可达方向，尽管启动器目前并未直接提供这些开箱即用的默认能力，但你仍可以期待后续在 `plugins/` 下逐步补上的可用示例插件。
 
 ---
 
@@ -75,8 +75,60 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 | 📦 **可回收模块上下文** | `ModuleLoadContext` 提供可卸载插件域，并支持分阶段依赖处理 |
 | 📝 **统一日志管线** | `UnifierApi.LogCore` 支持自定义过滤器、写入器与元数据注入 |
 | 🛡 **内置 TShock 移植基线** | 内置适配 USP 的 TShock 基线，开箱可用 |
-| 💻 **上下文级控制台隔离** | 通过命名管道协议为每个世界提供 ANSI 安全日志、语义化 readline 提示与实时状态栏 |
+| 💻 **上下文级控制台隔离** | 默认为每个世界实例提供独立、自动重连的控制台窗口 IO，以及语义化 readline 提示与实时状态栏 |
 | 🚀 **按 RID 发布** | Publisher 生成可复现、面向目标运行时的目录结构 |
+| ⚡ **命令系统 V2** | 全新声明式命令体系——200+ 条 TShock 命令已完成迁移，并内置智能上下文感知补全。插件通过属性标注声明命令结构，框架统一处理绑定、权限、输出和审计日志，覆盖终端、玩家和 REST 三类入口 |
+| 🧪 **Atelier REPL** | 直接运行在运行时内部的 Roslyn C# 工作台。针对真实服务器状态编写并执行代码，享有媲美 IDE 的补全与诊断体验，无需重启即可迭代——运维和开发都能用得上的正经工具 |
+
+---
+
+<a id="architecture-tradeoffs"></a>
+## ⚖️ 多世界架构横向比对
+
+> 这里的 `proxy-based` 泛指“前置代理 + 多个后端独立服务器进程 + 协议级转发/改写 + 可选共享存储或控制面”的常见可能形态。
+
+<details>
+<summary><strong>部署与生命周期</strong></summary>
+
+| 维度 | UnifierTSL（同进程统一协调） | proxy-based（前置代理 + 多后端进程） | 更占优 |
+|:--|:--|:--|:--|
+| 错误域隔离 | 多世界共享宿主进程；上下文之间有线程级隔离 | 进程级隔离，单个后端崩溃通常不会直接拖垮其他后端或代理本身 | proxy-based |
+| 实例级重启 | 支持世界上下文自由启停 | 可单独重启、替换、迁移某个后端实例，外层入口可继续存活 | 视具体需求而定 |
+| 插件热重载 | 运行时提供标准支持，由插件自身设计决定是否可热重载，通常玩家端无感 | 可单独重启后端实例完成后端插件干净重载，可能需要迁移玩家到临时后端 | 视具体需求而定 |
+| 水平弹性部署 | 核心设计目标为单宿主内多世界协调，可任意创建实例，但共享同一进程资源 | 天然适合跨设备、跨容器、跨主机扩展 | proxy-based |
+| 现有插件生态复用 | 需要按 Unifier 运行时模型适配 | 直接使用当前插件生态 | proxy-based |
+
+</details>
+
+<details>
+<summary><strong>运行时协同与迁移</strong></summary>
+
+| 维度 | UnifierTSL（同进程统一协调） | proxy-based（前置代理 + 多后端进程） | 更占优 |
+|:--|:--|:--|:--|
+| 世界定制化 | 完全可定制并可在运行中动态更改的世界上下文 | 视具体后端实现而定，通常启动后不再变动 | UnifierTSL |
+| 服务器一致性 | 世界存在性、路由目标、连接归属都在同一运行时里直接判定，一致性面更窄 | 依赖跨进程拓扑、注册信息、共享存储或控制面，竞态面更宽 | UnifierTSL |
+| 感知与切换编排 | 同一协调器可同时感知来源世界、目标世界与玩家连接状态，回退与兜底可集中处理 | 可能需要跨进程协同处理目标就绪、切换失败、掉线恢复和回滚 | UnifierTSL |
+| 数据传输与实体迁移 | 临时状态、插件附加数据、运行时对象可以在统一运行时内直接转移或协调 | 往往必须先序列化、协议化，或借共享数据库 / 自定义数据包搬运 | UnifierTSL |
+| 连接状态维护 | 单一监听入口持续持有客户端连接，切世界时不需要把连接所有权交给其他进程 | 代理需同时维护前后端连接，并处理任一侧掉线、重连与状态复原 | UnifierTSL |
+| 插件跨服互操作 | 更像“同一插件面对多个 `ServerContext`”，跨服协作可以直接复用进程内事件与 API | 更像分布式系统开发，通常要先定义消息协议、共享存储或同步层 | UnifierTSL |
+
+</details>
+
+
+<details>
+<summary><strong>运维与系统形态</strong></summary>
+
+| 维度 | UnifierTSL（同进程统一协调） | proxy-based（前置代理 + 多后端进程） | 更占优 |
+|:--|:--|:--|:--|
+| 统一管理成本 | 入口、世界生命周期、默认入服策略、配置应用都集中在同一协调平面 | 管理面通常分散在代理、后端实例和外部编排组件之间 | UnifierTSL |
+| 状态监测与观测 | 日志、状态栏、事件流、各世界运行指标天然可聚合 | 观测往往分散在代理层、后端层和外部控制面，拼接成本较高 | UnifierTSL |
+| 调试与故障定位 | 单进程时间线更连续，调试会话、日志关联和问题复现更集中 | 故障可能散落在代理、后端、共享存储和运维编排多个层面 | UnifierTSL |
+| 网络与序列化开销 | 关键协调路径可留在进程内，避免额外 hop 和附加协议 | 玩家迁移与扩展状态传播可能引入额外数据包和相关拦截策略、或通过旁路信道实现 | UnifierTSL |
+| 单节点能力密度 | 单机内即可覆盖路由、协调、联动、插件互通与统一运维 | 单节点更像路由壳层，复杂能力常转移到后端或外部系统 | UnifierTSL |
+
+</details>
+
+必须说明的是，UnifierTSL 与 proxy-based 并不互斥。由于 UnifierTSL 已经把多世界组织成单一对外监听入口，它完全可以作为一个更强的“单节点后端”继续挂到更外层的 gateway / proxy 前面。总之，具体的选择取决于你的需求，proxy-based 在跨设备、跨进程的伸缩与隔离问题上具备更高上限，如果你倾向于跨设备弹性部署并体验基础跨服功能，proxy-based会是你的最优选择。相比之下 UnifierTSL 可能在单节点内部的多世界一致性、迁移和协同能力方面具备天然优势，如果你想设计更具组织性和交互能力的多世界群组，也许现在就可以尝试UnifierTSL来搭建你的多世界服务器。
 
 ---
 
@@ -89,7 +141,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 | 组件 | 版本 | 来源 |
 |:--|:--|:--|
 | 目标框架 | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
-| Terraria | `1.4.5.6` | 通过 `src/UnifierTSL/obj/project.assets.json` 定位已还原的 `OTAPI.dll`（程序集文件版本） |
+| Terraria | `1.4.5.6` | 项目引用的 OTAPI.USP 包中的 `OTAPI.dll` |
 | OTAPI USP | `1.1.0-pre-release-upstream.30` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
@@ -118,13 +170,13 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 ---
 
 <a id="architecture"></a>
-## 🏗 架构
+## 🏗 运行架构
 
 <p align="center">
   <img src="./assets/readme/arch-flow.svg" alt="Architecture flow" width="100%">
 </p>
 
-运行时实际启动顺序如下：
+如果你想先看真实启动顺序，可以直接从这里开始：
 
 1. `Program.Main` 初始化程序集解析器，应用启动前 CLI 语言覆盖，并输出运行时版本信息。
 2. `Initializer.Initialize()` 准备 Terraria/USP 运行时状态，加载核心钩子（`UnifiedNetworkPatcher`、`UnifiedServerCoordinator`、`ServerContext` 初始化）。
@@ -148,6 +200,8 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 
 ### 角色入口
 
+如果你已经知道自己是来干什么的，可以直接从对应入口跳：
+
 | 角色 | 从这里开始 | 原因 |
 |:--|:--|:--|
 | 🖥 服主/运维 | [快速开始 ↓](#quick-start) | 用最少配置把多世界宿主先跑起来 |
@@ -157,6 +211,8 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 
 <a id="quick-start"></a>
 ## 🚀 快速开始
+
+如果你的目标很简单，就是“先把启动器跑起来，看着世界上线”，那就从这里开始。
 
 ### 前置要求
 
@@ -168,6 +224,8 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 | **源码运行 / Publisher** | 安装 [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) 且 `PATH` 中可用 `msgfmt`（用于 `.mo` 文件） |
 
 ### 方案 A：使用发布包
+
+如果你只是想先用起来，这是最短路径。
 
 **1.** 从 [GitHub Releases](https://github.com/CedaryCat/UnifierTSL/releases) 下载与你平台匹配的发布资产：
 
@@ -209,7 +267,7 @@ chmod +x UnifierTSL
 
 ### 方案 B：从源码运行
 
-如果你要本地调试、接 CI，或产出自定义发布包，走这个方式。
+如果你要本地调试、接 CI，或者自己控制 Publisher 产物，就走这个方式。
 
 **1.** 克隆并还原依赖：
 
@@ -252,6 +310,23 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 2. 仓库内置的 Publisher 启动配置会使用 `--use-rid-folder false --clean-output-dir false --output-path "utsl-publish"`，因此输出目录是 `src/UnifierTSL.Publisher/bin/Debug/net9.0/utsl-publish/`，而不是 `utsl-<rid>`。
 3. 随后把启动项目切换为 `UnifierTSL`，选择 `Executable` 启动配置并开始调试。
 4. 该配置会直接从 `utsl-publish` 运行发布后的启动器，并对该已发布程序附加调试。
+
+### 首次启动后会发生什么
+
+- 第一次成功启动后，`config/config.json` 会自动生成，并保存当前生效的启动器启动快照。不过对你这一次启动来说，CLI 参数仍然优先。
+- 插件配置统一落在 `config/<PluginName>/` 下。对内置 TShock 来说，配置根目录是 `config/TShockAPI/`；这同时也是其他 TShock 相关运行时文件的保存位置，例如启用 SQLite 时的 `tshock.sqlite` 也会放在这里，所以实际用起来它基本就等同于原版独立 TShock 程序目录下的 `tshock/` 文件夹。
+- 发布产物一开始是平铺的 `plugins/` 目录。启动过程中如果模块声明了核心模块或依赖元数据，加载器会按需要把它们重组到子目录里。
+- 如果一切正常，你会看到共享监听端口绑定成功、目标世界启动、启动器状态输出开始刷新，并且在默认控制台 IO 实现下，每个世界都会弹出自己的独立控制台窗口。
+
+### 内置 TShock 说明
+
+- 这里内置的 TShock 是面向 UnifierTSL / OTAPI USP 运行时的移植实现。底层会优先使用 UTSL/USP 原生提供的运行时接口、事件系统、数据包模型等通用能力来重实现相关逻辑，不会额外维持一套兼容层，但仍会尽力让 TShock 上层功能的行为与使用体验保持和原来一致，并适配多世界同进程运行模型。
+- 这个移植会持续跟随上游 TShock 的进度进行迁移更新。当前跟踪的移植基线可以直接在 `src/Plugins/TShockAPI/TShockAPI.csproj` 里查看，例如 `MainlineSyncBranch`、`MainlineSyncCommit` 和 `MainlineVersion`。
+- 启动器设置固定在 `config/config.json`，而内置 TShock 使用 `config/TShockAPI/` 下的独立配置和数据目录，不和启动器根配置混用；这也同时是其他 TShock 相关运行时文件的保存位置，例如启用 SQLite 时的 `tshock.sqlite` 也会放在这里，所以这个目录基本就相当于原版独立 TShock 程序目录下的 `tshock/` 文件夹。
+- `config/TShockAPI/config.json` 保存全局默认值，`config/TShockAPI/config.override.json` 以已配置的服务器名为键保存分服覆盖补丁，例如 `"S1": { "MaxSlots": 16 }`；`config/TShockAPI/sscconfig.json` 仍然独立负责 SSC 设置。
+- 由于运行时会同时承载多个世界，一些在原版单世界流程里通常依赖“当前世界”隐式决定的数据访问，在这里会改成显式带上 world 上下文；例如 warp 相关代码逻辑在查找或修改条目时会显式使用 `worldId`。
+- 直接编辑 `config.json` 或 `config.override.json` 会触发配置句柄监听，并重新应用运行中的 TShock 服务器设置；`/reload` 仍然有意义，因为它还会额外刷新权限、区域、封禁、白名单等状态，并走 TShock 传统 reload 流程。部分改动依旧需要重启。
+- 最后，也感谢 TShock 项目及其贡献者长期积累下来的功能、设计和社区生态；这个移植建立在这些工作的基础之上。
 
 ---
 
@@ -483,6 +558,8 @@ graph LR
 | **配置注册** | 配置存放在 `config/<PluginName>/`，支持自动重载（`TriggerReloadOnExternalChange(true)`） |
 | **可回收上下文** | `ModuleLoadContext` 支持可卸载的插件域 |
 
+命令系统 V2 是插件暴露命令的推荐方式。控制器通过属性标注声明，框架负责发现、端点绑定、参数解析和权限检查，同一份声明还会自动派生出补全候选、帮助文本和审计日志，不需要单独维护 usage 字符串。完整的 API 参考和代码示例可以在插件开发指南里找到。
+
 → 完整指南：[插件开发指南](./dev-plugin.zh-cn.md)
 
 ---
@@ -524,6 +601,8 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 | `linux-arm` | ⚠️ 部分支持 / 仍需人工验证 |
 | `osx-x64` | ✅ 支持 |
 
+如果你想在不写完整插件的情况下探索或操作运行中的世界，Atelier REPL 提供了一个直接附着在运行时上的 Roslyn 工作台。你可以在持久会话里逐步构建脚本、查询服务器状态、调用插件 API，也可以把长时间运行的操作放到后台执行——整个过程不需要重启。会话配置和元命令参考可以在 [dev-overview.zh-cn.md](./dev-overview.zh-cn.md#28-atelier-repl) 里找到。
+
 ---
 
 <a id="resources"></a>
@@ -533,6 +612,8 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 |:--|:--|
 | 开发者总览 | [docs/dev-overview.zh-cn.md](./dev-overview.zh-cn.md) |
 | 插件开发指南 | [docs/dev-plugin.zh-cn.md](./dev-plugin.zh-cn.md) |
+| 分支工作流指南 | [docs/branch-setup-guide.zh-cn.md](./branch-setup-guide.zh-cn.md) |
+| 分支工作流速查 | [docs/branch-strategy-quick-reference.zh-cn.md](./branch-strategy-quick-reference.zh-cn.md) |
 | OTAPI Unified Server Process | [GitHub](https://github.com/CedaryCat/OTAPI.UnifiedServerProcess) |
 | 上游 TShock | [GitHub](https://github.com/Pryaxis/TShock) |
 | DeepWiki AI 分析 | [deepwiki.com](https://deepwiki.com/CedaryCat/UnifierTSL) *(仅供参考)* |
@@ -542,6 +623,3 @@ dotnet run --project src/UnifierTSL.Publisher/UnifierTSL.Publisher.csproj -- \
 <p align="center">
   <sub>Made with ❤️ by the UnifierTSL contributors · Licensed under GPL-3.0</sub>
 </p>
-
-
-

@@ -17,17 +17,17 @@ namespace UnifierTSL.Module.Dependencies
         public NugetDependency(Assembly plugin, string packageId, string version) {
             this.packageId = packageId;
             this.version = NuGetVersion.Parse(version);
-            targetFramework = GetNuGetShortFolderName(plugin) ?? throw new Exception("");
+            targetFramework = GetNuGetShortFolderName(plugin) ?? throw new InvalidOperationException(GetString("Unable to determine the target framework for the plugin assembly."));
         }
         public NugetDependency(Assembly plugin, string packageId, NuGetVersion version) {
             this.packageId = packageId;
             this.version = version;
-            targetFramework = GetNuGetShortFolderName(plugin) ?? throw new Exception("");
+            targetFramework = GetNuGetShortFolderName(plugin) ?? throw new InvalidOperationException(GetString("Unable to determine the target framework for the plugin assembly."));
         }
         public NugetDependency(Assembly plugin, string packageId, Version version) {
             this.packageId = packageId;
             this.version = new(version);
-            targetFramework = GetNuGetShortFolderName(plugin) ?? throw new Exception("");
+            targetFramework = GetNuGetShortFolderName(plugin) ?? throw new InvalidOperationException(GetString("Unable to determine the target framework for the plugin assembly."));
         }
         private static string? GetNuGetShortFolderName(Assembly assembly) {
             TargetFrameworkAttribute? attr = assembly.GetCustomAttribute<TargetFrameworkAttribute>();
@@ -45,11 +45,11 @@ namespace UnifierTSL.Module.Dependencies
         private class NugetLibraryExtractor(string packageId, NuGetVersion version, string targetFramework) : IDependencyLibraryExtractor
         {
             public async Task<ImmutableArray<LibraryEntry>> Extract(RoleLogger logger) {
-                logger.Info($"Resolving dependencies for {packageId} ({version})");
+                logger.Info(GetString($"Resolving dependencies for {packageId} ({version})"));
                 List<NuGet.Packaging.Core.PackageIdentity> packages = NugetPackageCache.ResolveDependenciesAsync(packageId, version.ToNormalizedString(), targetFramework)
                     .GetAwaiter()
                     .GetResult();
-                logger.Success($"Resolved dependencies for {packageId} ({version}) successfully: \r\n{string.Join("\r\n", packages)}");
+                logger.Success(GetString($"Resolved dependencies for {packageId} ({version}) successfully: \r\n{string.Join("\r\n", packages)}"));
                 List<LibraryEntry> entries = [];
 
                 foreach (NuGet.Packaging.Core.PackageIdentity package in packages) {
@@ -67,7 +67,7 @@ namespace UnifierTSL.Module.Dependencies
                         DirectoryInfo nativeDirInfo = new(Path.GetDirectoryName(lib)!);
                         // path: runtimes/<rid>/native/<file>
                         if (nativeDirInfo.Name != "native" || nativeDirInfo.Parent!.Parent!.Name != "runtimes") {
-                            throw new InvalidOperationException("Invalid package structure.");
+                            throw new InvalidOperationException(GetString("Invalid package structure."));
                         }
                         string rid = nativeDirInfo.Parent!.Name;
 

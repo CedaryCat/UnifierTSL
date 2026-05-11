@@ -363,7 +363,6 @@ namespace UnifierTSL
         private static Thread? ServerLoopThread;
         private static int serverLoopStartToken;
 
-        public static bool Running { get; private set; }
         public static void Launch(int listenPort, string password = "") {
             ServerPassword = password;
             broadcastClient.EnableBroadcast = true;
@@ -377,8 +376,7 @@ namespace UnifierTSL
             }
 
             EnsureServerLoopStarted();
-
-            Running = true;
+            UnifierApi.MarkRunning();
         }
 
         public static bool RebindListener(int listenPort) {
@@ -455,19 +453,39 @@ namespace UnifierTSL
             try {
                 session.Cts.Cancel();
             }
-            catch { }
+            catch (Exception ex) {
+                Logger.LogHandledException(
+                    category: "Listener",
+                    message: GetString("Failed to cancel listener session token."),
+                    ex: ex);
+            }
             try {
                 session.Listener.Stop();
             }
-            catch { }
+            catch (Exception ex) {
+                Logger.LogHandledException(
+                    category: "Listener",
+                    message: GetString("Failed to stop listener session."),
+                    ex: ex);
+            }
             try {
                 session.Listener.Dispose();
             }
-            catch { }
+            catch (Exception ex) {
+                Logger.LogHandledException(
+                    category: "Listener",
+                    message: GetString("Failed to dispose listener session."),
+                    ex: ex);
+            }
             try {
                 session.Cts.Dispose();
             }
-            catch { }
+            catch (Exception ex) {
+                Logger.LogHandledException(
+                    category: "Listener",
+                    message: GetString("Failed to dispose listener session token source."),
+                    ex: ex);
+            }
         }
 
         private static bool NetMessageSystemContext_CheckCanSend(On.Terraria.NetMessageSystemContext.orig_CheckCanSend orig, NetMessageSystemContext self, int clientIndex) {

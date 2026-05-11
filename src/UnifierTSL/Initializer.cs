@@ -11,6 +11,9 @@ namespace UnifierTSL
 {
     public static class Initializer
     {
+        private static readonly Lock InitializeGate = new();
+        private static bool initialized;
+
         static Initializer() {
             AssemblyResolverInit();
         }
@@ -26,11 +29,28 @@ namespace UnifierTSL
         public static void InitializeResolver() { }
 
         public static void Initialize() {
-            Terraria.Program.SavePath = Platform.Get<IPathService>().GetStoragePath("Terraria");
+            lock (InitializeGate) {
+                if (initialized) {
+                    return;
+                }
+
+                InitializeCore();
+                initialized = true;
+            }
+        }
+
+        private static void InitializeCore() {
+            var savePath = Platform.Get<IPathService>()?.GetStoragePath("Terraria");
+            if (string.IsNullOrWhiteSpace(savePath)) {
+                savePath = Path.Combine(Path.GetTempPath(), "Terraria"); // for test
+            }
+
+            Directory.CreateDirectory(savePath);
+            Terraria.Program.SavePath = savePath;
             Terraria.Main.SkipAssemblyLoad = true;
             Terraria.Main.rand ??= new((int)DateTime.Now.Ticks);
-            EnglishLanguage.Load();
             GlobalInitializer.Initialize();
+            EnglishLanguage.Load();
             SynchronizedGuard.Load();
             UnifiedNetworkPatcher.Load();
             UnifiedServerCoordinator.Load();

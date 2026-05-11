@@ -1,110 +1,62 @@
-# Branch Strategy Quick Reference
+# Branch Workflow Quick Reference
 
-## Branch Overview
+> Languages: [English](./branch-strategy-quick-reference.md) | [简体中文](./branch-strategy-quick-reference.zh-cn.md)
 
-| Branch | Purpose | Version Pattern | Auto Release |
-|--------|---------|-----------------|--------------|
-| `main` | Production | 1.0.0 | ✅ Yes (from develop/hotfix) |
-| `develop` | Development | 1.1.0-beta.1 | ❌ No |
-| `documentation` | Docs only | 1.0.0-docs.1 | ❌ No |
-| `feature/*` | New features | 1.1.0-alpha.name.1 | ❌ No |
-| `bugfix/*` | Bug fixes | 1.1.0-bugfix.name.1 | ❌ No |
-| `hotfix/*` | Emergency fixes | 1.0.1-hotfix.1 | ✅ Yes (to main) |
+## Branch Roles
+
+| Branch | Use it for | Default target |
+|:--|:--|:--|
+| `develop` | Daily integration for code and docs | Normal PR base |
+| `main` | Stable promotions only | Receives `develop` when stable |
+| `release/<version>` | Release execution from `main` | GitHub release work |
+| `feature/*`, `bugfix/*`, `doc/*` | Optional short-lived working branches | Merge back to `develop` |
+
+Official docs use `release/<version>`. CI still accepts legacy `releases/*`, but do not create new branches with that prefix unless you need compatibility with older automation.
 
 ## Common Commands
 
-### Start New Feature
-```bash
-git checkout develop && git pull
-git checkout -b feature/my-feature
-# work, commit, push
-# PR to develop
-```
-
-### Fix a Bug
-```bash
-git checkout develop && git pull
-git checkout -b bugfix/fix-issue-123
-# work, commit, push
-# PR to develop
-```
-
-### Update Documentation
-```bash
-git checkout documentation && git pull
-git checkout -b docs/update-readme
-# work, commit, push
-# PR to documentation
-```
-
-### Emergency Hotfix
-```bash
-git checkout main && git pull
-git checkout -b hotfix/critical-bug
-# work, commit, push
-# PR to main
-# After merge, sync to develop:
-git checkout develop && git merge main && git push
-```
-
-### Create Release
-```bash
-# On GitHub: Create PR from develop to main
-# Title: "Release v1.x.x"
-# After merge → Auto-creates GitHub Release
-```
-
-## Version Control via Commits
+### Start normal work
 
 ```bash
-# Major version bump (breaking change)
-git commit -m "Refactor API +semver: major"
-
-# Minor version bump (new feature)
-git commit -m "Add authentication +semver: minor"
-
-# Patch version bump (bug fix)
-git commit -m "Fix login bug +semver: patch"
+git checkout develop
+git pull --ff-only origin develop
+git checkout -b feature/my-change
+git push -u origin feature/my-change
 ```
 
-## CI/CD Triggers
+### Promote a stable snapshot
 
-| Action | Builds Code | Creates Artifacts | Creates Release |
-|--------|-------------|-------------------|-----------------|
-| Push to develop | ✅ | ✅ | ❌ |
-| Push to main (direct) | ✅ | ✅ | ❌ |
-| develop → main | ✅ | ✅ | ✅ |
-| hotfix → main | ✅ | ✅ | ✅ |
-| documentation → main | ❌ | ❌ | ❌ |
-| PR to develop | ✅ | ✅ | ❌ |
-| PR to main | ✅ | ✅ | ❌ |
-| PR to documentation | ❌ | ❌ | ❌ |
+```text
+develop -> main
+```
 
-## Build Platforms
+### Cut a release branch
 
-All builds create artifacts for:
-- Windows x64
-- macOS x64
-- Linux x64
-- Linux ARM64
-- Linux ARM
-
-## Quick Troubleshooting
-
-### "GitVersion not found"
 ```bash
-git fetch --unshallow
+git checkout main
+git pull --ff-only origin main
+git checkout -b release/0.2.1
+git push -u origin release/0.2.1
 ```
 
-### "Workflow not triggering"
-Check branch name matches: `main`, `develop`, or `documentation`
+## Release Actions
 
-### "Release not created after merge"
-Verify commit message contains "Merge" and "develop" or "hotfix"
+1. Push to `release/<version>` to produce the next alpha prerelease automatically.
+2. Open GitHub Actions, choose `Build and Release`, select the same `release/<version>` branch, then run:
+   - `release_channel=rc` for the next RC release.
+   - `release_channel=stable` for the stable GitHub release.
 
-## File Locations
+## CI Trigger Summary
 
-- GitVersion config: `GitVersion.yml`
-- Workflow: `.github/workflows/build.yaml`
-- Full docs: `docs/branch-setup-guide.md`
-- Detailed setup guide: `docs/branch-setup-guide.md`
+| Change | Workflow result |
+|:--|:--|
+| Docs-only push/PR to `main`, `develop`, or `release/*` | `docs-check.yaml` |
+| Non-doc push/PR to `main`, `develop`, or `release/*` | `build.yaml` + artifacts |
+| Push to `release/*` | `build.yaml` + alpha prerelease |
+| Manual `workflow_dispatch` on `release/*` | RC or stable GitHub release |
+
+## Versioning Notes
+
+- `develop` builds use the `beta` label.
+- `release/*` builds use the `rc` release line and can also emit alpha prereleases on push.
+- `main` remains the stable promotion branch.

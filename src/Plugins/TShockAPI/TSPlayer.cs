@@ -11,6 +11,7 @@ using TrProtocol.Models;
 using TrProtocol.NetPackets;
 using TShockAPI.DB;
 using TShockAPI.Hooks;
+using UnifierTSL.Commanding;
 using UnifierTSL.Servers;
 using Timer = System.Timers.Timer;
 
@@ -61,6 +62,18 @@ namespace TShockAPI
         /// Equivalent to WriteToConsole | WriteToLog
         /// </summary>
         WriteToLogAndConsole
+    }
+
+    [Flags]
+    public enum RegionNameDisplayFlags
+    {
+        None = 0,
+        [CommandFlag("-u")]
+        IncludeUnprotected = 1 << 0,
+        [CommandFlag("-z")]
+        IncludeZIndexes = 1 << 1,
+        [CommandFlag("-p")]
+        Persistent = 1 << 2,
     }
 
     /// <summary>
@@ -273,7 +286,7 @@ namespace TShockAPI
 
         public bool AwaitingName { get; set; }
 
-        public string[] AwaitingNameParameters { get; set; }
+        public RegionNameDisplayFlags AwaitingNameFlags { get; set; }
 
         /// <summary>
         /// The last time a player broke a grief check.
@@ -2025,12 +2038,6 @@ namespace TShockAPI
                     LastDisableNotification = DateTime.UtcNow;
                 }
             }
-
-            /*
-			 * Calling new StackTrace() is incredibly expensive, and must be disabled
-			 * in release builds.  Use a conditional call instead.
-			 */
-            LogStackFrame();
         }
 
         /// <summary>
@@ -2100,15 +2107,6 @@ namespace TShockAPI
 
             SendErrorMessage(GetString("Use \"my query\" for items with spaces."));
             SendErrorMessage(GetString("Use tsi:[number] or tsn:[username] to distinguish between user IDs and usernames."));
-        }
-
-        [Conditional("DEBUG")]
-        private void LogStackFrame() {
-            var trace = new StackTrace();
-            StackFrame frame = null;
-            frame = trace.GetFrame(1);
-            if (frame != null && frame.GetMethod().DeclaringType != null)
-                GetCurrentServer().Log.Debug(frame.GetMethod().DeclaringType.Name + " called Disable().");
         }
 
         /// <summary>

@@ -1583,7 +1583,7 @@ namespace TShockAPI
 				var discreteDirection = (int)Math.Round(wrappedAngle / (MathF.PI / 4f));
 				if (discreteDirection is < -3 or > 4)
 				{
-					server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected portal gate from {0} (invalid angle: {1})", tsPlayer.Name, discreteDirection));
+					server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from portal gate from {0} (invalid angle: {1})", tsPlayer.Name, discreteDirection));
 					tsPlayer.RemoveProjectile(ident, owner);
 					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;
@@ -1597,7 +1597,7 @@ namespace TShockAPI
 					server.Main.projectile[p.Index].active);
 				if (boltIndex < 0)
 				{
-					server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected portal gate from {0} (missing active bolt)", tsPlayer.Name));
+					server.Log.Debug(GetString("Bouncer / OnNewProjectile rejected from portal gate from {0} (missing active Portal Gun bolt)", tsPlayer.Name));
 					tsPlayer.RemoveProjectile(ident, owner);
 					args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true;
 					return;

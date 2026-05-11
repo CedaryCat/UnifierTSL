@@ -312,7 +312,6 @@ namespace UnifierTSL
             }
             public static string Sha512Hex(string text, Encoding encoding) {
                 ArgumentNullException.ThrowIfNull(text);
-                ArgumentNullException.ThrowIfNull(encoding);
 
                 var bytes = encoding.GetBytes(text);
                 return Sha512Hex(bytes);

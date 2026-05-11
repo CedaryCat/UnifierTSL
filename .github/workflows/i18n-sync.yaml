@@ -1,0 +1,182 @@
+name: Crowdin Sync
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'src/**/*.cs'
+      - 'src/**/*.csproj'
+      - 'tools/i18n.ps1'
+      - 'crowdin.yml'
+      - '.config/dotnet-tools.json'
+      - '.github/workflows/i18n-sync.yaml'
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      force_crowdin_sync:
+        description: 'Force Crowdin upload/download even when extracted source templates match develop.'
+        required: false
+        default: false
+        type: boolean
+      upload_seed_translations:
+        description: 'Upload local seeded translations to Crowdin. Use this for the first bootstrap or after a TShock upstream baseline update.'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: crowdin-sync-develop
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'push' && github.sha || 'develop' }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Install gettext
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+        shell: bash
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Restore dependencies
+        run: dotnet restore src/UnifierTSL.slnx
+
+      - name: Resolve TShock upstream commit
+        id: tshock-ref
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content src/Plugins/TShockAPI/TShockAPI.csproj
+          $commit = @($project.Project.PropertyGroup | ForEach-Object { $_.MainlineSyncCommit } | Where-Object { $_ })[0]
+          if (!$commit) {
+            throw "MainlineSyncCommit was not found in src/Plugins/TShockAPI/TShockAPI.csproj."
+          }
+          "commit=$commit" >> $env:GITHUB_OUTPUT
+
+      - name: Checkout TShock upstream baseline
+        uses: actions/checkout@v4
+        with:
+          repository: Pryaxis/TShock
+          ref: ${{ steps.tshock-ref.outputs.commit }}
+          path: .local/tshock-upstream
+
+      - name: Extract templates and preserve local translations
+        shell: pwsh
+        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -NoMo
+
+      - name: Check Crowdin input changes
+        id: crowdin_inputs
+        shell: bash
+        run: |
+          source_changed=false
+          config_changed=false
+          force_sync=false
+
+          if [ -n "$(git status --porcelain -- 'i18n/*.template.pot')" ]; then
+            source_changed=true
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && { [ "${{ inputs.force_crowdin_sync }}" = "true" ] || [ "${{ inputs.upload_seed_translations }}" = "true" ]; }; then
+            force_sync=true
+          fi
+
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            force_sync=true
+          fi
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            before="${{ github.event.before }}"
+            if [[ -z "$before" || "$before" =~ ^0+$ ]] || git diff --name-only "$before" "${{ github.sha }}" -- \
+              'tools/i18n.ps1' \
+              'crowdin.yml' \
+              '.config/dotnet-tools.json' \
+              '.github/workflows/i18n-sync.yaml' | grep -q .; then
+              config_changed=true
+            fi
+          else
+            config_changed=false
+          fi
+
+          if [ "$source_changed" = true ] || [ "$config_changed" = true ] || [ "$force_sync" = true ]; then
+            should_sync=true
+          else
+            should_sync=false
+          fi
+
+          echo "source_changed=$source_changed" >> "$GITHUB_OUTPUT"
+          echo "config_changed=$config_changed" >> "$GITHUB_OUTPUT"
+          echo "force_sync=$force_sync" >> "$GITHUB_OUTPUT"
+          echo "should_sync=$should_sync" >> "$GITHUB_OUTPUT"
+
+      - name: Seed local translations for upload
+        if: steps.crowdin_inputs.outputs.should_sync == 'true' && github.event_name == 'workflow_dispatch' && inputs.upload_seed_translations
+        shell: pwsh
+        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -NoExtract -NoMo
+
+      - name: Save local translation fallback
+        if: steps.crowdin_inputs.outputs.should_sync == 'true'
+        shell: bash
+        run: |
+          rm -rf .local/i18n-fallback
+          mkdir -p .local
+          cp -a i18n .local/i18n-fallback
+
+      - name: Synchronize with Crowdin
+        if: steps.crowdin_inputs.outputs.should_sync == 'true'
+        uses: crowdin/github-action@v2
+        with:
+          config: crowdin.yml
+          upload_sources: true
+          upload_translations: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_seed_translations }}
+          download_sources: false
+          download_translations: true
+          push_sources: false
+          push_translations: false
+          create_pull_request: false
+        env:
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Normalize downloaded translation ownership
+        if: steps.crowdin_inputs.outputs.should_sync == 'true'
+        shell: bash
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" i18n
+          chmod -R u+rwX i18n
+
+      - name: Merge Crowdin translations with local fallback
+        if: steps.crowdin_inputs.outputs.should_sync == 'true'
+        shell: pwsh
+        run: ./tools/i18n.ps1 -TShockUpstreamPath .local/tshock-upstream -FallbackI18nPath .local/i18n-fallback -NoExtract -NoMo
+
+      - name: Create Pull Request
+        if: steps.crowdin_inputs.outputs.should_sync == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: 'chore: sync Crowdin translations [skip i18n]'
+          committer: 'Crowdin Bot <support+bot@crowdin.com>'
+          author: 'Crowdin Bot <support+bot@crowdin.com>'
+          title: 'Sync Crowdin translations'
+          body: 'Updates gettext templates and Crowdin translations for UnifierTSL, TShockAPI, and Atelier.'
+          branch: 'i18n/crowdin-sync'
+          base: 'develop'
+          delete-branch: true

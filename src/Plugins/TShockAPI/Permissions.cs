@@ -22,6 +22,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using TShockAPI.Commanding;
 
 // Since the permission nodes have annotations that say what they are, we don't need XML comments.
 #pragma warning disable 1591
@@ -521,11 +522,9 @@ namespace TShockAPI
 		/// </summary>
 		/// <param name="perm">string permission - the permission to get information on</param>
 		/// <returns>List of commands</returns>
-		private static List<Command> GetCommands(string perm)
+		private static List<TSCommandCatalogEntry> GetCommands(string perm)
 		{
-			if (Commands.ChatCommands.Count < 1)
-				Commands.InitCommands();
-			return Commands.ChatCommands.Where(c => c.Permissions.Contains(perm)).ToList();
+			return [.. TSCommandBridge.GetCommandsByPermission(perm)];
 		}
 
 		/// <summary>
@@ -542,9 +541,9 @@ namespace TShockAPI
 					field.GetCustomAttributes(false).FirstOrDefault(o => o is DescriptionAttribute) as DescriptionAttribute;
 				var desc = descattr != null && !string.IsNullOrWhiteSpace(descattr.Description) ? descattr.Description : GetString("No description available.");
 
-				var strs = GetCommands(name).Select(c => c.Names.Count > 1
-					? $"/{c.Name} (/{string.Join(" /", c.Names.Skip(1))})"
-					: $"/{c.Name}");
+				var strs = GetCommands(name).Select(c => c.Aliases.Length > 0
+					? $"/{c.PrimaryName} (/{string.Join(" /", c.Aliases)})"
+					: $"/{c.PrimaryName}");
 
 				sb.AppendLine($"## {name}");
 				sb.AppendLine($"{desc}");

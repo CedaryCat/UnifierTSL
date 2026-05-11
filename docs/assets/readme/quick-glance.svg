@@ -1,13 +1,13 @@
-<svg width="1280" height="380" viewBox="0 0 1280 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="1280" height="340" viewBox="0 0 1280 340" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="gBg" x1="0" y1="0" x2="1280" y2="380" gradientUnits="userSpaceOnUse">
+    <linearGradient id="gBg" x1="0" y1="0" x2="1280" y2="340" gradientUnits="userSpaceOnUse">
       <stop stop-color="#F8FAFC"/>
       <stop offset="1" stop-color="#F1F5F9"/>
     </linearGradient>
   </defs>
 
   <!-- Background -->
-  <rect width="1280" height="380" rx="16" fill="url(#gBg)"/>
+  <rect width="1280" height="340" rx="16" fill="url(#gBg)"/>
 
   <!-- Header -->
   <text x="64" y="52" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="28" font-weight="700">Quick Overview</text>
@@ -15,7 +15,7 @@
 
   <!-- Card 1: Multi-World Host -->
   <g>
-    <rect x="64" y="108" width="272" height="248" rx="12" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+    <rect x="64" y="108" width="272" height="200" rx="12" fill="white" stroke="#E2E8F0" stroke-width="1"/>
     <rect x="84" y="132" width="44" height="44" rx="10" fill="#EFF6FF"/>
     <text x="96" y="163" fill="#3B82F6" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="22">🖥</text>
     <text x="84" y="204" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="20" font-weight="700">Multi-World Host</text>
@@ -28,7 +28,7 @@
 
   <!-- Card 2: Plugin Runtime -->
   <g>
-    <rect x="360" y="108" width="272" height="248" rx="12" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+    <rect x="360" y="108" width="272" height="200" rx="12" fill="white" stroke="#E2E8F0" stroke-width="1"/>
     <rect x="380" y="132" width="44" height="44" rx="10" fill="#F0FDF4"/>
     <text x="392" y="163" fill="#16A34A" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="22">🔌</text>
     <text x="380" y="204" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="20" font-weight="700">Plugin Runtime</text>
@@ -41,7 +41,7 @@
 
   <!-- Card 3: Publisher Tooling -->
   <g>
-    <rect x="656" y="108" width="272" height="248" rx="12" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+    <rect x="656" y="108" width="272" height="200" rx="12" fill="white" stroke="#E2E8F0" stroke-width="1"/>
     <rect x="676" y="132" width="44" height="44" rx="10" fill="#FFF7ED"/>
     <text x="688" y="163" fill="#EA580C" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="22">📦</text>
     <text x="676" y="204" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="20" font-weight="700">Publisher Tooling</text>
@@ -54,7 +54,7 @@
 
   <!-- Card 4: TShock Port -->
   <g>
-    <rect x="952" y="108" width="272" height="248" rx="12" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+    <rect x="952" y="108" width="272" height="200" rx="12" fill="white" stroke="#E2E8F0" stroke-width="1"/>
     <rect x="972" y="132" width="44" height="44" rx="10" fill="#FAF5FF"/>
     <text x="984" y="163" fill="#9333EA" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="22">🛡</text>
     <text x="972" y="204" fill="#1E293B" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="20" font-weight="700">TShock Port</text>

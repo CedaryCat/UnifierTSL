@@ -27,11 +27,11 @@ namespace UnifierTSL.Module.Dependencies
                 string versionFolder = Path.Combine(globalPackagesPath, packageId.ToLowerInvariant(), version);
 
                 if (Directory.Exists(versionFolder)) {
-                    logger.Info($"Package: {packageId} ({version}) found in cache.");
+                    logger.Info(GetString($"Package: {packageId} ({version}) found in cache."));
                     return versionFolder;
                 }
 
-                logger.Info($"Downloading package: {packageId} ({version}) from NuGet.");
+                logger.Info(GetString($"Downloading package: {packageId} ({version}) from NuGet."));
 
                 FindPackageByIdResource resource = await SourceRepository.GetResourceAsync<FindPackageByIdResource>();
                 using MemoryStream stream = new();
@@ -40,11 +40,11 @@ namespace UnifierTSL.Module.Dependencies
                     packageId, NuGetVersion.Parse(version), stream, Cache, Logger, CancellationToken.None);
 
                 if (!success)
-                    throw new Exception($"Failed to download package {packageId} {version} from NuGet.");
+                    throw new Exception(GetString($"Failed to download package {packageId} {version} from NuGet."));
 
                 stream.Position = 0;
 
-                logger.Info($"Extracting package: {packageId} ({version}) to local nuget cache.");
+                logger.Info(GetString($"Extracting package: {packageId} ({version}) to local nuget cache."));
                 using PackageArchiveReader reader = new(stream);
 
                 // Use PackageExtractor to extract contents
@@ -66,7 +66,7 @@ namespace UnifierTSL.Module.Dependencies
                     token: CancellationToken.None
                 );
 
-                logger.Info($"Extracted package: {packageId} ({version}) successfully.");
+                logger.Info(GetString($"Extracted package: {packageId} ({version}) successfully."));
 
                 return versionFolder;
             });

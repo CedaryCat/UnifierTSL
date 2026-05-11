@@ -11,6 +11,7 @@ namespace UnifierTSL.Module
     public class ModuleLoadContext : AssemblyLoadContext
     {
         private bool _disposed;
+        private static readonly HashSet<string> frameworkAssemblyNames = CreateFrameworkAssemblyNames();
         private readonly AssemblyDependencyResolver UTSLResolver;
         private readonly Assembly hostAssembly = typeof(UnifierApi).Assembly;
         private readonly FileInfo moduleFile;
@@ -21,12 +22,13 @@ namespace UnifierTSL.Module
             Unloading += OnUnloading;
             ResolvingUnmanagedDll += OnResolvingUnmanagedDll;
         }
+        public string MainAssemblyPath => moduleFile.FullName;
         public override string ToString() => $"{moduleFile.Name} ({base.ToString()})";
 
         private ImmutableArray<Func<Task>> _disposeActions = [];
         public void AddDisposeAction(Func<Task> action) {
             if (_disposed) {
-                throw new InvalidOperationException("Dispose has already been called.");
+                throw new InvalidOperationException(GetString("Dispose has already been called."));
             }
             ImmutableInterlocked.Update(ref _disposeActions, x => x.Add(action));
         }
@@ -36,13 +38,32 @@ namespace UnifierTSL.Module
             _disposeActions = [];
         }
         private static bool IsFrameworkAssembly(AssemblyName assemblyName) {
-            var token = BitConverter.ToString(assemblyName.GetPublicKeyToken() ?? Array.Empty<byte>());
-            if (token is 
-                "B0-3F-5F-7F-11-D5-0A-3A" or // System.Runtime.Loader
-                "CC-7B-13-FF-CD-2D-DD-51" // netstandard
-                )
-                return true;
-            return false;
+            return assemblyName.Name is string name && frameworkAssemblyNames.Contains(name);
+        }
+        private static HashSet<string> CreateFrameworkAssemblyNames() {
+            var runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
+            if (!Directory.Exists(runtimeDir)) {
+                return [];
+            }
+            return Directory.EnumerateFiles(runtimeDir, "*.dll")
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Cast<string>()
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+        private static Assembly? TryLoadFrameworkAssembly(AssemblyName assemblyName) {
+            foreach (var loaded in Default.Assemblies) {
+                if (AssemblyName.ReferenceMatchesDefinition(loaded.GetName(), assemblyName)) {
+                    return loaded;
+                }
+            }
+
+            try {
+                return Default.LoadFromAssemblyName(assemblyName);
+            }
+            catch (FileNotFoundException) {
+                return null;
+            }
         }
 
         protected virtual bool IsUTSLCoreLibs(AssemblyName assemblyName) {
@@ -83,8 +104,8 @@ namespace UnifierTSL.Module
         }
         protected override Assembly? Load(AssemblyName assemblyName) {
 
-            if (IsFrameworkAssembly(assemblyName)) {
-                return Assembly.Load(assemblyName);
+            if (IsFrameworkAssembly(assemblyName) && TryLoadFrameworkAssembly(assemblyName) is Assembly frameworkAssembly) {
+                return frameworkAssembly;
             }
 
             if (assemblyName.Name == hostAssembly.GetName().Name) {

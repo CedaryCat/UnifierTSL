@@ -214,7 +214,7 @@ function Build-EnglishVersionBlock {
         '| Component | Version | Source |',
         '|:--|:--|:--|',
         ('| Target framework | `{0}` | `src/UnifierTSL/*.csproj` |' -f $Metadata.TargetFrameworkDisplay),
-        ('| Terraria | `{0}` | restored `OTAPI.dll` resolved via `src/UnifierTSL/obj/project.assets.json` (assembly file version) |' -f $Metadata.TerrariaVersion),
+        ('| Terraria | `{0}` | `OTAPI.dll` from the OTAPI USP package referenced by this project |' -f $Metadata.TerrariaVersion),
         ('| OTAPI USP | `{0}` | `src/UnifierTSL/UnifierTSL.csproj` |' -f $Metadata.OTAPIUSPVersion),
         '',
         '<details>',
@@ -257,7 +257,7 @@ function Build-ChineseVersionBlock {
         '| 组件 | 版本 | 来源 |',
         '|:--|:--|:--|',
         ('| 目标框架 | `{0}` | `src/UnifierTSL/*.csproj` |' -f $Metadata.TargetFrameworkDisplay),
-        ('| Terraria | `{0}` | 通过 `src/UnifierTSL/obj/project.assets.json` 定位已还原的 `OTAPI.dll`（程序集文件版本） |' -f $Metadata.TerrariaVersion),
+        ('| Terraria | `{0}` | 项目引用的 OTAPI.USP 包中的 `OTAPI.dll` |' -f $Metadata.TerrariaVersion),
         ('| OTAPI USP | `{0}` | `src/UnifierTSL/UnifierTSL.csproj` |' -f $Metadata.OTAPIUSPVersion),
         '',
         '<details>',
@@ -376,4 +376,3 @@ if ($Mode -eq 'check' -and $changed) {
 }
 
 Write-Host "Version metadata sync check completed in '$Mode' mode."
-

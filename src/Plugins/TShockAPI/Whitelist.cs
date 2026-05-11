@@ -85,7 +85,7 @@ public sealed class Whitelist
         // Terraria currently only supports IPv4.
         if (ip.AddressFamily is AddressFamily.InterNetworkV6)
         {
-            TShock.Log.Warning(GetString($"IPv6 address '{ip}' is not supported by Terraria. Skipping whitelist check."));
+            TShock.Log.Warning(GetString($"IPv6 address '{ip}' is not supported by Terraria. Skipping check."));
             TShock.Log.Warning(GetString("Please report this to the TShock team if needed: https://github.com/Pryaxis/TShock/issues"));
             return false;
         }
