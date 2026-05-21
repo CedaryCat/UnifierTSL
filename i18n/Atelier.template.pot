@@ -429,8 +429,8 @@ msgstr ""
 msgid "Unsupported atelier invocation host '{0}'."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Session/Roslyn/ScriptOptionsFactory.cs:84
 #: ../../src/Plugins/Atelier/Session/Context/HostContextFactory.cs:27
+#: ../../src/Plugins/Atelier/Session/Roslyn/ScriptOptionsFactory.cs:84
 #, csharp-format
 msgid "Unsupported atelier target profile '{0}'."
 msgstr ""

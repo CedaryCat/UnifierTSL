@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: tshock\n"
+"Project-Id-Version: unifiertsl\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
@@ -11,11 +11,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: GetText.NET Extractor\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Crowdin-Project: tshock\n"
-"X-Crowdin-Project-ID: 544368\n"
+"X-Crowdin-Project: unifiertsl\n"
+"X-Crowdin-Project-ID: 894776\n"
 "X-Crowdin-Language: zh-CN\n"
-"X-Crowdin-File: /general-devel/i18n/template.pot\n"
-"X-Crowdin-File-ID: 6\n"
+"X-Crowdin-File: /i18n/TShockAPI.template.pot\n"
+"X-Crowdin-File-ID: 9\n"
 
 #: ../../src/Plugins/TShockAPI/DB/CharacterManager.cs:301
 #: ../../src/Plugins/TShockAPI/DB/CharacterManager.cs:384
@@ -236,12 +236,12 @@ msgstr "\"{0}\" 不是一个有效的NPC。"
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:14
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:132
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
-#: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:209
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:378
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
+#: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
 #: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:456
 #, csharp-format
@@ -375,8 +375,8 @@ msgstr "{0} <{1}> [{2}] [{3}] [{4}]"
 msgid "{0} <{1}> [{2}|{3}|{4}|{5}]"
 msgstr "{0} <{1}> [{2}|{3}|{4}|{5}]"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:144
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:63
+#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:144
 #, csharp-format
 msgid "{0} <{1}> <{2}>"
 msgstr "{0} <{1}> <{2}>"
@@ -802,8 +802,8 @@ msgstr "{0}现在已处于上帝模式。"
 msgid "{0} is offline and cannot receive your reply."
 msgstr "{0}已离线，无法收到你的消息。"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/ModerationCommands.cs:131
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:1143
+#: ../../src/Plugins/TShockAPI/Commanding/V2/ModerationCommands.cs:131
 #, csharp-format
 msgid "{0} just killed you!"
 msgstr "{0}杀死了你！"
@@ -2866,8 +2866,8 @@ msgstr "指令 ({{0}}/{{1}}):"
 msgid "Commands: add, del, hide, list, send, [warpname]."
 msgstr "命令: add, del, hide, list, send, [传送点名]"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/MaintenanceCommands.cs:102
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:379
+#: ../../src/Plugins/TShockAPI/Commanding/V2/MaintenanceCommands.cs:102
 msgid "Configuration, permissions, and regions reload complete. Some changes may require a server restart."
 msgstr "配置、权限和区域重新加载完成。有些更改可能需要重新启动服务器。"
 
@@ -2890,11 +2890,11 @@ msgstr "腐化棕榈木"
 msgid "Could not find a warp named {0} to remove."
 msgstr "找不到名为{0}的warp传送点。"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:107
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:34
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:73
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:128
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:463
+#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:107
 #, csharp-format
 msgid "Could not find any player named \"{0}\""
 msgstr "找不到任何名为\"{0}\"的玩家"
@@ -3167,16 +3167,16 @@ msgid "Example usage: {0} \"{1}\" \"{2}\""
 msgstr "示例用法: {0} \"{1}\"{2}\""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:119
-#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:795
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:809
 #: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163
+#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #, csharp-format
 msgid "Example usage: {0} {1}"
 msgstr "示例用法: {0} {1}"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:145
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:170
+#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:145
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:414
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:415
 #, csharp-format
@@ -3252,8 +3252,8 @@ msgstr "删除用户组{0}失败。"
 msgid "Failed to find any users by that name on the list."
 msgstr "指定玩家没有完成今日渔夫任务。"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:708
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:749
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:708
 msgid "Failed to remove ban."
 msgstr "移除封禁记录失败。"
 
@@ -3828,8 +3828,8 @@ msgstr "用户组 {0} 创建成功"
 msgid "Group {0} deleted successfully"
 msgstr "用户组 {0} 删除成功"
 
-#: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:658
 #: ../../src/Plugins/TShockAPI/DB/UserManager.cs:622
+#: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:658
 #, csharp-format
 msgid "Group {0} does not exist"
 msgstr "用户组 {0} 不存在"
@@ -4062,8 +4062,8 @@ msgstr "已禁止其他玩家传送你。"
 msgid "Incorrect setup code. This incident has been logged."
 msgstr "认证代码错误，你的行为已被记录。"
 
-#: ../../src/Plugins/TShockAPI/DB/ProjectileManagager.cs:195
 #: ../../src/Plugins/TShockAPI/DB/TileManager.cs:184
+#: ../../src/Plugins/TShockAPI/DB/ProjectileManagager.cs:195
 #, csharp-format
 msgid "Infinite group parenting ({0})"
 msgstr "无限递归的父组引用({0})"
@@ -4118,12 +4118,12 @@ msgstr "无效的boss数量。"
 msgid "Invalid boss type!"
 msgstr "无效的boss类型。"
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
 #: ../../src/Plugins/TShockAPI/Commands.cs:206
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
+#: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:337
 #: ../../src/Plugins/TShockAPI/Commanding/TShockTerminalCommandDispatchAdapter.cs:71
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:148
-#: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:337
 #, csharp-format
 msgid "Invalid command entered. Type {0}help for a list of valid commands."
 msgstr "输入的命令无效。使用{0}help 获取可用的指令列表。"
@@ -4659,8 +4659,8 @@ msgid "Invalid time string! Proper format: _d_h_m_s, with at least one time spec
 msgstr "时间无效! 正确格式: _d_h_m_s, 至少需要一个时间单位。"
 
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandGuardAttributes.cs:177
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:812
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ModerationCommands.cs:272
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:812
 msgid "Invalid time string. Proper format: hh:mm, in 24-hour time."
 msgstr "无效的时间字符串。正确格式： hh:mm，24小时制时间。"
 
@@ -5009,8 +5009,8 @@ msgstr "缺少玩家名。"
 msgid "Mode: {0}"
 msgstr "模式：{0}"
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:273
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:2103
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:273
 msgid "More than one match found -- unable to decide which is correct: "
 msgstr "找到多个匹配项-无法判断哪个是正确的:"
 
@@ -5120,9 +5120,9 @@ msgstr "未授权：该授权令牌所对应的用户组已不存在，请创建
 msgid "Not authorized. The specified API endpoint requires a token, but the provided token was not valid."
 msgstr "未授权：指定的API端点需要授权令牌，但使用的令牌无效。"
 
-#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:95
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:101
+#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 msgid "Not authorized. The specified API endpoint requires a token."
 msgstr "未授权。指定的 API 终结点需要一个令牌。"
 
@@ -5213,10 +5213,10 @@ msgstr "{0} 的密码更改成功。"
 msgid "Password must be at least {0} characters."
 msgstr "密码至少需要 {0} 个字符。"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:292
-#: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:356
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:501
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:572
+#: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:292
+#: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:356
 #, csharp-format
 msgid "Password must be greater than or equal to {0} characters."
 msgstr "密码长度必须大于或等于 {0} 个字符。"
@@ -6591,8 +6591,8 @@ msgstr "魔法海螺"
 msgid "The message was broadcasted successfully"
 msgstr "消息已成功广播"
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:342
 #: ../../src/Plugins/TShockAPI/PaginationTools.cs:185
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:342
 msgid "The method referenced by LineFormatter has thrown an exception. See inner exception for details."
 msgstr "属性LineFormatter中的代码抛出了异常，查看异常以获取详情。"
 
@@ -7174,13 +7174,13 @@ msgstr "使用 \"{0}worldevent rain rain coin\" 开始一场钱币雨!"
 msgid "Use \"{0}worldevent rain slime\" to start slime rain!"
 msgstr "使用 {0}worldevent rain slime 开始一场史莱姆雨!"
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:277
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:2108
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:277
 msgid "Use \"my query\" for items with spaces."
 msgstr "用\"半角双引号\"包裹关键字来搜索名字带有空格的物品。"
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:278
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:2109
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:278
 msgid "Use tsi:[number] or tsn:[username] to distinguish between user IDs and usernames."
 msgstr "使用 tsi:序号 或者 tsn:名称 来区分含有数字的名称。"
 
@@ -7934,8 +7934,8 @@ msgid "You must spawn the Wall of Flesh in hell."
 msgstr "只有在地狱中才能生成血肉墙。"
 
 #: ../../src/Plugins/TShockAPI/Commands.cs:224
-#: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:193
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandValuePolicies.cs:70
+#: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:193
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1130
 msgid "You must use this command in specific server."
 msgstr "你必须在具体服务器中使用此命令。"
@@ -7946,18 +7946,18 @@ msgstr "你必须在具体服务器中使用此命令。"
 msgid "You must use this command in-game."
 msgstr "你必须在游戏内使用该指令。"
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:216
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:200
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:216
 msgid "You need to join with a hardcore player."
 msgstr "只有硬核模式的角色才能进入服务器。"
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:211
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:193
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:211
 msgid "You need to join with a mediumcore player or higher."
 msgstr "只有中核模式或更高难度的角色才能进入服务器。"
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:206
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:186
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:206
 msgid "You need to join with a softcore player."
 msgstr "只有软核模式的角色才能进入服务器。"
 

@@ -1689,10 +1689,10 @@ msgstr ""
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:325
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:336
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:326
+#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:510
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:529
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:537
-#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
 msgid "Invalid command syntax."
 msgstr ""
 
