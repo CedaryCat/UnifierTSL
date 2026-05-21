@@ -236,12 +236,12 @@ msgstr "\"{0}\" no es un PNJ válido."
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:14
 #: ../../src/Plugins/TShockAPI/Commanding/V2/GeneralCommands.cs:132
 #: ../../src/Plugins/TShockAPI/Commanding/V2/TeleportCommands.cs:335
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
-#: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:23
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:209
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RestrictionCommands.cs:378
 #: ../../src/Plugins/TShockAPI/Commanding/V2/RegionCommands.cs:32
+#: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:23
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:576
 #: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:117
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:456
 #, csharp-format
@@ -375,8 +375,8 @@ msgstr "{0} <{1}> [{2}] [{3}] [{4}]"
 msgid "{0} <{1}> [{2}|{3}|{4}|{5}]"
 msgstr "{0} <{1}> [{2}|{3}|{4}|{5}]"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:144
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:63
+#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:144
 #, csharp-format
 msgid "{0} <{1}> <{2}>"
 msgstr "{0} <{1}> <{2}>"
@@ -805,8 +805,8 @@ msgstr "{0} está ahora en modo dios."
 msgid "{0} is offline and cannot receive your reply."
 msgstr "{0} está desconectado(a) y no puede recibir tu respuesta."
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/ModerationCommands.cs:131
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:1143
+#: ../../src/Plugins/TShockAPI/Commanding/V2/ModerationCommands.cs:131
 #, csharp-format
 msgid "{0} just killed you!"
 msgstr "¡{0} te acaba de matar!"
@@ -2871,8 +2871,8 @@ msgstr "Comandos ({{0}}/{{1}}):"
 msgid "Commands: add, del, hide, list, send, [warpname]."
 msgstr "Comandos: add, del, hide, list, send, [nombre de warp]."
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/MaintenanceCommands.cs:102
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:379
+#: ../../src/Plugins/TShockAPI/Commanding/V2/MaintenanceCommands.cs:102
 msgid "Configuration, permissions, and regions reload complete. Some changes may require a server restart."
 msgstr "Recarga de configuración, permisos y regiones completada. Algunos cambios pueden requerir un reinicio del servidor."
 
@@ -2895,11 +2895,11 @@ msgstr "Palmera Corrupta"
 msgid "Could not find a warp named {0} to remove."
 msgstr "No se pudo encontrar un warp llamado {0} para eliminarlo."
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:107
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:34
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:73
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:128
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:463
+#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:107
 #, csharp-format
 msgid "Could not find any player named \"{0}\""
 msgstr "No se encontró ningún jugador llamado \"{0}\""
@@ -3172,16 +3172,16 @@ msgid "Example usage: {0} \"{1}\" \"{2}\""
 msgstr "Ejemplo de uso: {0} \"{1}\" \"{2}\""
 
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:119
-#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:795
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:809
 #: ../../src/Plugins/TShockAPI/Commanding/V2/InfoCommands.cs:163
+#: ../../src/Plugins/TShockAPI/Commanding/V2/NpcManagementCommands.cs:169
 #, csharp-format
 msgid "Example usage: {0} {1}"
 msgstr "Ejemplo de uso: {0} {1}"
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:145
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:170
+#: ../../src/Plugins/TShockAPI/Commanding/V2/CommunicationCommands.cs:145
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:414
 #: ../../src/Plugins/TShockAPI/Commanding/V2/WorldUtilityCommands.cs:415
 #, csharp-format
@@ -3257,8 +3257,8 @@ msgstr "No se pudo eliminar el grupo {0}."
 msgid "Failed to find any users by that name on the list."
 msgstr "No se pudo encontrar ningún usuario con ese nombre en la lista."
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:708
 #: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:749
+#: ../../src/Plugins/TShockAPI/Commanding/V2/PlayerManagementCommands.cs:708
 msgid "Failed to remove ban."
 msgstr "No se pudo eliminar el baneo."
 
@@ -3835,8 +3835,8 @@ msgstr "Grupo {0} creado con éxito"
 msgid "Group {0} deleted successfully"
 msgstr "Grupo {0} eliminado con éxito"
 
-#: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:658
 #: ../../src/Plugins/TShockAPI/DB/UserManager.cs:622
+#: ../../src/Plugins/TShockAPI/DB/GroupManager.cs:658
 #, csharp-format
 msgid "Group {0} does not exist"
 msgstr "El grupo {0} no existe"
@@ -4069,8 +4069,8 @@ msgstr "Ahora se bloquean teletransportes entrantes."
 msgid "Incorrect setup code. This incident has been logged."
 msgstr "Código de configuración incorrecto. Incidente archivado en el registro."
 
-#: ../../src/Plugins/TShockAPI/DB/ProjectileManagager.cs:195
 #: ../../src/Plugins/TShockAPI/DB/TileManager.cs:184
+#: ../../src/Plugins/TShockAPI/DB/ProjectileManagager.cs:195
 #, csharp-format
 msgid "Infinite group parenting ({0})"
 msgstr "Grupo infinito de jerarquía ({0})"
@@ -4125,12 +4125,12 @@ msgstr "La cantidad de jefes no es válida."
 msgid "Invalid boss type!"
 msgstr "¡El tipo de jefe no es válido!"
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
 #: ../../src/Plugins/TShockAPI/Commands.cs:206
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:674
+#: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:337
 #: ../../src/Plugins/TShockAPI/Commanding/TShockTerminalCommandDispatchAdapter.cs:71
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandBridge.cs:251
 #: ../../src/Plugins/TShockAPI/Commanding/V2/PrivilegeCommands.cs:148
-#: ../../src/Plugins/TShockAPI/Rest/RestManager.cs:337
 #, csharp-format
 msgid "Invalid command entered. Type {0}help for a list of valid commands."
 msgstr "Se ha introducido un comando inválido. Escriba {0}help para obtener una lista de comandos válidos."
@@ -4666,8 +4666,8 @@ msgid "Invalid time string! Proper format: _d_h_m_s, with at least one time spec
 msgstr "¡Cadena de tiempo inválida! Formato correcto: _d_h_m_s, con al menos un especificador de hora."
 
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandGuardAttributes.cs:177
-#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:812
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ModerationCommands.cs:272
+#: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:812
 msgid "Invalid time string. Proper format: hh:mm, in 24-hour time."
 msgstr "Cadena de tiempo inválida. Formato correcto: hh:mm, en formato de 24 horas."
 
@@ -5016,8 +5016,8 @@ msgstr "Falta el nombre del jugador."
 msgid "Mode: {0}"
 msgstr "Modo: {0}"
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:273
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:2103
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:273
 msgid "More than one match found -- unable to decide which is correct: "
 msgstr "Hay más de una coincidencia -- no se puede decidir la correcta: "
 
@@ -5127,9 +5127,9 @@ msgstr "No autorizado. El tóken proporcionado fue invalidado debido a cambios e
 msgid "Not authorized. The specified API endpoint requires a token, but the provided token was not valid."
 msgstr "No autorizado. El punto final API especificado requiere un tóken, pero el que fue proporcionado no era válido."
 
-#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:95
 #: ../../src/Plugins/TShockAPI/Rest/RestCommand.cs:101
+#: ../../src/Plugins/TShockAPI/Rest/SecureRest.cs:180
 msgid "Not authorized. The specified API endpoint requires a token."
 msgstr "No autorizado. El punto final API especificado requiere un tóken."
 
@@ -5220,10 +5220,10 @@ msgstr "La contraseña de {0} se cambió correctamente."
 msgid "Password must be at least {0} characters."
 msgstr "La contraseña debe tener al menos {0} caracteres."
 
-#: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:292
-#: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:356
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:501
 #: ../../src/Plugins/TShockAPI/Commanding/V2/ManagementCommands.cs:572
+#: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:292
+#: ../../src/Plugins/TShockAPI/Commanding/V2/AccountCommands.cs:356
 #, csharp-format
 msgid "Password must be greater than or equal to {0} characters."
 msgstr "La contraseña debe contener {0} o más caracteres."
@@ -6600,8 +6600,8 @@ msgstr "Concha mágica"
 msgid "The message was broadcasted successfully"
 msgstr "El mensaje se transmitió correctamente"
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:342
 #: ../../src/Plugins/TShockAPI/PaginationTools.cs:185
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:342
 msgid "The method referenced by LineFormatter has thrown an exception. See inner exception for details."
 msgstr "El método al que hace referencia LineFormatter arrojó una excepción. Revise la excepción interna para más detalles."
 
@@ -7183,13 +7183,13 @@ msgstr "¡Usa \"{0}worldevent rain coin\" para iniciar la lluvia de monedas!"
 msgid "Use \"{0}worldevent rain slime\" to start slime rain!"
 msgstr "¡Usa \"{0}worldevent rain slime\" para iniciar una lluvia de slimes!"
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:277
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:2108
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:277
 msgid "Use \"my query\" for items with spaces."
 msgstr "Usa comillas (Ej. \"tal objeto\") para objetos con espacios."
 
-#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:278
 #: ../../src/Plugins/TShockAPI/TSPlayer.cs:2109
+#: ../../src/Plugins/TShockAPI/CommandExecutor.cs:278
 msgid "Use tsi:[number] or tsn:[username] to distinguish between user IDs and usernames."
 msgstr "Usa tsi:[number] o tsn:[username] para distinguir entre IDs y nombres de usuario."
 
@@ -7944,8 +7944,8 @@ msgid "You must spawn the Wall of Flesh in hell."
 msgstr "Debes invocar al Muro Carnoso en el inframundo."
 
 #: ../../src/Plugins/TShockAPI/Commands.cs:224
-#: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:193
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandValuePolicies.cs:70
+#: ../../src/Plugins/TShockAPI/Commanding/TShockCommandSurface.cs:193
 #: ../../src/Plugins/TShockAPI/Commanding/TSCommandParamBinders.cs:1130
 msgid "You must use this command in specific server."
 msgstr ""
@@ -7956,18 +7956,18 @@ msgstr ""
 msgid "You must use this command in-game."
 msgstr "Debes usar este comando dentro del juego."
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:216
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:200
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:216
 msgid "You need to join with a hardcore player."
 msgstr "Necesitas unirte con un jugador en modo extremo."
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:211
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:193
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:211
 msgid "You need to join with a mediumcore player or higher."
 msgstr "Necesitas unirte con un jugador en modo medio o superior."
 
-#: ../../src/Plugins/TShockAPI/MiscHandler.cs:206
 #: ../../src/Plugins/TShockAPI/GetDataHandlers.cs:186
+#: ../../src/Plugins/TShockAPI/MiscHandler.cs:206
 msgid "You need to join with a softcore player."
 msgstr "Necesitas unirte con un jugador en modo clásico."
 
