@@ -70,7 +70,7 @@ namespace UnifierTSL.Commanding.Composition
             CommandControllerGroupRegistration registration,
             CommandRegistrationOptions options) {
             var controllerGroupType = registration.ControllerGroupType;
-            var sourceName = GetGroupSourceName(controllerGroupType);
+            var sourceName = GetSourceName(controllerGroupType);
 
             var group = controllerGroupType.GetCustomAttribute<ControllerGroupAttribute>(inherit: false)
                 ?? throw new InvalidOperationException(GetParticularString(
@@ -95,7 +95,7 @@ namespace UnifierTSL.Commanding.Composition
             return roots.ToImmutable();
         }
 
-        private static CommandRootDefinition DiscoverController(
+        internal static CommandRootDefinition DiscoverController(
             string sourceName,
             Type controllerType,
             CommandRegistrationOptions options) {
@@ -197,7 +197,7 @@ namespace UnifierTSL.Commanding.Composition
 
             ValidateReturnType(method);
 
-            var pathSegments = ParsePath(action.Path);
+            var pathSegments = NormalizePath(action.Path);
             var pathAliases = ParseActionAliases(method, pathSegments);
             (var parameters, var bindings, var flagsParameter) = BuildBindings(method, options);
             var ignoreTrailingArguments = method.GetCustomAttribute<IgnoreTrailingArgumentsAttribute>(inherit: false) is not null;
@@ -254,7 +254,7 @@ namespace UnifierTSL.Commanding.Composition
                 $"Command action '{method.DeclaringType?.FullName}.{method.Name}' uses unsupported return type '{returnType.FullName}'. V2 commands must return CommandOutcome, Task<CommandOutcome>, or ValueTask<CommandOutcome>."));
         }
 
-        private static ImmutableArray<string> ParsePath(string path) {
+        internal static ImmutableArray<string> NormalizePath(string path) {
             if (string.IsNullOrWhiteSpace(path)) {
                 return [];
             }
@@ -1049,9 +1049,9 @@ namespace UnifierTSL.Commanding.Composition
             return string.Empty;
         }
 
-        private static string GetGroupSourceName(Type controllerGroupType) {
-            var typeName = controllerGroupType.FullName ?? controllerGroupType.Name;
-            var assemblyName = controllerGroupType.Assembly.GetName().Name ?? "unknown-assembly";
+        internal static string GetSourceName(Type sourceType) {
+            var typeName = sourceType.FullName ?? sourceType.Name;
+            var assemblyName = sourceType.Assembly.GetName().Name ?? "unknown-assembly";
             return $"{assemblyName}:{typeName}";
         }
 

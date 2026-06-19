@@ -4,10 +4,12 @@ namespace ExamplePlugin
 {
     [CommandController("exampletask", Summary = nameof(ControllerSummary))]
     [Aliases("simtask")]
-    internal static class ExampleSimulatedTaskCommand
+    public static class ExampleSimulatedTaskCommand
     {
         private static string ControllerSummary => "Runs a cancellable simulated terminal task.";
         private static string ExecuteSummary => "Runs a long simulated task with progress updates.";
+        private static string StatusSummary => "Shows the base example command status.";
+        private static string LegacySummary => "Shows a command path that a satellite plugin can disable.";
         private static string StepsOutOfRangeMessage => "Steps must be between 1 and 240.";
         private static string DelayMsOutOfRangeMessage => "Delay must be between 50 and 10000 milliseconds.";
 
@@ -43,6 +45,18 @@ namespace ExamplePlugin
             finally {
                 feedback?.ClearProgress();
             }
+        }
+
+        [CommandAction("status", Summary = nameof(StatusSummary))]
+        [TerminalCommand]
+        public static CommandOutcome Status() {
+            return CommandOutcome.Info("ExamplePlugin base command is registered.");
+        }
+
+        [CommandAction("legacy", Summary = nameof(LegacySummary))]
+        [TerminalCommand]
+        public static CommandOutcome Legacy() {
+            return CommandOutcome.Warning("This legacy example path is available until a feature plugin disables it.");
         }
     }
 }

@@ -3,7 +3,7 @@ using UnifierTSL.Commanding;
 namespace TShockAPI.Commanding.V2
 {
     [CommandController("savessc", Summary = nameof(ControllerSummary))]
-    internal static class SaveSscCommand
+    public static class SaveSscCommand
     {
         private static string ControllerSummary => GetString("Saves all server-side characters.");
         private static string ExecuteSummary => GetString("Saves all currently tracked server-side characters.");
@@ -44,7 +44,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("overridessc", Summary = nameof(ControllerSummary))]
     [Aliases("ossc")]
-    internal static class OverrideSscCommand
+    public static class OverrideSscCommand
     {
         private static string MatchedPlayerInvalidPlayerMessage(params object?[] args) => GetString("No players matched \"{0}\".", args);
 
@@ -83,7 +83,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("uploadssc", Summary = nameof(ControllerSummary))]
-    internal static class UploadSscCommand
+    public static class UploadSscCommand
     {
         private static string ExecuteOtherDenialMessage => GetString("You do not have permission to upload another player's character join-state server-side-character data.");
         private static string TargetPlayerInvalidPlayerMessage(params object?[] args) => GetString("No player was found matching '{0}'.", args);
@@ -140,7 +140,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("sync", Summary = nameof(ControllerSummary))]
-    internal static class SyncLocalAreaCommand
+    public static class SyncLocalAreaCommand
     {
         private static string ControllerSummary => GetString("Resyncs the local world area around the current player.");
         private static string ExecuteSummary => GetString("Resends nearby tiles to the executing player.");

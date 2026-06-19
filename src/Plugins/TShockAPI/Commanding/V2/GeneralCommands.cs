@@ -5,7 +5,7 @@ namespace TShockAPI.Commanding.V2
 {
     [CommandController("help", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(HelpText = nameof(RootHelpText))]
-    internal static class HelpCommand
+    public static class HelpCommand
     {
         private static string ControllerSummary => GetString("Lists commands or gives help on them.");
         private static string RootHelpText => GetString("Lists commands or gives help on them.");
@@ -122,7 +122,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("rest", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(HelpText = nameof(RootHelpText))]
-    internal static class RestCommand
+    public static class RestCommand
     {
         private static string ControllerSummary => GetString("Manages the REST API.");
         private static string RootHelpText => GetString("Manages the REST API.");
@@ -217,7 +217,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("displaylogs", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(HelpText = nameof(RootHelpText))]
-    internal static class DisplayLogsCommand
+    public static class DisplayLogsCommand
     {
         private static string ControllerSummary => GetString("Toggles whether you receive server logs.");
         private static string RootHelpText => GetString("Toggles whether you receive server logs.");
@@ -238,7 +238,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("dump-reference-data", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(HelpText = nameof(RootHelpText))]
-    internal static class DumpReferenceDataCommand
+    public static class DumpReferenceDataCommand
     {
         private static string ControllerSummary => GetString("Creates reference tables for Terraria data types and permissions.");
         private static string RootHelpText => GetString("Creates a reference tables for Terraria data types and the TShock permission system in the server folder.");

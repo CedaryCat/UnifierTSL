@@ -14,7 +14,7 @@ using UnifierTSL.Servers;
 
 namespace TShockAPI.Commanding
 {
-    internal enum TSRegionResizeDirection : byte
+    public enum TSRegionResizeDirection : byte
     {
         Up,
         Right,

@@ -109,6 +109,7 @@ namespace UnifierTSL.Commanding.Composition
         private readonly HashSet<Type> endpointTypes = [];
         private readonly List<CommandEndpointActionBindingRule> actionBindingRules = [];
         private readonly HashSet<EndpointBindingRuleKey> actionBindingRuleKeys = [];
+        private readonly List<CommandCatalogPatch> catalogPatches = [];
         private readonly CommandOutcomeWriterRegistryBuilder outcomeWriters = new();
 
         internal CommandRegistrationBuilder() { }
@@ -167,6 +168,14 @@ namespace UnifierTSL.Commanding.Composition
             outcomeWriters.AddWriter(writer);
         }
 
+        public void EditCommands(Action<CommandCatalogEditor> configure) {
+            ArgumentNullException.ThrowIfNull(configure);
+
+            CommandCatalogEditor editor = new();
+            configure(editor);
+            catalogPatches.AddRange(editor.Build());
+        }
+
         internal ImmutableArray<CommandControllerGroupRegistration> GetControllerGroups() {
             return [.. controllerGroups.Values.OrderBy(static registration => registration.ControllerGroupType.FullName, StringComparer.Ordinal)];
         }
@@ -181,6 +190,10 @@ namespace UnifierTSL.Commanding.Composition
 
         internal ImmutableArray<CommandEndpointActionBindingRule> GetActionBindingRules() {
             return [.. actionBindingRules];
+        }
+
+        internal ImmutableArray<CommandCatalogPatch> GetCatalogPatches() {
+            return [.. catalogPatches];
         }
 
         internal ImmutableArray<CommandOutcomeWriterRegistration> GetOutcomeWriters() {

@@ -28,7 +28,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("worldmode", Summary = nameof(ControllerSummary))]
     [Aliases("gamemode")]
-    internal static class WorldModeCommand
+    public static class WorldModeCommand
     {
         private static string ControllerSummary => GetString("Changes the world mode.");
         private static string ExecuteSummary => GetString("Changes the current world's game mode.");
@@ -82,7 +82,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("worldevent", Summary = nameof(ControllerSummary))]
-    internal static class WorldEventCommand
+    public static class WorldEventCommand
     {
         private static string ControllerSummary => GetString("Enables starting and stopping various world events.");
         private static string MeteorSummary => GetString("Triggers a meteor.");
@@ -104,7 +104,7 @@ namespace TShockAPI.Commanding.V2
         private static string LanternsNightSummary => GetString("Starts or stops lantern night.");
         private static string MeteorShowerSummary => GetString("Starts or stops a meteor shower.");
 
-        internal enum RainVariant : byte
+        public enum RainVariant : byte
         {
             [CommandToken("normal")]
             Normal,
@@ -116,7 +116,7 @@ namespace TShockAPI.Commanding.V2
             Coin,
         }
 
-        internal enum StandardInvasionKind : byte
+        public enum StandardInvasionKind : byte
         {
             [CommandToken("goblin", "goblins")]
             Goblins,
@@ -592,7 +592,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("worldinfo", Summary = nameof(ControllerSummary))]
-    internal static class WorldInfoCommand
+    public static class WorldInfoCommand
     {
         private static string ControllerSummary => GetString("Shows information about the current world.");
         private static string ExecuteSummary => GetString("Shows information about the current world.");
@@ -615,7 +615,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("setspawn", Summary = nameof(ControllerSummary))]
-    internal static class SetSpawnCommand
+    public static class SetSpawnCommand
     {
         private static string ControllerSummary => GetString("Sets the world's spawn point to your location.");
         private static string ExecuteSummary => GetString("Sets the world's spawn point to your location.");
@@ -635,7 +635,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("setdungeon", Summary = nameof(ControllerSummary))]
-    internal static class SetDungeonCommand
+    public static class SetDungeonCommand
     {
         private static string ControllerSummary => GetString("Sets the dungeon's position to your location.");
         private static string ExecuteSummary => GetString("Sets the dungeon's position to your location.");
@@ -655,7 +655,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("protectspawn", Summary = nameof(ControllerSummary))]
-    internal static class ProtectSpawnCommand
+    public static class ProtectSpawnCommand
     {
         private static string ControllerSummary => GetString("Toggles spawn protection.");
         private static string ExecuteSummary => GetString("Toggles spawn protection.");
@@ -678,7 +678,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("save", Summary = nameof(ControllerSummary))]
-    internal static class SaveCommand
+    public static class SaveCommand
     {
         private static string ControllerSummary => GetString("Saves the world file.");
         private static string ExecuteSummary => GetString("Saves the world file.");

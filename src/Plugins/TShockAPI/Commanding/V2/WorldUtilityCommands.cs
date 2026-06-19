@@ -6,7 +6,7 @@ using UnifierTSL.Servers;
 
 namespace TShockAPI.Commanding.V2
 {
-    internal enum ClearTargetKind : byte
+    public enum ClearTargetKind : byte
     {
         [CommandToken("item", "items", "i")]
         Item,
@@ -18,7 +18,7 @@ namespace TShockAPI.Commanding.V2
         Projectile,
     }
 
-    internal enum GrowKind : byte
+    public enum GrowKind : byte
     {
         [CommandToken("basic")]
         Basic,
@@ -381,7 +381,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("clear", Summary = nameof(ControllerSummary))]
-    internal static class ClearCommand
+    public static class ClearCommand
     {
         private static string ControllerSummary => GetString("Clears item drops or projectiles.");
         private static string ExecuteSummary => GetString("Clears nearby entities around your current location.");
@@ -420,7 +420,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("antibuild", Summary = nameof(ControllerSummary))]
-    internal static class AntiBuildCommand
+    public static class AntiBuildCommand
     {
         private static string ControllerSummary => GetString("Toggles build protection.");
         private static string ExecuteSummary => GetString("Toggles anti-build for one server or all running servers.");
@@ -448,7 +448,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("grow", Summary = nameof(ControllerSummary))]
-    internal static class GrowCommand
+    public static class GrowCommand
     {
         private static string ControllerSummary => GetString("Grows plants at your location.");
         private static string DefaultHelpSummary => GetString("Shows grow help when no plant type is provided.");
@@ -496,7 +496,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("forcehalloween", Summary = nameof(ControllerSummary))]
-    internal static class ForceHalloweenCommand
+    public static class ForceHalloweenCommand
     {
         private static string ControllerSummary => GetString("Toggles halloween mode (goodie bags, pumpkins, etc).");
         private static string ExecuteSummary => GetString("Toggles halloween mode for the current server.");
@@ -524,7 +524,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("forcexmas", Summary = nameof(ControllerSummary))]
-    internal static class ForceXmasCommand
+    public static class ForceXmasCommand
     {
         private static string ControllerSummary => GetString("Toggles christmas mode (present spawning, santa, etc).");
         private static string ExecuteSummary => GetString("Toggles christmas mode for the current server.");
@@ -552,7 +552,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("hardmode", Summary = nameof(ControllerSummary))]
-    internal static class HardmodeCommand
+    public static class HardmodeCommand
     {
         private static string ControllerSummary => GetString("Toggles the world's hardmode status.");
         private static string ExecuteSummary => GetString("Toggles hardmode for the current world.");
@@ -577,7 +577,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("evil", Summary = nameof(ControllerSummary))]
-    internal static class EvilCommand
+    public static class EvilCommand
     {
         private static string ControllerSummary => GetString("Switches the world's evil.");
         private static string ExecuteSummary => GetString("Switches the world's evil between corruption and crimson.");
@@ -592,7 +592,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("settle", Summary = nameof(ControllerSummary))]
-    internal static class SettleCommand
+    public static class SettleCommand
     {
         private static string ControllerSummary => GetString("Forces all liquids to update immediately.");
         private static string ExecuteSummary => GetString("Starts settling liquids on the current server.");

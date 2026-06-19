@@ -5,7 +5,7 @@ using UnifierTSL.Commanding;
 namespace TShockAPI.Commanding.V2
 {
     [CommandController("me", Summary = nameof(ControllerSummary))]
-    internal static class MeCommand
+    public static class MeCommand
     {
         private static string ControllerSummary => GetString("Sends an action message to everyone.");
         private static string ExecuteSummary => GetString("Sends a third-person action message to the current server.");
@@ -28,7 +28,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("party", Summary = nameof(ControllerSummary))]
     [Aliases("p")]
-    internal static class PartyChatCommand
+    public static class PartyChatCommand
     {
         private static string ControllerSummary => GetString("Sends a message to everyone on your team.");
         private static string ExecuteSummary => GetString("Broadcasts a message to the executor's current team.");
@@ -66,7 +66,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("reply", Summary = nameof(ControllerSummary))]
     [Aliases("r")]
-    internal static class ReplyCommand
+    public static class ReplyCommand
     {
         private static string ControllerSummary => GetString("Replies to a PM sent to you.");
         private static string ExecuteSummary => GetString("Replies to the last whisper received by the execution actor.");
@@ -102,7 +102,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("whisper", Summary = nameof(ControllerSummary))]
     [Aliases("w", "tell", "pm", "dm")]
-    internal static class WhisperCommand
+    public static class WhisperCommand
     {
         private static string TargetInvalidPlayerMessage(params object?[] args) => GetString("Could not find any player named \"{0}\"", args);
 
@@ -149,7 +149,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("wallow", Summary = nameof(ControllerSummary))]
     [Aliases("wa")]
-    internal static class WallowCommand
+    public static class WallowCommand
     {
         private static string ControllerSummary => GetString("Toggles whether you accept whispers.");
         private static string ExecuteSummary => GetString("Toggles whether other players may whisper you.");

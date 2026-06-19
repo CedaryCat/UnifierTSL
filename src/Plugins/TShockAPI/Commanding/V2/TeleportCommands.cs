@@ -8,7 +8,7 @@ namespace TShockAPI.Commanding.V2
 {
 
     [CommandController("tp", Summary = nameof(ControllerSummary))]
-    internal static class TeleportCommand
+    public static class TeleportCommand
     {
         private static string TargetInvalidPlayerMessage => GetString("Invalid destination player.");
         private static string ExecutePairDenialMessage => GetString("You do not have permission to teleport other players.");
@@ -133,7 +133,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("tphere", Summary = nameof(ControllerSummary))]
-    internal static class TeleportHereCommand
+    public static class TeleportHereCommand
     {
         private static string PlayerTargetInvalidPlayerMessage => GetString("Invalid destination player.");
 
@@ -189,7 +189,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("tpnpc", Summary = nameof(ControllerSummary))]
-    internal static class TeleportNpcCommand
+    public static class TeleportNpcCommand
     {
         private static string ControllerSummary => GetString("Teleports you to an active NPC.");
         private static string ExecuteSummary => GetString("Teleports you to an active NPC.");
@@ -213,7 +213,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("tppos", Summary = nameof(ControllerSummary))]
-    internal static class TeleportPositionCommand
+    public static class TeleportPositionCommand
     {
         private static string ControllerSummary => GetString("Teleports you to a tile position.");
         private static string ExecuteSummary => GetString("Teleports you to a tile position.");
@@ -236,7 +236,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("tpallow", Summary = nameof(ControllerSummary))]
-    internal static class TeleportAllowCommand
+    public static class TeleportAllowCommand
     {
         private static string ControllerSummary => GetString("Toggles whether other players may teleport to you.");
         private static string ExecuteSummary => GetString("Toggles whether other players may teleport to you.");
@@ -256,7 +256,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("home", Summary = nameof(ControllerSummary))]
-    internal static class HomeCommand
+    public static class HomeCommand
     {
         private static string ControllerSummary => GetString("Sends you to your spawn point.");
         private static string ExecuteSummary => GetString("Sends you to your spawn point.");
@@ -277,7 +277,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("spawn", Summary = nameof(ControllerSummary))]
-    internal static class SpawnCommand
+    public static class SpawnCommand
     {
         private static string ControllerSummary => GetString("Sends you to the world's spawn point.");
         private static string ExecuteSummary => GetString("Sends you to the world's spawn point.");
@@ -293,7 +293,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("pos", Summary = nameof(ControllerSummary))]
-    internal static class PositionCommand
+    public static class PositionCommand
     {
         private static string TargetInvalidPlayerMessage => GetString("Invalid target player.");
 
@@ -319,7 +319,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("warp", Summary = nameof(ControllerSummary))]
-    internal static class WarpCommand
+    public static class WarpCommand
     {
         private static string AddSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}warp add [name].", args);
         private static string DeleteSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}warp del [name].", args);

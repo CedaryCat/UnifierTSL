@@ -5,7 +5,7 @@ using UnifierTSL.Commanding;
 namespace TShockAPI.Commanding.V2
 {
     [Flags]
-    internal enum PlayingFlags
+    public enum PlayingFlags
     {
         None = 0,
         [CommandFlag("-i")]
@@ -13,7 +13,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("version", Summary = nameof(ControllerSummary))]
-    internal static class VersionCommand
+    public static class VersionCommand
     {
         private static string ControllerSummary => GetString("Shows the TShock version.");
         private static string ExecuteSummary => GetString("Shows the TShock version.");
@@ -27,7 +27,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("motd", Summary = nameof(ControllerSummary))]
-    internal static class MotdCommand
+    public static class MotdCommand
     {
         private static string ControllerSummary => GetString("Shows the message of the day.");
         private static string ExecuteSummary => GetString("Shows the message of the day.");
@@ -41,7 +41,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("rules", Summary = nameof(ControllerSummary))]
-    internal static class RulesCommand
+    public static class RulesCommand
     {
         private static string ControllerSummary => GetString("Shows the server's rules.");
         private static string ExecuteSummary => GetString("Shows the server's rules.");
@@ -55,7 +55,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("serverinfo", Summary = nameof(ControllerSummary))]
-    internal static class ServerInfoCommand
+    public static class ServerInfoCommand
     {
         private static string ControllerSummary => GetString("Shows host process information.");
         private static string ExecuteSummary => GetString("Shows host process information.");
@@ -76,7 +76,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("aliases", Summary = nameof(ControllerSummary))]
-    internal static class AliasesCommand
+    public static class AliasesCommand
     {
         private static string ControllerSummary => GetString("Shows a command's aliases.");
         private static string ExecuteSummary => GetString("Shows a command's aliases.");
@@ -110,7 +110,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("playing", Summary = nameof(ControllerSummary))]
     [Aliases("online", "who")]
-    internal static class PlayingCommand
+    public static class PlayingCommand
     {
         private static string ControllerSummary => GetString("Lists connected players.");
         private static string ExecuteSummary => GetString("Lists connected players.");
@@ -223,7 +223,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("death", Summary = nameof(ControllerSummary))]
-    internal static class DeathCommand
+    public static class DeathCommand
     {
         private static string ControllerSummary => GetString("Shows your number of deaths.");
         private static string ExecuteSummary => GetString("Shows your number of PvE deaths.");
@@ -237,7 +237,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("pvpdeath", Summary = nameof(ControllerSummary))]
-    internal static class PvpDeathCommand
+    public static class PvpDeathCommand
     {
         private static string ControllerSummary => GetString("Shows your number of PVP deaths.");
         private static string ExecuteSummary => GetString("Shows your number of PVP deaths.");
@@ -251,7 +251,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("alldeath", Summary = nameof(ControllerSummary))]
-    internal static class AllDeathCommand
+    public static class AllDeathCommand
     {
         private static string ControllerSummary => GetString("Shows the number of deaths for all online players.");
         private static string ExecuteSummary => GetString("Shows PvE death counts for all online players.");
@@ -267,7 +267,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("allpvpdeath", Summary = nameof(ControllerSummary))]
-    internal static class AllPvpDeathCommand
+    public static class AllPvpDeathCommand
     {
         private static string ControllerSummary => GetString("Shows the number of PVP deaths for all online players.");
         private static string ExecuteSummary => GetString("Shows the number of PVP deaths for all online players.");
@@ -283,7 +283,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("bossdamage", Summary = nameof(ControllerSummary))]
-    internal static class BossDamageCommand
+    public static class BossDamageCommand
     {
         private static string ControllerSummary => GetString("Shows recent boss kill contribution.");
         private static string ExecuteSummary => GetString("Shows recent boss kill contribution.");

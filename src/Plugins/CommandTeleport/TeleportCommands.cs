@@ -11,7 +11,7 @@ namespace CommandTeleport
 {
     [CommandController("transfer", Summary = nameof(ControllerSummary))]
     [Aliases("connect", "tr", "worldwarp", "ww")]
-    internal static class CommandTeleportTransferCommand
+    public static class CommandTeleportTransferCommand
     {
         private static string ControllerSummary => "Transfers you to another running server.";
         private static string ExecuteSummary => "Transfers you to another running server.";
@@ -39,7 +39,7 @@ namespace CommandTeleport
 
     [CommandController("servers", Summary = nameof(ControllerSummary))]
     [Aliases("serverlist")]
-    internal static class CommandTeleportServersCommand
+    public static class CommandTeleportServersCommand
     {
         private static string ControllerSummary => "Lists available running servers.";
         private static string ExecuteSummary => "Lists available running servers.";

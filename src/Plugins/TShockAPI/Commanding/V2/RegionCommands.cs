@@ -9,7 +9,7 @@ using UnifierTSL.Servers;
 namespace TShockAPI.Commanding.V2
 {
     [Flags]
-    internal enum RegionInfoFlags
+    public enum RegionInfoFlags
     {
         None = 0,
         [CommandFlag("-d")]
@@ -17,7 +17,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("region", Summary = nameof(ControllerSummary))]
-    internal static class RegionCommand
+    public static class RegionCommand
     {
         private static string RegionInvalidRegionMessage(params object?[] args) => GetString("Could not find the region {0}.", args);
         private static string AccountInvalidUserAccountMessage(params object?[] args) => GetString("Player {0} not found.", args);

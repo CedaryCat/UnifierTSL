@@ -6,7 +6,7 @@ using UnifierTSL.Logging;
 namespace TShockAPI.Commanding.V2
 {
     [CommandController("group", Summary = nameof(ControllerSummary))]
-    internal static class GroupCommand
+    public static class GroupCommand
     {
         private static string AddPermissionsToAllSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}group addperm <group name> <permissions...>.", args);
         private static string AddPermissionsSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}group addperm <group name> <permissions...>.", args);
@@ -462,7 +462,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("user", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(DoLog = false)]
-    internal static class UserCommand
+    public static class UserCommand
     {
         private static string GroupInvalidGroupMessage(params object?[] args) => GetString("Group {0} does not exist.", args);
         private static string AccountInvalidUserAccountMessage(params object?[] args) => GetString("User {0} does not exist.", args);
@@ -638,7 +638,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("whitelist", Summary = nameof(ControllerSummary))]
-    internal static class WhitelistCommand
+    public static class WhitelistCommand
     {
         private static string ExecuteSyntaxMessage(params object?[] args) => GetString("Invalid Whitelist syntax. Usage: {0}whitelist <ip[/range]>", args);
 

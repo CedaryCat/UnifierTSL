@@ -7,7 +7,7 @@ namespace TShockAPI.Commanding.V2
 {
     [CommandController("item", Summary = nameof(ControllerSummary))]
     [Aliases("i")]
-    internal static class ItemCommand
+    public static class ItemCommand
     {
         private static string ItemInvalidItemMessage => GetString("Invalid item type!");
         private static string ItemInvalidItemMessage2 => GetString("Invalid item type!");
@@ -86,7 +86,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("give", Summary = nameof(ControllerSummary))]
     [Aliases("g")]
-    internal static class GiveCommand
+    public static class GiveCommand
     {
         private static string ExecuteErrorMessage => GetString("Missing item name/id.");
         private static string ExecuteErrorMessage2 => GetString("Missing player name.");

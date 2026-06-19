@@ -4,7 +4,7 @@ using UnifierTSL.Commanding;
 namespace Atelier.Commanding
 {
     [CommandController("repl", Summary = nameof(ControllerSummary))]
-    internal static class OpenCommand
+    public static class OpenCommand
     {
         private static string ControllerSummary => GetString("Opens the Atelier REPL window.");
         private static string ExecuteSummary => GetString("Opens the Atelier REPL window.");

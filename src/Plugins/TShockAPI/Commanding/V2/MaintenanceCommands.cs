@@ -29,7 +29,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("checkupdates", Summary = nameof(ControllerSummary))]
-    internal static class CheckUpdatesCommand
+    public static class CheckUpdatesCommand
     {
         private static string ControllerSummary => GetString("Checks for TShock updates.");
         private static string ExecuteSummary => GetString("Queues an update check.");
@@ -44,7 +44,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("off", Summary = nameof(ControllerSummary))]
     [Aliases("exit", "stop")]
-    internal static class OffCommand
+    public static class OffCommand
     {
         private static string ControllerSummary => GetString("Shuts down one server or all running servers while saving.");
         private static string ExecuteSummary => GetString("Stops one server or all running servers with save enabled.");
@@ -67,7 +67,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("off-nosave", Summary = nameof(ControllerSummary))]
     [Aliases("exit-nosave", "stop-nosave")]
-    internal static class OffNoSaveCommand
+    public static class OffNoSaveCommand
     {
         private static string ControllerSummary => GetString("Shuts down one server or all running servers without saving.");
         private static string ExecuteSummary => GetString("Stops one server or all running servers with save disabled.");
@@ -89,7 +89,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("reload", Summary = nameof(ControllerSummary))]
-    internal static class ReloadCommand
+    public static class ReloadCommand
     {
         private static string ControllerSummary => GetString("Reloads config, permissions and regions.");
         private static string ExecuteSummary => GetString("Reloads the current TShock runtime configuration.");
@@ -104,7 +104,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("serverpassword", Summary = nameof(ControllerSummary))]
-    internal static class ServerPasswordCommand
+    public static class ServerPasswordCommand
     {
         private static string ExecuteSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}serverpassword \"<new password>\".", args);
 

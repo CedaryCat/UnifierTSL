@@ -6,7 +6,7 @@ using Timer = System.Timers.Timer;
 namespace TShockAPI.Commanding.V2
 {
     [CommandController("setup", Summary = nameof(ControllerSummary))]
-    internal static class SetupCommand
+    public static class SetupCommand
     {
         private static string ControllerSummary => GetString("Used to authenticate as superadmin when first setting up TShock.");
         private static string ExecuteSummary => GetString("Finalizes the initial setup flow after you log into your new account.");
@@ -82,7 +82,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("su", Summary = nameof(ControllerSummary))]
-    internal static class SuCommand
+    public static class SuCommand
     {
         private static string ControllerSummary => GetString("Temporarily elevates you to Super Admin.");
         private static string ExecuteSummary => GetString("Temporarily elevates you to Super Admin.");
@@ -109,7 +109,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("sudo", Summary = nameof(ControllerSummary))]
-    internal static class SudoCommand
+    public static class SudoCommand
     {
         private static string ControllerSummary => GetString("Executes a command as the super admin.");
         private static string ExecuteSummary => GetString("Executes a nested command while temporarily elevated to Super Admin.");

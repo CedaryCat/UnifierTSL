@@ -55,8 +55,10 @@ namespace UnifierTSL.Commanding.Composition
             long registrationId;
             lock (SyncLock) {
                 registrationId = checked(++nextRegistrationId);
-                registrations = registrations.Add(registrationId, new CommandSystemRegistration(registrationId, configure));
-                state = BuildState(registrations.Values);
+                var nextRegistrations = registrations.Add(registrationId, new CommandSystemRegistration(registrationId, configure));
+                var nextState = BuildState(nextRegistrations.Values);
+                registrations = nextRegistrations;
+                state = nextState;
             }
 
             return new CommandInstallHandle(registrationId);
@@ -91,10 +93,12 @@ namespace UnifierTSL.Commanding.Composition
                     return;
                 }
 
-                registrations = registrations.Remove(registrationId);
-                state = registrations.Count == 0
+                var nextRegistrations = registrations.Remove(registrationId);
+                var nextState = nextRegistrations.Count == 0
                     ? CommandSystemState.Empty
-                    : BuildState(registrations.Values);
+                    : BuildState(nextRegistrations.Values);
+                registrations = nextRegistrations;
+                state = nextState;
             }
         }
 
@@ -109,16 +113,21 @@ namespace UnifierTSL.Commanding.Composition
                 configureBindings(bindingRegistry);
             }
 
+            var bindingOptions = bindingRegistry.Build();
             var controllerGroups = registrationBuilder.GetControllerGroups();
             var catalog = CommandSystemDiscovery.DiscoverFromControllerGroups(
                 controllerGroups,
-                bindingRegistry.Build());
+                bindingOptions);
+            catalog = CommandCatalogPatchApplier.Apply(
+                catalog,
+                registrationBuilder.GetCatalogPatches(),
+                bindingOptions);
+            ValidateConflicts(catalog.Roots);
+
             var endpointTypes = registrationBuilder.GetEndpoints();
             var actionBindingRules = registrationBuilder.GetActionBindingRules();
             ImmutableArray<ICommandEndpoint> endpoints = [.. endpointTypes.Select(CreateEndpoint)];
             var endpointCatalog = CommandEndpointCatalogCompiler.Compile(catalog, endpoints, actionBindingRules);
-
-            ValidateConflicts(catalog.Roots);
 
             return new CommandSystemState {
                 ControllerGroups = controllerGroups,

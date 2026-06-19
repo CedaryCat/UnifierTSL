@@ -6,7 +6,7 @@ namespace TShockAPI.Commanding.V2
 {
     [CommandController("broadcast", Summary = nameof(ControllerSummary))]
     [Aliases("bc", "say")]
-    internal static class BroadcastCommand
+    public static class BroadcastCommand
     {
         private static string ControllerSummary => GetString("Broadcasts a message to everyone on the server.");
         private static string ExecuteSummary => GetString("Broadcasts a message to one server or all running servers.");
@@ -44,7 +44,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("heal", Summary = nameof(ControllerSummary))]
-    internal static class HealCommand
+    public static class HealCommand
     {
         private static string ControllerSummary => GetString("Heals a player in HP and MP.");
         private static string ExecuteSummary => GetString("Heals a player by their max HP.");
@@ -103,7 +103,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("kill", Summary = nameof(ControllerSummary))]
     [Aliases("slay")]
-    internal static class KillCommand
+    public static class KillCommand
     {
         private static string ControllerSummary => GetString("Kills another player.");
         private static string ExecuteSummary => GetString("Kills a player.");
@@ -137,7 +137,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("buff", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(HelpText = nameof(RootHelpText))]
-    internal static class BuffCommand
+    public static class BuffCommand
     {
         private static string ControllerSummary => GetString("Gives yourself a buff or debuff for an amount of time.");
         private static string RootHelpText => GetString("Gives yourself a buff or debuff for an amount of time. Putting -1 for time will set it to 415 days.");
@@ -164,7 +164,7 @@ namespace TShockAPI.Commanding.V2
     [CommandController("gbuff", Summary = nameof(ControllerSummary))]
     [Aliases("buffplayer")]
     [TSCommandRoot(HelpText = nameof(RootHelpText))]
-    internal static class GroupBuffCommand
+    public static class GroupBuffCommand
     {
         private static string ControllerSummary => GetString("Gives another player a buff or debuff for an amount of time.");
         private static string RootHelpText => GetString("Gives another player a buff or debuff for an amount of time. Putting -1 for time will set it to 415 days.");
@@ -220,7 +220,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("time", Summary = nameof(ControllerSummary))]
-    internal static class TimeCommand
+    public static class TimeCommand
     {
         private static string ControllerSummary => GetString("Sets the world time.");
         private static string QuerySummary => GetString("Shows the current world time.");
@@ -305,7 +305,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("wind", Summary = nameof(ControllerSummary))]
-    internal static class WindCommand
+    public static class WindCommand
     {
         private static string ControllerSummary => GetString("Changes the wind speed.");
         private static string ExecuteSummary => GetString("Sets the world wind speed in mph.");

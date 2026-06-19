@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
 using UnifierTSL;
 using UnifierTSL.Commanding.Composition;
 using UnifierTSL.Logging;
@@ -7,7 +6,6 @@ using UnifierTSL.Module;
 using UnifierTSL.Plugins;
 
 [assembly: CoreModule]
-[assembly: InternalsVisibleTo("ExamplePlugin.Features")]
 
 namespace ExamplePlugin
 {
@@ -23,7 +21,7 @@ namespace ExamplePlugin
         public Plugin() {
             logger = UnifierApi.CreateLogger(this);
         }
-        internal const int Order = 6;
+        public const int Order = 6;
         public override int InitializationOrder => Order;
         public override async Task InitializeAsync(
             IPluginConfigRegistrar configRegistrar,
@@ -53,8 +51,14 @@ namespace ExamplePlugin
             var config = await configHandle.RequestAsync(cancellationToken: cancellationToken);
 
             logger.Info($"Config loaded: {config.Name} {config.Message}");
-            commandingRegistration = CommandSystem.Install(static context =>
-                context.AddControllerGroup<ExampleTerminalCommandController>());
+            commandingRegistration = CommandSystem.Install(static context => {
+                context.AddControllerGroup<ExampleTerminalCommandController>();
+                context.EditCommands(static commands => {
+                    var task = commands.Root(typeof(ExampleSimulatedTaskCommand));
+                    task.AddAlias("task");
+                    task.Path("status").AddAlias("state");
+                });
+            });
         }
 
         public override Task ShutdownAsync(CancellationToken cancellationToken = default) {

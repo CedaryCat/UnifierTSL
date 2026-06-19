@@ -10,7 +10,7 @@ namespace UnifierTSL.Commanding.Builtin
 {
     [CommandController("command", Summary = nameof(ControllerSummary))]
     [Aliases("commands", "cmd")]
-    internal static class CommandInspectionCommand
+    public static class CommandInspectionCommand
     {
         private static string ControllerSummary => GetString("Inspects registered command roots, actions, and endpoint bindings.");
         private static string ExecuteSummary => GetString("Shows management-oriented help for command inspection.");

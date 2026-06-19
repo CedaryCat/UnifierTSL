@@ -99,5 +99,5 @@ namespace TShockAPI.Commanding
         typeof(ProjectileBanCommand),
         typeof(TileBanCommand),
         typeof(WhitelistCommand))]
-    internal sealed partial class TShockCommandV2 { }
+    public sealed partial class TShockCommandV2 { }
 }

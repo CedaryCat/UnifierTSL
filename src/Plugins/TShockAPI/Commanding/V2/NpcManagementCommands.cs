@@ -111,7 +111,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("butcher", Summary = nameof(ControllerSummary))]
-    internal static class ButcherCommand
+    public static class ButcherCommand
     {
         private static string ControllerSummary => GetString("Kills hostile NPCs or NPCs of a certain type.");
         private static string ExecuteSummary => GetString("Kills hostile NPCs or active NPCs of a specific type.");
@@ -175,7 +175,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("renamenpc", Summary = nameof(ControllerSummary))]
-    internal static class RenameNpcCommand
+    public static class RenameNpcCommand
     {
         private static string NpcIdInvalidNpcMessage => GetString("Invalid mob type!");
 
@@ -221,7 +221,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("maxspawns", Summary = nameof(ControllerSummary))]
-    internal static class MaxSpawnsCommand
+    public static class MaxSpawnsCommand
     {
         private static string ControllerSummary => GetString("Sets the maximum number of NPCs.");
         private static string ExecuteSummary => GetString("Shows or updates the server maximum spawn count.");
@@ -293,7 +293,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("spawnboss", Summary = nameof(ControllerSummary))]
     [Aliases("sb")]
-    internal static class SpawnBossCommand
+    public static class SpawnBossCommand
     {
         private static string ControllerSummary => GetString("Spawns a number of bosses around you.");
         private static string ExecuteSummary => GetString("Spawns a supported boss at your location.");
@@ -555,7 +555,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("spawnmob", Summary = nameof(ControllerSummary))]
     [Aliases("sm")]
-    internal static class SpawnMobCommand
+    public static class SpawnMobCommand
     {
         private static string NpcIdInvalidNpcMessage => GetString("Invalid mob type!");
 
@@ -614,7 +614,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("spawnrate", Summary = nameof(ControllerSummary))]
-    internal static class SpawnRateCommand
+    public static class SpawnRateCommand
     {
         private static string ControllerSummary => GetString("Sets the spawn rate of NPCs.");
         private static string ExecuteSummary => GetString("Shows or updates the NPC spawn rate.");
@@ -685,7 +685,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("clearangler", Summary = nameof(ControllerSummary))]
-    internal static class ClearAnglerCommand
+    public static class ClearAnglerCommand
     {
         private static string ControllerSummary => GetString("Resets the list of users who have completed an angler quest that day.");
         private static string ExecuteSummary => GetString("Clears all angler completions or only one player's entry.");

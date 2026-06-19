@@ -3,5 +3,5 @@ using UnifierTSL.Commanding;
 namespace Atelier.Commanding
 {
     [ControllerGroup(typeof(OpenCommand))]
-    internal sealed partial class TerminalCommandController { }
+    public sealed partial class TerminalCommandController { }
 }

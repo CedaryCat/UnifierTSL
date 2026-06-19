@@ -13,7 +13,7 @@ using Timer = System.Timers.Timer;
 namespace TShockAPI.Commanding.V2
 {
     [Flags]
-    internal enum BanAddFlags
+    public enum BanAddFlags
     {
         None = 0,
         [CommandFlag("-a")]
@@ -29,7 +29,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("annoy", Summary = nameof(ControllerSummary))]
-    internal static class AnnoyCommand
+    public static class AnnoyCommand
     {
         private static string TargetInvalidPlayerMessage(params object?[] args) => GetString("Could not find any player named \"{0}\"", args);
 
@@ -68,7 +68,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("rocket", Summary = nameof(ControllerSummary))]
-    internal static class RocketCommand
+    public static class RocketCommand
     {
         private static string TargetInvalidPlayerMessage(params object?[] args) => GetString("Could not find any player named \"{0}\"", args);
 
@@ -123,7 +123,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("firework", Summary = nameof(ControllerSummary))]
-    internal static class FireworkCommand
+    public static class FireworkCommand
     {
         private static string TargetInvalidPlayerMessage(params object?[] args) => GetString("Could not find any player named \"{0}\"", args);
 
@@ -187,7 +187,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("kick", Summary = nameof(ControllerSummary))]
-    internal static class KickCommand
+    public static class KickCommand
     {
         private static string TargetInvalidPlayerMessage => GetString("Player not found. Unable to kick the player.");
 
@@ -216,7 +216,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("mute", Summary = nameof(ControllerSummary))]
     [Aliases("unmute")]
-    internal static class MuteCommand
+    public static class MuteCommand
     {
         private static string TargetInvalidPlayerMessage(params object?[] args) => GetString("Could not find any players named \"{0}\"", args);
 
@@ -268,7 +268,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("slap", Summary = nameof(ControllerSummary))]
-    internal static class SlapCommand
+    public static class SlapCommand
     {
         private static string TargetInvalidPlayerMessage => GetString("Invalid target player.");
 
@@ -307,7 +307,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("userinfo", Summary = nameof(ControllerSummary))]
     [Aliases("ui")]
-    internal static class UserInfoCommand
+    public static class UserInfoCommand
     {
         private static string ControllerSummary => GetString("Shows information about a player.");
         private static string ExecuteSummary => GetString("Shows information about a player.");
@@ -331,7 +331,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("accountinfo", Summary = nameof(ControllerSummary))]
     [Aliases("ai")]
-    internal static class AccountInfoCommand
+    public static class AccountInfoCommand
     {
         private static string AccountInvalidUserAccountMessage(params object?[] args) => GetString("User {0} does not exist.", args);
 
@@ -404,7 +404,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("tempgroup", Summary = nameof(ControllerSummary))]
-    internal static class TempGroupCommand
+    public static class TempGroupCommand
     {
         private static string TargetInvalidPlayerMessage(params object?[] args) => GetString("Could not find player {0}.", args);
         private static string GroupInvalidGroupMessage(params object?[] args) => GetString("Could not find group {0}", args);
@@ -457,7 +457,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("respawn", Summary = nameof(ControllerSummary))]
-    internal static class RespawnCommand
+    public static class RespawnCommand
     {
         private static string RespawnOtherDenialMessage => GetString("You do not have permission to respawn another player.");
         private static string TargetInvalidPlayerMessage(params object?[] args) => GetString("Could not find any player named \"{0}\"", args);
@@ -511,7 +511,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("godmode", Summary = nameof(ControllerSummary))]
     [Aliases("god")]
-    internal static class GodModeCommand
+    public static class GodModeCommand
     {
         private static string ToggleOtherDenialMessage => GetString("You do not have permission to god mode another player.");
         private static string TargetInvalidPlayerMessage => GetString("Invalid player!");
@@ -562,7 +562,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("ban", Summary = nameof(ControllerSummary))]
-    internal static class BanCommand
+    public static class BanCommand
     {
         private static string ControllerSummary => GetString("Manages player bans.");
         private static string DefaultSummary => GetString("Shows ban command help.");

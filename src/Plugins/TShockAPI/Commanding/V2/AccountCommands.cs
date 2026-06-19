@@ -8,7 +8,7 @@ namespace TShockAPI.Commanding.V2
 {
     [CommandController("login", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(DoLog = false)]
-    internal static class LoginCommand
+    public static class LoginCommand
     {
         private static string ControllerSummary => GetString("Logs you into an account.");
         private static string ExecuteUuidSummary => GetString("{0}login - Authenticates you using your UUID and character name.", Commands.Specifier);
@@ -228,7 +228,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("logout", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(DoLog = false)]
-    internal static class LogoutCommand
+    public static class LogoutCommand
     {
         private static string ControllerSummary => GetString("Logs you out of your current account.");
         private static string ExecuteSummary => GetString("Logs you out of the account bound to your player session.");
@@ -259,7 +259,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("password", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(DoLog = false)]
-    internal static class PasswordCommand
+    public static class PasswordCommand
     {
         private static string ControllerSummary => GetString("Changes your account's password.");
         private static string ExecuteSummary => GetString("Changes your account's password.");
@@ -308,7 +308,7 @@ namespace TShockAPI.Commanding.V2
 
     [CommandController("register", Summary = nameof(ControllerSummary))]
     [TSCommandRoot(DoLog = false)]
-    internal static class RegisterCommand
+    public static class RegisterCommand
     {
         private static string ControllerSummary => GetString("Registers you an account.");
         private static string ExecuteSummary => GetString("Registers a new account using your current player name.");

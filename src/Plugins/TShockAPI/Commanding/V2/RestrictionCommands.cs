@@ -6,7 +6,7 @@ using static TShockAPI.Commanding.V2.RestrictionCommandHelpers;
 namespace TShockAPI.Commanding.V2
 {
     [CommandController("itemban", Summary = nameof(ControllerSummary))]
-    internal static class ItemBanCommand
+    public static class ItemBanCommand
     {
         private static string AddSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}itemban add <item name>.", args);
         private static string AllowSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}itemban allow <item name> <group name>.", args);
@@ -190,7 +190,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("projban", Summary = nameof(ControllerSummary))]
-    internal static class ProjectileBanCommand
+    public static class ProjectileBanCommand
     {
         private static string AddSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}projban add <proj id>", args);
         private static string ProjectileIdInvalidProjectileMessage => GetString("Invalid projectile ID!");
@@ -360,7 +360,7 @@ namespace TShockAPI.Commanding.V2
     }
 
     [CommandController("tileban", Summary = nameof(ControllerSummary))]
-    internal static class TileBanCommand
+    public static class TileBanCommand
     {
         private static string AddSyntaxMessage(params object?[] args) => GetString("Invalid syntax. Proper syntax: {0}tileban add <tile id>.", args);
         private static string TileIdInvalidTileMessage => GetString("Invalid tile ID.");
