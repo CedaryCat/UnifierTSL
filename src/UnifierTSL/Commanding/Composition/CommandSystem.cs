@@ -56,7 +56,7 @@ namespace UnifierTSL.Commanding.Composition
             lock (SyncLock) {
                 registrationId = checked(++nextRegistrationId);
                 var nextRegistrations = registrations.Add(registrationId, new CommandSystemRegistration(registrationId, configure));
-                var nextState = BuildState(nextRegistrations.Values);
+                var nextState = BuildState(nextRegistrations.Values, CommandCatalogPatchRootResolution.Strict);
                 registrations = nextRegistrations;
                 state = nextState;
             }
@@ -94,15 +94,18 @@ namespace UnifierTSL.Commanding.Composition
                 }
 
                 var nextRegistrations = registrations.Remove(registrationId);
+                // Remaining patches may outlive their target roots because module unload order is external to CommandSystem.
                 var nextState = nextRegistrations.Count == 0
                     ? CommandSystemState.Empty
-                    : BuildState(nextRegistrations.Values);
+                    : BuildState(nextRegistrations.Values, CommandCatalogPatchRootResolution.SkipMissing);
                 registrations = nextRegistrations;
                 state = nextState;
             }
         }
 
-        private static CommandSystemState BuildState(IEnumerable<CommandSystemRegistration> activeRegistrations) {
+        private static CommandSystemState BuildState(
+            IEnumerable<CommandSystemRegistration> activeRegistrations,
+            CommandCatalogPatchRootResolution patchRootResolution) {
             CommandRegistrationBuilder registrationBuilder = new();
             foreach (var registration in activeRegistrations.OrderBy(static registration => registration.Id)) {
                 registration.Configure(registrationBuilder);
@@ -121,7 +124,8 @@ namespace UnifierTSL.Commanding.Composition
             catalog = CommandCatalogPatchApplier.Apply(
                 catalog,
                 registrationBuilder.GetCatalogPatches(),
-                bindingOptions);
+                bindingOptions,
+                patchRootResolution);
             ValidateConflicts(catalog.Roots);
 
             var endpointTypes = registrationBuilder.GetEndpoints();

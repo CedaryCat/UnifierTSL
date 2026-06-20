@@ -54,6 +54,12 @@ namespace UnifierTSL.Commanding.Composition
         DisableAction,
     }
 
+    internal enum CommandCatalogPatchRootResolution : byte
+    {
+        Strict,
+        SkipMissing,
+    }
+
     internal sealed record CommandCatalogPatch
     {
         internal required CommandCatalogPatchKind Kind { get; init; }
@@ -264,9 +270,10 @@ namespace UnifierTSL.Commanding.Composition
         public static CommandCatalog Apply(
             CommandCatalog catalog,
             ImmutableArray<CommandCatalogPatch> patches,
-            CommandRegistrationOptions bindingOptions) {
+            CommandRegistrationOptions bindingOptions,
+            CommandCatalogPatchRootResolution rootResolution) {
             foreach (var patch in patches) {
-                catalog = ApplyPatch(catalog, patch, bindingOptions);
+                catalog = ApplyPatch(catalog, patch, bindingOptions, rootResolution);
             }
 
             return catalog with {
@@ -277,8 +284,9 @@ namespace UnifierTSL.Commanding.Composition
         private static CommandCatalog ApplyPatch(
             CommandCatalog catalog,
             CommandCatalogPatch patch,
-            CommandRegistrationOptions bindingOptions) {
-            var rootIndex = ResolveRootIndex(catalog, patch);
+            CommandRegistrationOptions bindingOptions,
+            CommandCatalogPatchRootResolution rootResolution) {
+            var rootIndex = ResolveRootIndex(catalog, patch, rootResolution);
             if (rootIndex < 0) {
                 return catalog;
             }
@@ -319,7 +327,10 @@ namespace UnifierTSL.Commanding.Composition
             return catalog with { Roots = roots.ToImmutable() };
         }
 
-        private static int ResolveRootIndex(CommandCatalog catalog, CommandCatalogPatch patch) {
+        private static int ResolveRootIndex(
+            CommandCatalog catalog,
+            CommandCatalogPatch patch,
+            CommandCatalogPatchRootResolution rootResolution) {
             List<int> indexes = [];
             for (var i = 0; i < catalog.Roots.Length; i++) {
                 if (MatchesRootTarget(catalog.Roots[i], patch.RootTarget)) {
@@ -331,7 +342,7 @@ namespace UnifierTSL.Commanding.Composition
                 return indexes[0];
             }
 
-            if (indexes.Count == 0 && patch.OptionalRoot) {
+            if (indexes.Count == 0 && (patch.OptionalRoot || rootResolution == CommandCatalogPatchRootResolution.SkipMissing)) {
                 return -1;
             }
 
