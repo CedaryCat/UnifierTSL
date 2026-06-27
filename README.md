@@ -59,7 +59,7 @@ Compared with approaches that push this coordination outside process boundaries,
 This shared listener-and-coordination model reduces the extra overhead and complexity introduced by cross-process relays, making cross-world interaction, data interchange, and unified operations easier while still leaving enough routing control to define the default join target and take over later world-switch flows.
 
 From the player's side, this still behaves like a normal Terraria entry point: clients connect to one shared listener port, and `UnifiedServerCoordinator` routes each connection to the selected world inside the same process. If you push this model further, you can build more gameplay-driven setups: fully connected multi-instance world clusters, elastic worlds that load or unload region-sized shards on demand, or private worlds tuned per player for logic and resource budgets.
-These are reachable directions, even though the launcher does not currently ship them as default out-of-the-box features, you can still expect usable example plugins to land under `plugins/` over time.
+These are reachable directions, even though most are not launcher defaults. The in-repo `Kaleido` plugins under `src/Plugins/` provide the official reference implementation for realm orchestration, shared projection hosting, full `ServerContext` hosting with system-owned world providers, and a TShock-backed login lobby that is enabled by default when available.
 
 ---
 
@@ -421,6 +421,7 @@ Each `-server` value is whitespace-separated `key:value` pairs parsed by `Launch
 |:--|:--|:--|:--|
 | `--rid` | Target runtime identifier. If omitted, Publisher infers the current host RID; explicit input is still recommended | e.g. `win-x64`, `linux-x64`, `osx-x64` | Auto-detected from current host |
 | `--excluded-plugins` | Plugin projects to skip | Comma-separated or repeated | — |
+| `--skip-build` | Publisher sections to skip. `app` skips the core program and app tools; `plugins` skips bundled plugin projects | Comma-separated or repeated: `app`, `plugins`, `core`, `app-tools` | — |
 | `--output-path` | Base output directory | Absolute or relative path | `src/.../bin/<Config>/net9.0` |
 | `--use-rid-folder` | Append `utsl-<rid>` folder | `true` / `false` | `true` |
 | `--clean-output-dir` | Clear existing output first | `true` / `false` | `true` |
@@ -499,7 +500,7 @@ GitHub Actions uses two naming layers:
 | **Launcher** (`UnifierTSL`) | Runtime entry point for world bootstrap, routing, and coordinator lifecycle |
 | **Console Client** (`UnifierTSL.ConsoleClient`) | One console process per world, connected by named pipes |
 | **Publisher** (`UnifierTSL.Publisher`) | Builds RID-targeted deployment directory outputs |
-| **Plugins** (`src/Plugins/`) | Modules maintained in-repo (TShockAPI, CommandTeleport, examples) |
+| **Plugins** (`src/Plugins/`) | Modules maintained in-repo (TShockAPI, CommandTeleport, Kaleido, examples) |
 | **Docs** (`docs/`) | Runtime, plugin, and migration docs |
 
 ```text
@@ -517,6 +518,8 @@ GitHub Actions uses two naming layers:
 │   └── Plugins/
 │       ├── TShockAPI/
 │       ├── CommandTeleport/
+│       ├── Kaleido/
+│       ├── Kaleido.LoginLobby/
 │       ├── ExamplePlugin/
 │       └── ExamplePlugin.Features/
 └── docs/
@@ -558,6 +561,8 @@ graph LR
 | **Collectible contexts** | `ModuleLoadContext` enables unloadable plugin domains |
 
 Command System V2 is the recommended way to expose commands from plugins. Controllers are declared with attributes, and the framework handles discovery, endpoint binding, parameter parsing, and permission checks automatically. The same declaration also drives completion candidates, help text generation, and audit logging — so there is no separate usage string to maintain.
+
+`src/Plugins/Kaleido` is the reusable realm orchestration framework reference implementation. It keeps admission, planning, instance bookkeeping, host selection, transfer intent execution, scheduling, and lifecycle policy inside the plugin layer, then uses the neutral `ServerRuntime` API to talk to UnifierTSL. `Kaleido.LoginLobby` registers as a Kaleido system, creates a shared-projection login hall when identity checks require it, and keeps TShock-specific account behavior inside its identity adapter rather than the framework layer.
 
 → Full guide: [Plugin Development Guide](./docs/dev-plugin.md)
 

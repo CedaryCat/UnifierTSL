@@ -18,7 +18,7 @@ namespace CommandTeleport
 
         [CommandAction(Summary = nameof(ExecuteSummary))]
         [TShockCommand(Permissions.ServerTransfer, PlayerScope = true)]
-        public static CommandOutcome Execute(
+        public static async Task<CommandOutcome> Execute(
             [FromAmbientContext] TSExecutionContext context,
             [CommandParam(Name = "server")]
             [CommandPromptSemantic<CommandPromptParamKeys>(nameof(CommandPromptParamKeys.ServerRef))] string serverNameOrId)
@@ -32,7 +32,11 @@ namespace CommandTeleport
                 return CommandOutcome.Warning("You are already on this server.");
             }
 
-            UnifiedServerCoordinator.TransferPlayerToServer(context.Executor.UserId, target);
+            var result = await ServerRuntime.TransferAsync(new(context.Executor.UserId, target)).ConfigureAwait(false);
+            if (!result.Succeeded) {
+                return CommandOutcome.Warning(result.Error ?? $"Could not transfer to {target.Name}.");
+            }
+
             return CommandOutcome.Success($"Transferring to {target.Name}.");
         }
     }
@@ -51,7 +55,7 @@ namespace CommandTeleport
             StringBuilder sb = new();
             sb.AppendLine("Server List: ");
 
-            var servers = UnifiedServerCoordinator.Servers;
+            var servers = ServerRuntime.Servers;
             for (int i = 0; i < servers.Length; i++) {
                 ServerContext server = servers[i];
                 if (!server.IsRunning) {

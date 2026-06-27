@@ -847,25 +847,11 @@ Byte processing routed via ProcessBytes hook
 
 **Server Transfer Protocol** (src/UnifierTSL/UnifiedServerCoordinator.cs:290-353):
 ```csharp
-public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false)
-{
-    ServerContext? from = GetClientCurrentlyServer(plr);
-    if (from is null || from == to) return;
-    if (!to.IsRunning && !ignoreChecks) return;
-
-    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
-    if (handled) return;
-
-    // Sync leave → switch mapping → sync join
-    from.SyncPlayerLeaveToOthers(plr);
-    from.SyncServerOfflineToPlayer(plr);
-    SetClientCurrentlyServer(plr, to);
-    to.SyncServerOnlineToPlayer(plr);
-    to.SyncPlayerJoinToOthers(plr);
-
-    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
-}
+public static Task<ServerTransferResult> ServerRuntime.TransferAsync(ServerTransferRequest request, CancellationToken cancellationToken = default)
+    => ServerTransferCoordinator.TransferAsync(request, cancellationToken);
 ```
+
+The coordinator serializes requests per player, groups source and target dispatchers by physical execution domain, waits for every distinct domain to reach its dispatch safe point, and then performs the existing leave/swap/join commit synchronously while those domains are quiescent.
 
 **Packet Routing Hook** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416):
 ```csharp
@@ -1695,7 +1681,7 @@ Background work is tracked through `PendingTasks` and `LastTask`; there is no se
 - `PacketSender` exposes fixed/dynamic packet send helpers plus server-side variants.
 - `NetPacketHandler` offers `Register<TPacket>`, `UnRegister<TPacket>`, `ProcessBytes`, and packet callbacks over `ReceivePacketEvent<T>`.
 - `LocalClientSender` wraps a `RemoteClient`, exposing `Kick`, `SendData`, and `Client` metadata. `ClientPacketReceiver` replays or rewrites inbound packets.
-- Coordinator helpers provide `TransferPlayerToServer`, `SwitchJoinServerEvent`, and state queries (`GetClientCurrentlyServer`, `Servers` list).
+- Runtime helpers provide `ServerRuntime.TransferAsync`, join resolver registration, transfer observers, leave observers, and state queries (`GetCurrentServer`, `Servers` list).
 
 ### 4.5 Logging & Diagnostics
 - `RoleLogger` extension methods (see `src/UnifierTSL/Logging/LoggerExt.cs`) give you severity helpers: `Debug`, `Info`, `Warning`, `Error`, `Success`, `LogHandledException`.

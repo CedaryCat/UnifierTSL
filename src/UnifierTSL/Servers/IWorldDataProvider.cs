@@ -2,11 +2,27 @@ using Terraria.IO;
 
 namespace UnifierTSL.Servers
 {
+    public enum WorldSaveMode
+    {
+        Standard,
+        Suppress,
+        Custom
+    }
+
+    public readonly record struct WorldRuntimeOptions(bool SuppressLiquidUpdates)
+    {
+        public static WorldRuntimeOptions Default { get; } = new(false);
+    }
+
     public interface IWorldDataProvider
     {
         string WorldName { get; }
         string WorldFileName { get; }
+        WorldSaveMode SaveMode => WorldSaveMode.Standard;
+        WorldRuntimeOptions RuntimeOptions => WorldRuntimeOptions.Default;
         WorldFileData ApplyMetadata(ServerContext server);
+        void ConfigureRuntime(ServerContext server) { }
+        void OnServerStarted(ServerContext server) { }
 
         static IWorldDataProvider GenerateOrLoadExisting(string worldName, int worldSize, int difficulty = 2, int worldEvil = 0, string seed = "")
             => new GenerateOrLoadProvider(worldName, worldSize, difficulty, worldEvil, seed);

@@ -59,7 +59,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 这种共享监听入口与协调平面的方式，减少了跨进程中转带来的额外开销与复杂度，既方便建立跨世界联动、数据互通和统一运维，也保留了足够的路由控制空间，用于定义默认入服目标并接管后续的世界切换流程。
 
 从玩家视角看，它依然像一个普通的 Terraria 服务器入口：客户端只需要连到同一个监听端口，随后由 `UnifiedServerCoordinator` 在同一进程内把连接路由到目标世界；如果继续把这套模型往前推，你可以做出更偏玩法的形态：完全互通的多实例世界集群、按需加载/卸载区域分片的弹性世界，或为单个玩家定制逻辑和资源预算的私人世界。
-这些是可达方向，尽管启动器目前并未直接提供这些开箱即用的默认能力，但你仍可以期待后续在 `plugins/` 下逐步补上的可用示例插件。
+这些是可达方向，尽管其中大多数并不是启动器默认能力。仓库内 `src/Plugins/` 下的 `Kaleido` 插件组提供了官方参考实现：realm 编排、共享投影 / 虚拟图格 / 完整上下文三种承载，以及一个在可用时默认启用并内置 TShock 身份处理的登录大厅。
 
 ---
 
@@ -422,6 +422,7 @@ dotnet run --project src/UnifierTSL/UnifierTSL.csproj -- \
 |:--|:--|:--|:--|
 | `--rid` | 目标运行时标识符；省略时会自动推断当前主机 RID，但仍建议显式填写 | 例如 `win-x64`, `linux-x64`, `osx-x64` | 自动从当前主机推断 |
 | `--excluded-plugins` | 要跳过的插件项目 | 逗号分隔或重复传入 | — |
+| `--skip-build` | 要跳过的发布段；`app` 表示本体（核心程序和 app tools），`plugins` 表示插件 | 逗号分隔或重复传入：`app`, `plugins`, `core`, `app-tools` | — |
 | `--output-path` | 输出根目录 | 绝对或相对路径 | `src/.../bin/<Config>/net9.0` |
 | `--use-rid-folder` | 是否追加 `utsl-<rid>` 子目录 | `true` / `false` | `true` |
 | `--clean-output-dir` | 输出前清空已有目录 | `true` / `false` | `true` |
@@ -500,7 +501,7 @@ GitHub Actions 采用两层命名：
 | **Launcher** (`UnifierTSL`) | 运行时入口，负责世界引导、路由和协调器生命周期 |
 | **Console Client** (`UnifierTSL.ConsoleClient`) | 每个世界一个独立控制台进程，通过命名管道连接 |
 | **Publisher** (`UnifierTSL.Publisher`) | 按 RID 生成可部署目录产物 |
-| **Plugins** (`src/Plugins/`) | 仓库维护的模块（TShockAPI、CommandTeleport、示例） |
+| **Plugins** (`src/Plugins/`) | 仓库维护的模块（TShockAPI、CommandTeleport、Kaleido、示例） |
 | **Docs** (`docs/`) | 运行时、插件和迁移相关文档 |
 
 ```text
@@ -518,6 +519,8 @@ GitHub Actions 采用两层命名：
 │   └── Plugins/
 │       ├── TShockAPI/
 │       ├── CommandTeleport/
+│       ├── Kaleido/
+│       ├── Kaleido.LoginLobby/
 │       ├── ExamplePlugin/
 │       └── ExamplePlugin.Features/
 └── docs/
@@ -559,6 +562,8 @@ graph LR
 | **可回收上下文** | `ModuleLoadContext` 支持可卸载的插件域 |
 
 命令系统 V2 是插件暴露命令的推荐方式。控制器通过属性标注声明，框架负责发现、端点绑定、参数解析和权限检查，同一份声明还会自动派生出补全候选、帮助文本和审计日志，不需要单独维护 usage 字符串。完整的 API 参考和代码示例可以在插件开发指南里找到。
+
+`src/Plugins/Kaleido` 是可复用 realm 编排框架的参考实现。它把 admission、planning、实例账本、host 选择、转运意图执行、调度和生命周期策略保持在插件层，然后通过中立的 `ServerRuntime` API 与 UnifierTSL 沟通。`Kaleido.LoginLobby` 作为 Kaleido system 注册，在身份检查需要时创建 shared projection 登录大厅，并把 TShock 账号行为留在身份适配器中，而不是泄漏进框架层。
 
 → 完整指南：[插件开发指南](./dev-plugin.zh-cn.md)
 

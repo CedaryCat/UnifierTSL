@@ -855,37 +855,63 @@ namespace UnifierTSL
             return servers.Any(s => s.IsRunning) && GetClientSpace() > 0;
         }
 
-        public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false) {
+        internal static ServerTransferResult TransferPlayer(ServerTransferRequest request, ServerContext expectedSource) {
+            int playerId = request.PlayerId;
+            if ((uint)playerId >= (uint)globalClients.Length) {
+                return ServerTransferResult.Failure(playerId, null, request.Target, "Player id is outside the client range.");
+            }
+
+            byte plr = (byte)playerId;
+            ServerContext to = request.Target;
+            ServerTransferOptions options = request.Options ?? ServerTransferOptions.Default;
             ServerContext? from = GetClientCurrentlyServer(plr);
 
             if (from is null) {
-                return;
+                return ServerTransferResult.Failure(plr, null, to, "Player is not attached to a server.");
+            }
+            if (!ReferenceEquals(from, expectedSource)) {
+                return ServerTransferResult.Failure(plr, from, to, "Player changed servers before the transfer reached its commit point.");
             }
             if (from == to) {
-                return;
+                return ServerTransferResult.Success(plr, from, to);
             }
-            if (!to.IsRunning && !ignoreChecks) {
-                return;
+            if (options.RequireRunning && !to.IsRunning && !options.AllowTransientTarget) {
+                return ServerTransferResult.Failure(plr, from, to, "Target server is not running.");
             }
 
-            UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool h);
-            if (h) {
-                return;
+            if (options.RaiseEvents) {
+                bool handled;
+                try {
+                    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out handled);
+                }
+                catch (Exception ex) {
+                    TryLogTransferError(
+                        GetParticularString("{0} is player id, {1} is source server name, {2} is destination server name",
+                            $"Pre-transfer observer failed for player #{plr} while moving from '{from.Name}' to '{to.Name}'."),
+                        ex);
+                    return ServerTransferResult.Failure(plr, from, to, GetString("A pre-transfer observer failed."));
+                }
+
+                if (handled) {
+                    return ServerTransferResult.Failure(plr, from, to, GetString("Transfer was canceled by a coordinator observer."));
+                }
             }
 
             var msgBuffer = globalMsgBuffers[plr];
             lock (msgBuffer) {
-
                 var client = globalClients[plr];
-                // Leave data sync
-                from.SyncPlayerLeaveToOthers(plr);
-                from.SyncServerOfflineToPlayer(plr);
+                TryTransferSideEffect(() => from.SyncPlayerLeaveToOthers(plr), GetString("source player leave sync"), plr, from, to);
+                TryTransferSideEffect(() => from.SyncServerOfflineToPlayer(plr), GetString("source server offline sync"), plr, from, to);
 
-                from.Log.Success(
-                    category: "PlayerTransfer",
-                    message: GetParticularString("{0} is player name, {1} is destination server name, {2} is number of players in destination server", $"Player '{from.Main.player[plr].name}' transferred to {to.Name}, current players: {to.NPC.GetActivePlayerCount()}"));
+                TryTransferSideEffect(
+                    () => from.Log.Success(
+                        category: "PlayerTransfer",
+                        message: GetParticularString("{0} is player name, {1} is destination server name, {2} is number of players in destination server", $"Player '{from.Main.player[plr].name}' transferred to {to.Name}, current players: {to.NPC.GetActivePlayerCount()}")),
+                    GetString("source transfer log"),
+                    plr,
+                    from,
+                    to);
 
-                // Player state swap
                 Player inactivePlayer = to.Main.player[plr];
                 Player activePlayer = from.Main.player[plr];
                 from.Main.player[plr] = inactivePlayer;
@@ -893,24 +919,62 @@ namespace UnifierTSL
                 inactivePlayer.active = false;
                 activePlayer.active = true;
 
-                // Update current server
                 SetClientCurrentlyServer(plr, to);
-                client.ResetSections(to);
+                if (options.SyncSections) {
+                    TryTransferSideEffect(() => client.ResetSections(to), GetString("section reset"), plr, from, to);
+                }
 
-                // Join data sync
-                to.SyncServerOnlineToPlayer(plr);
-                to.SyncPlayerJoinToOthers(plr);
+                TryTransferSideEffect(() => to.SyncServerOnlineToPlayer(plr), GetString("target server online sync"), plr, from, to);
+                TryTransferSideEffect(() => to.SyncPlayerJoinToOthers(plr), GetString("target player join sync"), plr, from, to);
 
-                UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
+                if (options.RaiseEvents) {
+                    TryTransferSideEffect(
+                        () => UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr)),
+                        GetString("post-transfer observer"),
+                        plr,
+                        from,
+                        to);
+                }
 
-                to.Log.Success(
-                    category: "PlayerTransfer",
-                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is number of players in current server", $"Player '{to.Main.player[plr].name}' joined from {from.Name}, current players: {to.NPC.GetActivePlayerCount()}"));
+                TryTransferSideEffect(
+                    () => to.Log.Success(
+                        category: "PlayerTransfer",
+                        message: GetParticularString("{0} is player name, {1} is source server name, {2} is number of players in current server", $"Player '{to.Main.player[plr].name}' joined from {from.Name}, current players: {to.NPC.GetActivePlayerCount()}")),
+                    GetString("target transfer log"),
+                    plr,
+                    from,
+                    to);
 
-                // Log
-                Logger.Info(
-                    category: "PlayerTransfer",
-                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Player '{to.Main.player[plr].name}' {from.Name} ? {to.Name} transferred."));
+                TryTransferSideEffect(
+                    () => Logger.Info(
+                        category: "PlayerTransfer",
+                        message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Player '{to.Main.player[plr].name}' {from.Name} -> {to.Name} transferred.")),
+                    GetString("coordinator transfer log"),
+                    plr,
+                    from,
+                    to);
+            }
+
+            return ServerTransferResult.Success(plr, from, to);
+        }
+
+        private static void TryTransferSideEffect(Action action, string stage, int playerId, ServerContext from, ServerContext to) {
+            try {
+                action();
+            }
+            catch (Exception ex) {
+                TryLogTransferError(
+                    GetParticularString("{0} is transfer side-effect stage, {1} is player id, {2} is source server name, {3} is destination server name",
+                        $"Player transfer side effect '{stage}' failed for player #{playerId} while moving from '{from.Name}' to '{to.Name}'. Continuing without rollback."),
+                    ex);
+            }
+        }
+
+        private static void TryLogTransferError(string message, Exception ex) {
+            try {
+                Logger.Error(category: "PlayerTransfer", message: message, ex: ex);
+            }
+            catch {
             }
         }
     }

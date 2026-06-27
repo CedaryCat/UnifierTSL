@@ -856,25 +856,11 @@ Byte processing routed via ProcessBytes hook
 
 **服务器传输协议** (src/UnifierTSL/UnifiedServerCoordinator.cs:290-353)：
 ```csharp
-public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false)
-{
-    ServerContext? from = GetClientCurrentlyServer(plr);
-    if (from is null || from == to) return;
-    if (!to.IsRunning && !ignoreChecks) return;
-
-    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
-    if (handled) return;
-
-    // 同步离开 → 切换映射 → 同步加入
-    from.SyncPlayerLeaveToOthers(plr);
-    from.SyncServerOfflineToPlayer(plr);
-    SetClientCurrentlyServer(plr, to);
-    to.SyncServerOnlineToPlayer(plr);
-    to.SyncPlayerJoinToOthers(plr);
-
-    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
-}
+public static Task<ServerTransferResult> ServerRuntime.TransferAsync(ServerTransferRequest request, CancellationToken cancellationToken = default)
+    => ServerTransferCoordinator.TransferAsync(request, cancellationToken);
 ```
+
+协调器按玩家串行化请求，按物理执行域归并来源与目标 Dispatcher，等待所有不同执行域到达调度安全点，然后在这些执行域均静止时同步执行既有的离开、交换和加入提交。
 
 **数据包路由挂钩** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416)：
 ```csharp
@@ -1711,7 +1697,7 @@ REPL 可以引用当前加载的插件程序集，让脚本直接访问插件的
 - `PacketSender` 公开固定/动态数据包发送帮助程序以及服务器端变体。
 - `NetPacketHandler` 提供 `Register<TPacket>`、`UnRegister<TPacket>`、`ProcessBytes` 以及 `ReceivePacketEvent<T>` 上的数据包回调。
 - `LocalClientSender` 包装 `RemoteClient`，公开 `Kick`、`SendData` 和 `Client` 元数据。 `ClientPacketReceiver` 重放或重写入站数据包。
-- 协调器助手提供 `TransferPlayerToServer`、`SwitchJoinServerEvent` 和状态查询（`GetClientCurrentlyServer`、`Servers` 列表）。
+- 运行时助手提供 `ServerRuntime.TransferAsync`、进服解析器注册、转服观察器、离服观察器和状态查询（`GetCurrentServer`、`Servers` 列表）。
 
 <a id="45-logging--diagnostics"></a>
 ### 4.5 日志与诊断

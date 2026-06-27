@@ -560,8 +560,8 @@ NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
 
 <a id="53-transfers--coordinator-helpers"></a>
 ### 5.3 服间转移与协调器辅助
-- `UnifiedServerCoordinator.TransferPlayerToServer` 用于跨服务器转移客户端。建议用 try/catch 包裹调用，并通过 `PreServerTransferEvent` 正确处理可取消流程。
-- `ServerContext.SyncPlayerJoinToOthers` 等方法可在自定义转移流程后校正可见性，但它们属于底层原语。除非你明确需要定制时序/行为，否则优先使用已封装的 `TransferPlayerToServer`。
+- `ServerRuntime.TransferAsync` 通过中立运行时 API 转移客户端。它按玩家串行化传输，并只在来源与目标调度执行域都到达安全点后提交。
+- `ServerContext.SyncPlayerJoinToOthers` 等方法可在自定义转移流程后校正可见性，但它们属于底层原语。除非你明确需要定制时序/行为，否则优先使用 `ServerRuntime.TransferAsync`。
 - 查询 `UnifiedServerCoordinator.Servers` 以获得活动上下文；每个上下文都直接继承 `RootContext` 并公开 `Name` 以及注册的扩展。
 - 启动器端路由选项映射到协调器事件：
   - `-joinserver random|rnd|r` 注册一个低优先级加服策略处理器，用于随机选择目标服务器。

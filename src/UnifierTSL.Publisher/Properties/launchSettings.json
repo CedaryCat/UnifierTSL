@@ -3,6 +3,14 @@
     "UnifierTSL.Publisher": {
       "commandName": "Project",
       "commandLineArgs": "--use-rid-folder false\r\n--clean-output-dir false\r\n--output-path \"utsl-publish\""
+    },
+    "UnifierTSL.Publisher - Plugins Only": {
+      "commandName": "Project",
+      "commandLineArgs": "--skip-build app\r\n--use-rid-folder false\r\n--clean-output-dir false\r\n--output-path \"utsl-publish\""
+    },
+    "UnifierTSL.Publisher - App Only": {
+      "commandName": "Project",
+      "commandLineArgs": "--skip-build plugins\r\n--use-rid-folder false\r\n--clean-output-dir false\r\n--output-path \"utsl-publish\""
     }
   }
 }

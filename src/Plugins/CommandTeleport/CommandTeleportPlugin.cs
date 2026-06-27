@@ -43,7 +43,7 @@ namespace CommandTeleport
         }
 
         internal static ServerContext? FindServer(string name) {
-            var servers = UnifiedServerCoordinator.Servers;
+            var servers = ServerRuntime.Servers;
             for (int i = 0; i < servers.Length; i++) {
                 ServerContext server = servers[i];
                 if (!server.IsRunning) {

@@ -34,6 +34,9 @@ namespace UnifierTSL.Servers
             On.Terraria.NetplaySystemContext.StartServer += StartServer;
             On.Terraria.Main.YouCanSleepNow += CloseServer;
             On.UnifiedServerProcess.RootContext.ctor += OnCreateInstance;
+            On.Terraria.IO.WorldFileSystemContext.SaveWorld += SaveWorld;
+            On.Terraria.IO.WorldFileSystemContext._SaveWorld += SaveWorldInner;
+            On.Terraria.LiquidBufferSystemContext.AddBuffer += AddLiquidBuffer;
         }
 
         private static void CloseServer(On.Terraria.Main.orig_YouCanSleepNow orig, Main self, RootContext root) {
@@ -43,7 +46,33 @@ namespace UnifierTSL.Servers
 
         private static void StartServer(On.Terraria.NetplaySystemContext.orig_StartServer orig, Terraria.NetplaySystemContext self) {
             orig(self);
-            self.root.ToServer().IsRunning = true;
+            var server = self.root.ToServer();
+            server.IsRunning = true;
+            server.worldDataProvider.OnServerStarted(server);
+        }
+
+        private static void SaveWorld(On.Terraria.IO.WorldFileSystemContext.orig_SaveWorld orig, Terraria.IO.WorldFileSystemContext self, bool resetTime, bool useTemps, bool canBeSkipped) {
+            if (self.root is ServerContext { worldDataProvider.SaveMode: not WorldSaveMode.Standard }) {
+                return;
+            }
+
+            orig(self, resetTime, useTemps, canBeSkipped);
+        }
+
+        private static void SaveWorldInner(On.Terraria.IO.WorldFileSystemContext.orig__SaveWorld orig, Terraria.IO.WorldFileSystemContext self, bool useCloudSaving, bool resetTime, bool useTemps, bool canBeSkipped) {
+            if (self.root is ServerContext { worldDataProvider.SaveMode: not WorldSaveMode.Standard }) {
+                return;
+            }
+
+            orig(self, useCloudSaving, resetTime, useTemps, canBeSkipped);
+        }
+
+        private static void AddLiquidBuffer(On.Terraria.LiquidBufferSystemContext.orig_AddBuffer orig, LiquidBufferSystemContext self, int x, int y) {
+            if (self.root is ServerContext { worldDataProvider.RuntimeOptions.SuppressLiquidUpdates: true }) {
+                return;
+            }
+
+            orig(self, x, y);
         }
 
         private static void OnCreateInstance(On.UnifiedServerProcess.RootContext.orig_ctor orig, RootContext self, string name) {
@@ -67,6 +96,7 @@ namespace UnifierTSL.Servers
 
             worldDataProvider = worldData;
             worldData.ApplyMetadata(this);
+            worldData.ConfigureRuntime(this);
 
             Main.maxNetPlayers = byte.MaxValue;
             Netplay.ListenPort = -1;

@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks.Sources;
 using UnifierTSL.Events.Core;
@@ -10,6 +9,7 @@ namespace UnifierTSL.Servers
     {
         protected ServerContext Server { get; } = server ?? throw new ArgumentNullException(nameof(server));
 
+        public abstract ServerDispatchDomain Domain { get; }
         public abstract TaskScheduler Scheduler { get; }
 
         public abstract bool CheckAccess();
@@ -29,47 +29,40 @@ namespace UnifierTSL.Servers
         public abstract void Dispose();
     }
 
-    internal sealed class UpdateThreadServerDispatcher : ServerDispatcher
+    public abstract class QueuedServerDispatcher : ServerDispatcher
     {
-        private readonly ConcurrentQueue<Action> queue = new();
+        private readonly Queue<DispatchWork> queue = [];
+        private readonly Lock gate = new();
         private readonly DispatcherTaskScheduler scheduler;
         private readonly DispatcherSynchronizationContext synchronizationContext;
-        private readonly ReadonlyEventNoCancelDelegate<ServerEvent> preUpdateHandler;
         private int disposed;
 
-        public UpdateThreadServerDispatcher(ServerContext server) : base(server) {
-            scheduler = new DispatcherTaskScheduler(this);
-            synchronizationContext = new DispatcherSynchronizationContext(this);
-            preUpdateHandler = OnPreUpdate;
-            UnifierApi.EventHub.Game.PreUpdate.Register(preUpdateHandler, HandlerPriority.Highest);
+        protected QueuedServerDispatcher(ServerContext server) : base(server) {
+            scheduler = new(this);
+            synchronizationContext = new(this);
         }
 
-        public override TaskScheduler Scheduler => scheduler;
+        public sealed override TaskScheduler Scheduler => scheduler;
 
-        public override bool CheckAccess() {
-            if (Volatile.Read(ref disposed) != 0) {
-                return false;
-            }
+        protected bool IsDisposed => Volatile.Read(ref disposed) != 0;
 
-            return TryGetDispatchThread(out Thread? thread)
-                && ReferenceEquals(Thread.CurrentThread, thread);
-        }
+        protected abstract void EnsureTargetAvailable();
 
         public override void Post(Action action) {
-            ThrowIfUnavailable();
-            queue.Enqueue(WrapPostedAction(action));
+            ArgumentNullException.ThrowIfNull(action);
+            Enqueue(new(WrapPostedAction(action), null));
         }
 
         public override Task InvokeAsync(Action action, CancellationToken cancellationToken = default) {
-
+            ArgumentNullException.ThrowIfNull(action);
             if (cancellationToken.IsCancellationRequested) {
                 return Task.FromCanceled(cancellationToken);
             }
 
-            ThrowIfUnavailable();
+            EnsureAvailable();
             if (CheckAccess()) {
                 try {
-                    ExecuteWithDispatchContext(action);
+                    RunInDispatchContext(action);
                     return Task.CompletedTask;
                 }
                 catch (Exception ex) {
@@ -78,7 +71,7 @@ namespace UnifierTSL.Servers
             }
 
             TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            queue.Enqueue(() => {
+            Enqueue(new(() => {
                 if (cancellationToken.IsCancellationRequested) {
                     completion.TrySetCanceled(cancellationToken);
                     return;
@@ -91,20 +84,20 @@ namespace UnifierTSL.Servers
                 catch (Exception ex) {
                     completion.TrySetException(ex);
                 }
-            });
+            }, ex => completion.TrySetException(ex)));
             return completion.Task;
         }
 
         public override Task<T> InvokeAsync<T>(Func<T> action, CancellationToken cancellationToken = default) {
-
+            ArgumentNullException.ThrowIfNull(action);
             if (cancellationToken.IsCancellationRequested) {
                 return Task.FromCanceled<T>(cancellationToken);
             }
 
-            ThrowIfUnavailable();
+            EnsureAvailable();
             if (CheckAccess()) {
                 try {
-                    return Task.FromResult(ExecuteWithDispatchContext(action));
+                    return Task.FromResult(RunInDispatchContext(action));
                 }
                 catch (Exception ex) {
                     return Task.FromException<T>(ex);
@@ -112,7 +105,7 @@ namespace UnifierTSL.Servers
             }
 
             TaskCompletionSource<T> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            queue.Enqueue(() => {
+            Enqueue(new(() => {
                 if (cancellationToken.IsCancellationRequested) {
                     completion.TrySetCanceled(cancellationToken);
                     return;
@@ -124,46 +117,72 @@ namespace UnifierTSL.Servers
                 catch (Exception ex) {
                     completion.TrySetException(ex);
                 }
-            });
+            }, ex => completion.TrySetException(ex)));
             return completion.Task;
         }
 
         public override Task InvokeAsync(Func<Task> action, CancellationToken cancellationToken = default) {
-
+            ArgumentNullException.ThrowIfNull(action);
             if (cancellationToken.IsCancellationRequested) {
                 return Task.FromCanceled(cancellationToken);
             }
 
-            ThrowIfUnavailable();
+            EnsureAvailable();
             if (CheckAccess()) {
-                return InvokeTaskInline(action, cancellationToken);
+                return InvokeTaskInline(action);
             }
 
-            return Task.Factory.StartNew(
-                    () => InvokeTaskInline(action, cancellationToken),
-                    cancellationToken,
-                    TaskCreationOptions.DenyChildAttach,
-                    scheduler)
-                .Unwrap();
+            TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            Enqueue(new(() => {
+                if (cancellationToken.IsCancellationRequested) {
+                    completion.TrySetCanceled(cancellationToken);
+                    return;
+                }
+
+                Task task;
+                try {
+                    task = action() ?? Task.CompletedTask;
+                }
+                catch (Exception ex) {
+                    completion.TrySetException(ex);
+                    return;
+                }
+
+                Complete(task, completion);
+            }, ex => completion.TrySetException(ex)));
+            return completion.Task;
         }
 
         public override Task<T> InvokeAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default) {
-
+            ArgumentNullException.ThrowIfNull(action);
             if (cancellationToken.IsCancellationRequested) {
                 return Task.FromCanceled<T>(cancellationToken);
             }
 
-            ThrowIfUnavailable();
+            EnsureAvailable();
             if (CheckAccess()) {
                 return InvokeTaskInline(action, cancellationToken);
             }
 
-            return Task.Factory.StartNew(
-                    () => InvokeTaskInline(action, cancellationToken),
-                    cancellationToken,
-                    TaskCreationOptions.DenyChildAttach,
-                    scheduler)
-                .Unwrap();
+            TaskCompletionSource<T> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            Enqueue(new(() => {
+                if (cancellationToken.IsCancellationRequested) {
+                    completion.TrySetCanceled(cancellationToken);
+                    return;
+                }
+
+                Task<T> task;
+                try {
+                    task = action() ?? Task.FromException<T>(new InvalidOperationException("The dispatched async callback returned null."));
+                }
+                catch (Exception ex) {
+                    completion.TrySetException(ex);
+                    return;
+                }
+
+                Complete(task, completion);
+            }, ex => completion.TrySetException(ex)));
+            return completion.Task;
         }
 
         public override ValueTask SwitchAsync(CancellationToken cancellationToken = default) {
@@ -171,76 +190,101 @@ namespace UnifierTSL.Servers
                 return ValueTask.FromCanceled(cancellationToken);
             }
 
-            ThrowIfUnavailable();
+            EnsureAvailable();
             if (CheckAccess()) {
                 return ValueTask.CompletedTask;
             }
 
-            ServerDispatchSwitchSource source = new(this, cancellationToken);
-            return source.CreateValueTask();
+            return new DispatchSwitchSource(this, cancellationToken).CreateValueTask();
         }
 
-        public override void Dispose() {
-            if (Interlocked.Exchange(ref disposed, 1) != 0) {
-                return;
+        protected int DrainQueue(int maxWorkItems = int.MaxValue) {
+            if (maxWorkItems <= 0) {
+                throw new ArgumentOutOfRangeException(nameof(maxWorkItems));
             }
 
-            UnifierApi.EventHub.Game.PreUpdate.UnRegister(preUpdateHandler);
-
-            while (queue.TryDequeue(out _)) {
-            }
-        }
-
-        internal void QueueTask(Task task) {
-            ThrowIfUnavailable();
-            queue.Enqueue(() => scheduler.Execute(task));
-        }
-
-        private void OnPreUpdate(ref ReadonlyNoCancelEventArgs<ServerEvent> args) {
-            if (!ReferenceEquals(args.Content.Server, Server)) {
-                return;
-            }
-
-            DrainQueue();
-        }
-
-        private void DrainQueue() {
-            while (queue.TryDequeue(out Action? action)) {
-                try {
-                    ExecuteWithDispatchContext(action);
+            var completed = 0;
+            while (completed < maxWorkItems) {
+                DispatchWork work;
+                lock (gate) {
+                    if (disposed != 0 || !queue.TryDequeue(out work!)) {
+                        return completed;
+                    }
                 }
-                catch (Exception ex) {
-                    Server.Log.Error(
-                        category: "Dispatcher",
-                        message: GetString("Unhandled exception while executing a queued server-dispatch callback."),
-                        ex: ex);
+
+                RunInDispatchContext(work.Invoke);
+                completed++;
+            }
+
+            return completed;
+        }
+
+        protected void RunInDispatchContext(Action callback) {
+            var previous = SynchronizationContext.Current;
+            try {
+                SynchronizationContext.SetSynchronizationContext(synchronizationContext);
+                callback();
+            }
+            finally {
+                SynchronizationContext.SetSynchronizationContext(previous);
+            }
+        }
+
+        protected T RunInDispatchContext<T>(Func<T> callback) {
+            var previous = SynchronizationContext.Current;
+            try {
+                SynchronizationContext.SetSynchronizationContext(synchronizationContext);
+                return callback();
+            }
+            finally {
+                SynchronizationContext.SetSynchronizationContext(previous);
+            }
+        }
+
+        protected void RejectPending(Exception exception) {
+            DispatchWork[] pending;
+            lock (gate) {
+                pending = [.. queue];
+                queue.Clear();
+            }
+
+            foreach (var work in pending) {
+                work.Reject?.Invoke(exception);
+            }
+        }
+
+        protected bool TryDisposeQueue() {
+            DispatchWork[] pending;
+            lock (gate) {
+                if (disposed != 0) {
+                    return false;
                 }
+
+                disposed = 1;
+                pending = [.. queue];
+                queue.Clear();
+            }
+
+            var exception = new ObjectDisposedException(GetType().Name);
+            foreach (var work in pending) {
+                work.Reject?.Invoke(exception);
+            }
+
+            return true;
+        }
+
+        protected void EnsureAvailable() {
+            lock (gate) {
+                ObjectDisposedException.ThrowIf(disposed != 0, this);
+                EnsureTargetAvailable();
             }
         }
 
-        private Task InvokeTaskInline(Func<Task> action, CancellationToken cancellationToken) {
-            if (cancellationToken.IsCancellationRequested) {
-                return Task.FromCanceled(cancellationToken);
-            }
-
-            try {
-                return ExecuteWithDispatchContext(action) ?? Task.CompletedTask;
-            }
-            catch (Exception ex) {
-                return Task.FromException(ex);
-            }
-        }
-
-        private Task<T> InvokeTaskInline<T>(Func<Task<T>> action, CancellationToken cancellationToken) {
-            if (cancellationToken.IsCancellationRequested) {
-                return Task.FromCanceled<T>(cancellationToken);
-            }
-
-            try {
-                return ExecuteWithDispatchContext(action) ?? Task.FromCanceled<T>(cancellationToken);
-            }
-            catch (Exception ex) {
-                return Task.FromException<T>(ex);
+        private void Enqueue(DispatchWork work) {
+            lock (gate) {
+                ObjectDisposedException.ThrowIf(disposed != 0, this);
+                EnsureTargetAvailable();
+                queue.Enqueue(work);
             }
         }
 
@@ -258,79 +302,120 @@ namespace UnifierTSL.Servers
             };
         }
 
-        private T ExecuteWithDispatchContext<T>(Func<T> callback) {
-            SynchronizationContext? previous = SynchronizationContext.Current;
+        private Task InvokeTaskInline(Func<Task> action) {
             try {
-                SynchronizationContext.SetSynchronizationContext(synchronizationContext);
-                return callback();
+                return RunInDispatchContext(action) ?? Task.CompletedTask;
             }
-            finally {
-                SynchronizationContext.SetSynchronizationContext(previous);
+            catch (Exception ex) {
+                return Task.FromException(ex);
             }
         }
 
-        private void ExecuteWithDispatchContext(Action callback) {
-            SynchronizationContext? previous = SynchronizationContext.Current;
+        private Task<T> InvokeTaskInline<T>(Func<Task<T>> action, CancellationToken cancellationToken) {
             try {
-                SynchronizationContext.SetSynchronizationContext(synchronizationContext);
-                callback();
+                return RunInDispatchContext(action)
+                    ?? Task.FromException<T>(new InvalidOperationException("The dispatched async callback returned null."));
             }
-            finally {
-                SynchronizationContext.SetSynchronizationContext(previous);
-            }
-        }
-
-        private bool TryGetDispatchThread(out Thread? thread) {
-            thread = Server.RunningThread;
-            return thread is not null && thread.IsAlive;
-        }
-
-        private void ThrowIfUnavailable() {
-            ObjectDisposedException.ThrowIf(Volatile.Read(ref disposed) != 0, this);
-            if (!TryGetDispatchThread(out _)) {
-                throw new InvalidOperationException(GetString("The server dispatcher is unavailable because the server update thread is not running."));
+            catch (Exception ex) {
+                return Task.FromException<T>(ex);
             }
         }
 
-        private sealed class DispatcherTaskScheduler(UpdateThreadServerDispatcher owner) : TaskScheduler
+        private static void Complete(Task task, TaskCompletionSource completion) {
+            if (task.IsCompleted) {
+                CompleteNow(task, completion);
+            }
+            else {
+                _ = CompleteAsync(task, completion);
+            }
+        }
+
+        private static void Complete<T>(Task<T> task, TaskCompletionSource<T> completion) {
+            if (task.IsCompleted) {
+                CompleteNow(task, completion);
+            }
+            else {
+                _ = CompleteAsync(task, completion);
+            }
+        }
+
+        private static void CompleteNow(Task task, TaskCompletionSource completion) {
+            if (task.IsCompletedSuccessfully) {
+                completion.TrySetResult();
+            }
+            else if (task.IsCanceled) {
+                completion.TrySetCanceled();
+            }
+            else {
+                completion.TrySetException(task.Exception!.InnerExceptions);
+            }
+        }
+
+        private static void CompleteNow<T>(Task<T> task, TaskCompletionSource<T> completion) {
+            if (task.IsCompletedSuccessfully) {
+                completion.TrySetResult(task.Result);
+            }
+            else if (task.IsCanceled) {
+                completion.TrySetCanceled();
+            }
+            else {
+                completion.TrySetException(task.Exception!.InnerExceptions);
+            }
+        }
+
+        private static async Task CompleteAsync(Task task, TaskCompletionSource completion) {
+            try {
+                await task.ConfigureAwait(false);
+                completion.TrySetResult();
+            }
+            catch (OperationCanceledException) {
+                completion.TrySetCanceled();
+            }
+            catch (Exception ex) {
+                completion.TrySetException(ex);
+            }
+        }
+
+        private static async Task CompleteAsync<T>(Task<T> task, TaskCompletionSource<T> completion) {
+            try {
+                completion.TrySetResult(await task.ConfigureAwait(false));
+            }
+            catch (OperationCanceledException) {
+                completion.TrySetCanceled();
+            }
+            catch (Exception ex) {
+                completion.TrySetException(ex);
+            }
+        }
+
+        private sealed record DispatchWork(Action Invoke, Action<Exception>? Reject);
+
+        private sealed class DispatcherTaskScheduler(QueuedServerDispatcher owner) : TaskScheduler
         {
-            private readonly UpdateThreadServerDispatcher owner = owner;
-
             protected override IEnumerable<Task> GetScheduledTasks() {
                 throw new NotSupportedException();
             }
 
             protected override void QueueTask(Task task) {
-                owner.QueueTask(task);
+                owner.Enqueue(new(() => TryExecuteTask(task), null));
             }
 
             protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) {
-                if (!owner.CheckAccess() || taskWasPreviouslyQueued) {
-                    return false;
-                }
-
-                return owner.ExecuteWithDispatchContext(() => TryExecuteTask(task));
-            }
-
-            public void Execute(Task task) {
-                owner.ExecuteWithDispatchContext(() => TryExecuteTask(task));
+                return owner.CheckAccess()
+                    && !taskWasPreviouslyQueued
+                    && owner.RunInDispatchContext(() => TryExecuteTask(task));
             }
         }
 
-        private sealed class DispatcherSynchronizationContext(UpdateThreadServerDispatcher owner) : SynchronizationContext
+        private sealed class DispatcherSynchronizationContext(QueuedServerDispatcher owner) : SynchronizationContext
         {
-            private readonly UpdateThreadServerDispatcher owner = owner;
-
             public override void Post(SendOrPostCallback d, object? state) {
-
-                owner.ThrowIfUnavailable();
-                owner.queue.Enqueue(() => d(state));
+                owner.Post(() => d(state));
             }
 
             public override void Send(SendOrPostCallback d, object? state) {
-
                 if (owner.CheckAccess()) {
-                    owner.ExecuteWithDispatchContext(() => d(state));
+                    owner.RunInDispatchContext(() => d(state));
                     return;
                 }
 
@@ -338,18 +423,25 @@ namespace UnifierTSL.Servers
             }
         }
 
-        private sealed class ServerDispatchSwitchSource(UpdateThreadServerDispatcher owner, CancellationToken cancellationToken) : IValueTaskSource
+        private sealed class DispatchSwitchSource(QueuedServerDispatcher owner, CancellationToken cancellationToken) : IValueTaskSource
         {
             private Exception? completionException;
+            private int completed;
 
             public ValueTask CreateValueTask() => new(this, token: 0);
 
             public ValueTaskSourceStatus GetStatus(short token) {
+                if (Volatile.Read(ref completed) == 0) {
+                    return cancellationToken.IsCancellationRequested
+                        ? ValueTaskSourceStatus.Canceled
+                        : ValueTaskSourceStatus.Pending;
+                }
+
                 return completionException is not null
                     ? ValueTaskSourceStatus.Faulted
                     : cancellationToken.IsCancellationRequested
                     ? ValueTaskSourceStatus.Canceled
-                    : ValueTaskSourceStatus.Pending;
+                    : ValueTaskSourceStatus.Succeeded;
             }
 
             public void OnCompleted(
@@ -358,47 +450,90 @@ namespace UnifierTSL.Servers
                 short token,
                 ValueTaskSourceOnCompletedFlags flags) {
 
-                if (cancellationToken.IsCancellationRequested) {
-                    completionException = new OperationCanceledException(cancellationToken);
-                    continuation(state);
-                    return;
-                }
-
-                ExecutionContext? executionContext =
-                    (flags & ValueTaskSourceOnCompletedFlags.FlowExecutionContext) != 0
+                var executionContext = (flags & ValueTaskSourceOnCompletedFlags.FlowExecutionContext) != 0
                     ? ExecutionContext.Capture()
                     : null;
-
-                try {
-                    owner.Post(() => {
-                        if (executionContext is null) {
-                            continuation(state);
-                            return;
-                        }
-
+                void Continue() {
+                    Volatile.Write(ref completed, 1);
+                    if (executionContext is null) {
+                        continuation(state);
+                    }
+                    else {
                         ExecutionContext.Run(
                             executionContext,
-                            static context => {
-                                ((State)context!).Continuation(((State)context).ContinuationState);
+                            static value => {
+                                var continuationState = (ContinuationState)value!;
+                                continuationState.Continuation(continuationState.State);
                             },
-                            new State(continuation, state));
-                    });
+                            new ContinuationState(continuation, state));
+                    }
+                }
+
+                try {
+                    owner.Enqueue(new(Continue, ex => {
+                        completionException = ex;
+                        Continue();
+                    }));
                 }
                 catch (Exception ex) {
                     completionException = ex;
-                    continuation(state);
+                    Continue();
                 }
             }
 
             public void GetResult(short token) {
-                if (completionException is null) {
-                    return;
+                if (completionException is not null) {
+                    ExceptionDispatchInfo.Capture(completionException).Throw();
                 }
 
-                ExceptionDispatchInfo.Capture(completionException).Throw();
+                cancellationToken.ThrowIfCancellationRequested();
             }
 
-            private sealed record State(Action<object?> Continuation, object? ContinuationState);
+            private sealed record ContinuationState(Action<object?> Continuation, object? State);
+        }
+    }
+
+    internal sealed class UpdateThreadServerDispatcher : QueuedServerDispatcher
+    {
+        private readonly ServerDispatchDomain domain = new();
+        private readonly ReadonlyEventNoCancelDelegate<ServerEvent> preUpdateHandler;
+
+        public UpdateThreadServerDispatcher(ServerContext server) : base(server) {
+            preUpdateHandler = OnPreUpdate;
+            UnifierApi.EventHub.Game.PreUpdate.Register(preUpdateHandler, HandlerPriority.Highest);
+        }
+
+        public override ServerDispatchDomain Domain => domain;
+
+        public override bool CheckAccess() {
+            return !IsDisposed
+                && TryGetDispatchThread(out var thread)
+                && ReferenceEquals(Thread.CurrentThread, thread);
+        }
+
+        protected override void EnsureTargetAvailable() {
+            if (!TryGetDispatchThread(out _)) {
+                throw new InvalidOperationException(GetString("The server dispatcher is unavailable because the server update thread is not running."));
+            }
+        }
+
+        private void OnPreUpdate(ref ReadonlyNoCancelEventArgs<ServerEvent> args) {
+            if (ReferenceEquals(args.Content.Server, Server)) {
+                DrainQueue();
+            }
+        }
+
+        private bool TryGetDispatchThread(out Thread? thread) {
+            thread = Server.RunningThread;
+            return thread is not null && thread.IsAlive;
+        }
+
+        public override void Dispose() {
+            if (!TryDisposeQueue()) {
+                return;
+            }
+
+            UnifierApi.EventHub.Game.PreUpdate.UnRegister(preUpdateHandler);
         }
     }
 }

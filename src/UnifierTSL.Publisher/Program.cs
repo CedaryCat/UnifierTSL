@@ -6,20 +6,15 @@ internal class Program
 {
     static void Main(string[] args) {
         var options = Utils.CLI.ParseArguments(args);
-        string rid = ResolveRuntimeIdentifier(options);
-        if (options.TryGetValue("--excluded-plugins", out var excludedPlugins)) {
-            excludedPlugins = [.. excludedPlugins
-                .Select(p => p.Split(',' , StringSplitOptions.RemoveEmptyEntries))
-                .SelectMany(p => p)
-                .Select(p => p.Trim())];
-        }
-        excludedPlugins ??= [];
+        var rid = ResolveRuntimeIdentifier(options);
+        var excludedPlugins = ParseListOption(options, "--excluded-plugins");
+        var buildParts = ParseBuildParts(options);
 
         // Locate solution root early for default path calculation
         var solutionRoot = Utils.Solution.SolutionRoot;
 
         // Parse output path (default: Publisher project's bin directory for compatibility)
-        string outputPath = Utils.Solution.DefaultOutputPath;
+        var outputPath = Utils.Solution.DefaultOutputPath;
         if (options.TryGetValue("--output-path", out var outputPaths) && outputPaths.Count > 0) {
             outputPath = outputPaths[0];
             // Resolve relative paths relative to the current working directory
@@ -49,7 +44,7 @@ internal class Program
             }
         }
 
-        var task = Run(rid, excludedPlugins, outputPath, useRidFolder, cleanOutputDir);
+        var task = Run(rid, excludedPlugins, buildParts, outputPath, useRidFolder, cleanOutputDir);
 
         task.Wait();
         if (task.IsFaulted) throw task.Exception;
@@ -95,19 +90,80 @@ internal class Program
         };
     }
 
-    static async Task Run(string rid, IReadOnlyList<string> excludedPlugins, string outputPath, bool useRidFolder, bool cleanOutputDir) {
+    static IReadOnlyList<string> ParseListOption(Dictionary<string, List<string>> options, string name) {
+        return options.TryGetValue(name, out var values)
+            ? [.. values
+                .SelectMany(p => p.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                .Select(p => p.Trim())
+                .Where(p => p.Length > 0)]
+            : [];
+    }
+
+    static PublisherBuildPart ParseBuildParts(Dictionary<string, List<string>> options) {
+        var buildParts = PublisherBuildPart.All;
+        var skippedParts = ParseListOption(options, "--skip-build");
+        foreach (var skippedPart in skippedParts) {
+            buildParts &= ~ParseBuildPart(skippedPart);
+        }
+
+        if (options.ContainsKey("--skip-build") && skippedParts.Count == 0) {
+            throw new ArgumentException("--skip-build must name at least one section.");
+        }
+        if (buildParts is PublisherBuildPart.None) {
+            throw new ArgumentException("--skip-build cannot skip every publisher section.");
+        }
+
+        return buildParts;
+    }
+
+    static PublisherBuildPart ParseBuildPart(string value) {
+        return value.ToLowerInvariant() switch {
+            "plugin" or "plugins" => PublisherBuildPart.Plugins,
+            "app" or "apps" or "body" or "main" => PublisherBuildPart.App,
+            "core" or "core-program" or "program" => PublisherBuildPart.CoreProgram,
+            "app-tools" or "tools" or "console" or "console-client" => PublisherBuildPart.AppTools,
+            _ => throw new ArgumentException(
+                $"Unknown --skip-build section '{value}'. Expected plugins, app, core, or app-tools.")
+        };
+    }
+
+    static async Task Run(
+        string rid,
+        IReadOnlyList<string> excludedPlugins,
+        PublisherBuildPart buildParts,
+        string outputPath,
+        bool useRidFolder,
+        bool cleanOutputDir) {
+
         var package = new PackageLayoutManager(rid, outputPath, useRidFolder, cleanOutputDir);
 
-        await package.InputAppTools(
-            new AppToolsPublisher([
-                Path.Combine("UnifierTSL.ConsoleClient", "UnifierTSL.ConsoleClient.csproj"),
-            ])
-            .PublishApps(rid));
+        if ((buildParts & PublisherBuildPart.AppTools) != PublisherBuildPart.None) {
+            await package.InputAppTools(
+                new AppToolsPublisher([
+                    Path.Combine("UnifierTSL.ConsoleClient", "UnifierTSL.ConsoleClient.csproj"),
+                ])
+                .PublishApps(rid));
+        }
 
-        await package.InputPlugins(
-            new PluginsBuilder("Plugins").BuildPlugins(rid, excludedPlugins));
+        if ((buildParts & PublisherBuildPart.Plugins) != PublisherBuildPart.None) {
+            await package.InputPlugins(
+                new PluginsBuilder("Plugins").BuildPlugins(rid, excludedPlugins));
+        }
 
-        await package.InputCoreProgram(
-            new CoreAppBuilder(Path.Combine("UnifierTSL", "UnifierTSL.csproj")).Build(rid));
+        if ((buildParts & PublisherBuildPart.CoreProgram) != PublisherBuildPart.None) {
+            await package.InputCoreProgram(
+                new CoreAppBuilder(Path.Combine("UnifierTSL", "UnifierTSL.csproj")).Build(rid));
+        }
     }
+}
+
+[Flags]
+internal enum PublisherBuildPart
+{
+    None = 0,
+    AppTools = 1,
+    Plugins = 2,
+    CoreProgram = 4,
+    App = AppTools | CoreProgram,
+    All = App | Plugins
 }
