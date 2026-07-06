@@ -263,9 +263,7 @@ namespace UnifierTSL
                                     globalClients[Index].ResetSections(joinServer);
 
                                     SetClientCurrentlyServer(Index, joinServer);
-
-                                    serverPlayer.active = true;
-
+                                    
                                     UnifierApi.EventHub.Coordinator.JoinServer.Invoke(new(joinServer, player.whoAmI));
 
                                     UnifierApi.UpdateTitle();
