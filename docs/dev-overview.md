@@ -832,7 +832,7 @@ Async receive loop: ClientHello, SendPassword, SyncPlayer, ClientUUID
     ↓
 SwitchJoinServerEvent fires → plugin selects destination server
     ↓
-Activate client in chosen ServerContext
+Route client to the chosen ServerContext; keep Player inactive through WorldData/tile sync
     ↓
 Byte processing routed via ProcessBytes hook
 ```
@@ -843,31 +843,48 @@ Byte processing routed via ProcessBytes hook
 - `Coordinator.CheckVersion` is currently invoked twice during `ClientHello` handling; handlers should be idempotent and avoid side effects that assume single invocation
 - Password authentication (if `UnifierApi.ServerPassword` is set)
 - Collects client metadata: `ClientUUID`, player name and appearance
+- Routing occurs at connection state 1, but the server player remains inactive until vanilla `SpawnPlayer`; this prevents automatic section streaming before `WorldData`
 - Kicks incompatible clients with `NetworkText` reasons
 
-**Server Transfer Protocol** (src/UnifierTSL/UnifiedServerCoordinator.cs:290-353):
+**Server Transfer Protocol** (src/UnifierTSL/UnifiedServerCoordinator.cs):
 ```csharp
 public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false)
 {
     ServerContext? from = GetClientCurrentlyServer(plr);
     if (from is null || from == to) return;
     if (!to.IsRunning && !ignoreChecks) return;
+    if (from.Main.maxTilesX != to.Main.maxTilesX || from.Main.maxTilesY != to.Main.maxTilesY) return;
 
     UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
     if (handled) return;
 
-    // Sync leave → switch mapping → sync join
-    from.SyncPlayerLeaveToOthers(plr);
-    from.SyncServerOfflineToPlayer(plr);
-    SetClientCurrentlyServer(plr, to);
-    to.SyncServerOnlineToPlayer(plr);
-    to.SyncPlayerJoinToOthers(plr);
+    lock (globalMsgBuffers[plr]) {
+        from.SyncPlayerLeaveToOthers(plr);
+        from.SyncServerOfflineToPlayer(plr);
 
-    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
+        Player inactivePlayer = to.Main.player[plr];
+        Player player = players[plr] = from.Main.player[plr];
+        from.Main.player[plr] = inactivePlayer;
+        inactivePlayer.active = false;
+        to.Main.player[plr] = player;
+        player.active = false;
+
+        globalClients[plr].ResetSections(to);
+        SetClientCurrentlyServer(plr, to);
+        to.SyncServerOnlineToPlayer(plr);
+        player.Spawn(to, PlayerSpawnContext.SpawningIntoWorld);
+        to.NetMessage.SendData(MessageID.PlayerSpawn, plr, -1, null, plr, (byte)PlayerSpawnContext.SpawningIntoWorld);
+        to.SyncPlayerJoinToOthers(plr);
+        UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
+    }
 }
 ```
 
-**Packet Routing Hook** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416):
+Seamless transfer requires equal world dimensions because a connected vanilla client has no protocol operation that re-enters the `clearWorld()` state. Calls must originate on the source server update thread. The entire handoff is one synchronous sequence under the shared message-buffer lock and the client's route-publication gate: clear the source projection, move the existing session `Player`, clear server-side section visibility, publish the target route, and send the target world state. Incidental source or target broadcasts are dropped while that state is published. Only the target spawn, team-spawn, and portal sections used by the normal join path are sent; other sections are streamed normally when the player approaches them. There is no transfer queue or separate transfer-state field. Packet processing rechecks the route after taking the same lock, so a server thread that observed the old route cannot decode a packet after the handoff.
+
+There is no transfer-completion state and the client's `SpawnPlayer` echo is not treated as an acknowledgement. `SyncServerOnlineToPlayer` sets `SpawnX` and `SpawnY` to `-1`, and message 12 serializes those values, so the client discards any source-world bed before spawning at the target world/team spawn. The same locked transfer sequence performs the server-side spawn, sends the vanilla `PlayerSpawn` packet, publishes the player to peers, and raises `PostServerTransfer`; the later client echo follows Terraria's ordinary state-10 packet path. Client-only incremental projections without a negative wire operation, notably map and bestiary history, can remain until their normal refresh or a reconnect.
+
+**Packet Routing Hook** (src/UnifierTSL/UnifiedServerCoordinator.cs):
 ```csharp
 On.Terraria.NetMessageSystemContext.CheckBytes += ProcessBytes;
 
@@ -879,6 +896,7 @@ private static void ProcessBytes(
     ServerContext server = netMsg.root.ToServer();
     MessageBuffer buffer = globalMsgBuffers[clientIndex];
     lock (buffer) {
+        if (GetClientCurrentlyServer(clientIndex) != server) return;
         // Decode packet length, then route payload to NetPacketHandler.ProcessBytes(...)
         NetPacketHandler.ProcessBytes(server, buffer, contentStart, contentLength);
     }

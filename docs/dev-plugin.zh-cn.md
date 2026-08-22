@@ -560,7 +560,8 @@ NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
 
 <a id="53-transfers--coordinator-helpers"></a>
 ### 5.3 服间转移与协调器辅助
-- `UnifiedServerCoordinator.TransferPlayerToServer` 用于跨服务器转移客户端。建议用 try/catch 包裹调用，并通过 `PreServerTransferEvent` 正确处理可取消流程。
+- `UnifiedServerCoordinator.TransferPlayerToServer` 用于跨服务器转移客户端。调用必须发生在玩家当前所在的源服务器更新线程；若调用方来自其他线程，应先调度到源服务器。建议用 try/catch 包裹调用，并通过 `PreServerTransferEvent` 正确处理可取消流程。
+- 无缝转移要求两个世界尺寸一致，并在 `TransferPlayerToServer` 内同步完成；服务端交接与目标世界同步结束后会触发 `PostServerTransfer`。原版 `SpawnPlayer` 回声仍是状态 10 下的普通输入，不作为完成确认。
 - `ServerContext.SyncPlayerJoinToOthers` 等方法可在自定义转移流程后校正可见性，但它们属于底层原语。除非你明确需要定制时序/行为，否则优先使用已封装的 `TransferPlayerToServer`。
 - 查询 `UnifiedServerCoordinator.Servers` 以获得活动上下文；每个上下文都直接继承 `RootContext` 并公开 `Name` 以及注册的扩展。
 - 启动器端路由选项映射到协调器事件：

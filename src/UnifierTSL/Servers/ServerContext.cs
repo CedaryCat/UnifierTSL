@@ -20,7 +20,9 @@ namespace UnifierTSL.Servers
 
         public Thread? RunningThread { get; private set; }
         public int ActivePlayerCount { get; internal set; }
+        internal int routedConnectionCountAccumulator;
         internal int playerCountAccumulator;
+        internal volatile bool hasRoutedConnections;
         public bool IsRunning { get; private set; }
 
         public string? CurrentLogCategory { get; set; }

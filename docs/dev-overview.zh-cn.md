@@ -841,7 +841,7 @@ Async receive loop: ClientHello, SendPassword, SyncPlayer, ClientUUID
     ↓
 SwitchJoinServerEvent fires → plugin selects destination server
     ↓
-Activate client in chosen ServerContext
+把客户端路由到选定的 ServerContext；在 WorldData/区块同步完成前保持 Player inactive
     ↓
 Byte processing routed via ProcessBytes hook
 ```
@@ -852,31 +852,48 @@ Byte processing routed via ProcessBytes hook
 - `Coordinator.CheckVersion` 当前在 `ClientHello` 处理期间被调用两次；处理程序应该是幂等的，并避免假设单次调用的副作用
 - 密码验证（如果设置了 `UnifierApi.ServerPassword`）
 - 收集客户端元数据：`ClientUUID`、玩家姓名和外观
+- 路由发生在连接状态 1，但服务端玩家会保持 inactive，直到原版 `SpawnPlayer` 激活；这能阻止 `WorldData` 之前的自动区块发送
 - 以 `NetworkText` 原因踢掉不兼容的客户端
 
-**服务器传输协议** (src/UnifierTSL/UnifiedServerCoordinator.cs:290-353)：
+**服务器传输协议** (src/UnifierTSL/UnifiedServerCoordinator.cs)：
 ```csharp
 public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false)
 {
     ServerContext? from = GetClientCurrentlyServer(plr);
     if (from is null || from == to) return;
     if (!to.IsRunning && !ignoreChecks) return;
+    if (from.Main.maxTilesX != to.Main.maxTilesX || from.Main.maxTilesY != to.Main.maxTilesY) return;
 
     UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
     if (handled) return;
 
-    // 同步离开 → 切换映射 → 同步加入
-    from.SyncPlayerLeaveToOthers(plr);
-    from.SyncServerOfflineToPlayer(plr);
-    SetClientCurrentlyServer(plr, to);
-    to.SyncServerOnlineToPlayer(plr);
-    to.SyncPlayerJoinToOthers(plr);
+    lock (globalMsgBuffers[plr]) {
+        from.SyncPlayerLeaveToOthers(plr);
+        from.SyncServerOfflineToPlayer(plr);
 
-    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
+        Player inactivePlayer = to.Main.player[plr];
+        Player player = players[plr] = from.Main.player[plr];
+        from.Main.player[plr] = inactivePlayer;
+        inactivePlayer.active = false;
+        to.Main.player[plr] = player;
+        player.active = false;
+
+        globalClients[plr].ResetSections(to);
+        SetClientCurrentlyServer(plr, to);
+        to.SyncServerOnlineToPlayer(plr);
+        player.Spawn(to, PlayerSpawnContext.SpawningIntoWorld);
+        to.NetMessage.SendData(MessageID.PlayerSpawn, plr, -1, null, plr, (byte)PlayerSpawnContext.SpawningIntoWorld);
+        to.SyncPlayerJoinToOthers(plr);
+        UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
+    }
 }
 ```
 
-**数据包路由挂钩** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416)：
+无缝转移要求两个世界尺寸一致，因为已经连接的原版客户端没有重新进入 `clearWorld()` 状态的协议操作。调用必须来自源服务器更新线程。整个交接都在共享消息缓冲区锁和该客户端的路由发布 gate 内同步完成：清除源世界投影、移动已有会话 `Player`、清空服务端区块可见性记录、发布目标路由并发送目标世界状态；期间偶发的源服或目标服广播会直接丢弃。这里只发送正常进服路径所需的目标世界出生点、队伍出生点与传送门区块；其他区块会在玩家靠近时按原版机制重新流式发送。转服没有调度队列，也没有单独的传输状态字段。数据包处理会在取得同一把锁后重新核对路由，因此先前观察到旧路由的服务器线程无法在交接后继续解析数据包。
+
+转服不再存在完成态，客户端随后发回的 `SpawnPlayer` 也不被当作确认。`SyncServerOnlineToPlayer` 会先把 `SpawnX`、`SpawnY` 设为 `-1`，而消息 12 会序列化这两个值，所以客户端会在出生前丢弃源世界的个人床点并使用目标世界/队伍出生点。同一个锁内顺序段会直接完成服务端 Spawn、发送原版 `PlayerSpawn`、向其他玩家发布并触发 `PostServerTransfer`；客户端稍后的回声只走 Terraria 状态 10 下的普通数据包路径。缺少负向 wire 操作的客户端增量投影（尤其是地图和 bestiary 历史）可能保留到其正常刷新或重新连接。
+
+**数据包路由挂钩** (src/UnifierTSL/UnifiedServerCoordinator.cs)：
 ```csharp
 On.Terraria.NetMessageSystemContext.CheckBytes += ProcessBytes;
 
@@ -888,6 +905,7 @@ private static void ProcessBytes(
     ServerContext server = netMsg.root.ToServer();
     MessageBuffer buffer = globalMsgBuffers[clientIndex];
     lock (buffer) {
+        if (GetClientCurrentlyServer(clientIndex) != server) return;
         // 解码包长度，然后把载荷路由到 NetPacketHandler.ProcessBytes(...)
         NetPacketHandler.ProcessBytes(server, buffer, contentStart, contentLength);
     }

@@ -245,7 +245,7 @@ namespace UnifierTSL.Performance
                 => frame.events is { Count: > 0 };
 
             private static bool ShouldIncludeCurrentFrame(DetailedFPSSystemContext detailedFps)
-                => !detailedFps.root.Main.dedServ || detailedFps.root.Netplay.HasClients;
+                => !detailedFps.root.Main.dedServ || detailedFps.root.Netplay.HasFullyConnectedClients;
 
             private static void AccumulateFrameWindow(
                 ServerPerformance.FrameData frameData,

@@ -277,7 +277,7 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.PlayNote: ProcessPacket_F<PlayNote>(in info); return;
                 case MessageID.NPCHome: ProcessPacket_F<NPCHome>(in info); return;
                 case MessageID.SpawnBoss: ProcessPacket_F<SpawnBoss>(in info); return;
-                case MessageID.Dodge: ProcessPacket_F<Dodge>(in info); return;
+                case MessageID.SyncDodge: ProcessPacket_F<Dodge>(in info); return;
                 case MessageID.SpiritHeal: ProcessPacket_F<SpiritHeal>(in info); return;
                 case MessageID.BugCatching: ProcessPacket_F<BugCatching>(in info); return;
                 case MessageID.BugReleasing: ProcessPacket_F<BugReleasing>(in info); return;
@@ -288,12 +288,13 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.InvasionProgressReport: ProcessPacket_F<InvasionProgressReport>(in info); return;
                 case MessageID.CombatTextInt: ProcessPacket_F<CombatTextInt>(in info); return;
                 case MessageID.NetModules: {
-                        switch ((NetModuleType)Unsafe.Read<short>(Unsafe.Add<byte>(ptr, 1))) {
+                        switch ((NetModuleType)Unsafe.Read<ushort>(Unsafe.Add<byte>(ptr, 1))) {
                             case NetModuleType.NetLiquidModule: ProcessPacket_D<NetLiquidModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetTextModule: ProcessPacket_DS<NetTextModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetPingModule: ProcessPacket_F<NetPingModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetAmbienceModule: ProcessPacket_F<NetAmbienceModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetBestiaryModule: ProcessPacket_F<NetBestiaryModule>(in info, contentOffset: 3); return;
+                            case NetModuleType.NetCreativeUnlocksModule: ProcessPacket_F<NetCreativeUnlocksModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetCreativePowersModule: ProcessPacket_D<NetCreativePowersModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetCreativeUnlocksPlayerReportModule: ProcessPacket_F<NetCreativeUnlocksPlayerReportModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetTeleportPylonModule: ProcessPacket_F<NetTeleportPylonModule>(in info, contentOffset: 3); return;
@@ -301,19 +302,17 @@ namespace UnifierTSL.Events.Handlers
                             case NetModuleType.NetCreativePowerPermissionsModule: ProcessPacket_F<NetCreativePowerPermissionsModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetBannersModule: ProcessPacket_D<NetBannersModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetCraftingRequestsModule: ProcessPacket_DS<NetCraftingRequestsModule>(in info, contentOffset: 3); return;
-                            case NetModuleType.NetTagEffectStateModule: ProcessPacket_DS<NetTagEffectStateModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetLeashedEntityModule: ProcessPacket_D<NetLeashedEntityModule>(in info, contentOffset: 3); return;
                             case NetModuleType.NetUnbreakableWallScanModule: ProcessPacket_F<NetUnbreakableWallScanModule>(in info, contentOffset: 3); return;
                             default: return;
                         }
                     }
-                case MessageID.NPCKillCountDeathTally: ProcessPacket_F<NPCKillCountDeathTally>(in info); return;
                 case MessageID.QuickStackChests: ProcessPacket_DS<QuickStackChests>(in info); return;
                 case MessageID.TileEntitySharing: ProcessPacket_D<TileEntitySharing>(in info); return;
                 case MessageID.TileEntityPlacement: ProcessPacket_F<TileEntityPlacement>(in info); return;
                 case MessageID.ItemTweaker: ProcessPacket_F<ItemTweaker>(in info); return;
                 case MessageID.ItemFrameTryPlacing: ProcessPacket_F<ItemFrameTryPlacing>(in info); return;
-                case MessageID.InstancedItem: ProcessPacket_F<InstancedItem>(in info); return;
+                case MessageID.SpawnInstancedItem: ProcessPacket_F<SpawnInstancedItem>(in info); return;
                 case MessageID.SyncEmoteBubble: ProcessPacket_D<SyncEmoteBubble>(in info); return;
                 case MessageID.MurderSomeoneElsesProjectile: ProcessPacket_F<MurderSomeoneElsesProjectile>(in info); return;
                 case MessageID.TeleportPlayerThroughPortal: ProcessPacket_F<TeleportPlayerThroughPortal>(in info); return;
@@ -346,7 +345,7 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.SyncPlayerChestIndex: ProcessPacket_F<SyncPlayerChestIndex>(in info); return;
                 case MessageID.PlayerStealth: ProcessPacket_F<PlayerStealth>(in info); return;
                 case MessageID.SyncExtraValue: ProcessPacket_F<SyncExtraValue>(in info); return;
-                case MessageID.SocialHandshake: ProcessPacket_D<SocialHandshake>(in info); return;
+                case MessageID.DevCommands: ProcessPacket_D<DevCommands>(in info); return;
                 case MessageID.GemLockToggle: ProcessPacket_F<GemLockToggle>(in info); return;
                 case MessageID.PoofOfSmoke: ProcessPacket_F<PoofOfSmoke>(in info); return;
                 case MessageID.SmartTextMessage: ProcessPacket_D<SmartTextMessage>(in info); return;
@@ -382,10 +381,8 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.SyncProjectileTrackers: ProcessPacket_F<SyncProjectileTrackers>(in info); return;
                 case MessageID.CrystalInvasionRequestedToSkipWaitTime: ProcessPacket_F<CrystalInvasionRequestedToSkipWaitTime>(in info); return;
                 case MessageID.RequestQuestEffect: ProcessPacket_F<RequestQuestEffect>(in info); return;
-                case MessageID.SyncItemsWithShimmer: ProcessPacket_F<SyncItemsWithShimmer>(in info); return;
                 case MessageID.ShimmerActions: ProcessPacket_F<ShimmerActions>(in info); return;
                 case MessageID.SyncLoadout: ProcessPacket_F<SyncLoadout>(in info); return;
-                case MessageID.SyncItemCannotBeTakenByEnemies: ProcessPacket_F<SyncItemCannotBeTakenByEnemies>(in info); return;
                 case MessageID.DeadCellsDisplayJarTryPlacing: ProcessPacket_F<DeadCellsDisplayJarTryPlacing>(in info); return;
                 case MessageID.SpectatePlayer: ProcessPacket_F<SpectatePlayer>(in info); return;
                 case MessageID.SyncItemDespawn: ProcessPacket_F<SyncItemDespawn>(in info); return;
@@ -399,8 +396,7 @@ namespace UnifierTSL.Events.Handlers
                 case MessageID.RequestSection: ProcessPacket_F<RequestSection>(in info); return;
                 case MessageID.ItemPosition: ProcessPacket_F<ItemPosition>(in info); return;
                 case MessageID.HostToken: ProcessPacket_D<HostToken>(in info); return;
-                case MessageID.ServerInfo: ProcessPacket_D<ServerInfo>(in info); return;
-                case MessageID.PlayerPlatformInfo: ProcessPacket_F<PlayerPlatformInfo>(in info); return;
+                case MessageID.DamageNPCAck: ProcessPacket_F<DamageNPCAck>(in info); return;
                 default: return;
             }
         }

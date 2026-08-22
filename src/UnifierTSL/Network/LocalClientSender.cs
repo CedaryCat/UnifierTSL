@@ -7,6 +7,7 @@ namespace UnifierTSL.Network
     public sealed class LocalClientSender(int clientId) : SocketSender(clientId)
     {
         public readonly int ID = clientId;
+        internal readonly object RoutePublicationGate = new();
         public RemoteClient Client => UnifiedServerCoordinator.globalClients[ID];
         public sealed override ISocket Socket => Client.Socket;
         public sealed override void Kick(NetworkText reason, bool bg = false) {

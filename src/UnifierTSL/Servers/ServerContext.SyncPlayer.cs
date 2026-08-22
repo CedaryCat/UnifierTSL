@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.GameContent;
 using Terraria.GameContent.NetModules;
 using Terraria.ID;
@@ -14,7 +15,23 @@ namespace UnifierTSL.Servers
         public static event Action<ServerContext, int>? SyncServerOnlineToPlayerEvent;
         public virtual void SyncServerOnlineToPlayer(int plr) {
             SyncServerOnlineToPlayerEvent?.Invoke(this, plr);
-            SyncCountsAsHostForGameplay(plr, NetMessage.DoesPlayerSlotCountAsAHost(plr));
+
+            Player player = Main.player[plr];
+            player.SpawnX = -1;
+            player.SpawnY = -1;
+            player.chest = -1;
+            player.sign = -1;
+            player.SetTalkNPC(this, -1);
+            player.tileEntityAnchor.Clear();
+            player.MinionRestTargetPoint = Vector2.Zero;
+            player.MinionAttackTargetNPC = -1;
+            player.piggyBankProjTracker.Clear();
+            player.voidLensChest.Clear();
+            player.PotionOfReturnOriginalUsePosition = null;
+            player.PotionOfReturnHomePosition = null;
+            player.isOperatingAnotherEntity = false;
+            player.netCameraTarget = null;
+            player.spectating = -1;
 
             NetMessage.TrySendData(MessageID.WorldData, plr);
             Main.SyncAnInvasion(plr);
@@ -29,22 +46,24 @@ namespace UnifierTSL.Servers
             HashSet<Point> sentSections = new();
             List<Point> existingPos = new();
 
-            SendSectionRectAtTile(whoAmI, Main.spawnTileX, Main.spawnTileY, sentSections, existingPos);
+            SendSectionRectAtTile(whoAmI, Main.spawnTileX, Main.spawnTileY, sentSections, existingPos, expanded: false);
 
             if (Main.teamBasedSpawnsSeed && player.team != 0 && ExtraSpawnPointManager.TryGetExtraSpawnPointForTeam(player.team, out Point teamSpawnPoint)) {
-                SendSectionRectAtTile(whoAmI, teamSpawnPoint.X, teamSpawnPoint.Y, sentSections, existingPos);
+                SendSectionRectAtTile(whoAmI, teamSpawnPoint.X, teamSpawnPoint.Y, sentSections, existingPos, expanded: true);
             }
 
             PortalHelper.SyncPortalsOnPlayerJoin(whoAmI, 1, existingPos, out List<Point>? portalSections);
             foreach (Point section in portalSections) {
-                NetMessage.SendSection(whoAmI, section.X, section.Y);
+                if (sentSections.Add(section)) {
+                    NetMessage.SendSection(whoAmI, section.X, section.Y);
+                }
             }
         }
-        protected virtual void SendSectionRectAtTile(int whoAmI, int tileX, int tileY, HashSet<Point> sentSections, List<Point> existingPos) {
+        protected virtual void SendSectionRectAtTile(int whoAmI, int tileX, int tileY, HashSet<Point> sentSections, List<Point> existingPos, bool expanded) {
             int sectionXBegin = Terraria.Netplay.GetSectionX(tileX) - 2;
             int sectionYBegin = Terraria.Netplay.GetSectionY(tileY) - 1;
-            int sectionXEnd = sectionXBegin + 5;
-            int sectionYEnd = sectionYBegin + 3;
+            int sectionXEnd = sectionXBegin + (expanded ? 6 : 5);
+            int sectionYEnd = sectionYBegin + (expanded ? 4 : 3);
             if (sectionXBegin < 0) {
                 sectionXBegin = 0;
             }
@@ -81,7 +100,13 @@ namespace UnifierTSL.Servers
             }
         }
         protected virtual void SendWorldEntities(int whoAmI) {
+            Network.LocalClientSender sender = UnifiedServerCoordinator.clientSenders[whoAmI];
             NetMessage.SyncConnectedPlayer(whoAmI);
+            NetMessage.TrySendData(MessageID.SyncPlayerChestIndex, whoAmI, -1, null, whoAmI, Main.player[whoAmI].chest);
+            NetMessage.TrySendData(MessageID.SyncProjectileTrackers, whoAmI, -1, null, whoAmI);
+            NetMessage.TrySendData(MessageID.RequestTileEntityInteraction, whoAmI, -1, null, -1, whoAmI);
+            NetMessage.TrySendData(MessageID.MinionRestTargetUpdate, whoAmI, -1, null, whoAmI);
+            NetMessage.TrySendData(MessageID.MinionAttackTargetUpdate, whoAmI, -1, null, whoAmI);
             for (int i = 0; i < Terraria.Main.maxItems; i++) {
                 NetMessage.TrySendData(MessageID.SyncItem, whoAmI, -1, null, i);
                 if (Main.item[i].active) {
@@ -89,13 +114,36 @@ namespace UnifierTSL.Servers
                 }
             }
             for (int i = 0; i < Terraria.Main.maxNPCs; i++) {
+                NPC npc = Main.npc[i];
+                SyncNPC invalidation = new() {
+                    NPCSlot = (byte)i,
+                    Generation = (byte)(npc.generation + (npc.active ? 1 : 0)),
+                    Target = ushort.MaxValue,
+                    NPCType = 0,
+                    ExtraData = [],
+                };
+                invalidation.Bit3[0] = true;
+                sender.SendDynamicPacket(in invalidation);
+                if (!npc.active) {
+                    continue;
+                }
                 NetMessage.TrySendData(MessageID.SyncNPC, whoAmI, -1, null, i);
-                if (Main.npc[i].active) {
+                if (npc.active) {
                     NetMessage.TrySendData(MessageID.NPCBuffs, whoAmI, -1, null, i);
                 }
             }
             for (int i = 0; i < Terraria.Main.maxProjectiles; i++) {
-                if (Main.projectile[i].active) {
+                Projectile projectile = Main.projectile[i];
+                if (projectile.active) {
+                    ProjectileKey invalidationKey = new(projectile.key.Spawner, projectile.key.Index, (projectile.key.Generation + 1) & 0x3FFF);
+                    SyncProjectile invalidation = new() {
+                        Key = invalidationKey,
+                        Position = projectile.position,
+                        Velocity = projectile.velocity,
+                        ProjType = 0,
+                    };
+                    sender.SendFixedPacket(in invalidation);
+                    sender.SendFixedPacket(new KillProjectile(invalidationKey, new Vector2(float.NaN, float.NaN)));
                     NetMessage.TrySendData(MessageID.SyncProjectile, whoAmI, -1, null, i);
                 }
             }
@@ -106,7 +154,6 @@ namespace UnifierTSL.Servers
             NetMessage.TrySendData(MessageID.MoonlordHorror);
             NetMessage.TrySendData(MessageID.UpdateTowerShieldStrengths, whoAmI);
             NetMessage.TrySendData(MessageID.SyncCavernMonsterType, whoAmI);
-            NetMessage.TrySendData(MessageID.SetMiscEventValues, whoAmI, -1, null, 0, CreditsRollEvent._creditsRollRemainingTime);
             Main.BestiaryTracker.OnPlayerJoining(this, whoAmI);
             CreativePowerManager.SyncThingsToJoiningPlayer(whoAmI);
             Main.PylonSystem.OnPlayerJoining(this, whoAmI);
@@ -120,6 +167,24 @@ namespace UnifierTSL.Servers
             SyncCountsAsHostForGameplay(plr, false);
 
             Network.LocalClientSender sender = UnifiedServerCoordinator.clientSenders[plr];
+            RemoteClient client = Netplay.Clients[plr];
+
+            for (int i = 0; i < Terraria.Main.maxChests; i++) {
+                Chest? chest = Main.chest[i];
+                if (chest is null || !client.TileSections[Terraria.Netplay.GetSectionX(chest.x), Terraria.Netplay.GetSectionY(chest.y)]) {
+                    continue;
+                }
+                sender.SendFixedPacket(new ChestUpdates {
+                    Operation = 1,
+                    Position = new(chest.x, chest.y),
+                    ChestSlot = (short)i,
+                });
+            }
+            foreach (var entity in TileEntity.ByID.Values) {
+                if (client.TileSections[Terraria.Netplay.GetSectionX(entity.Position.X), Terraria.Netplay.GetSectionY(entity.Position.Y)]) {
+                    sender.SendDynamicPacket(new TileEntitySharing { ID = entity.ID, IsNew = false });
+                }
+            }
 
             foreach (TeleportPylonInfo pylon in Main.PylonSystem.Pylons) {
                 NetManager.SendToClient(
@@ -143,17 +208,19 @@ namespace UnifierTSL.Servers
 
             for (int i = 0; i < Terraria.Main.maxItems; i++) {
                 WorldItem item = Main.item[i];
-                if (!item.active || item.playerIndexTheItemIsReservedFor != plr) {
-                    continue;
+                if (item.active && item.playerIndexTheItemIsReservedFor == plr) {
+                    sender.SendFixedPacket(new ItemOwner((short)i, byte.MaxValue, 0, (byte)item.grabDelayPlayer, item.grabDelayTime, item.position));
                 }
-                sender.SendFixedPacket(new ItemOwner((short)i, 255, item.position));
+                else if (!item.active && Main.timeItemSlotCannotBeReusedFor[i] > 0) {
+                    sender.SendFixedPacket(new SyncItemDespawn((short)i));
+                }
             }
             for (int i = 0; i < Terraria.Main.maxProjectiles; i++) {
                 Projectile proj = Main.projectile[i];
                 if (!proj.active) {
                     continue;
                 }
-                NetMessage.TrySendData(MessageID.KillProjectile, plr, -1, null, proj.identity, proj.owner);
+                NetMessage.TrySendData(MessageID.KillProjectile, plr, -1, null, proj.key, float.NaN, float.NaN);
             }
             for (int i = 0; i < Terraria.Main.maxPlayers; i++) {
                 Player player = Main.player[i];
@@ -171,53 +238,9 @@ namespace UnifierTSL.Servers
 
         #region Sync Player Join To Others
         public virtual void SyncPlayerJoinToOthers(int whoAmI) {
-            Player player = Main.player[whoAmI];
-            NetMessage.TrySendData(MessageID.PlayerActive, -1, whoAmI, null, whoAmI);
-            NetMessage.TrySendData(MessageID.SyncPlayer, -1, whoAmI, null, whoAmI);
-            NetMessage.TrySendData(MessageID.PlayerLifeMana, -1, whoAmI, null, whoAmI);
-            NetMessage.TrySendData(42, -1, whoAmI, null, whoAmI);
-            NetMessage.TrySendData(MessageID.PlayerBuffs, -1, whoAmI, null, whoAmI);
-            NetMessage.TrySendData(MessageID.SyncLoadout, -1, whoAmI, null, whoAmI, player.CurrentLoadoutIndex);
-            for (int i = 0; i < 59; i++) {
-                NetMessage.TrySendData(MessageID.SyncEquipment, -1, whoAmI, null, whoAmI, PlayerItemSlotID.Inventory0 + i, player.inventory[i].prefix);
-            }
-            TrySendingItemArrayToOther(whoAmI, player.armor, PlayerItemSlotID.Armor0);
-            TrySendingItemArrayToOther(whoAmI, player.dye, PlayerItemSlotID.Dye0);
-            TrySendingItemArrayToOther(whoAmI, player.miscEquips, PlayerItemSlotID.Misc0);
-            TrySendingItemArrayToOther(whoAmI, player.miscDyes, PlayerItemSlotID.MiscDye0);
-            TrySendingItemArrayToOther(whoAmI, player.bank.item, PlayerItemSlotID.Bank1_0);
-            TrySendingItemArrayToOther(whoAmI, player.bank2.item, PlayerItemSlotID.Bank2_0);
-            NetMessage.TrySendData(5, -1, whoAmI, null, whoAmI, PlayerItemSlotID.TrashItem, player.trashItem.prefix);
-            TrySendingItemArrayToOther(whoAmI, player.bank3.item, PlayerItemSlotID.Bank3_0);
-            TrySendingItemArrayToOther(whoAmI, player.bank4.item, PlayerItemSlotID.Bank4_0);
-            TrySendingItemArrayToOther(whoAmI, player.Loadouts[0].Armor, PlayerItemSlotID.Loadout1_Armor_0);
-            TrySendingItemArrayToOther(whoAmI, player.Loadouts[0].Dye, PlayerItemSlotID.Loadout1_Dye_0);
-            TrySendingItemArrayToOther(whoAmI, player.Loadouts[1].Armor, PlayerItemSlotID.Loadout2_Armor_0);
-            TrySendingItemArrayToOther(whoAmI, player.Loadouts[1].Dye, PlayerItemSlotID.Loadout2_Dye_0);
-            TrySendingItemArrayToOther(whoAmI, player.Loadouts[2].Armor, PlayerItemSlotID.Loadout3_Armor_0);
-            TrySendingItemArrayToOther(whoAmI, player.Loadouts[2].Dye, PlayerItemSlotID.Loadout3_Dye_0);
-
-            Point spawnTile = new(Main.spawnTileX, Main.spawnTileY);
-            if (Main.teamBasedSpawnsSeed && player.team != 0 && ExtraSpawnPointManager.TryGetExtraSpawnPointForTeam(player.team, out var sp)) {
-                spawnTile = sp;
-                RemoteClient.CheckSection(whoAmI, sp.ToWorldCoordinates());
-                NetMessage.SendData(158, whoAmI, -1, null, whoAmI);
-            }
-            else {
-                NetMessage.SendData(MessageID.PlayerSpawn, whoAmI, -1, null, whoAmI, (byte)PlayerSpawnContext.SpawningIntoWorld);
-            }
-
-            player.position = new(
-                spawnTile.X * 16 + 8 - player.width / 2,
-                spawnTile.Y * 16 - player.height);
-            player.velocity = default;
-            NetMessage.SendData(MessageID.TeleportEntity, -1, -1, null, 0, whoAmI, player.position.X, player.position.Y, -1);
+            SyncCountsAsHostForGameplay(whoAmI, NetMessage.DoesPlayerSlotCountAsAHost(whoAmI));
+            NetMessage.SyncOnePlayer(whoAmI, -1, whoAmI);
             NetMessage.greetPlayer(whoAmI);
-        }
-        private void TrySendingItemArrayToOther(int plr, Item[] array, int slotStartIndex) {
-            for (int i = 0; i < array.Length; i++) {
-                NetMessage.TrySendData(5, -1, plr, null, plr, slotStartIndex + i, array[i].prefix);
-            }
         }
         #endregion
 

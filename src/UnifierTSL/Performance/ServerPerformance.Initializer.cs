@@ -90,7 +90,7 @@ namespace UnifierTSL.Performance
                             server.Console.WriteLine(Main.statusText); // Push the updated status line
                         }
 
-                        bool anyConnections = Netplay.HasClients;
+                        bool anyConnections = server.hasRoutedConnections;
 
                         // Only bother running game logic if somebody's actually connected
                         if (anyConnections) {
