@@ -150,7 +150,7 @@ The baseline values below come straight from project files and restored package 
 |:--|:--|
 | Bundled TShock version | `6.1.0` |
 | Sync branch | `general-devel` |
-| Sync commit | `1afaeb514343ca547abceeb357654603d1e2a456` |
+| Sync commit | `b41bd4b7e4c76a5e0c532df394ba488378f12be6` |
 | Source | `src/Plugins/TShockAPI/TShockAPI.csproj` |
 
 Additional dependency baselines:

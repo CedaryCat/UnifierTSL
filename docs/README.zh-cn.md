@@ -151,7 +151,7 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 |:--|:--|
 | 内置 TShock 版本 | `6.1.0` |
 | 同步分支 | `general-devel` |
-| 同步提交 | `1afaeb514343ca547abceeb357654603d1e2a456` |
+| 同步提交 | `b41bd4b7e4c76a5e0c532df394ba488378f12be6` |
 | 来源 | `src/Plugins/TShockAPI/TShockAPI.csproj` |
 
 附加依赖版本：
