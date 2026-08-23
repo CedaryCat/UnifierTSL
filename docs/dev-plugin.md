@@ -541,7 +541,7 @@ NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
 
 ### 5.3 Transfers & Coordinator Helpers
 - `UnifiedServerCoordinator.TransferPlayerToServer` transfers a client across servers. Invoke it on the player's current source-server update thread (dispatch there first when calling from another thread), wrap calls in try/catch, and honour cancellation via `PreServerTransferEvent`.
-- Seamless transfer requires equal world dimensions and completes synchronously inside `TransferPlayerToServer`; `PostServerTransfer` is raised after the server-side handoff and target-world sync. The vanilla `SpawnPlayer` echo remains ordinary state-10 input and is not a completion acknowledgement.
+- Seamless transfer requires equal world dimensions. `TransferPlayerToServer` completes the server-side handoff and target-world synchronization before raising `PostServerTransfer`.
 - `ServerContext.SyncPlayerJoinToOthers` and related methods can realign visibility after custom transfer flows, but they are low-level primitives. Prefer `TransferPlayerToServer` unless you explicitly need custom sequencing.
 - Query `UnifiedServerCoordinator.Servers` for active contexts; each context directly inherits `RootContext` and exposes `Name` plus registered extensions.
 - Launcher-side routing options map into coordinator events:
