@@ -454,13 +454,6 @@ namespace TShockAPI
             var tsPlayer = args.GetTSPlayer();
             var server = args.LocalReceiver.Server;
 
-            if (tsPlayer.Dead && tsPlayer.RespawnTimer > 0) {
-                server.Log.Debug(GetString("GetDataHandlers / HandleSpawn rejected dead player spawn request {0}", tsPlayer.Name));
-                args.HandleMode = PacketHandleMode.Cancel;
-                args.StopPropagation = true;
-                return;
-            }
-
             short spawnX = args.Packet.Position.X;
             short spawnY = args.Packet.Position.Y;
             int respawnTimer = args.Packet.Timer;
@@ -468,6 +461,9 @@ namespace TShockAPI
             short numberOfDeathsPVP = args.Packet.DeathsPVP;
             byte team = args.Packet.Team;
             PlayerSpawnContext context = args.Packet.Context;
+            if (tsPlayer.Dead && respawnTimer <= 0 && context == PlayerSpawnContext.ReviveFromDeath) {
+                tsPlayer.RespawnTimer = 0;
+            }
             bool teamCorrectNeeded = false; // If we need to correct their team after handling
             var setting = TShock.Config.GetServerSettings(server.Name);
             string pvpMode = setting.PvPMode.ToLowerInvariant();
@@ -751,24 +747,16 @@ namespace TShockAPI
         private static void HandleProjectileNew(ref ReceivePacketEvent<SyncProjectile> args) {
             var tsPlayer = args.GetTSPlayer();
             var server = args.LocalReceiver.Server;
+            var key = args.Packet.Key;
 
-            short ident = args.Packet.ProjSlot;
-            byte owner = args.Packet.PlayerSlot;
-            var index = Utils.SearchProjectile(server, ident, owner);
-
-            // Cattiva's dig ability can bypass build permissions via a vanilla exploit in Terraria v1.4.5.
-            // Block AI1 == 3 (dig state).
-            if (args.Packet.ProjType == ProjectileID.PalworldMinionCattiva && args.Packet.AI1 == 3f) {
-                server.Log.Debug(GetString("GetDataHandlers / HandleProjectileNew rejected Palworld Minion Cattiva dig sync {0}", tsPlayer.Name));
-                args.HandleMode = PacketHandleMode.Cancel;
-                args.StopPropagation = true;
+            if (key.Spawner != tsPlayer.Index || key.Index >= Main.maxProjectiles) {
                 return;
             }
 
             lock (tsPlayer.RecentlyCreatedProjectiles) {
-                if (!tsPlayer.RecentlyCreatedProjectiles.Any(p => p.Index == index)) {
+                if (!tsPlayer.RecentlyCreatedProjectiles.Any(p => p.Key == key)) {
                     tsPlayer.RecentlyCreatedProjectiles.Add(new ProjectileStruct() {
-                        Index = index,
+                        Key = key,
                         Type = args.Packet.ProjType,
                         CreatedAt = DateTime.Now
                     });
@@ -787,18 +775,31 @@ namespace TShockAPI
             var direction = (byte)(args.Packet.HitDirection - 1);
             var crit = args.Packet;
 
+            if (id >= Main.maxNPCs) {
+                args.HandleMode = PacketHandleMode.Cancel;
+                args.StopPropagation = true;
+                return;
+            }
+
+            var npc = server.Main.npc[id];
+            if (npc.generation != args.Packet.NPCGeneration) {
+                return;
+            }
+
             //if (OnNPCStrike(tsPlayer, args.Data, id, direction, dmg, knockback, crit))
             //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
 
-            if (server.Main.npc[id].townNPC && !tsPlayer.HasPermission(Permissions.hurttownnpc)) {
+            if (npc.townNPC && !tsPlayer.HasPermission(Permissions.hurttownnpc)) {
+                tsPlayer.MsgSender.SendFixedPacket(new DamageNPCAck());
                 tsPlayer.SendErrorMessage(GetString("You do not have permission to hurt Town NPCs."));
                 tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
                 server.Log.Debug(GetString($"GetDataHandlers / HandleNpcStrike rejected npc strike {tsPlayer.Name}"));
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
-            if (server.Main.npc[id].netID == NPCID.EmpressButterfly) {
+            if (npc.netID == NPCID.EmpressButterfly) {
                 if (!tsPlayer.HasPermission(Permissions.summonboss)) {
+                    tsPlayer.MsgSender.SendFixedPacket(new DamageNPCAck());
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to summon the Empress of Light."));
                     tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
                     server.Log.Debug(GetString($"GetDataHandlers / HandleNpcStrike rejected EoL summon from {tsPlayer.Name}"));
@@ -811,8 +812,9 @@ namespace TShockAPI
                     Utils.SendLogs(server, GetString($"{tsPlayer.Name} summoned the Empress of Light!"), Color.PaleVioletRed, tsPlayer);
             }
 
-            if (server.Main.npc[id].netID == NPCID.CultistDevote || server.Main.npc[id].netID == NPCID.CultistArcherBlue) {
+            if (npc.netID == NPCID.CultistDevote || npc.netID == NPCID.CultistArcherBlue) {
                 if (!tsPlayer.HasPermission(Permissions.summonboss)) {
+                    tsPlayer.MsgSender.SendFixedPacket(new DamageNPCAck());
                     tsPlayer.SendErrorMessage(GetString("You do not have permission to summon the Lunatic Cultist!"));
                     tsPlayer.SendData(PacketTypes.NpcUpdate, "", id);
                     server.Log.Debug(GetString($"GetDataHandlers / HandleNpcStrike rejected Cultist summon from {tsPlayer.Name}"));
@@ -826,22 +828,18 @@ namespace TShockAPI
             var server = args.LocalReceiver.Server;
             var setting = TShock.Config.GetServerSettings(server.Name);
 
-            var ident = args.Packet.ProjSlot;
-            var owner = (byte)tsPlayer.Index;
+            var key = args.Packet.Key;
+            if (key.Spawner != tsPlayer.Index || key.Index >= Main.maxProjectiles || !key.TryGetActive(server, out var projectile)) {
+                return;
+            }
 
-            var index = Utils.SearchProjectile(server, ident, owner);
-
-            //if (OnProjectileKill(tsPlayer, args.Data, ident, owner, index)) {
-            //    { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
-            //}
-
-            short type = (short)server.Main.projectile[index].type;
+            short type = (short)projectile.type;
 
             // TODO: This needs to be moved somewhere else.
 
             if (type == ProjectileID.Tombstone) {
                 server.Log.Debug(GetString("GetDataHandlers / HandleProjectileKill rejected tombstone {0}", tsPlayer.Name));
-                tsPlayer.RemoveProjectile(ident, owner);
+                tsPlayer.RemoveProjectile(key);
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
@@ -854,13 +852,18 @@ namespace TShockAPI
                     return;
                 }
                 server.Log.Debug(GetString("GetDataHandlers / HandleProjectileKill rejected banned projectile {0}", tsPlayer.Name));
-                tsPlayer.RemoveProjectile(ident, owner);
+                tsPlayer.RemoveProjectile(key);
                 { args.HandleMode = PacketHandleMode.Cancel; args.StopPropagation = true; return; }
             }
 
             tsPlayer.LastKilledProjectile = type;
             lock (tsPlayer.RecentlyCreatedProjectiles) {
-                tsPlayer.RecentlyCreatedProjectiles.ForEach(s => { if (s.Index == index) { s.Killed = true; } });
+                int index = tsPlayer.RecentlyCreatedProjectiles.FindIndex(p => p.Key == key);
+                if (index >= 0) {
+                    var recentProjectile = tsPlayer.RecentlyCreatedProjectiles[index];
+                    recentProjectile.Killed = true;
+                    tsPlayer.RecentlyCreatedProjectiles[index] = recentProjectile;
+                }
             }
 
             return;

@@ -74,7 +74,7 @@ namespace TShockAPI
         }
 
         public void BCWarningMessage(string msg) {
-			BCMessage(msg, new Color(139, 0, 0));
+            BCMessage(msg, new Color(139, 0, 0));
         }
 
         public void BCMessage(string msg, byte red, byte green, byte blue) {
@@ -102,13 +102,13 @@ namespace TShockAPI
             /* var snippets = Terraria.UI.Chat.ChatManager.ParseMessage(Server, msg, new Color(red, green, blue));
 
             foreach (var snippet in snippets)
-			{
+            {
                 if (snippet.Color != default)
-				{
+                {
                     Server.Console.ForegroundColor = PickNearbyConsoleColor(snippet.Color);
                 }
                 else
-				{
+                {
                     Server.Console.ForegroundColor = ConsoleColor.Gray;
                 }
 
@@ -117,7 +117,7 @@ namespace TShockAPI
             Server.Console.WriteLine();
             Server.Console.ResetColor(); */
 
-            var snippets = Terraria.UI.Chat.ChatManager.ParseMessage(TShock.ServerSample, msg, new Color(red, green, blue));
+            var snippets = TShock.ServerSample.ChatManager.ParseMessage(msg, new Color(red, green, blue));
 
             var sb = new StringBuilder();
 

@@ -355,7 +355,7 @@ namespace TShockAPI.Commanding.V2
 
                 proj.active = false;
                 proj.type = 0;
-                server.NetMessage.SendData((int)PacketTypes.KillProjectile, -1, -1, null, proj.identity, proj.owner);
+                server.NetMessage.SendData((int)PacketTypes.KillProjectile, -1, -1, null, proj.key, float.NaN, float.NaN);
                 cleared++;
             }
 

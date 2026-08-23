@@ -304,7 +304,7 @@ namespace TShockAPI.Commanding.V2
                         continue;
                     }
 
-                    reports.Add(recentAttempt.GetReport(context.Server.Main.player[playerId]).ToString());
+                    reports.Add(recentAttempt.GetReport(context.Server, context.Server.Main.player[playerId]).ToString());
                 }
             }
 
