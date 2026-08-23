@@ -30,7 +30,7 @@ namespace TShockAPI.Commanding.V2
             int item) {
 
             var itemObj = Utils.GetItemById(item);
-            return CommandHelpers.GrantItemToSelf(context.Player!, itemObj, itemObj.maxStack, prefixId: 0);
+            return CommandHelpers.GrantItemToSelf(context.Player!, itemObj, itemAmount: 0, prefixId: 0);
         }
 
         [CommandAction(Summary = nameof(ExecuteAmountSummary))]
@@ -49,9 +49,7 @@ namespace TShockAPI.Commanding.V2
                 // `/item dirt warding` surface the legacy "invalid item" path instead of
                 // silently treating `warding` as a default stack amount.
                 InvalidTokenBehavior = InvalidTokenBehavior.Fail,
-                OutOfRangeBehavior = OutOfRangeBehavior.UseDefault,
-                DefaultSource = ItemAmountDefaultSource.ItemMaxStack,
-                TreatZeroAsDefault = true)]
+                OutOfRangeBehavior = OutOfRangeBehavior.Clamp)]
             int itemAmount) {
             return CommandHelpers.GrantItemToSelf(context.Player!, Utils.GetItemById(item), itemAmount, prefixId: 0);
         }
@@ -73,9 +71,7 @@ namespace TShockAPI.Commanding.V2
                 // `/item dirt foo 5` fall back to the legacy "invalid item name" path instead
                 // of letting the shorter `dirt` candidate swallow `foo` as a default amount.
                 InvalidTokenBehavior = InvalidTokenBehavior.Fail,
-                OutOfRangeBehavior = OutOfRangeBehavior.UseDefault,
-                DefaultSource = ItemAmountDefaultSource.ItemMaxStack,
-                TreatZeroAsDefault = true)]
+                OutOfRangeBehavior = OutOfRangeBehavior.Clamp)]
             int itemAmount,
             [PrefixRef(Name = "prefix")] int prefixId) {
 
@@ -126,7 +122,7 @@ namespace TShockAPI.Commanding.V2
             [TSPlayerRef(nameof(TargetInvalidPlayerMessage))] TSPlayer target) {
 
             var itemObj = Utils.GetItemById(item);
-            return CommandHelpers.GiveItemToTarget(context.Executor, target, itemObj, itemObj.maxStack, prefixId: 0);
+            return CommandHelpers.GiveItemToTarget(context.Executor, target, itemObj, itemAmount: 0, prefixId: 0);
         }
 
         [CommandAction(Summary = nameof(ExecuteAmountSummary))]
@@ -144,9 +140,8 @@ namespace TShockAPI.Commanding.V2
             [TSPlayerRef(nameof(TargetInvalidPlayerMessage2))] TSPlayer target,
             [ItemAmount(
                 InvalidTokenBehavior = InvalidTokenBehavior.UseDefault,
-                OutOfRangeBehavior = OutOfRangeBehavior.UseDefault,
-                DefaultSource = ItemAmountDefaultSource.ItemMaxStack,
-                TreatZeroAsDefault = true)]
+                OutOfRangeBehavior = OutOfRangeBehavior.Clamp,
+                DefaultSource = ItemAmountDefaultSource.ParameterDefault)]
             int itemAmount) {
 
             var itemObj = Utils.GetItemById(item);
@@ -168,9 +163,8 @@ namespace TShockAPI.Commanding.V2
             [TSPlayerRef(nameof(TargetInvalidPlayerMessage3))] TSPlayer target,
             [ItemAmount(
                 InvalidTokenBehavior = InvalidTokenBehavior.UseDefault,
-                OutOfRangeBehavior = OutOfRangeBehavior.UseDefault,
-                DefaultSource = ItemAmountDefaultSource.ItemMaxStack,
-                TreatZeroAsDefault = true)]
+                OutOfRangeBehavior = OutOfRangeBehavior.Clamp,
+                DefaultSource = ItemAmountDefaultSource.ParameterDefault)]
             int itemAmount,
             [PrefixRef(ResolveMode = PrefixResolveMode.Lenient, Name = "prefix")] int prefixId) {
 
@@ -199,7 +193,7 @@ namespace TShockAPI.Commanding.V2
             [TSPlayerRef(nameof(TargetInvalidPlayerMessage4))] TSPlayer target) {
 
             var itemObj = Utils.GetItemById(item);
-            return CommandHelpers.GiveItemToTarget(context.Executor, target, itemObj, itemObj.maxStack, prefixId: 0);
+            return CommandHelpers.GiveItemToTarget(context.Executor, target, itemObj, itemAmount: 0, prefixId: 0);
         }
     }
 
@@ -210,6 +204,7 @@ namespace TShockAPI.Commanding.V2
                 return CommandOutcome.Error(GetString("Your inventory seems full."));
             }
 
+            itemAmount = NormalizeItemAmount(item, itemAmount);
             if (!player.GiveItemCheck(item.type, EnglishLanguage.GetItemNameById(item.type), itemAmount, prefixId)) {
                 return CommandOutcome.Error(GetString("You cannot spawn banned items."));
             }
@@ -230,6 +225,7 @@ namespace TShockAPI.Commanding.V2
                 return CommandOutcome.Error(GetString("Player does not have free slots!"));
             }
 
+            itemAmount = NormalizeItemAmount(item, itemAmount);
             if (!target.GiveItemCheck(item.type, EnglishLanguage.GetItemNameById(item.type), itemAmount, prefixId)) {
                 return CommandOutcome.Error(GetString("You cannot spawn banned items."));
             }
@@ -251,6 +247,14 @@ namespace TShockAPI.Commanding.V2
                     itemAmount,
                     item.Name));
             return builder.Build();
+        }
+
+        private static int NormalizeItemAmount(Item item, int itemAmount) {
+            if (itemAmount == 0) {
+                return item.OnlyNeedOneInInventory() ? 1 : item.maxStack;
+            }
+
+            return itemAmount;
         }
 
         public static bool HasInventoryCapacity(TSPlayer player, Item item) {

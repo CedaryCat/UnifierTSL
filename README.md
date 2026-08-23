@@ -140,8 +140,8 @@ The baseline values below come straight from project files and restored package 
 | Component | Version | Source |
 |:--|:--|:--|
 | Target framework | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
-| Terraria | `1.4.5.6` | `OTAPI.dll` from the OTAPI USP package referenced by this project |
-| OTAPI USP | `1.1.0-pre-release-upstream.30` | `src/UnifierTSL/UnifierTSL.csproj` |
+| Terraria | `1.4.5.7` | `OTAPI.dll` from the OTAPI USP package referenced by this project |
+| OTAPI USP | `1.2.0-pre-release-upstream.2` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock and dependency details</strong></summary>
@@ -150,7 +150,7 @@ The baseline values below come straight from project files and restored package 
 |:--|:--|
 | Bundled TShock version | `6.1.0` |
 | Sync branch | `general-devel` |
-| Sync commit | `1afaeb514343ca547abceeb357654603d1e2a456` |
+| Sync commit | `b41bd4b7e4c76a5e0c532df394ba488378f12be6` |
 | Source | `src/Plugins/TShockAPI/TShockAPI.csproj` |
 
 Additional dependency baselines:

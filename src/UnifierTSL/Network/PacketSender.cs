@@ -137,7 +137,7 @@ namespace UnifierTSL.Network
                 case MessageID.PlayNote: SendFixedPacket(in Unsafe.As<TNetPacket, PlayNote>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.NPCHome: SendFixedPacket(in Unsafe.As<TNetPacket, NPCHome>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.SpawnBoss: SendFixedPacket(in Unsafe.As<TNetPacket, SpawnBoss>(ref Unsafe.AsRef(in packet)), callback, state); return;
-                case MessageID.Dodge: SendFixedPacket(in Unsafe.As<TNetPacket, Dodge>(ref Unsafe.AsRef(in packet)), callback, state); return;
+                case MessageID.SyncDodge: SendFixedPacket(in Unsafe.As<TNetPacket, Dodge>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.SpiritHeal: SendFixedPacket(in Unsafe.As<TNetPacket, SpiritHeal>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.BugCatching: SendFixedPacket(in Unsafe.As<TNetPacket, BugCatching>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.BugReleasing: SendFixedPacket(in Unsafe.As<TNetPacket, BugReleasing>(ref Unsafe.AsRef(in packet)), callback, state); return;
@@ -154,6 +154,7 @@ namespace UnifierTSL.Network
                             case NetModuleType.NetPingModule: SendFixedPacket(in Unsafe.As<TNetPacket, NetPingModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetAmbienceModule: SendFixedPacket(in Unsafe.As<TNetPacket, NetAmbienceModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetBestiaryModule: SendFixedPacket(in Unsafe.As<TNetPacket, NetBestiaryModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
+                            case NetModuleType.NetCreativeUnlocksModule: SendFixedPacket(in Unsafe.As<TNetPacket, NetCreativeUnlocksModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetCreativePowersModule: SendDynamicPacket(in Unsafe.As<TNetPacket, NetCreativePowersModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetCreativeUnlocksPlayerReportModule: SendFixedPacket(in Unsafe.As<TNetPacket, NetCreativeUnlocksPlayerReportModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetTeleportPylonModule: SendFixedPacket(in Unsafe.As<TNetPacket, NetTeleportPylonModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
@@ -161,19 +162,17 @@ namespace UnifierTSL.Network
                             case NetModuleType.NetCreativePowerPermissionsModule: SendFixedPacket(in Unsafe.As<TNetPacket, NetCreativePowerPermissionsModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetBannersModule: SendDynamicPacket(in Unsafe.As<TNetPacket, NetBannersModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetCraftingRequestsModule: SendDynamicPacket_S(in Unsafe.As<TNetPacket, NetCraftingRequestsModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
-                            case NetModuleType.NetTagEffectStateModule: SendDynamicPacket_S(in Unsafe.As<TNetPacket, NetTagEffectStateModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetLeashedEntityModule: SendDynamicPacket(in Unsafe.As<TNetPacket, NetLeashedEntityModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             case NetModuleType.NetUnbreakableWallScanModule: SendFixedPacket(in Unsafe.As<TNetPacket, NetUnbreakableWallScanModule>(ref Unsafe.AsRef(in packet)), callback, state); return;
                             default: return;
                         }
                     }
-                case MessageID.NPCKillCountDeathTally: SendFixedPacket(in Unsafe.As<TNetPacket, NPCKillCountDeathTally>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.QuickStackChests: SendDynamicPacket_S(in Unsafe.As<TNetPacket, QuickStackChests>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.TileEntitySharing: SendDynamicPacket(in Unsafe.As<TNetPacket, TileEntitySharing>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.TileEntityPlacement: SendFixedPacket(in Unsafe.As<TNetPacket, TileEntityPlacement>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.ItemTweaker: SendFixedPacket(in Unsafe.As<TNetPacket, ItemTweaker>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.ItemFrameTryPlacing: SendFixedPacket(in Unsafe.As<TNetPacket, ItemFrameTryPlacing>(ref Unsafe.AsRef(in packet)), callback, state); return;
-                case MessageID.InstancedItem: SendFixedPacket(in Unsafe.As<TNetPacket, InstancedItem>(ref Unsafe.AsRef(in packet)), callback, state); return;
+                case MessageID.SpawnInstancedItem: SendFixedPacket(in Unsafe.As<TNetPacket, SpawnInstancedItem>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.SyncEmoteBubble: SendDynamicPacket(in Unsafe.As<TNetPacket, SyncEmoteBubble>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.MurderSomeoneElsesProjectile: SendFixedPacket(in Unsafe.As<TNetPacket, MurderSomeoneElsesProjectile>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.TeleportPlayerThroughPortal: SendFixedPacket(in Unsafe.As<TNetPacket, TeleportPlayerThroughPortal>(ref Unsafe.AsRef(in packet)), callback, state); return;
@@ -206,7 +205,7 @@ namespace UnifierTSL.Network
                 case MessageID.SyncPlayerChestIndex: SendFixedPacket(in Unsafe.As<TNetPacket, SyncPlayerChestIndex>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.PlayerStealth: SendFixedPacket(in Unsafe.As<TNetPacket, PlayerStealth>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.SyncExtraValue: SendFixedPacket(in Unsafe.As<TNetPacket, SyncExtraValue>(ref Unsafe.AsRef(in packet)), callback, state); return;
-                case MessageID.SocialHandshake: SendDynamicPacket(in Unsafe.As<TNetPacket, SocialHandshake>(ref Unsafe.AsRef(in packet)), callback, state); return;
+                case MessageID.DevCommands: SendDynamicPacket(in Unsafe.As<TNetPacket, DevCommands>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.GemLockToggle: SendFixedPacket(in Unsafe.As<TNetPacket, GemLockToggle>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.PoofOfSmoke: SendFixedPacket(in Unsafe.As<TNetPacket, PoofOfSmoke>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.SmartTextMessage: SendDynamicPacket(in Unsafe.As<TNetPacket, SmartTextMessage>(ref Unsafe.AsRef(in packet)), callback, state); return;
@@ -242,10 +241,8 @@ namespace UnifierTSL.Network
                 case MessageID.SyncProjectileTrackers: SendFixedPacket(in Unsafe.As<TNetPacket, SyncProjectileTrackers>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.CrystalInvasionRequestedToSkipWaitTime: SendFixedPacket(in Unsafe.As<TNetPacket, CrystalInvasionRequestedToSkipWaitTime>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.RequestQuestEffect: SendFixedPacket(in Unsafe.As<TNetPacket, RequestQuestEffect>(ref Unsafe.AsRef(in packet)), callback, state); return;
-                case MessageID.SyncItemsWithShimmer: SendFixedPacket(in Unsafe.As<TNetPacket, SyncItemsWithShimmer>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.ShimmerActions: SendFixedPacket(in Unsafe.As<TNetPacket, ShimmerActions>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.SyncLoadout: SendFixedPacket(in Unsafe.As<TNetPacket, SyncLoadout>(ref Unsafe.AsRef(in packet)), callback, state); return;
-                case MessageID.SyncItemCannotBeTakenByEnemies: SendFixedPacket(in Unsafe.As<TNetPacket, SyncItemCannotBeTakenByEnemies>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.DeadCellsDisplayJarTryPlacing: SendFixedPacket(in Unsafe.As<TNetPacket, DeadCellsDisplayJarTryPlacing>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.SpectatePlayer: SendFixedPacket(in Unsafe.As<TNetPacket, SpectatePlayer>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.SyncItemDespawn: SendFixedPacket(in Unsafe.As<TNetPacket, SyncItemDespawn>(ref Unsafe.AsRef(in packet)), callback, state); return;
@@ -259,8 +256,7 @@ namespace UnifierTSL.Network
                 case MessageID.RequestSection: SendFixedPacket(in Unsafe.As<TNetPacket, RequestSection>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.ItemPosition: SendFixedPacket(in Unsafe.As<TNetPacket, ItemPosition>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 case MessageID.HostToken: SendDynamicPacket(in Unsafe.As<TNetPacket, HostToken>(ref Unsafe.AsRef(in packet)), callback, state); return;
-                case MessageID.ServerInfo: SendDynamicPacket(in Unsafe.As<TNetPacket, ServerInfo>(ref Unsafe.AsRef(in packet)), callback, state); return;
-                case MessageID.PlayerPlatformInfo: SendFixedPacket(in Unsafe.As<TNetPacket, PlayerPlatformInfo>(ref Unsafe.AsRef(in packet)), callback, state); return;
+                case MessageID.DamageNPCAck: SendFixedPacket(in Unsafe.As<TNetPacket, DamageNPCAck>(ref Unsafe.AsRef(in packet)), callback, state); return;
                 default: return;
             }
         }

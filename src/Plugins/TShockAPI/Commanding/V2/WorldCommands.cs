@@ -514,7 +514,7 @@ namespace TShockAPI.Commanding.V2
                         serverPlayer.BCInfoMessage(GetString("{0} ended the coin rain.", context.Executor.Name));
                     }
                     else {
-                        server.Main.StartRain(garenteeCoinRain: true);
+                        server.Main.StartRain(guaranteeCoinRain: true);
                         WorldCommandHelpers.SendWorldInfo(server);
                         serverPlayer.BCInfoMessage(GetString("{0} caused it to coin rain.", context.Executor.Name));
                     }

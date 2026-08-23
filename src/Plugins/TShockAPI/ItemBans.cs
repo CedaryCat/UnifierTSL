@@ -28,33 +28,33 @@ using TrProtocol.Models;
 
 namespace TShockAPI
 {
-	/// <summary>The TShock item ban subsystem. It handles keeping things out of people's inventories.</summary>
-	public sealed class ItemBans
-	{
+    /// <summary>The TShock item ban subsystem. It handles keeping things out of people's inventories.</summary>
+    public sealed class ItemBans
+    {
 
-		/// <summary>The database connection layer to for the item ban subsystem.</summary>
-		public ItemManager DataModel;
+        /// <summary>The database connection layer to for the item ban subsystem.</summary>
+        public ItemManager DataModel;
 
-		/// <summary>The last time the second update process was run. Used to throttle task execution.</summary>
-		private DateTime LastTimelyRun = DateTime.UtcNow;
+        /// <summary>The last time the second update process was run. Used to throttle task execution.</summary>
+        private DateTime LastTimelyRun = DateTime.UtcNow;
 
-		/// <summary>A reference to the TShock plugin so we can register events.</summary>
-		private TShock Plugin;
+        /// <summary>A reference to the TShock plugin so we can register events.</summary>
+        private TShock Plugin;
 
-		/// <summary>Creates an ItemBan system given a plugin to register events to and a database.</summary>
-		/// <param name="plugin">The executing plugin.</param>
-		/// <param name="database">The database the item ban information is stored in.</param>
-		/// <returns>A new item ban system.</returns>
-		internal ItemBans(TShock plugin, DataConnection database)
-		{
-			DataModel = new ItemManager(database);
-			Plugin = plugin;
+        /// <summary>Creates an ItemBan system given a plugin to register events to and a database.</summary>
+        /// <param name="plugin">The executing plugin.</param>
+        /// <param name="database">The database the item ban information is stored in.</param>
+        /// <returns>A new item ban system.</returns>
+        internal ItemBans(TShock plugin, DataConnection database)
+        {
+            DataModel = new ItemManager(database);
+            Plugin = plugin;
 
-			UnifierApi.EventHub.Game.PreUpdate.Register(OnGameUpdate, HandlerPriority.Low);
-			NetPacketHandler.Register<PlayerControls>(OnPlayerUpdate, HandlerPriority.High);
-			NetPacketHandler.Register<SyncChestItem>(OnChestItemChange, HandlerPriority.Normal);
-			NetPacketHandler.Register<TileChange>(OnTileEdit, HandlerPriority.Normal);
-		}
+            UnifierApi.EventHub.Game.PreUpdate.Register(OnGameUpdate, HandlerPriority.Low);
+            NetPacketHandler.Register<PlayerControls>(OnPlayerUpdate, HandlerPriority.High);
+            NetPacketHandler.Register<SyncChestItem>(OnChestItemChange, HandlerPriority.Normal);
+            NetPacketHandler.Register<TileChange>(OnTileEdit, HandlerPriority.Normal);
+        }
 
         private void OnGameUpdate(ref ReadonlyNoCancelEventArgs<ServerEvent> args) {
             if ((DateTime.UtcNow - LastTimelyRun).TotalSeconds >= 1) {
@@ -62,104 +62,106 @@ namespace TShockAPI
             }
         }
 
-		/// <summary>Called by OnGameUpdate once per second to execute tasks regularly but not too often.</summary>
-		/// <param name="args">The standard event arguments.</param>
-		internal void OnSecondlyUpdate(ref ReadonlyNoCancelEventArgs<ServerEvent> args)
-		{
-			foreach (TSPlayer player in TShock.Players)
-			{
-				if (player == null || !player.Active)
-				{
-					continue;
-				}
+        /// <summary>Called by OnGameUpdate once per second to execute tasks regularly but not too often.</summary>
+        /// <param name="args">The standard event arguments.</param>
+        internal void OnSecondlyUpdate(ref ReadonlyNoCancelEventArgs<ServerEvent> args)
+        {
+            foreach (TSPlayer player in TShock.Players)
+            {
+                if (player == null || !player.Active)
+                {
+                    continue;
+                }
 
                 var server = player.GetCurrentServer();
-				var setting = TShock.Config.GetServerSettings(server.Name);
+                var setting = TShock.Config.GetServerSettings(server.Name);
                 var disableFlags = setting.DisableSecondUpdateLogs ? DisableFlags.WriteToConsole : DisableFlags.WriteToLogAndConsole;
 
                 // Untaint now, re-taint if they fail the check.
                 UnTaint(player);
 
-				// If player isn't disabled for not being logged in, check for any banned items in use.
-				if (((setting.RequireLogin || server.Main.ServerSideCharacter) && player.IsLoggedIn) ||
-					(!setting.RequireLogin && !server.Main.ServerSideCharacter))
-				{
-					// No matter the player type, we do a check when a player is holding an item that's banned.
-					if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[player.TPlayer.selectedItem].type), player))
-					{
-						string itemName = player.TPlayer.inventory[player.TPlayer.selectedItem].Name;
-						player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
-						SendCorrectiveMessage(player, itemName);
-					}
+                // If player isn't disabled for not being logged in, check for any banned items in use.
+                if (((setting.RequireLogin || server.Main.ServerSideCharacter) && player.IsLoggedIn) ||
+                    (!setting.RequireLogin && !server.Main.ServerSideCharacter))
+                {
+                    // No matter the player type, we do a check when a player is holding an item that's banned.
+                    if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[player.TPlayer.selectedItem].type), player))
+                    {
+                        string itemName = player.TPlayer.inventory[player.TPlayer.selectedItem].Name;
+                        player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
+                        SendCorrectiveMessage(player, itemName);
+                    }
 
-					// The Terraria inventory is composed of a multicultural set of arrays
-					// with various different contents and beliefs
+                    // The Terraria inventory is composed of a multicultural set of arrays
+                    // with various different contents and beliefs
 
-					// Armor ban checks
-					foreach (Item item in player.TPlayer.armor)
-					{
-						if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player))
-						{
-							Taint(player);
-							SendCorrectiveMessage(player, item.Name);
-						}
-					}
+                    // Armor ban checks
+                    for (int i = 0; i < player.TPlayer.armor.Length; i++)
+                    {
+                        Item item = player.TPlayer.GetEffectiveArmor(server, i);
+                        if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player))
+                        {
+                            Taint(player);
+                            SendCorrectiveMessage(player, item.Name);
+                        }
+                    }
 
-					// Dye ban checks
-					foreach (Item item in player.TPlayer.dye)
-					{
-						if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player))
-						{
-							Taint(player);
-							SendCorrectiveMessage(player, item.Name);
-						}
-					}
+                    // Dye ban checks
+                    for (int i = 0; i < player.TPlayer.dye.Length; i++)
+                    {
+                        Item item = player.TPlayer.GetEffectiveDye(i);
+                        if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player))
+                        {
+                            Taint(player);
+                            SendCorrectiveMessage(player, item.Name);
+                        }
+                    }
 
-					// Misc equip ban checks
-					foreach (Item item in player.TPlayer.miscEquips)
-					{
-						if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player))
-						{
-							Taint(player);
-							SendCorrectiveMessage(player, item.Name);
-						}
-					}
+                    // Misc equip ban checks
+                    foreach (Item item in player.TPlayer.miscEquips)
+                    {
+                        if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player))
+                        {
+                            Taint(player);
+                            SendCorrectiveMessage(player, item.Name);
+                        }
+                    }
 
-					// Misc dye ban checks
-					foreach (Item item in player.TPlayer.miscDyes)
-					{
-						if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player))
-						{
-							Taint(player);
-							SendCorrectiveMessage(player, item.Name);
-						}
-					}
-				}
-			}
+                    // Misc dye ban checks
+                    foreach (Item item in player.TPlayer.miscDyes)
+                    {
+                        if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player))
+                        {
+                            Taint(player);
+                            SendCorrectiveMessage(player, item.Name);
+                        }
+                    }
+                }
+            }
 
-			// Set the update time to now, so that we know when to execute next.
-			// We do this at the end so that the task can't re-execute faster than we expected.
-			// (If we did this at the start of the method, the method execution would count towards the timer.)
-			LastTimelyRun = DateTime.UtcNow;
-		}
+            // Set the update time to now, so that we know when to execute next.
+            // We do this at the end so that the task can't re-execute faster than we expected.
+            // (If we did this at the start of the method, the method execution would count towards the timer.)
+            LastTimelyRun = DateTime.UtcNow;
+        }
 
         private void OnPlayerUpdate(ref ReceivePacketEvent<PlayerControls> args) {
             var player = TShock.Players[args.ReceiveFrom.ID];
             var server = args.LocalReceiver.Server;
             var disableFlags = player.GetCurrentSettings().DisableSecondUpdateLogs ? DisableFlags.WriteToConsole : DisableFlags.WriteToLogAndConsole;
 
-			string itemName = player.TPlayer.inventory[args.Packet.SelectedItem].Name;
+            string itemName = player.TPlayer.inventory[args.Packet.SelectedItem].Name;
 
             if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(player.TPlayer.inventory[args.Packet.SelectedItem].type), player)) {
                 player.TPlayer.controlUseItem = false;
-				args.Packet.PlayerControlData.IsUsingItem = false;
+                args.Packet.PlayerControlData.IsUsingItem = false;
                 player.Disable(GetString($"holding banned item: {itemName}"), disableFlags);
 
                 SendCorrectiveMessage(player, itemName);
 
                 player.TPlayer.Update(server, player.TPlayer.whoAmI);
-				args.StopPropagation = true;
-				args.HandleMode = PacketHandleMode.Overwrite;
+                args.StopPropagation = true;
+                args.HandleMode = PacketHandleMode.Overwrite;
                 return;
             }
             return;
@@ -167,7 +169,7 @@ namespace TShockAPI
 
         private void OnChestItemChange(ref ReceivePacketEvent<SyncChestItem> args) {
             var player = TShock.Players[args.ReceiveFrom.ID];
-			var server = args.LocalReceiver.Server;
+            var server = args.LocalReceiver.Server;
 
             Item item = new Item();
             item.netDefaults(server, args.Packet.ItemType);
@@ -175,21 +177,21 @@ namespace TShockAPI
 
             if (DataModel.ItemIsBanned(EnglishLanguage.GetItemNameById(item.type), player)) {
                 SendCorrectiveMessage(player, item.Name);
-				args.HandleMode = PacketHandleMode.Cancel;
-				args.StopPropagation = true;
+                args.HandleMode = PacketHandleMode.Cancel;
+                args.StopPropagation = true;
                 return;
             }
         }
 
         private void OnTileEdit(ref ReceivePacketEvent<TileChange> args) {
-			var action = args.Packet.ChangeType;
+            var action = args.Packet.ChangeType;
 
             if (action == TileEditAction.PlaceTile || action == TileEditAction.PlaceWall) {
-				var player = TShock.Players[args.ReceiveFrom.ID];
+                var player = TShock.Players[args.ReceiveFrom.ID];
                 if (player.TPlayer.autoActuator && DataModel.ItemIsBanned("Actuator", player)) {
                     player.SendTileSquareCentered(args.Packet.Position.X, args.Packet.Position.Y, 1);
                     player.SendErrorMessage(GetString("You do not have permission to place actuators."));
-					args.HandleMode = PacketHandleMode.Cancel;
+                    args.HandleMode = PacketHandleMode.Cancel;
                     return;
                 }
 
@@ -201,25 +203,25 @@ namespace TShockAPI
             }
         }
 
-		private void UnTaint(TSPlayer player)
-		{
-			player.IsDisabledForBannedWearable = false;
-		}
+        private void UnTaint(TSPlayer player)
+        {
+            player.IsDisabledForBannedWearable = false;
+        }
 
-		private void Taint(TSPlayer player)
-		{
-			// Arbitrarily does things to the player
-			player.SetBuff(BuffID.Frozen, 330, true);
-			player.SetBuff(BuffID.Stoned, 330, true);
-			player.SetBuff(BuffID.Webbed, 330, true);
+        private void Taint(TSPlayer player)
+        {
+            // Arbitrarily does things to the player
+            player.SetBuff(BuffID.Frozen, 330, true);
+            player.SetBuff(BuffID.Stoned, 330, true);
+            player.SetBuff(BuffID.Webbed, 330, true);
 
-			// Marks them as a target for future disables
-			player.IsDisabledForBannedWearable = true;
-		}
+            // Marks them as a target for future disables
+            player.IsDisabledForBannedWearable = true;
+        }
 
-		private void SendCorrectiveMessage(TSPlayer player, string itemName)
-		{
-			player.SendErrorMessage(GetString("{0} is banned! Remove it!", itemName));
-		}
-	}
+        private void SendCorrectiveMessage(TSPlayer player, string itemName)
+        {
+            player.SendErrorMessage(GetString("{0} is banned! Remove it!", itemName));
+        }
+    }
 }

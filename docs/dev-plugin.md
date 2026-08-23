@@ -540,7 +540,8 @@ NetPacketHandler.Register<TrProtocol.NetPackets.TileChange>(
 - Use `NetPacketHandler.ProcessPacketEvent` to inspect raw packet bytes (`ProcessPacketEvent.RawData`) for diagnostics.
 
 ### 5.3 Transfers & Coordinator Helpers
-- `UnifiedServerCoordinator.TransferPlayerToServer` transfers a client across servers. Wrap calls in try/catch and honour cancellation via `PreServerTransferEvent`.
+- `UnifiedServerCoordinator.TransferPlayerToServer` transfers a client across servers. Invoke it on the player's current source-server update thread (dispatch there first when calling from another thread), wrap calls in try/catch, and honour cancellation via `PreServerTransferEvent`.
+- Seamless transfer requires equal world dimensions. `TransferPlayerToServer` completes the server-side handoff and target-world synchronization before raising `PostServerTransfer`.
 - `ServerContext.SyncPlayerJoinToOthers` and related methods can realign visibility after custom transfer flows, but they are low-level primitives. Prefer `TransferPlayerToServer` unless you explicitly need custom sequencing.
 - Query `UnifiedServerCoordinator.Servers` for active contexts; each context directly inherits `RootContext` and exposes `Name` plus registered extensions.
 - Launcher-side routing options map into coordinator events:

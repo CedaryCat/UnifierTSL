@@ -832,42 +832,36 @@ Async receive loop: ClientHello, SendPassword, SyncPlayer, ClientUUID
     ↓
 SwitchJoinServerEvent fires → plugin selects destination server
     ↓
-Activate client in chosen ServerContext
+Route client to the chosen ServerContext; keep Player inactive through WorldData/tile sync
     ↓
 Byte processing routed via ProcessBytes hook
 ```
 
-**PendingConnection** (src/UnifierTSL/UnifiedServerCoordinator.cs:529-696):
+**PendingConnection** (`src/UnifierTSL/UnifiedServerCoordinator.cs`):
 - Handles pre-authentication packets before server assignment
 - Validates client version against `Terraria{Main.curRelease}` (with override via `Coordinator.CheckVersion`)
-- `Coordinator.CheckVersion` is currently invoked twice during `ClientHello` handling; handlers should be idempotent and avoid side effects that assume single invocation
+- `ClientHello` invokes `Coordinator.CheckVersion` twice; handlers must be idempotent and must not assume a single invocation
 - Password authentication (if `UnifierApi.ServerPassword` is set)
 - Collects client metadata: `ClientUUID`, player name and appearance
+- Routing occurs at connection state 1, but the server player remains inactive until vanilla `SpawnPlayer`; this prevents automatic section streaming before `WorldData`
 - Kicks incompatible clients with `NetworkText` reasons
 
-**Server Transfer Protocol** (src/UnifierTSL/UnifiedServerCoordinator.cs:290-353):
-```csharp
-public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false)
-{
-    ServerContext? from = GetClientCurrentlyServer(plr);
-    if (from is null || from == to) return;
-    if (!to.IsRunning && !ignoreChecks) return;
+**Server Transfer Protocol** (`src/UnifierTSL/UnifiedServerCoordinator.cs`)
 
-    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
-    if (handled) return;
+`TransferPlayerToServer` must be called on the player's current source-server update thread. It accepts only a connected state-10 player and requires equal world dimensions; the destination must be running unless `ignoreChecks` is set. `PreServerTransfer` may cancel the operation.
 
-    // Sync leave → switch mapping → sync join
-    from.SyncPlayerLeaveToOthers(plr);
-    from.SyncServerOfflineToPlayer(plr);
-    SetClientCurrentlyServer(plr, to);
-    to.SyncServerOnlineToPlayer(plr);
-    to.SyncPlayerJoinToOthers(plr);
+An accepted transfer completes synchronously while the coordinator holds the client's message-buffer lock and `RoutePublicationGate`:
 
-    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
-}
-```
+1. Remove the source-world player projection and invalidate source-world entities visible to the client.
+2. Move the session `Player` into the destination slot, reset the client's server-side section visibility, and publish the destination route.
+3. Send destination `WorldData`, spawn/team/portal sections, world entities, and world-level state.
+4. Spawn the server-side player, send `PlayerSpawn` to the client, and publish the player to destination peers.
 
-**Packet Routing Hook** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416):
+Outbound route checks reject broadcasts until route publication completes, and packet processing rechecks the route after acquiring the same message-buffer lock. `PostServerTransfer` is raised after the server-side sequence; an exception during synchronization disconnects the client.
+
+The connected client cannot reallocate its world tile grid, so seamless transfer requires equal dimensions. Only spawn-related and portal sections are sent immediately; normal proximity streaming supplies other sections. `SyncServerOnlineToPlayer` serializes `SpawnX` and `SpawnY` as `-1`, allowing the client to resolve a valid spawn from destination-world metadata and loaded destination sections. Client-side projections without removal packets, including map and bestiary history, may remain until their normal refresh or a reconnect.
+
+**Packet Routing Hook** (src/UnifierTSL/UnifiedServerCoordinator.cs):
 ```csharp
 On.Terraria.NetMessageSystemContext.CheckBytes += ProcessBytes;
 
@@ -879,6 +873,7 @@ private static void ProcessBytes(
     ServerContext server = netMsg.root.ToServer();
     MessageBuffer buffer = globalMsgBuffers[clientIndex];
     lock (buffer) {
+        if (GetClientCurrentlyServer(clientIndex) != server) return;
         // Decode packet length, then route payload to NetPacketHandler.ProcessBytes(...)
         NetPacketHandler.ProcessBytes(server, buffer, contentStart, contentLength);
     }

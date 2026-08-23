@@ -40,10 +40,6 @@ namespace UnifierTSL
                 totalData = 0;
                 client.Data.Clear();
                 client.TimeOutTimer = 0;
-                client.StatusCount = 0;
-                client.StatusMax = 0;
-                client.StatusText2 = "";
-                client.StatusText = "";
                 client.State = 0;
                 client._isReading = false;
                 client.PendingTermination = false;
@@ -263,7 +259,8 @@ namespace UnifierTSL
                                     globalClients[Index].ResetSections(joinServer);
 
                                     SetClientCurrentlyServer(Index, joinServer);
-                                    
+                                    // Player.Spawn activates the slot after WorldData and tile-data synchronization.
+
                                     UnifierApi.EventHub.Coordinator.JoinServer.Invoke(new(joinServer, player.whoAmI));
 
                                     UnifierApi.UpdateTitle();
@@ -487,7 +484,16 @@ namespace UnifierTSL
         }
 
         private static bool NetMessageSystemContext_CheckCanSend(On.Terraria.NetMessageSystemContext.orig_CheckCanSend orig, NetMessageSystemContext self, int clientIndex) {
-            return GetClientCurrentlyServer(clientIndex) == self.root && globalClients[clientIndex].IsConnected();
+            LocalClientSender? sender = clientSenders[clientIndex];
+            if (sender is null || !Monitor.TryEnter(sender.RoutePublicationGate)) {
+                return false;
+            }
+            try {
+                return GetClientCurrentlyServer(clientIndex) == self.root && globalClients[clientIndex].IsConnected();
+            }
+            finally {
+                Monitor.Exit(sender.RoutePublicationGate);
+            }
         }
 
         private static void UpdateServerInMainThread(On.Terraria.NetplaySystemContext.orig_UpdateServerInMainThread orig, NetplaySystemContext self) {
@@ -516,6 +522,9 @@ namespace UnifierTSL
             ServerContext server = netMsg.root.ToServer();
             MessageBuffer buffer = globalMsgBuffers[clientIndex];
             lock (buffer) {
+                if (GetClientCurrentlyServer(clientIndex) != server) {
+                    return;
+                }
                 if (server.Main.dedServ && server.Netplay.Clients[clientIndex].PendingTermination) {
                     server.Netplay.Clients[clientIndex].PendingTerminationApproved = true;
                     buffer.checkBytes = false;
@@ -608,6 +617,7 @@ namespace UnifierTSL
 
                 foreach (ServerContext server in servers) {
                     if (server.IsRunning) {
+                        server.routedConnectionCountAccumulator = 0;
                         server.playerCountAccumulator = 0;
                     }
                 }
@@ -636,7 +646,10 @@ namespace UnifierTSL
                             activeConnections += 1;
                             lock (client) {
                                 client.Update(server);
-                                server.playerCountAccumulator += 1;
+                                server.routedConnectionCountAccumulator += 1;
+                                if (client.State == 10 && server.Main.player[i].active) {
+                                    server.playerCountAccumulator += 1;
+                                }
                             }
                             continue;
                         }
@@ -660,12 +673,12 @@ namespace UnifierTSL
                         client.PendingTerminationApproved = true;
                         continue;
                     }
-                    client.StatusText2 = "";
                 }
 
                 foreach (ServerContext server in servers) {
                     if (server.IsRunning) {
-                        server.Netplay.HasClients = server.playerCountAccumulator > 0;
+                        server.hasRoutedConnections = server.routedConnectionCountAccumulator > 0;
+                        server.Netplay.HasFullyConnectedClients = server.playerCountAccumulator > 0;
                         server.ActivePlayerCount = server.playerCountAccumulator;
                     }
                 }
@@ -691,10 +704,6 @@ namespace UnifierTSL
             client.ClientUUID = null;
 
             client.TimeOutTimer = 0;
-            client.StatusCount = 0;
-            client.StatusMax = 0;
-            client.StatusText2 = "";
-            client.StatusText = "";
             client.State = 0;
             client._isReading = false;
             client.PendingTermination = false;
@@ -855,60 +864,74 @@ namespace UnifierTSL
 
         public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false) {
             ServerContext? from = GetClientCurrentlyServer(plr);
-
-            if (from is null) {
+            if (from is null || from == to || (!to.IsRunning && !ignoreChecks)) {
                 return;
             }
-            if (from == to) {
-                return;
+            if (!from.Dispatcher.CheckAccess()) {
+                throw new InvalidOperationException("Player transfer must be initiated on the source server update thread.");
             }
-            if (!to.IsRunning && !ignoreChecks) {
-                return;
-            }
-
-            UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool h);
-            if (h) {
+            if (from.Main.maxTilesX != to.Main.maxTilesX || from.Main.maxTilesY != to.Main.maxTilesY) {
+                Logger.Warning(
+                    category: "PlayerTransfer",
+                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Cannot transfer player '{from.Main.player[plr].name}' from {from.Name} to {to.Name}: seamless transfer requires equal world dimensions."));
                 return;
             }
 
-            var msgBuffer = globalMsgBuffers[plr];
+            UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
+            if (handled) {
+                return;
+            }
+
+            MessageBuffer msgBuffer = globalMsgBuffers[plr];
             lock (msgBuffer) {
+                RemoteClient client = globalClients[plr];
+                if (GetClientCurrentlyServer(plr) != from || !client.IsConnected() || client.PendingTermination ||
+                    client.State != 10 || !from.Main.player[plr].active ||
+                    (!to.IsRunning && !ignoreChecks)) {
+                    return;
+                }
 
-                var client = globalClients[plr];
-                // Leave data sync
-                from.SyncPlayerLeaveToOthers(plr);
-                from.SyncServerOfflineToPlayer(plr);
+                Player player;
+                LocalClientSender sender = clientSenders[plr];
+                lock (sender.RoutePublicationGate) {
+                    try {
+                        from.SyncPlayerLeaveToOthers(plr);
+                        from.SyncServerOfflineToPlayer(plr);
+
+                        Player inactivePlayer = to.Main.player[plr];
+                        player = players[plr] = from.Main.player[plr];
+                        from.Main.player[plr] = inactivePlayer;
+                        inactivePlayer.active = false;
+                        to.Main.player[plr] = player;
+                        player.active = false;
+
+                        client.ResetSections(to);
+                        SetClientCurrentlyServer(plr, to);
+                        to.SyncServerOnlineToPlayer(plr);
+                        player.Spawn(to, PlayerSpawnContext.SpawningIntoWorld);
+                        to.NetMessage.SendData(Terraria.ID.MessageID.PlayerSpawn, plr, -1, null, plr, (byte)PlayerSpawnContext.SpawningIntoWorld);
+                        to.SyncPlayerJoinToOthers(plr);
+                    }
+                    catch (Exception ex) {
+                        Logger.Error(
+                            category: "PlayerTransfer",
+                            message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Failed to transfer player '{client.Name}' from {from.Name} to {to.Name}."),
+                            ex: ex);
+                        sender.Kick(NetworkText.FromLiteral("Server transfer failed."));
+                        return;
+                    }
+                }
 
                 from.Log.Success(
                     category: "PlayerTransfer",
-                    message: GetParticularString("{0} is player name, {1} is destination server name, {2} is number of players in destination server", $"Player '{from.Main.player[plr].name}' transferred to {to.Name}, current players: {to.NPC.GetActivePlayerCount()}"));
-
-                // Player state swap
-                Player inactivePlayer = to.Main.player[plr];
-                Player activePlayer = from.Main.player[plr];
-                from.Main.player[plr] = inactivePlayer;
-                to.Main.player[plr] = activePlayer;
-                inactivePlayer.active = false;
-                activePlayer.active = true;
-
-                // Update current server
-                SetClientCurrentlyServer(plr, to);
-                client.ResetSections(to);
-
-                // Join data sync
-                to.SyncServerOnlineToPlayer(plr);
-                to.SyncPlayerJoinToOthers(plr);
-
+                    message: GetParticularString("{0} is player name, {1} is destination server name, {2} is number of players in destination server", $"Player '{player.name}' transferred to {to.Name}, current players: {to.NPC.GetActivePlayerCount()}"));
                 UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
-
                 to.Log.Success(
                     category: "PlayerTransfer",
-                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is number of players in current server", $"Player '{to.Main.player[plr].name}' joined from {from.Name}, current players: {to.NPC.GetActivePlayerCount()}"));
-
-                // Log
+                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is number of players in current server", $"Player '{player.name}' joined from {from.Name}, current players: {to.NPC.GetActivePlayerCount()}"));
                 Logger.Info(
                     category: "PlayerTransfer",
-                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Player '{to.Main.player[plr].name}' {from.Name} ? {to.Name} transferred."));
+                    message: GetParticularString("{0} is player name, {1} is source server name, {2} is destination server name", $"Player '{player.name}' transferred from {from.Name} to {to.Name}."));
             }
         }
     }

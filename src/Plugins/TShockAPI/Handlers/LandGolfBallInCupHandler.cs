@@ -108,8 +108,12 @@ namespace TShockAPI.Handlers
                 return;
             }
 
-            var usedGolfBall = player.RecentlyCreatedProjectiles.Any(e => GolfBallProjectileIDs.Contains(e.Type));
-            var usedGolfClub = player.RecentlyCreatedProjectiles.Any(e => e.Type == ProjectileID.GolfClubHelper);
+            bool usedGolfBall;
+            bool usedGolfClub;
+            lock (player.RecentlyCreatedProjectiles) {
+                usedGolfBall = player.RecentlyCreatedProjectiles.Any(e => GolfBallProjectileIDs.Contains(e.Type));
+                usedGolfClub = player.RecentlyCreatedProjectiles.Any(e => e.Type == ProjectileID.GolfClubHelper);
+            }
             if (!usedGolfClub && !usedGolfBall) {
                 server.Log.Debug(GetString($"GolfPacketHandler: Player did not have create a golf club projectile the last 5 seconds! - From {player.Name}"));
                 args.HandleMode = PacketHandleMode.Cancel;

@@ -24,9 +24,9 @@ namespace TShockAPI
     public struct ProjectileStruct
     {
         /// <summary>
-        /// Index inside Main.projectile
+        /// Stable projectile identity assigned by Terraria
         /// </summary>
-        public int Index { get; set; }
+        public ProjectileKey Key { get; set; }
         /// <summary>
         /// Projectile's type ID
         /// </summary>
@@ -959,10 +959,10 @@ namespace TShockAPI
         public int LastKilledProjectile = 0;
 
         /// <summary>
-        /// Keeps track of recently created projectiles by this player. TShock.cs OnSecondUpdate() removes from this in an async task.
+        /// Keeps track of recently created projectiles by this player.
         /// Projectiles older than 5 seconds are purged from this collection as they are no longer "recent."
         /// </summary>
-        public List<ProjectileStruct> RecentlyCreatedProjectiles = new List<ProjectileStruct>();
+        public readonly List<ProjectileStruct> RecentlyCreatedProjectiles = [];
 
         /// <summary>
         /// The current region this player is in, or null if none.
@@ -1038,8 +1038,9 @@ namespace TShockAPI
         /// </summary>
         public IEnumerable<Item> Accessories {
             get {
+                var server = GetCurrentServer();
                 for (int i = 3; i < 10; i++)
-                    yield return TPlayer.armor[i];
+                    yield return TPlayer.GetEffectiveArmor(server, i);
             }
         }
 
@@ -1261,7 +1262,7 @@ namespace TShockAPI
                 if (RealPlayer) {
                     for (int i = 0; i < 50; i++) //51 is trash can, 52-55 is coins, 56-59 is ammo
                     {
-                        if (TPlayer.inventory[i] == null || !TPlayer.inventory[i].active || TPlayer.inventory[i].Name == "") {
+                        if (TPlayer.inventory[i] == null || TPlayer.inventory[i].IsAir || TPlayer.inventory[i].Name == "") {
                             flag = true;
                             break;
                         }
@@ -1545,12 +1546,11 @@ namespace TShockAPI
         }
 
         /// <summary>
-        /// Removes the projectile with the given index and owner.
+        /// Removes the projectile with the given stable identity.
         /// </summary>
-        /// <param name="index">The projectile's index.</param>
-        /// <param name="owner">The projectile's owner.</param>
-        public void RemoveProjectile(int index, int owner) {
-            MsgSender.SendFixedPacket(new KillProjectile((short)index, (byte)owner));
+        /// <param name="key">The projectile's stable identity.</param>
+        public void RemoveProjectile(ProjectileKey key) {
+            MsgSender.SendFixedPacket(new KillProjectile { Key = key, FinalPosition = new(float.NaN, float.NaN) });
         }
 
         /// <summary>Sends a tile square at a location with a given size.
@@ -1768,10 +1768,9 @@ namespace TShockAPI
 
         private void GiveItemByDrop(int type, int stack, int prefix) {
             var server = GetCurrentServer();
-            int itemIndex = server.Item.NewItem(new EntitySource_DebugCommand(), (int)X, (int)Y, TPlayer.width, TPlayer.height, type, stack, true, prefix, true);
-            server.Main.item[itemIndex].playerIndexTheItemIsReservedFor = this.Index;
-            SendData(PacketTypes.ItemDrop, "", itemIndex, 1);
-            SendData(PacketTypes.ItemOwner, null, itemIndex);
+            int itemIndex = server.Item.NewItem(new EntitySource_DebugCommand(), new Vector2(X + TPlayer.width / 2f, Y + TPlayer.height / 2f), type, stack, prefix, noBroadcast: true);
+            SendData(PacketTypes.ItemDrop, "", itemIndex, (int)NewItemOwnership.ReserveForLocalPlayer);
+            server.Main.item[itemIndex].ReserveFor(server, Index, WorldItem.DefaultGrabDelay);
         }
 
         /// <summary>

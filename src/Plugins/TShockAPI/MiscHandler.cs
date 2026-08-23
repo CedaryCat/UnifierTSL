@@ -825,8 +825,8 @@ namespace TShockAPI
             }
         }
 
-        private static double OnStrikeNpc(On.Terraria.NPC.orig_StrikeNPC orig, NPC self, RootContext root, int Damage, float knockBack, int hitDirection, bool crit, bool noEffect, bool fromNet, int owner, Entity entity) {
-            var dmg = orig(self, root, Damage, knockBack, hitDirection, crit, noEffect, fromNet, owner, entity);
+        private static int OnStrikeNpc(On.Terraria.NPC.orig_StrikeNPC orig, NPC self, RootContext root, int Damage, float knockBack, int hitDirection, bool crit, bool fromNet, int owner, Entity entity) {
+            var dmg = orig(self, root, Damage, knockBack, hitDirection, crit, fromNet, owner, entity);
             if (root is ServerContext server && TShock.Config.GetServerSettings(server.Name).InfiniteInvasion) {
                 if (server.Main.invasionSize < 10) {
                     server.Main.invasionSize = 20000000;
@@ -867,16 +867,18 @@ namespace TShockAPI
                         (Bouncer.projectileCreatesLiquid.ContainsKey(projectile.type) || Bouncer.projectileCreatesTile.ContainsKey(projectile.type))) {
                         var player = Players[projectile.owner];
                         if (player != null) {
-                            if (player.RecentlyCreatedProjectiles.Any(p => p.Index == number && p.Killed)) {
-                                player.RecentlyCreatedProjectiles.RemoveAll(p => p.Index == number && p.Killed);
-                            }
+                            lock (player.RecentlyCreatedProjectiles) {
+                                if (player.RecentlyCreatedProjectiles.Any(p => p.Key == projectile.key && p.Killed)) {
+                                    player.RecentlyCreatedProjectiles.RemoveAll(p => p.Key == projectile.key && p.Killed);
+                                }
 
-                            if (!player.RecentlyCreatedProjectiles.Any(p => p.Index == number)) {
-                                player.RecentlyCreatedProjectiles.Add(new ProjectileStruct() {
-                                    Index = number,
-                                    Type = (short)projectile.type,
-                                    CreatedAt = DateTime.Now
-                                });
+                                if (!player.RecentlyCreatedProjectiles.Any(p => p.Key == projectile.key)) {
+                                    player.RecentlyCreatedProjectiles.Add(new ProjectileStruct() {
+                                        Key = projectile.key,
+                                        Type = (short)projectile.type,
+                                        CreatedAt = DateTime.Now
+                                    });
+                                }
                             }
                         }
                     }

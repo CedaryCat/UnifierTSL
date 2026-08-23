@@ -316,7 +316,7 @@ function Sync-MarkedBlock {
     }
 
     if ($Mode -eq 'apply') {
-        Set-Content -Path $Path -Value $updated -Encoding UTF8
+        Set-Content -Path $Path -Value $updated -Encoding UTF8 -NoNewline
         Write-Host "Updated: $Path"
         return $true
     }

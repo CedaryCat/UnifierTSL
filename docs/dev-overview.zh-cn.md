@@ -841,42 +841,36 @@ Async receive loop: ClientHello, SendPassword, SyncPlayer, ClientUUID
     ↓
 SwitchJoinServerEvent fires → plugin selects destination server
     ↓
-Activate client in chosen ServerContext
+把客户端路由到选定的 ServerContext；在 WorldData/区块同步完成前保持 Player inactive
     ↓
 Byte processing routed via ProcessBytes hook
 ```
 
-**待连接** (src/UnifierTSL/UnifiedServerCoordinator.cs:529-696)：
+**待连接**（`src/UnifierTSL/UnifiedServerCoordinator.cs`）：
 - 在服务器分配之前处理预身份验证数据包
 - 根据 `Terraria{Main.curRelease}` 验证客户端版本（通过 `Coordinator.CheckVersion` 覆盖）
-- `Coordinator.CheckVersion` 当前在 `ClientHello` 处理期间被调用两次；处理程序应该是幂等的，并避免假设单次调用的副作用
+- `ClientHello` 会调用两次 `Coordinator.CheckVersion`；处理程序必须保持幂等，不能假定只调用一次
 - 密码验证（如果设置了 `UnifierApi.ServerPassword`）
 - 收集客户端元数据：`ClientUUID`、玩家姓名和外观
+- 路由发生在连接状态 1，但服务端玩家会保持 inactive，直到原版 `SpawnPlayer` 激活；这能阻止 `WorldData` 之前的自动区块发送
 - 以 `NetworkText` 原因踢掉不兼容的客户端
 
-**服务器传输协议** (src/UnifierTSL/UnifiedServerCoordinator.cs:290-353)：
-```csharp
-public static void TransferPlayerToServer(byte plr, ServerContext to, bool ignoreChecks = false)
-{
-    ServerContext? from = GetClientCurrentlyServer(plr);
-    if (from is null || from == to) return;
-    if (!to.IsRunning && !ignoreChecks) return;
+**服务器传输协议**（`src/UnifierTSL/UnifiedServerCoordinator.cs`）
 
-    UnifierApi.EventHub.Coordinator.PreServerTransfer.Invoke(new(from, to, plr), out bool handled);
-    if (handled) return;
+`TransferPlayerToServer` 必须在玩家当前所在的源服务器更新线程调用。它只接受连接状态为 10 的在线玩家，并要求两个世界尺寸相同；除非设置 `ignoreChecks`，目标世界还必须处于运行状态。`PreServerTransfer` 可以取消操作。
 
-    // 同步离开 → 切换映射 → 同步加入
-    from.SyncPlayerLeaveToOthers(plr);
-    from.SyncServerOfflineToPlayer(plr);
-    SetClientCurrentlyServer(plr, to);
-    to.SyncServerOnlineToPlayer(plr);
-    to.SyncPlayerJoinToOthers(plr);
+接受转服后，协调器会持有该客户端的消息缓冲区锁和 `RoutePublicationGate` 门控，并同步完成以下步骤：
 
-    UnifierApi.EventHub.Coordinator.PostServerTransfer.Invoke(new(from, to, plr));
-}
-```
+1. 移除源世界中的玩家投影，并使客户端已知的源世界实体失效。
+2. 把会话 `Player` 移入目标槽位，重置客户端在服务端记录的区块可见性，然后发布目标路由。
+3. 发送目标世界的 `WorldData`、出生点/队伍出生点/传送门区块、世界实体和世界级状态。
+4. 在服务端生成玩家，向客户端发送 `PlayerSpawn`，并向目标世界的其他玩家发布该玩家。
 
-**数据包路由挂钩** (src/UnifierTSL/UnifiedServerCoordinator.cs:356-416)：
+路由发布完成前，出站路由检查会拒绝广播；数据包处理在取得同一把消息缓冲区锁后还会再次核对路由。服务端顺序完成后触发 `PostServerTransfer`；同步期间发生异常会断开客户端。
+
+已连接的客户端无法重新分配世界 tile 网格，因此无缝转服要求世界尺寸一致。初始同步只发送出生相关区块和传送门区块，其他区块由正常的距离流式机制补充。`SyncServerOnlineToPlayer` 会把 `SpawnX`、`SpawnY` 以 `-1` 写入数据包，使客户端根据目标世界元数据和已加载的目标区块解析有效出生点。缺少移除数据包的客户端投影（包括地图和图鉴历史）可能保留到正常刷新或重新连接。
+
+**数据包路由挂钩** (src/UnifierTSL/UnifiedServerCoordinator.cs)：
 ```csharp
 On.Terraria.NetMessageSystemContext.CheckBytes += ProcessBytes;
 
@@ -888,6 +882,7 @@ private static void ProcessBytes(
     ServerContext server = netMsg.root.ToServer();
     MessageBuffer buffer = globalMsgBuffers[clientIndex];
     lock (buffer) {
+        if (GetClientCurrentlyServer(clientIndex) != server) return;
         // 解码包长度，然后把载荷路由到 NetPacketHandler.ProcessBytes(...)
         NetPacketHandler.ProcessBytes(server, buffer, contentStart, contentLength);
     }
