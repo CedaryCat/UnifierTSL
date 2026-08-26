@@ -544,8 +544,12 @@ namespace UnifierTSL
                         if (unreadLength >= packetLength && packetLength != 0) {
                             CountReceivedData(clientIndex, (uint)packetLength, server);
 
-                            // buffer.GetData(server, readPosition + 2, packetLength - 2, out var _);
-                            NetPacketHandler.ProcessBytes(server, buffer, readPosition + 2, packetLength - 2);
+                            try {
+                                NetPacketHandler.ProcessBytes(server, buffer, readPosition + 2, packetLength - 2);
+                            }
+                            catch (Exception exception) {
+                                netMsg.LogMessageError(clientIndex, buffer.readBuffer[readPosition + 2].ToString(), exception);
+                            }
 
                             if (server.Main.dedServ && server.Netplay.Clients[clientIndex].PendingTermination) {
                                 server.Netplay.Clients[clientIndex].PendingTerminationApproved = true;
@@ -574,14 +578,9 @@ namespace UnifierTSL
                     }
                 }
                 catch (Exception exception) {
-                    if (server.Main.dedServ && readPosition < globalMsgBuffers.Length - 100) {
-                        server.Log.Error(
-                            Language.GetTextValue("Error.NetMessageError", globalMsgBuffers[readPosition + 2]),
-                            exception);
-                    }
+                    netMsg.LogMessageError(clientIndex, "?", exception);
                     unreadLength = 0;
                     readPosition = 0;
-                    server.Hooks.NetMessage.InvokeCheckBytesException(exception);
                 }
                 if (unreadLength != buffer.totalData) {
                     for (int i = 0; i < unreadLength; i++) {

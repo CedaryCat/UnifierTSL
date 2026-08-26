@@ -141,8 +141,8 @@ UnifierTSL 把 [OTAPI Unified Server Process](https://github.com/CedaryCat/OTAPI
 | 组件 | 版本 | 来源 |
 |:--|:--|:--|
 | 目标框架 | `.NET 9.0` | `src/UnifierTSL/*.csproj` |
-| Terraria | `1.4.5.7` | 项目引用的 OTAPI.USP 包中的 `OTAPI.dll` |
-| OTAPI USP | `1.2.0-pre-release-upstream.2` | `src/UnifierTSL/UnifierTSL.csproj` |
+| Terraria | `1.4.5.8` | 项目引用的 OTAPI.USP 包中的 `OTAPI.dll` |
+| OTAPI USP | `1.2.0-pre-release-upstream.5` | `src/UnifierTSL/UnifierTSL.csproj` |
 
 <details>
 <summary><strong>TShock 与依赖详情</strong></summary>
