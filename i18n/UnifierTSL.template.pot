@@ -10,7 +10,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: GetText.NET Extractor\n"
 
-#: ../../src/UnifierTSL/Servers/ServerContext.cs:51
+#: ../../src/UnifierTSL/Servers/ServerContext.cs:53
 #, csharp-format
 msgctxt "{0} is class name (SampleServer)"
 msgid ""
@@ -24,7 +24,7 @@ msgctxt "{0} is CLI option name"
 msgid "Duplicate launcher CLI binding registered for '{0}'."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:820
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:826
 #, csharp-format
 msgctxt "{0} is client IP address"
 msgid "Accepted connection: {0}"
@@ -777,7 +777,7 @@ msgctxt "{0} is password text length"
 msgid "password length: {0}"
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:192
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:188
 #, csharp-format
 msgctxt ""
 "{0} is player IP address, {1} is client version string, {2} is server version "
@@ -786,7 +786,7 @@ msgid ""
 "Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:186
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:182
 #, csharp-format
 msgctxt ""
 "{0} is player IP address, {1} is client version string, {2} is server version "
@@ -796,7 +796,7 @@ msgid ""
 "allowed by policy."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:886
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:926
 #, csharp-format
 msgctxt ""
 "{0} is player name, {1} is destination server name, {2} is number of players "
@@ -804,14 +804,14 @@ msgctxt ""
 msgid "Player '{0}' transferred to {1}, current players: {2}"
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:234
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:230
 #, csharp-format
 msgctxt ""
 "{0} is player name, {1} is player IP address, {2} is invalid raw UUID string"
 msgid "'{0}' ({1}) sent invalid UUID '{2}' before authentication. Kicked."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:285
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:280
 #, csharp-format
 msgctxt ""
 "{0} is player name, {1} is player IP address, {2} is packet type number"
@@ -819,26 +819,42 @@ msgid ""
 "'{0}' ({1}) sent invalid packet {2} before name/UUID authentication. Kicked."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:275
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:270
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID, {2} is server name"
 msgid "Player '{0}' ({1}) routed to server '{2}'."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:257
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:253
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID"
 msgid "No available server found for player '{0}' ({1}); connection aborted."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:913
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:875
 #, csharp-format
 msgctxt ""
 "{0} is player name, {1} is source server name, {2} is destination server name"
-msgid "Player '{0}' {1} ? {2} transferred."
+msgid ""
+"Cannot transfer player '{0}' from {1} to {2}: seamless transfer requires "
+"equal world dimensions."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:908
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:917
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Failed to transfer player '{0}' from {1} to {2}."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:933
+#, csharp-format
+msgctxt ""
+"{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Player '{0}' transferred from {1} to {2}."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:930
 #, csharp-format
 msgctxt ""
 "{0} is player name, {1} is source server name, {2} is number of players in "
@@ -1111,25 +1127,25 @@ msgctxt "{0} is raw command input"
 msgid "Executing {0}."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:372
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:367
 #, csharp-format
 msgctxt "{0} is requested listen port"
 msgid "Cannot initialize listener to invalid port '{0}'."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:386
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:381
 #, csharp-format
 msgctxt "{0} is requested listen port"
 msgid "Cannot rebind listener to invalid port '{0}'."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:397
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:392
 #, csharp-format
 msgctxt "{0} is requested listen port"
 msgid "Failed to bind listener to port '{0}'. Keeping the current listener."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:405
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:400
 #, csharp-format
 msgctxt "{0} is requested listen port"
 msgid "Listener rebound to port '{0}'."
@@ -1516,9 +1532,9 @@ msgstr ""
 msgid "{0} was already initialized."
 msgstr ""
 
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:153
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:156
-#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #, csharp-format
 msgid "{0} was not initialized."
 msgstr ""
@@ -1614,10 +1630,10 @@ msgstr ""
 msgid "Command endpoint id must not be empty."
 msgstr ""
 
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:187
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:310
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:451
-#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 msgid "Command failed, check logs for more details."
 msgstr ""
 
@@ -1790,7 +1806,7 @@ msgstr ""
 msgid "Extracting package: {0} ({1}) to local nuget cache."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:459
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:454
 msgid "Failed to cancel listener session token."
 msgstr ""
 
@@ -1811,11 +1827,11 @@ msgstr ""
 msgid "Failed to deserialize config: '{0}' when reloading, skipping reload."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:486
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:481
 msgid "Failed to dispose listener session token source."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:477
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:472
 msgid "Failed to dispose listener session."
 msgstr ""
 
@@ -1840,11 +1856,11 @@ msgstr ""
 msgid "Failed to serialize config: '{0}'."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:426
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:421
 msgid "Failed to start server loop thread."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:468
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:463
 msgid "Failed to stop listener session."
 msgstr ""
 
@@ -1893,7 +1909,7 @@ msgstr ""
 msgid "invalid"
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:231
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:227
 msgid "Invalid client UUID."
 msgstr ""
 
@@ -1906,11 +1922,11 @@ msgstr ""
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:274
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:325
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:336
+#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:326
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:510
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:529
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:537
-#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
 msgid "Invalid command syntax."
 msgstr ""
 
@@ -2015,7 +2031,7 @@ msgstr ""
 msgid "No active console task is selected."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:253
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:249
 msgid "No available server found for you."
 msgstr ""
 
@@ -2046,7 +2062,7 @@ msgstr ""
 msgid "no more input"
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:837
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:843
 msgid "No more slots available, stopping listener"
 msgstr ""
 
@@ -2192,7 +2208,7 @@ msgstr ""
 msgid "Server"
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:828
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:834
 msgid "Server is full"
 msgstr ""
 
@@ -2407,7 +2423,7 @@ msgstr ""
 msgid "Window must be greater than zero."
 msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:243
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:239
 msgid "You are not allowed to join this server."
 msgstr ""
 
