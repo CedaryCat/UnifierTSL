@@ -430,7 +430,7 @@ namespace TShockAPI.Commanding.V2
 
         private static PaginationTools.Settings CreateHelpPageSettings() {
             return new PaginationTools.Settings {
-                HeaderFormat = GetString("Group Sub-Commands ({0}/{1}):"),
+                HeaderFormat = GetString("Group Sub-Commands ({{0}}/{{1}}):"),
                 FooterFormat = GetString("Type {0}group help {{0}} for more sub-commands.", Commands.Specifier),
             };
         }
@@ -441,7 +441,7 @@ namespace TShockAPI.Commanding.V2
 
         private static PaginationTools.Settings CreateGroupListPageSettings() {
             return new PaginationTools.Settings {
-                HeaderFormat = GetString("Groups ({0}/{1}):"),
+                HeaderFormat = GetString("Groups ({{0}}/{{1}}):"),
                 FooterFormat = GetString("Type {0}group list {{0}} for more.", Commands.Specifier),
             };
         }
