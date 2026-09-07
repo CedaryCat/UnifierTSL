@@ -622,7 +622,7 @@ namespace TShockAPI.Commanding.V2
 
         private static PaginationTools.Settings CreateRegionListPageSettings() {
             return new PaginationTools.Settings {
-                HeaderFormat = GetString("Regions ({0}/{1}):"),
+                HeaderFormat = GetString("Regions ({{0}}/{{1})}:"),
                 FooterFormat = GetString("Type {0}region list {{0}} for more.", Commands.Specifier),
                 NothingToDisplayString = GetString("There are currently no regions defined."),
             };

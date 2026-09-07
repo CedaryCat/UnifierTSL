@@ -857,7 +857,7 @@ namespace TShockAPI.Commanding.V2
 
         private static PaginationTools.Settings CreateIdentifierHelpPageSettings() {
             return new PaginationTools.Settings {
-                HeaderFormat = GetString("Available identifiers ({0}/{1}):"),
+                HeaderFormat = GetString("Available identifiers ({{0}}/{{1}}):"),
                 FooterFormat = GetString("Type {0}ban help identifiers {{0}} for more.", Commands.Specifier),
                 NothingToDisplayString = GetString("There are currently no available identifiers."),
                 HeaderTextColor = Color.White,
