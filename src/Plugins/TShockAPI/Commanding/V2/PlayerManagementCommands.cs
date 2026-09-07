@@ -845,7 +845,7 @@ namespace TShockAPI.Commanding.V2
 
         private static PaginationTools.Settings CreateBanListPageSettings() {
             return new PaginationTools.Settings {
-                HeaderFormat = GetString("Bans ({0}/{1}):"),
+                HeaderFormat = GetString("Bans ({{0}}/{{1}}):"),
                 FooterFormat = GetString("Type {0}ban list {{0}} for more.", Commands.Specifier),
                 NothingToDisplayString = GetString("There are currently no active bans."),
             };
