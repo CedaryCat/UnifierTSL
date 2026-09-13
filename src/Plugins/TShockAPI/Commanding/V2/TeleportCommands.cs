@@ -488,7 +488,7 @@ namespace TShockAPI.Commanding.V2
 
         private static PaginationTools.Settings CreateWarpListPageSettings() {
             return new PaginationTools.Settings {
-                HeaderFormat = GetString("Warps ({0}/{1}):"),
+                HeaderFormat = GetString("Warps ({{0}}/{{1}}):"),
                 FooterFormat = GetString("Type {0}warp list {{0}} for more.", Commands.Specifier),
                 NothingToDisplayString = GetString("There are currently no warps defined.")
             };

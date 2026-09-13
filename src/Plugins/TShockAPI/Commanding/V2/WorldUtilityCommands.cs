@@ -172,7 +172,7 @@ namespace TShockAPI.Commanding.V2
 
         public static PaginationTools.Settings CreateGrowHelpPageSettings() {
             return new PaginationTools.Settings {
-                HeaderFormat = GetString("Trees types & misc available to use. ({0}/{1}):"),
+                HeaderFormat = GetString("Trees types & misc available to use. ({{0}}/{{1}}):"),
                 FooterFormat = GetString("Type {0}grow help {{0}} for more sub-commands.", Commands.Specifier),
             };
         }
