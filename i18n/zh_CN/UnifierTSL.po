@@ -1,17 +1,23 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: UnifierTSL\n"
+"Project-Id-Version: unifiertsl\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
-"Language-Team: \n"
+"Language-Team: Chinese Simplified\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: GetText.NET Extractor\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Crowdin-Project: unifiertsl\n"
+"X-Crowdin-Project-ID: 894776\n"
+"X-Crowdin-Language: zh-CN\n"
+"X-Crowdin-File: /i18n/UnifierTSL.template.pot\n"
+"X-Crowdin-File-ID: 7\n"
 
-#: ../../src/UnifierTSL/Servers/ServerContext.cs:51
+#: ../../src/UnifierTSL/Servers/ServerContext.cs:53
 #, csharp-format
 msgctxt "{0} is class name (SampleServer)"
 msgid "Under the UnifierTSL API, only instances of ServerContext (or its derivatives) can be created. To create a sample context, use '{0}' instead."
@@ -23,7 +29,7 @@ msgctxt "{0} is CLI option name"
 msgid "Duplicate launcher CLI binding registered for '{0}'."
 msgstr "启动器 CLI 绑定“{0}”被重复注册。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:820
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:826
 #, csharp-format
 msgctxt "{0} is client IP address"
 msgid "Accepted connection: {0}"
@@ -628,55 +634,67 @@ msgctxt "{0} is password text length"
 msgid "password length: {0}"
 msgstr "密码长度：{0}"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:192
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:188
 #, csharp-format
 msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
 msgid "Version mismatch from {0}: client='{1}', server='{2}'. Connection rejected."
 msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。连接已拒绝。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:186
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:182
 #, csharp-format
 msgctxt "{0} is player IP address, {1} is client version string, {2} is server version string"
 msgid "Version mismatch from {0}: client='{1}', server='{2}'. Cross-version join allowed by policy."
 msgstr "版本不匹配，来源 {0}: 客户端='{1}'，服务端='{2}'。已按策略允许跨版本加入。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:886
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:926
 #, csharp-format
 msgctxt "{0} is player name, {1} is destination server name, {2} is number of players in destination server"
 msgid "Player '{0}' transferred to {1}, current players: {2}"
 msgstr "玩家“{0}”已转移到 {1}，当前玩家数：{2}"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:234
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:230
 #, csharp-format
 msgctxt "{0} is player name, {1} is player IP address, {2} is invalid raw UUID string"
 msgid "'{0}' ({1}) sent invalid UUID '{2}' before authentication. Kicked."
 msgstr "“{0}”({1}) 在身份验证前发送了无效 UUID“{2}”。已踢出。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:285
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:280
 #, csharp-format
 msgctxt "{0} is player name, {1} is player IP address, {2} is packet type number"
 msgid "'{0}' ({1}) sent invalid packet {2} before name/UUID authentication. Kicked."
 msgstr "“{0}”({1}) 在名称/UUID 身份验证前发送了无效数据包 {2}。已踢出。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:275
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:270
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID, {2} is server name"
 msgid "Player '{0}' ({1}) routed to server '{2}'."
 msgstr "玩家“{0}”({1}) 已路由到服务器“{2}”。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:257
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:253
 #, csharp-format
 msgctxt "{0} is player name, {1} is player UUID"
 msgid "No available server found for player '{0}' ({1}); connection aborted."
 msgstr "找不到玩家“{0}”({1}) 可用的服务器；连接已中止。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:913
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:875
 #, csharp-format
 msgctxt "{0} is player name, {1} is source server name, {2} is destination server name"
-msgid "Player '{0}' {1} ? {2} transferred."
-msgstr "玩家“{0}”已从 {1} 转移到 {2}。"
+msgid "Cannot transfer player '{0}' from {1} to {2}: seamless transfer requires equal world dimensions."
+msgstr ""
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:908
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:917
+#, csharp-format
+msgctxt "{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Failed to transfer player '{0}' from {1} to {2}."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:933
+#, csharp-format
+msgctxt "{0} is player name, {1} is source server name, {2} is destination server name"
+msgid "Player '{0}' transferred from {1} to {2}."
+msgstr ""
+
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:930
 #, csharp-format
 msgctxt "{0} is player name, {1} is source server name, {2} is number of players in current server"
 msgid "Player '{0}' joined from {1}, current players: {2}"
@@ -935,25 +953,25 @@ msgctxt "{0} is raw command input"
 msgid "Executing {0}."
 msgstr "正在执行 {0}。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:372
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:367
 #, csharp-format
 msgctxt "{0} is requested listen port"
 msgid "Cannot initialize listener to invalid port '{0}'."
 msgstr "无法将监听器初始化到无效端口“{0}”。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:386
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:381
 #, csharp-format
 msgctxt "{0} is requested listen port"
 msgid "Cannot rebind listener to invalid port '{0}'."
 msgstr "无法将监听器重绑到无效端口“{0}”。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:397
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:392
 #, csharp-format
 msgctxt "{0} is requested listen port"
 msgid "Failed to bind listener to port '{0}'. Keeping the current listener."
 msgstr "监听器绑定到端口“{0}”失败。将保留当前监听器。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:405
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:400
 #, csharp-format
 msgctxt "{0} is requested listen port"
 msgid "Listener rebound to port '{0}'."
@@ -1312,9 +1330,9 @@ msgstr "{0} 切换重载解释"
 msgid "{0} was already initialized."
 msgstr "{0} 已初始化。"
 
+#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:153
 #: ../../src/UnifierTSL/Surface/Hosting/Server/ServerSurfaceConsole.Runtime.cs:156
-#: ../../src/UnifierTSL/Surface/Hosting/LauncherSurfaceConsole.cs:200
 #, csharp-format
 msgid "{0} was not initialized."
 msgstr "{0} 尚未初始化。"
@@ -1410,10 +1428,10 @@ msgstr "命令已取消。"
 msgid "Command endpoint id must not be empty."
 msgstr "命令端点 ID 不能为空。"
 
+#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:187
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:310
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:451
-#: ../../src/UnifierTSL/Commanding/Jobs/InMemoryCommandJobRunner.cs:137
 msgid "Command failed, check logs for more details."
 msgstr "命令失败，请查看日志获取更多详情。"
 
@@ -1571,7 +1589,7 @@ msgstr "已成功提取包：{0} ({1})。"
 msgid "Extracting package: {0} ({1}) to local nuget cache."
 msgstr "正在将包 {0} ({1}) 提取到本地 NuGet 缓存。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:459
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:454
 msgid "Failed to cancel listener session token."
 msgstr "取消监听器会话令牌失败。"
 
@@ -1592,11 +1610,11 @@ msgstr "创建实例失败"
 msgid "Failed to deserialize config: '{0}' when reloading, skipping reload."
 msgstr "重载时反序列化配置“{0}”失败，跳过重载。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:486
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:481
 msgid "Failed to dispose listener session token source."
 msgstr "释放监听器会话令牌源失败。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:477
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:472
 msgid "Failed to dispose listener session."
 msgstr "释放监听器会话失败。"
 
@@ -1621,11 +1639,11 @@ msgstr "请求时读取配置“{0}”失败，将按模式返回：{1}。"
 msgid "Failed to serialize config: '{0}'."
 msgstr "序列化配置“{0}”失败。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:426
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:421
 msgid "Failed to start server loop thread."
 msgstr "启动服务器循环线程失败。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:468
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:463
 msgid "Failed to stop listener session."
 msgstr "停止监听器会话失败。"
 
@@ -1673,7 +1691,7 @@ msgstr "交互文档作用域 ID 与活动交互作用域不匹配。"
 msgid "invalid"
 msgstr "无效"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:231
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:227
 msgid "Invalid client UUID."
 msgstr "无效的客户端 UUID。"
 
@@ -1686,11 +1704,11 @@ msgstr "输入的命令无效。"
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:274
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:325
 #: ../../src/UnifierTSL/Commanding/CommandingAttributes.cs:336
+#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
 #: ../../src/UnifierTSL/Commanding/Endpoints/CommandSurfaceRuntime.cs:326
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:510
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:529
 #: ../../src/UnifierTSL/Commanding/Bindings/CommandCommonParameterRules.cs:537
-#: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:180
 msgid "Invalid command syntax."
 msgstr "命令语法无效。"
 
@@ -1790,7 +1808,7 @@ msgstr "匹配到多个前缀：{0}"
 msgid "No active console task is selected."
 msgstr "当前未选择活动控制台任务。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:253
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:249
 msgid "No available server found for you."
 msgstr "找不到你的可用服务器。"
 
@@ -1821,7 +1839,7 @@ msgstr "不再接受参数"
 msgid "no more input"
 msgstr "不再接受输入"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:837
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:843
 msgid "No more slots available, stopping listener"
 msgstr "没有更多可用玩家槽，停止监听"
 
@@ -1962,7 +1980,7 @@ msgstr "语义键成员名不能为空。"
 msgid "Server"
 msgstr "服务器"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:828
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:834
 msgid "Server is full"
 msgstr "服务器已满"
 
@@ -2173,7 +2191,7 @@ msgstr "UTSL 命令检查器"
 msgid "Window must be greater than zero."
 msgstr "窗口大小必须大于零。"
 
-#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:243
+#: ../../src/UnifierTSL/UnifiedServerCoordinator.cs:239
 msgid "You are not allowed to join this server."
 msgstr "您不被允许加入此服务器。"
 
@@ -2184,6 +2202,11 @@ msgstr "你没有使用此命令的权限。"
 #: ../../src/UnifierTSL/Commanding/Execution/CommandActionRuntime.cs:247
 msgid "You must use this command in specific server."
 msgstr "你必须在具体服务器中使用此命令。"
+
+#, csharp-format
+#~ msgctxt "{0} is player name, {1} is source server name, {2} is destination server name"
+#~ msgid "Player '{0}' {1} ? {2} transferred."
+#~ msgstr "玩家“{0}”已从 {1} 转移到 {2}。"
 
 #~ msgid "Enter the server password: "
 #~ msgstr "输入服务器密码: "
