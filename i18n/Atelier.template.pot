@@ -335,8 +335,8 @@ msgstr ""
 msgid "Opens the Atelier REPL window."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:509
 #: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:287
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:509
 msgid ""
 "Paste mode disabled. Enter uses smart submit; Shift+Enter inserts new lines."
 msgstr ""
@@ -423,8 +423,8 @@ msgid ""
 "guidance."
 msgstr ""
 
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:126
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
 #, csharp-format
 msgid "Unsupported atelier invocation host '{0}'."
 msgstr ""
