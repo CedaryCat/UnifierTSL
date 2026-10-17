@@ -309,8 +309,8 @@ msgstr "已在 {0} 上打开 Atelier REPL，目标为 {1}。"
 msgid "Opens the Atelier REPL window."
 msgstr "打开 Atelier REPL 窗口。"
 
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:509
 #: ../../src/Plugins/Atelier/Commanding/Meta/MetaCommand.cs:287
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowAdapter.cs:509
 msgid "Paste mode disabled. Enter uses smart submit; Shift+Enter inserts new lines."
 msgstr "粘贴模式已关闭。Enter 使用智能提交；Shift+Enter 插入新行。"
 
@@ -390,8 +390,8 @@ msgstr "未知命令“:{0}”。输入 ':' 可查看命令建议，或运行 :h
 msgid "Unknown command. Type ':' for command suggestions, or run :help for usage guidance."
 msgstr "未知命令。输入 ':' 可查看命令建议，或运行 :help 查看使用说明。"
 
-#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
 #: ../../src/Plugins/Atelier/Commanding/TargetResolver.cs:126
+#: ../../src/Plugins/Atelier/Presentation/Window/ReplWindowService.cs:88
 #, csharp-format
 msgid "Unsupported atelier invocation host '{0}'."
 msgstr "不支持的 Atelier 调用宿主“{0}”。"
