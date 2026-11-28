@@ -396,8 +396,8 @@ msgstr "未知命令。输入 ':' 可查看命令建议，或运行 :help 查看
 msgid "Unsupported atelier invocation host '{0}'."
 msgstr "不支持的 Atelier 调用宿主“{0}”。"
 
-#: ../../src/Plugins/Atelier/Session/Roslyn/ScriptOptionsFactory.cs:84
 #: ../../src/Plugins/Atelier/Session/Context/HostContextFactory.cs:27
+#: ../../src/Plugins/Atelier/Session/Roslyn/ScriptOptionsFactory.cs:84
 #, csharp-format
 msgid "Unsupported atelier target profile '{0}'."
 msgstr "不支持的 Atelier 目标配置“{0}”。"
